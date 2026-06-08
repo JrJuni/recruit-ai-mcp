@@ -4,6 +4,7 @@ import json
 import uuid
 from datetime import datetime, timezone
 
+from deal_intel.errors import ErrorCode, MCPError, Stage
 from deal_intel.providers.llm import LLMProvider
 from deal_intel.storage.mongodb import MongoDBClient
 
@@ -45,7 +46,12 @@ def handle(
 ) -> dict:
     deal = mongo.get_deal(deal_id)
     if deal is None:
-        return {"ok": False, "error_code": "NOT_FOUND", "message": f"deal_id {deal_id!r} not found"}
+        raise MCPError(
+            error_code=ErrorCode.NOT_FOUND,
+            stage=Stage.STORAGE,
+            message=f"deal_id {deal_id!r} not found",
+            retryable=False,
+        )
 
     try:
         resp = llm.chat_once(
@@ -53,11 +59,18 @@ def handle(
             user=_PROMPT.format(notes=raw_notes),
             max_tokens=1024,
         )
+    except Exception as exc:
+        raise MCPError(
+            error_code=ErrorCode.LLM_ERROR,
+            stage=Stage.LLM,
+            message=str(exc),
+            retryable=True,
+        ) from exc
+
+    try:
         meddpicc_raw = json.loads(resp.text)
     except json.JSONDecodeError:
         meddpicc_raw = {}
-    except Exception as exc:
-        return {"ok": False, "error_code": "LLM_ERROR", "message": str(exc)}
 
     meeting = {
         "meeting_id": str(uuid.uuid4()),
@@ -72,7 +85,12 @@ def handle(
     try:
         mongo.upsert_deal(deal)
     except Exception as exc:
-        return {"ok": False, "error_code": "STORAGE_ERROR", "message": str(exc)}
+        raise MCPError(
+            error_code=ErrorCode.STORAGE_ERROR,
+            stage=Stage.STORAGE,
+            message=str(exc),
+            retryable=True,
+        ) from exc
 
     return {
         "ok": True,

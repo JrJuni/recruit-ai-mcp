@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import datetime, timezone
 
+from deal_intel.errors import ErrorCode, MCPError, Stage
 from deal_intel.providers.llm import LLMProvider
 from deal_intel.storage.mongodb import MongoDBClient
 
@@ -47,7 +48,8 @@ def _meddpicc_summary(meetings: list[dict]) -> str:
     for d in _DIMS:
         if scores[d]:
             avg = sum(scores[d]) / len(scores[d])
-            lines.append(f"  {d}: {avg:.1f}/5 ({len(scores[d])} data point{'s' if len(scores[d])>1 else ''})")
+            n = len(scores[d])
+            lines.append(f"  {d}: {avg:.1f}/5 ({n} data point{'s' if n > 1 else ''})")
         else:
             lines.append(f"  {d}: no data")
     return "\n".join(lines)
@@ -56,13 +58,17 @@ def _meddpicc_summary(meetings: list[dict]) -> str:
 def handle(mongo: MongoDBClient, llm: LLMProvider, *, deal_id: str) -> dict:
     deal = mongo.get_deal(deal_id)
     if deal is None:
-        return {"ok": False, "error_code": "NOT_FOUND", "message": f"deal_id {deal_id!r} not found"}
+        raise MCPError(
+            error_code=ErrorCode.NOT_FOUND,
+            stage=Stage.STORAGE,
+            message=f"deal_id {deal_id!r} not found",
+            retryable=False,
+        )
 
     meetings = deal.get("meetings", [])
-    size_line = ""
-    if deal.get("deal_size_krw"):
-        size_line = f"Deal size: {deal['deal_size_krw']:,} KRW\n"
-
+    size_line = (
+        f"Deal size: {deal['deal_size_krw']:,} KRW\n" if deal.get("deal_size_krw") else ""
+    )
     prompt = _PROMPT.format(
         company=deal["company"],
         stage=deal.get("deal_stage", "unknown"),
@@ -74,13 +80,18 @@ def handle(mongo: MongoDBClient, llm: LLMProvider, *, deal_id: str) -> dict:
     try:
         resp = llm.chat_once(system=_SYSTEM, user=prompt, max_tokens=2048)
     except Exception as exc:
-        return {"ok": False, "error_code": "LLM_ERROR", "message": str(exc)}
+        raise MCPError(
+            error_code=ErrorCode.LLM_ERROR,
+            stage=Stage.ANALYSIS,
+            message=str(exc),
+            retryable=True,
+        ) from exc
 
     deal["bd_strategy"] = resp.text
     deal["updated_at"] = datetime.now(timezone.utc).isoformat()
     try:
         mongo.upsert_deal(deal)
     except Exception:
-        pass  # analysis result still returned even if save fails
+        pass  # analysis still returned even if save fails
 
     return {"ok": True, "deal_id": deal_id, "analysis": resp.text, "usage": resp.usage}
