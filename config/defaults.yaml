@@ -10,6 +10,7 @@ mongodb:
 
 reporting:
   timezone: Asia/Seoul
+  output_dir: outputs/reports
 
 # MEDDPICC health score 계산 가중치.
 # health_pct = sum(score_i * weight_i) / sum(5 * weight_i) * 100

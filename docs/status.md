@@ -2,6 +2,22 @@
 
 ## Latest Update - 2026-06-09
 
+### BI Reporting Milestone 2.4 완료
+
+- `export_report(report_type="weekly_pipeline")` MCP 도구 추가
+- CSV와 Markdown을 같은 `weekly_pipeline` row surface에서 생성
+- 기본 저장 경로: `reporting.output_dir` 또는 `outputs/reports`
+- `output_dir`, `stage`, `industry`, `as_of` optional parameter 지원
+- 결과에 `csv_path`, `markdown_path`, `artifacts`, `metrics`, `warnings`, `row_count` 반환
+- LLM과 embedding 미사용, MongoDB write 없음
+- FastMCP 등록 smoke: 11 tools
+- Targeted test: `26 passed`
+- Full pytest: `128 passed`
+- Ruff: `ruff check .` 통과
+- Atlas read/file-write smoke: `2026-06-09` 기준 row `7`, warnings `incomplete_data_quality`, CSV/Markdown 생성 및 raw notes/contact/vector 미노출 확인
+
+CSV Reporting MVP Gate 통과. 다음 단계: Milestone 3 Atlas Charts Pipeline Dashboard
+
 ### BI Reporting Milestone 2.3 완료
 
 - `build_weekly_pipeline_markdown` Markdown 요약 생성기 추가
@@ -14,8 +30,6 @@
 - Full pytest: `123 passed`
 - Ruff: `ruff check .` 통과
 - Atlas read/write smoke 없음: 2.3은 pure renderer 작업
-
-다음 단계: Milestone 2.4 `export_report(report_type="weekly_pipeline")` MCP 도구
 
 ### BI Reporting Milestone 2.2 완료
 
@@ -157,6 +171,6 @@
 
 ## 다음 스텝
 
-1. Milestone 2.1 `weekly_pipeline` 보고서 행 생성기
-2. Milestone 2.2 UTF-8 BOM CSV 저장과 formula injection 방어
-3. Milestone 2.3 LLM 없는 Markdown 요약
+1. Milestone 3.1 Atlas Charts용 Pipeline dashboard aggregation JSON
+2. Milestone 3.2 MongoDB Atlas `Weekly Pipeline Review` dashboard 구성
+3. Milestone 3.3 `get_metrics`, CSV/Markdown, Atlas Charts KPI 교차 검증

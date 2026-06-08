@@ -190,6 +190,41 @@ def get_metrics(
 
 
 @app.tool()
+def export_report(
+    report_type: str = "weekly_pipeline",
+    output_dir: str = "",
+    stage: str = "",
+    industry: str = "",
+    as_of: str = "",
+) -> dict:
+    """Export BI reports to local files and return absolute artifact paths.
+
+    First supported report_type: weekly_pipeline.
+    Creates a CSV and Markdown report using the shared BI/reporting contracts.
+    Optional filters:
+    - stage: exact pipeline stage match
+    - industry: exact stored industry match
+    - as_of: YYYY-MM-DD business date for stuck/overdue calculations
+    - output_dir: local output directory; defaults to reporting.output_dir or outputs/reports
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.tools import export_report as _t
+
+        return _t.handle(
+            mongo=_context.mongo(),
+            cfg=_context.config(),
+            report_type=report_type,
+            output_dir=output_dir or None,
+            stage=stage or None,
+            industry=industry or None,
+            as_of=as_of or None,
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.STORAGE)
+
+
+@app.tool()
 def get_customer_themes(
     dimension: str = "all",
     stage: str = "active",

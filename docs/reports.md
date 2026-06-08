@@ -277,3 +277,83 @@ Risk deal tables escape Markdown table separators and newlines in cell values.
 Milestone 2.3 does not create a new MCP tool, write files, call Atlas Charts,
 call an LLM, or create a polished natural-language executive narrative. It is a
 deterministic report renderer.
+
+## Milestone 2.4 - `export_report` MCP Tool
+
+`deal_intel.tools.export_report.handle` exposes weekly pipeline reporting through
+MCP.
+
+### Scope
+
+- First supported `report_type`: `weekly_pipeline`.
+- Reads deal documents through `MongoDBClient.list_deals_for_metrics()`.
+- Builds M2.1 rows, M2.2 CSV, and M2.3 Markdown from the same row surface.
+- Writes CSV and Markdown files to a local output directory.
+- Returns absolute artifact paths.
+- LLM / embedding: none.
+- MongoDB writes: none.
+
+### Inputs
+
+| Parameter | Required | Contract |
+|---|---|---|
+| `report_type` | optional | Defaults to `weekly_pipeline`; other values fail preflight |
+| `output_dir` | optional | Explicit local directory. Defaults to `reporting.output_dir` or `outputs/reports` |
+| `stage` | optional | Exact valid stage match |
+| `industry` | optional | Exact stored industry match |
+| `as_of` | optional | `YYYY-MM-DD` business date for stuck/overdue calculations |
+
+### Success Shape
+
+```json
+{
+  "ok": true,
+  "report_type": "weekly_pipeline",
+  "as_of": "2026-06-09",
+  "timezone": "Asia/Seoul",
+  "generated_at": "2026-06-09T12:34:56+00:00",
+  "filters": {"stage": null, "industry": null},
+  "row_count": 7,
+  "warnings": [],
+  "metrics": {},
+  "output_dir": "C:/absolute/path/outputs/reports",
+  "artifacts": {
+    "csv": {
+      "path": "C:/absolute/path/weekly_pipeline_20260609_123456.csv",
+      "filename": "weekly_pipeline_20260609_123456.csv",
+      "encoding": "utf-8-sig"
+    },
+    "markdown": {
+      "path": "C:/absolute/path/weekly_pipeline_20260609_123456.md",
+      "filename": "weekly_pipeline_20260609_123456.md",
+      "encoding": "utf-8"
+    }
+  },
+  "csv_path": "C:/absolute/path/weekly_pipeline_20260609_123456.csv",
+  "markdown_path": "C:/absolute/path/weekly_pipeline_20260609_123456.md"
+}
+```
+
+`csv_path` and `markdown_path` are convenience aliases for assistant-facing
+answers.
+
+### Error Behavior
+
+- Invalid `report_type`, invalid `stage`, and invalid `as_of` fail before
+  MongoDB access.
+- Invalid metric/reporting config fails before MongoDB access.
+- MongoDB read failure returns `STORAGE_ERROR`.
+- File write failure returns `IO_ERROR` at `storage` stage.
+
+Artifact writes are not transactional. If a later artifact write fails after an
+earlier file was created, the caller receives a structured error and may retry
+with a new output directory or timestamp.
+
+### MVP Gate
+
+With M2.4 complete, CSV Reporting MVP is functionally complete:
+
+1. row generation
+2. CSV export
+3. Markdown summary
+4. MCP artifact export

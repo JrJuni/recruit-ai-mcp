@@ -46,6 +46,7 @@ All MCP boundaries return structured errors with:
 | `get_deal` | `deal_id` | None | `ok`, `deal` | Read only; includes full meeting history and raw notes |
 | `list_deals` | None | `stage`, `limit`, `as_of` | `ok`, `as_of`, `timezone`, `generated_at`, `deals`, `count`, `data_quality` | Read only; returns health, timing, attention, and field-quality results while excluding meeting raw notes |
 | `get_metrics` | None | `metric_type`, `stage`, `industry`, `as_of` | `ok`, `metric_type`, `as_of`, `timezone`, `generated_at`, `filters`, `kpis`, `stage_breakdown`, `health_bands`, `attention_reasons`, `pipeline_values`, `win_rate`, `data_quality`, `warnings` | Read only; uses the shared metric calculator and restricted metric projection |
+| `export_report` | None | `report_type`, `output_dir`, `stage`, `industry`, `as_of` | `ok`, `report_type`, `as_of`, `timezone`, `generated_at`, `filters`, `row_count`, `warnings`, `metrics`, `output_dir`, `artifacts`, `csv_path`, `markdown_path` | Reads through the restricted metric projection and writes local CSV/Markdown report artifacts |
 | `get_insights` | `query_type` | `as_of` | `ok`, `query_type`, `as_of`, `timezone`, `generated_at`, query-specific aggregate fields | Read only over the current collection snapshot |
 | `get_customer_themes` | None | `dimension`, `stage`, `industry`, `top_k` | `ok`, `filters`, `coverage`, `themes` | Read-only MongoDB counts and aggregation |
 | `search_deals` | `query` | `limit` | `ok`, `query`, `result_count`, `results` | Generates a local query embedding and reads deal embeddings; may return a structured warmup response before search |
@@ -58,6 +59,14 @@ All MCP boundaries return structured errors with:
 `get_metrics` accepts exact-match `stage` and `industry` filters. Invalid
 metric types, invalid stages, invalid `as_of`, and invalid metric config fail
 before MongoDB storage access.
+
+`export_report.report_type` currently supports:
+
+- `weekly_pipeline`
+
+`export_report` accepts exact-match `stage` and `industry` filters. Invalid
+report types, invalid stages, invalid `as_of`, and invalid report/metric config
+fail before MongoDB storage access.
 
 `get_insights.query_type` currently supports:
 
@@ -135,10 +144,10 @@ Milestone 0.1 최초 측정 결과는 28개 기존 finding이었다.
 Milestone 1 시작 전에 28개 finding을 모두 해결했다. 현재 gate는 다음과 같다.
 
 ```text
-pytest -> 123 passed
+pytest -> 128 passed
 ruff check . -> All checks passed
 wheel build -> passed
-FastMCP runtime registration -> 10 tools
+FastMCP runtime registration -> 11 tools
 MongoDB Atlas read smoke -> passed
 ```
 
