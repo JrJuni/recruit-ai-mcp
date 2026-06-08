@@ -42,7 +42,7 @@ All MCP boundaries return structured errors with:
 |---|---|---|---|---|
 | `create_deal` | `company` | `industry`, `deal_size_krw`, `expected_close_date` | `ok`, `deal_id`, `company` | Upserts one deal and initializes `discovery` stage history |
 | `add_meeting` | `deal_id`, `date`, `raw_notes` | None | `ok`, `meeting_id`, `summary`, `meddpicc`, `meddpicc_latest`, `customer_themes`, `stage_suggestion`, `embedding_stored`, `usage` | Calls LLM, appends a meeting, recalculates deal signals, optionally stores an embedding, and upserts the deal |
-| `update_stage` | `deal_id`, `new_stage` | None | `ok`, `deal_id`, `old_stage`, `new_stage`, `days_in_previous_stage`, `stuck_threshold_days` | Appends stage history, recalculates stage-aware MEDDPICC gaps, and upserts the deal |
+| `update_stage` | `deal_id`, `new_stage` | `actual_close_date` | `ok`, `deal_id`, `old_stage`, `new_stage`, `actual_close_date`, `days_in_previous_stage`, `stuck_threshold_days` | Appends stage history, records the actual terminal date, recalculates stage-aware MEDDPICC gaps, and upserts the deal |
 | `get_deal` | `deal_id` | None | `ok`, `deal` | Read only; includes full meeting history and raw notes |
 | `list_deals` | None | `stage`, `limit` | `ok`, `deals`, `count` | Read only; excludes meeting raw notes through the storage projection |
 | `get_insights` | `query_type` | None | `ok`, `query_type`, query-specific aggregate fields | Read-only MongoDB aggregation |

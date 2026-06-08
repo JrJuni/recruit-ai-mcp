@@ -40,7 +40,7 @@
 | `create_deal` | 없음 | 없음 | 딜 생성, stage_history 초기화 |
 | `add_meeting` | 2회 (분석 + 요약) | embed + store | MEDDPICC·고객 주제 추출, health_pct 재계산 |
 | `get_deal` | 없음 | 없음 | 딜 전체 조회 |
-| `update_stage` | 없음 | 없음 | stage_history 기록, MEDDPICC 재계산 (갭 기준 재적용) |
+| `update_stage` | 없음 | 없음 | stage_history 및 actual_close_date 기록, MEDDPICC 재계산 |
 | `list_deals` | 없음 | 없음 | stuck flag, health_pct 집계, 정렬 |
 | `get_insights` | 없음 | 없음 | 7가지 MongoDB aggregation BI |
 | `get_customer_themes` | 없음 | 없음 | 고객 고민 주제별 고유 딜 수·근거 집계 |
@@ -57,6 +57,7 @@
   "deal_size_krw":      200000000,
   "deal_stage":         "proposal",
   "expected_close_date": "2026-09-30",
+  "actual_close_date":   null,
   "contacts":           [],
 
   "stage_history": [

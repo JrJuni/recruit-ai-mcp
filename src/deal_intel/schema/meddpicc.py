@@ -152,6 +152,10 @@ class Deal(BaseModel):
     company: str
     industry: str | None = None
     deal_size_krw: int | None = None
+    deal_size_low_krw: int | None = None
+    deal_size_high_krw: int | None = None
+    deal_size_status: str | None = None
+    deal_size_note: str | None = None
     contacts: list[dict] = Field(default_factory=list)   # Contact dicts
     meetings: list[dict] = Field(default_factory=list)
     customer_themes: list[dict] = Field(default_factory=list)
@@ -159,6 +163,7 @@ class Deal(BaseModel):
     stage_history: list[dict] = Field(default_factory=list)  # StageHistoryEntry dicts
     deal_stage: str = "discovery"
     expected_close_date: str | None = None  # ISO-8601 date
+    actual_close_date: str | None = None  # ISO-8601 date; won/lost only
     close_reason: str | None = None
     bd_strategy: str = ""
     gtm_notes: str = ""

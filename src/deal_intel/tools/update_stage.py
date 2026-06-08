@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 from deal_intel.errors import ErrorCode, MCPError, Stage
 from deal_intel.schema.meddpicc import VALID_STAGES, compute_meddpicc_latest
@@ -13,6 +13,7 @@ def handle(
     *,
     deal_id: str,
     new_stage: str,
+    actual_close_date: str | None = None,
 ) -> dict:
     if new_stage not in VALID_STAGES:
         raise MCPError(
@@ -22,6 +23,25 @@ def handle(
             hint={"valid_stages": sorted(VALID_STAGES)},
             retryable=False,
         )
+
+    parsed_close_date = None
+    if actual_close_date is not None:
+        if new_stage not in {"won", "lost"}:
+            raise MCPError(
+                error_code=ErrorCode.INVALID_INPUT,
+                stage=Stage.PREFLIGHT,
+                message="actual_close_date is only valid for won or lost stages",
+                retryable=False,
+            )
+        try:
+            parsed_close_date = date.fromisoformat(actual_close_date).isoformat()
+        except (TypeError, ValueError) as exc:
+            raise MCPError(
+                error_code=ErrorCode.INVALID_INPUT,
+                stage=Stage.PREFLIGHT,
+                message="actual_close_date must use ISO format YYYY-MM-DD",
+                retryable=False,
+            ) from exc
 
     deal = mongo.get_deal(deal_id)
     if deal is None:
@@ -36,6 +56,10 @@ def handle(
     now = datetime.now(UTC).isoformat()
 
     deal["deal_stage"] = new_stage
+    if new_stage in {"won", "lost"}:
+        deal["actual_close_date"] = parsed_close_date or datetime.now(UTC).date().isoformat()
+    else:
+        deal["actual_close_date"] = None
     deal["updated_at"] = now
     deal.setdefault("stage_history", []).append({
         "stage": new_stage,
@@ -87,6 +111,7 @@ def handle(
         "deal_id": deal_id,
         "old_stage": old_stage,
         "new_stage": new_stage,
+        "actual_close_date": deal["actual_close_date"],
         "days_in_previous_stage": days_in_prev,
         "stuck_threshold_days": threshold,
     }

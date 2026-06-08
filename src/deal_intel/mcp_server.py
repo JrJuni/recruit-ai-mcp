@@ -59,10 +59,16 @@ def add_meeting(deal_id: str, date: str, raw_notes: str) -> dict:
 
 
 @app.tool()
-def update_stage(deal_id: str, new_stage: str) -> dict:
+def update_stage(
+    deal_id: str,
+    new_stage: str,
+    actual_close_date: str = "",
+) -> dict:
     """Move a deal to a new pipeline stage and log it to stage_history.
 
     Valid stages: discovery, qualification, proposal, negotiation, won, lost, stalled.
+    For won/lost, actual_close_date is an optional ISO date (YYYY-MM-DD). It
+    defaults to today when omitted. Non-terminal stages cannot receive one.
     Returns days spent in the previous stage and the stuck threshold for the new stage.
     """
     try:
@@ -74,6 +80,7 @@ def update_stage(deal_id: str, new_stage: str) -> dict:
             cfg=_context.config(),
             deal_id=deal_id,
             new_stage=new_stage,
+            actual_close_date=actual_close_date or None,
         )
     except Exception as exc:
         return envelope_from_exception(exc, stage=Stage.STORAGE)

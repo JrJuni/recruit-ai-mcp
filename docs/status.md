@@ -37,8 +37,21 @@
 - 잘못된 threshold는 명시적 오류로 차단
 - 계약 및 미결정 항목: [metrics.md](metrics.md)
 
+### BI Reporting Milestone 1.1 Part B 완료
+
+- 금액 상태를 `unknown`, `rough_estimate`, `customer_budget`, `quoted`,
+  `strategic_zero`로 구분
+- 중앙 추정치와 low/high 범위의 유효성 계약 및 순수 계산 함수 추가
+- 누락 금액, 전략적 0원, 기존 무분류 금액, 잘못된 금액을 별도 집계
+- Pipeline value, known range, validated value, amount coverage 계약 고정
+- LLM 추론 금액은 자동 저장하지 않고 사용자 승인 후 별도 update를 수행하도록 계약
+- Won/Lost 실제 종료일을 예상일 및 시스템 stage 변경시각과 분리
+- `update_stage` actual close 입력과 MCP forwarding test 추가
+- 전체 테스트 `58 passed`, Ruff 통과
+- 기존 합성 Won 3건의 actual close date backfill은 범위에서 제외
+
 ## 다음 스텝
 
-1. Milestone 1.1 Part B: pipeline value와 누락 금액 처리 결정
-2. Milestone 1.1 Part C: stuck/overdue와 win rate 결정
+1. Milestone 1.1 Part C: stuck/overdue와 win rate 결정
+2. Milestone 1.1 Part D: 데이터 누락률과 reporting `as_of` 결정
 3. 전체 metric 계약 완료 후 공통 계산 모듈 구현

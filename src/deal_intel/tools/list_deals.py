@@ -64,6 +64,7 @@ def handle(mongo: MongoDBClient, cfg: dict, *, stage: str | None, limit: int) ->
             "deal_stage": current_stage,
             "deal_size_krw": d.get("deal_size_krw"),
             "expected_close_date": d.get("expected_close_date"),
+            "actual_close_date": d.get("actual_close_date"),
             "health_pct": meddpicc_latest.get("health_pct"),
             "filled_count": meddpicc_latest.get("filled_count"),
             "gaps": meddpicc_latest.get("gaps", []),

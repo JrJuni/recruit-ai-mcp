@@ -34,6 +34,7 @@ def handle(
         "stage_history": [{"stage": "discovery", "entered_at": now}],
         "deal_stage": "discovery",
         "expected_close_date": expected_close_date,
+        "actual_close_date": None,
         "close_reason": None,
         "bd_strategy": "",
         "gtm_notes": "",

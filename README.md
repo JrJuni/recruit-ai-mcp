@@ -170,10 +170,19 @@ list_deals / get_insights / get_customer_themes / analyze_deal / search_deals
 
 **언제 쓰나**: 딜이 다음 단계로 넘어가거나 결과가 확정됐을 때.
 
+```text
+update_stage(deal_id, new_stage, actual_close_date="")
+```
+
 **예시 대화**:
 ```
 현대정밀 딜 proposal 단계로 올려줘.
 ```
+
+`won` 또는 `lost`로 변경할 때 실제 종료일을 `YYYY-MM-DD`로 지정할 수 있다.
+생략하면 처리 당일이 저장된다. `expected_close_date`는 예상일로 유지되며,
+`stage_history.entered_at`은 시스템에서 변경한 감사 시각이므로 실제 종료일과
+구분한다. 종료 딜을 다시 열린 stage로 옮기면 `actual_close_date`는 제거된다.
 
 **사용 가능한 단계** (순서대로):
 ```
@@ -181,6 +190,7 @@ discovery → qualification → proposal → negotiation → won / lost / stalle
 ```
 
 **결과에 포함되는 것**:
+- `actual_close_date` — Won/Lost의 실제 종료일
 - `days_in_previous_stage` — 이전 단계에 얼마나 있었는지
 - `stuck_threshold_days` — 새 단계의 stuck 기준 일수
 - MEDDPICC 갭이 단계에 따라 자동 재계산됨 (예: proposal 단계에서 Identify Pain 하락은 갭이 아님 — 고객의 Pain이 해소되고 있다는 긍정 신호)
@@ -363,6 +373,7 @@ search_deals
   "deal_size_krw": 200000000,
   "deal_stage": "proposal",
   "expected_close_date": "2026-09-30",
+  "actual_close_date": null,
   "stage_history": [
     {"stage": "discovery",     "entered_at": "2026-05-01T..."},
     {"stage": "qualification", "entered_at": "2026-05-15T..."},
