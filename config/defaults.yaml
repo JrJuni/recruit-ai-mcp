@@ -1,0 +1,8 @@
+llm:
+  provider: chatgpt_oauth        # chatgpt_oauth | anthropic
+  chatgpt_oauth_model: gpt-5.5
+  chatgpt_oauth_reasoning_effort: low
+  draft_model: claude-sonnet-4-6
+
+mongodb:
+  database: deal_intel
