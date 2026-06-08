@@ -109,7 +109,7 @@ Milestone 0.1 최초 측정 결과는 28개 기존 finding이었다.
 Milestone 1 시작 전에 28개 finding을 모두 해결했다. 현재 gate는 다음과 같다.
 
 ```text
-pytest -> 17 passed
+pytest -> 34 passed
 ruff check . -> All checks passed
 wheel build -> passed
 FastMCP runtime registration -> 9 tools

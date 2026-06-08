@@ -442,6 +442,22 @@ health_pct = sum(dim_avg × weight) / sum(5 × weight) × 100
 - `proposal` / `negotiation` 단계에서 Identify Pain 점수 하락 → 갭 아님 (고객 Pain이 해소되고 있다는 신호)
 - `won` 딜 → 갭 없음
 
+**Health band 운영 설정**:
+
+기본값은 Healthy 70 이상, Watch 40 이상, At Risk 40 미만이다. 이 값은
+수주 확률이 아니라 MEDDPICC 검증 수준의 분류 기준이며, 운영 데이터가 쌓이면
+`~/.deal-intel/config.yaml`에서 변경할 수 있다.
+
+```yaml
+metrics:
+  health_bands:
+    healthy_min: 75
+    watch_min: 45
+```
+
+Active/Open/Stalled와 미평가 처리의 공식 정의는
+[`docs/metrics.md`](docs/metrics.md)에 있다.
+
 ---
 
 ## FAQ

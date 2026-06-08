@@ -11,10 +11,12 @@
 
 ### #1 Metric 계약과 공통 계산
 
-1. Active deal, pipeline value, health coverage, health band 정의
-2. Stuck/overdue, win rate, 데이터 누락률 정의
-3. 경계값·누락값·종료 딜 fixture 테스트
-4. `get_insights`와 향후 CSV가 공유할 순수 계산 모듈
+1. 완료: Active/Open/Stalled 범위와 health assessment 정의
+2. 완료: config 기반 health band와 경계값 fixture 테스트
+3. 결정 필요: pipeline value, stuck/overdue, win rate, 데이터 누락률
+4. 이후: `get_insights`와 향후 CSV가 공유할 순수 계산 모듈
+
+현재 계약: [metrics.md](metrics.md)
 
 ### #2 `get_metrics` MCP 도구
 

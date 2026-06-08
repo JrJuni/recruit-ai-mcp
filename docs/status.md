@@ -29,8 +29,16 @@
 - M0 검색 경로를 Python cosine으로 명확히 하고 M10+ Atlas 전환과 구분
 - 로컬 전용 설정과 build artifact는 gitignore 유지
 
+### BI Reporting Milestone 1.1 Part A 완료
+
+- Active, Stalled, Open, Terminal stage population 계약 고정
+- 미평가 딜을 `unassessed`로 분리하고 평균 health에서 제외
+- Health band 기본값 `70/40`을 `metrics.health_bands` config로 이동
+- 잘못된 threshold는 명시적 오류로 차단
+- 계약 및 미결정 항목: [metrics.md](metrics.md)
+
 ## 다음 스텝
 
-1. BI Reporting Milestone 1.1 metric 계약 정의
-2. metric 경계값·누락값·종료 딜 fixture 테스트
-3. 공통 metric 계산 모듈 구현 전 계약 gate 검증
+1. Milestone 1.1 Part B: pipeline value와 누락 금액 처리 결정
+2. Milestone 1.1 Part C: stuck/overdue와 win rate 결정
+3. 전체 metric 계약 완료 후 공통 계산 모듈 구현

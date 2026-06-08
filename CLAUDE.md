@@ -103,4 +103,5 @@ ChatGPT OAuth 구현 당시 누적된 5가지 함정은 `docs/lesson-learned.md`
 - `docs/backlog.md` — 장기 계획 / 미구현 / defer 항목
 - `docs/architecture.md` — 아키텍처 상세
 - `docs/baseline.md` — MCP 계약 / 테스트 / 실 DB 검증 기준선
+- `docs/metrics.md` — BI/CSV/Charts가 공유하는 metric 의미와 경계값 계약
 - `docs/lesson-learned.md` — 실패 로그 (append-only, failures only)

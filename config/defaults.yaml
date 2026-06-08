@@ -40,3 +40,10 @@ pipeline:
     stalled:       30
     won:           0   # terminal — stuck 판정 없음
     lost:          0   # terminal — stuck 판정 없음
+
+# BI metric classification. Override in ~/.deal-intel/config.yaml as operating
+# data accumulates; these bands describe MEDDPICC qualification, not win probability.
+metrics:
+  health_bands:
+    healthy_min: 70
+    watch_min: 40

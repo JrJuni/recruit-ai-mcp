@@ -195,6 +195,16 @@ meddpicc:
 
 ML 자동 조정: `~/.deal-intel/config.yaml`에 weights 섹션 override → 코드 변경 없이 적용.
 
+Health band와 BI stage population의 공식 계약은 [metrics.md](metrics.md)를 따른다.
+Health band 경계값은 고정 상수가 아니라 운영 config다:
+
+```yaml
+metrics:
+  health_bands:
+    healthy_min: 70
+    watch_min: 40
+```
+
 ## Stage-aware 갭 분류
 
 ```python
