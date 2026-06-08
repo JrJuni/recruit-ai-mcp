@@ -16,9 +16,15 @@
 3. 완료: pipeline value, 추정 범위, 전략적 0원, 금액 coverage 정의
 4. 완료: stuck/overdue, win rate, expected close 기본값 정의
 5. 완료: 데이터 품질 coverage, reporting timezone, 재현 가능한 `as_of`
-6. 다음: `get_insights`와 향후 CSV가 공유할 순수 계산 모듈
+6. 완료: `get_insights`와 향후 CSV가 공유할 순수 계산 모듈
 
 현재 계약: [metrics.md](metrics.md)
+
+Milestone 1.2 상태:
+
+- 완료: `build_pipeline_health_summary`를 BI/CSV/Atlas 공통 계산기로 추가
+- 완료: `get_insights("pipeline_overview")`가 공통 계산기를 사용하도록 전환
+- 다음: `get_metrics(pipeline_health)` MCP 도구 구현
 
 ### #2 `get_metrics` MCP 도구
 

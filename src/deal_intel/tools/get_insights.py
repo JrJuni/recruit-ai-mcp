@@ -4,7 +4,13 @@ from collections import defaultdict
 from datetime import datetime
 
 from deal_intel.errors import ErrorCode, MCPError, Stage
-from deal_intel.schema.metrics import ReportingContext, WinRateSettings
+from deal_intel.schema.metrics import (
+    HealthBandThresholds,
+    PipelineTimingSettings,
+    ReportingContext,
+    WinRateSettings,
+)
+from deal_intel.schema.pipeline_metrics import build_pipeline_health_summary
 from deal_intel.storage.mongodb import MongoDBClient
 
 _DIMS = [
@@ -65,27 +71,37 @@ def _meddpicc_profile(col, stage: str) -> dict:
 
 # ── query implementations ──────────────────────────────────────────────────────
 
-def _pipeline_overview(col) -> dict:
-    pipeline = [
-        {"$group": {
-            "_id": "$deal_stage",
-            "count": {"$sum": 1},
-            "avg_health_pct": {"$avg": "$meddpicc_latest.health_pct"},
-            "total_size_krw": {"$sum": {"$ifNull": ["$deal_size_krw", 0]}},
-        }},
-        {"$sort": {"_id": 1}},
+def _pipeline_overview(
+    deals: list[dict],
+    *,
+    reporting: ReportingContext,
+    health_thresholds: HealthBandThresholds,
+    timing_settings: PipelineTimingSettings,
+    win_rate_settings: WinRateSettings,
+) -> dict:
+    summary = build_pipeline_health_summary(
+        deals,
+        as_of=reporting.as_of,
+        health_thresholds=health_thresholds,
+        timing_settings=timing_settings,
+        win_rate_settings=win_rate_settings,
+    )
+    stages = [
+        {
+            "stage": row["stage"],
+            "count": row["count"],
+            "avg_health_pct": row["avg_health_pct"],
+            "total_size_krw": row["pipeline_value_krw"],
+        }
+        for row in summary["stage_breakdown"]
+        if row["count"]
     ]
-    rows = []
-    for r in col.aggregate(pipeline):
-        rows.append({
-            "stage": r["_id"],
-            "count": r["count"],
-            "avg_health_pct": round(r["avg_health_pct"], 1) if r["avg_health_pct"] else None,
-            "total_size_krw": r["total_size_krw"],
-        })
-    total_deals = sum(r["count"] for r in rows)
-    total_size = sum(r["total_size_krw"] for r in rows)
-    return {"stages": rows, "total_deals": total_deals, "total_size_krw": total_size}
+    return {
+        **summary,
+        "stages": stages,
+        "total_deals": summary["kpis"]["deal_count"],
+        "total_size_krw": summary["pipeline_values"]["open"]["pipeline_value_krw"],
+    }
 
 
 def _win_patterns(col) -> dict:
@@ -247,7 +263,6 @@ def _stage_velocity(col) -> dict:
 # ── public entry point ─────────────────────────────────────────────────────────
 
 _HANDLERS = {
-    "pipeline_overview": _pipeline_overview,
     "win_patterns": _win_patterns,
     "loss_patterns": _loss_patterns,
     "compare_won_lost": _compare_won_lost,
@@ -273,8 +288,15 @@ def handle(
             retryable=False,
         )
     try:
-        win_rate_settings = WinRateSettings.from_config(cfg)
         reporting = ReportingContext.from_config(cfg, as_of=as_of)
+        win_rate_settings = (
+            WinRateSettings.from_config(cfg)
+            if query_type in {"industry_benchmark", "pipeline_overview"}
+            else None
+        )
+        if query_type == "pipeline_overview":
+            health_thresholds = HealthBandThresholds.from_config(cfg)
+            timing_settings = PipelineTimingSettings.from_config(cfg)
     except ValueError as exc:
         error_code = (
             ErrorCode.INVALID_INPUT
@@ -288,11 +310,21 @@ def handle(
             retryable=False,
         ) from exc
     try:
-        col = mongo._get_db().deals
-        if query_type == "industry_benchmark":
-            result = _industry_benchmark(col, win_rate_settings)
+        if query_type == "pipeline_overview":
+            deals = mongo.list_deals_for_metrics()
+            result = _pipeline_overview(
+                deals,
+                reporting=reporting,
+                health_thresholds=health_thresholds,
+                timing_settings=timing_settings,
+                win_rate_settings=win_rate_settings,
+            )
         else:
-            result = _HANDLERS[query_type](col)
+            col = mongo._get_db().deals
+            if query_type == "industry_benchmark":
+                result = _industry_benchmark(col, win_rate_settings)
+            else:
+                result = _HANDLERS[query_type](col)
         return {
             "ok": True,
             "query_type": query_type,

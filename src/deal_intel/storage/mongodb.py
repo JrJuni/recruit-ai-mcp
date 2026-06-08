@@ -97,6 +97,17 @@ class MongoDBClient:
         ).limit(limit)
         return list(cursor)
 
+    def list_deals_for_metrics(self) -> list[dict]:
+        db = self._get_db()
+        projection = {
+            "_id": 0,
+            "meetings.raw_notes": 0,
+            "contacts": 0,
+            "summary_embedding": 0,
+        }
+        cursor = db.deals.find({}, projection)
+        return list(cursor)
+
     def count_deals(self, query: dict) -> int:
         return self._get_db().deals.count_documents(query)
 

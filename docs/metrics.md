@@ -2,6 +2,8 @@
 
 BI, CSV, and Atlas Charts must use the same definitions in this document.
 Implementation helpers live in `deal_intel.schema.metrics`.
+The shared pipeline-health summary lives in
+`deal_intel.schema.pipeline_metrics`.
 
 ## Part A - Pipeline Scope and Health
 
@@ -276,3 +278,37 @@ reporting:
   as input errors.
 
 Parts A through D complete the Milestone 1.1 metric contract.
+
+## Milestone 1.2 - Shared Pipeline Health Summary
+
+`build_pipeline_health_summary` is the official in-memory calculator for
+pipeline health metrics. It accepts already-fetched deal documents, an `as_of`
+business date, metric settings, and optional exact `stage` / `industry`
+filters. It does not access MongoDB, embeddings, or LLM providers.
+
+The summary applies filters before calculation and returns:
+
+- `filters`: applied exact-match filters.
+- `kpis`: active/open/stalled/terminal counts, active/open value, active
+  average health and coverage, stuck/overdue/attention counts, win rate, and
+  data-quality coverage.
+- `stage_breakdown`: all canonical stages in this order:
+  `discovery`, `qualification`, `proposal`, `negotiation`, `stalled`, `won`,
+  `lost`.
+- `health_bands`: `healthy`, `watch`, `at_risk`, `unassessed` counts.
+- `attention_reasons`: overlapping reason counts plus unique attention deals.
+- `pipeline_values`: Active, Stalled, and Open value summaries from Part B.
+- `win_rate`: terminal-only win-rate summary from Part C.
+- `data_quality`: usable and confirmed quality coverage from Part D.
+- `warnings`: data-quality and sample-size warning codes.
+
+`get_insights("pipeline_overview")` consumes this shared calculator. Its
+legacy aliases remain available:
+
+- `stages`
+- `total_deals`
+- `total_size_krw`
+
+`total_size_krw` now follows the Part B contract and equals
+`pipeline_values.open.pipeline_value_krw`, not a sum of every terminal and open
+deal amount.

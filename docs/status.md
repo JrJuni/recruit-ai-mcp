@@ -2,7 +2,25 @@
 
 진행 중인 작업과 최근 완료 항목. 장기 계획은 [backlog.md](backlog.md).
 
-## 현재 (2026-06-08)
+## 현재 (2026-06-09)
+
+### BI Reporting Milestone 1.2 완료
+
+- `build_pipeline_health_summary` 공통 계산 모듈 추가
+- `get_insights("pipeline_overview")`가 Mongo aggregation 대신 공통 계산 모듈 사용
+- `total_size_krw` alias를 Open pipeline value 기준으로 교정
+- metric read path `MongoDBClient.list_deals_for_metrics()` 추가
+- metric projection에서 `_id`, `meetings.raw_notes`, `contacts`, `summary_embedding` 제외
+- targeted test: `19 passed`
+- full pytest: `102 passed`
+- Ruff: `ruff check .` 통과
+- FastMCP 등록 smoke: 9 tools 유지
+- Atlas read smoke: `2026-06-09` 기준 10건, Open value `453000000`, raw notes/contact/vector 미노출 확인
+- Atlas write smoke 없음: 1.2는 read-only BI 계산 작업
+
+다음 단계: `get_metrics(pipeline_health)` MCP 도구 구현
+
+## 이전 (2026-06-08)
 
 ### BI Reporting Milestone 0.1 완료
 

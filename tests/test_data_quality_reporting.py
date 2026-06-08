@@ -13,6 +13,7 @@ from deal_intel.schema.metrics import (
     assess_deal_data_quality,
     summarize_data_quality,
 )
+from deal_intel.storage.mongodb import MongoDBClient
 from deal_intel.tools import get_insights, list_deals
 
 
@@ -166,16 +167,17 @@ def test_list_deals_rejects_invalid_as_of_as_input_error() -> None:
 
 
 def test_get_insights_and_mcp_forward_reporting_context(monkeypatch) -> None:
-    class FakeCollection:
-        def aggregate(self, pipeline: list[dict]) -> list[dict]:
-            return []
-
-    class FakeDatabase:
-        deals = FakeCollection()
-
     class FakeInsightMongo:
-        def _get_db(self) -> FakeDatabase:
-            return FakeDatabase()
+        def list_deals_for_metrics(self) -> list[dict]:
+            open_deal = _deal()
+            won_deal = _deal(stage="won")
+            won_deal["deal_size_krw"] = 99_000_000
+            won_deal["deal_size_status"] = "quoted"
+            won_deal["actual_close_date"] = "2026-06-01"
+            return [open_deal, won_deal]
+
+        def _get_db(self) -> None:
+            raise AssertionError("pipeline_overview should use metrics read path")
 
     mongo = FakeInsightMongo()
     direct = get_insights.handle(
@@ -190,5 +192,67 @@ def test_get_insights_and_mcp_forward_reporting_context(monkeypatch) -> None:
 
     assert direct["as_of"] == "2026-06-08"
     assert direct["timezone"] == "Asia/Seoul"
+    assert direct["total_deals"] == 2
+    assert direct["total_size_krw"] == 10_000_000
+    assert direct["kpis"]["open_pipeline_value_krw"] == 10_000_000
+    assert "stage_breakdown" in direct
+    assert "pipeline_values" in direct
     assert via_mcp["ok"] is True
     assert via_mcp["as_of"] == "2026-06-08"
+
+
+def test_get_insights_preflight_errors_happen_before_storage() -> None:
+    class FailingMongo:
+        def list_deals_for_metrics(self) -> list[dict]:
+            raise AssertionError("preflight should fail before storage")
+
+        def _get_db(self) -> None:
+            raise AssertionError("preflight should fail before storage")
+
+    with pytest.raises(MCPError) as invalid_config:
+        get_insights.handle(
+            mongo=FailingMongo(),
+            cfg={"metrics": {"health_bands": {"healthy_min": 40, "watch_min": 70}}},
+            query_type="pipeline_overview",
+            as_of="2026-06-08",
+        )
+    with pytest.raises(MCPError) as invalid_as_of:
+        get_insights.handle(
+            mongo=FailingMongo(),
+            cfg={},
+            query_type="pipeline_overview",
+            as_of="not-a-date",
+        )
+
+    assert invalid_config.value.error_code == ErrorCode.CONFIG_ERROR
+    assert invalid_as_of.value.error_code == ErrorCode.INVALID_INPUT
+
+
+def test_metrics_read_path_excludes_raw_notes_contacts_and_vectors() -> None:
+    class FakeCollection:
+        query: dict | None = None
+        projection: dict | None = None
+
+        def find(self, query: dict, projection: dict) -> list[dict]:
+            self.query = query
+            self.projection = projection
+            return [{"deal_id": "deal-1"}]
+
+    class FakeDatabase:
+        def __init__(self) -> None:
+            self.deals = FakeCollection()
+
+    db = FakeDatabase()
+    client = MongoDBClient(uri="mongodb://unused")
+    client._db = db
+
+    result = client.list_deals_for_metrics()
+
+    assert result == [{"deal_id": "deal-1"}]
+    assert db.deals.query == {}
+    assert db.deals.projection == {
+        "_id": 0,
+        "meetings.raw_notes": 0,
+        "contacts": 0,
+        "summary_embedding": 0,
+    }

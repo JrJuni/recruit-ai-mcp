@@ -45,7 +45,7 @@ All MCP boundaries return structured errors with:
 | `update_stage` | `deal_id`, `new_stage` | `actual_close_date` | `ok`, `deal_id`, `old_stage`, `new_stage`, `actual_close_date`, `days_in_previous_stage`, `stuck_threshold_days` | Appends stage history, records the actual terminal date, recalculates stage-aware MEDDPICC gaps, and upserts the deal |
 | `get_deal` | `deal_id` | None | `ok`, `deal` | Read only; includes full meeting history and raw notes |
 | `list_deals` | None | `stage`, `limit`, `as_of` | `ok`, `as_of`, `timezone`, `generated_at`, `deals`, `count`, `data_quality` | Read only; returns health, timing, attention, and field-quality results while excluding meeting raw notes |
-| `get_insights` | `query_type` | `as_of` | `ok`, `query_type`, `as_of`, `timezone`, `generated_at`, query-specific aggregate fields | Read-only MongoDB aggregation over the current collection snapshot |
+| `get_insights` | `query_type` | `as_of` | `ok`, `query_type`, `as_of`, `timezone`, `generated_at`, query-specific aggregate fields | Read only over the current collection snapshot |
 | `get_customer_themes` | None | `dimension`, `stage`, `industry`, `top_k` | `ok`, `filters`, `coverage`, `themes` | Read-only MongoDB counts and aggregation |
 | `search_deals` | `query` | `limit` | `ok`, `query`, `result_count`, `results` | Generates a local query embedding and reads deal embeddings; may return a structured warmup response before search |
 | `analyze_deal` | `deal_id` | None | `ok`, `deal_id`, `analysis`, `usage` | Calls LLM and attempts to persist `bd_strategy`; analysis still returns if that save fails |
@@ -59,6 +59,23 @@ All MCP boundaries return structured errors with:
 - `gap_frequency`
 - `industry_benchmark`
 - `stage_velocity`
+
+`get_insights("pipeline_overview")` additionally returns the Milestone 1.2
+shared summary surface:
+
+- `kpis`
+- `stage_breakdown`
+- `health_bands`
+- `attention_reasons`
+- `pipeline_values`
+- `win_rate`
+- `data_quality`
+- `warnings`
+
+Compatibility aliases remain: `stages`, `total_deals`, and `total_size_krw`.
+`total_size_krw` is now the Open pipeline value from the shared Part B
+contract. The metrics read path uses a restricted projection that excludes
+`_id`, `meetings.raw_notes`, `contacts`, and `summary_embedding`.
 
 `search_deals` has additional preflight outcomes:
 
