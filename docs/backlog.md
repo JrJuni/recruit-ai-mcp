@@ -7,10 +7,11 @@
 ## P1 — 다음 phase
 
 ### #1 Atlas Charts BI 대시보드
-딜 stage 분포, MEDDPICC 점수 히트맵, 성공/실패 패턴. `close_reason` 기준 승리/패배 분석.
+Customer Themes pipeline 준비 완료. 실제 대시보드 생성과 딜 stage 분포,
+MEDDPICC 점수 히트맵, `close_reason` 기준 승리/패배 분석은 후속.
 
 ### #2 회의록 요약 (summary 필드 채우기)
-현재 `add_meeting`은 `summary: ""`. MEDDPICC 추출과 동시에 요약 생성 추가.
+완료. `add_meeting`에서 별도 요약 LLM 호출로 2~3문장 summary 저장.
 
 ### #3 in-app ChatGPT 로그인 (MCP 도구화)
 현재 `login-chatgpt`는 CLI-only (blocking). event-intel-mcp backlog #14 패턴으로 비동기화.
@@ -19,8 +20,9 @@
 
 ## P2
 
-### #4 Vector Search — 유사 성공 사례 검색
-MongoDB Atlas Vector Search로 "이 딜과 비슷한 과거 성공 사례" 검색. 임베딩 생성 파이프라인 필요.
+### #4 Atlas Vector Search 전환 (M10+)
+M0 호환 Python cosine 기반 `search_deals`는 완료. 딜 수가 커져 M10+로 올릴 때
+`mongodb.vector_search: atlas`와 `deal_summary_vector` 인덱스로 전환하고 성능을 검증.
 
 ### #5 Notion 연동
 Notion에서 작성한 회의록을 Notion API → `add_meeting`으로 자동 싱크.

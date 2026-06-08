@@ -1,0 +1,252 @@
+from __future__ import annotations
+
+from collections import defaultdict
+from datetime import datetime
+
+from deal_intel.errors import ErrorCode, MCPError, Stage
+from deal_intel.storage.mongodb import MongoDBClient
+
+_DIMS = [
+    "metrics", "economic_buyer", "decision_criteria",
+    "decision_process", "identify_pain", "champion", "competition",
+]
+
+VALID_QUERY_TYPES = frozenset({
+    "pipeline_overview",
+    "win_patterns",
+    "loss_patterns",
+    "compare_won_lost",
+    "gap_frequency",
+    "industry_benchmark",
+    "stage_velocity",
+})
+
+_TERMINAL_STAGES = ["won", "lost"]
+_ACTIVE_STAGES = {"$nin": _TERMINAL_STAGES}
+
+
+def _clean(doc: dict) -> dict:
+    doc.pop("_id", None)
+    return doc
+
+
+def _round_dict(d: dict, keys: list[str], ndigits: int = 1) -> dict:
+    for k in keys:
+        if d.get(k) is not None:
+            d[k] = round(d[k], ndigits)
+    return d
+
+
+# ── aggregation helpers ────────────────────────────────────────────────────────
+
+def _dim_avg_accumulators() -> dict:
+    return {d: {"$avg": f"$meddpicc_latest.{d}.score"} for d in _DIMS}
+
+
+def _meddpicc_profile(col, stage: str) -> dict:
+    """Average MEDDPICC scores for a given stage."""
+    pipeline = [
+        {"$match": {"deal_stage": stage}},
+        {"$group": {
+            "_id": None,
+            "count": {"$sum": 1},
+            "avg_health_pct": {"$avg": "$meddpicc_latest.health_pct"},
+            **_dim_avg_accumulators(),
+        }},
+    ]
+    results = list(col.aggregate(pipeline))
+    if not results:
+        return {"count": 0}
+    r = _clean(results[0])
+    _round_dict(r, ["avg_health_pct"] + _DIMS)
+    return r
+
+
+# ── query implementations ──────────────────────────────────────────────────────
+
+def _pipeline_overview(col) -> dict:
+    pipeline = [
+        {"$group": {
+            "_id": "$deal_stage",
+            "count": {"$sum": 1},
+            "avg_health_pct": {"$avg": "$meddpicc_latest.health_pct"},
+            "total_size_krw": {"$sum": {"$ifNull": ["$deal_size_krw", 0]}},
+        }},
+        {"$sort": {"_id": 1}},
+    ]
+    rows = []
+    for r in col.aggregate(pipeline):
+        rows.append({
+            "stage": r["_id"],
+            "count": r["count"],
+            "avg_health_pct": round(r["avg_health_pct"], 1) if r["avg_health_pct"] else None,
+            "total_size_krw": r["total_size_krw"],
+        })
+    total_deals = sum(r["count"] for r in rows)
+    total_size = sum(r["total_size_krw"] for r in rows)
+    return {"stages": rows, "total_deals": total_deals, "total_size_krw": total_size}
+
+
+def _win_patterns(col) -> dict:
+    r = _meddpicc_profile(col, "won")
+    return {"query": "win_patterns", **r}
+
+
+def _loss_patterns(col) -> dict:
+    r = _meddpicc_profile(col, "lost")
+    return {"query": "loss_patterns", **r}
+
+
+def _compare_won_lost(col) -> dict:
+    won = _meddpicc_profile(col, "won")
+    lost = _meddpicc_profile(col, "lost")
+
+    comparison = {}
+    for dim in _DIMS:
+        won_avg = won.get(dim)
+        lost_avg = lost.get(dim)
+        comparison[dim] = {
+            "won_avg": won_avg,
+            "lost_avg": lost_avg,
+            "delta": (
+                round(won_avg - lost_avg, 2)
+                if (won_avg is not None and lost_avg is not None)
+                else None
+            ),
+        }
+
+    return {
+        "won_count": won.get("count", 0),
+        "lost_count": lost.get("count", 0),
+        "won_avg_health_pct": won.get("avg_health_pct"),
+        "lost_avg_health_pct": lost.get("avg_health_pct"),
+        "dimensions": comparison,
+    }
+
+
+def _gap_frequency(col) -> dict:
+    pipeline = [
+        {"$match": {"deal_stage": _ACTIVE_STAGES}},
+        {"$project": {"gaps": "$meddpicc_latest.gaps", "deal_stage": 1}},
+        {"$unwind": "$gaps"},
+        {"$group": {"_id": "$gaps", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+    ]
+    rows = [{"dimension": r["_id"], "gap_count": r["count"]} for r in col.aggregate(pipeline)]
+    active_count_pipeline = [
+        {"$match": {"deal_stage": _ACTIVE_STAGES}},
+        {"$count": "n"},
+    ]
+    active_res = list(col.aggregate(active_count_pipeline))
+    active_deals = active_res[0]["n"] if active_res else 0
+    return {"active_deal_count": active_deals, "gap_frequency": rows}
+
+
+def _industry_benchmark(col) -> dict:
+    pipeline = [
+        {"$match": {"industry": {"$ne": None}}},
+        {"$group": {
+            "_id": "$industry",
+            "deal_count": {"$sum": 1},
+            "avg_health_pct": {"$avg": "$meddpicc_latest.health_pct"},
+            "won_count": {"$sum": {"$cond": [{"$eq": ["$deal_stage", "won"]}, 1, 0]}},
+            "lost_count": {"$sum": {"$cond": [{"$eq": ["$deal_stage", "lost"]}, 1, 0]}},
+            "total_size_krw": {"$sum": {"$ifNull": ["$deal_size_krw", 0]}},
+        }},
+        {"$addFields": {
+            "win_rate_pct": {
+                "$cond": [
+                    {"$gt": ["$deal_count", 0]},
+                    {
+                        "$round": [
+                            {"$multiply": [{"$divide": ["$won_count", "$deal_count"]}, 100]},
+                            1,
+                        ]
+                    },
+                    0,
+                ]
+            }
+        }},
+        {"$sort": {"avg_health_pct": -1}},
+    ]
+    rows = []
+    for r in col.aggregate(pipeline):
+        rows.append({
+            "industry": r["_id"],
+            "deal_count": r["deal_count"],
+            "avg_health_pct": round(r["avg_health_pct"], 1) if r["avg_health_pct"] else None,
+            "won_count": r["won_count"],
+            "lost_count": r["lost_count"],
+            "win_rate_pct": r["win_rate_pct"],
+            "total_size_krw": r["total_size_krw"],
+        })
+    return {"industries": rows}
+
+
+def _stage_velocity(col) -> dict:
+    """Compute average days spent per stage from stage_history entries."""
+    deals = list(col.find(
+        {"stage_history.1": {"$exists": True}},  # at least 2 history entries
+        {"_id": 0, "stage_history": 1},
+    ))
+
+    stage_days: dict[str, list[float]] = defaultdict(list)
+    for deal in deals:
+        history = deal.get("stage_history", [])
+        for i in range(len(history) - 1):
+            try:
+                t0 = datetime.fromisoformat(history[i]["entered_at"])
+                t1 = datetime.fromisoformat(history[i + 1]["entered_at"])
+                days = (t1 - t0).total_seconds() / 86400
+                if days >= 0:
+                    stage_days[history[i]["stage"]].append(days)
+            except Exception:
+                pass
+
+    rows = []
+    for stage, days_list in sorted(stage_days.items()):
+        rows.append({
+            "stage": stage,
+            "avg_days": round(sum(days_list) / len(days_list), 1),
+            "min_days": round(min(days_list), 1),
+            "max_days": round(max(days_list), 1),
+            "sample_count": len(days_list),
+        })
+    return {"stage_velocity": rows}
+
+
+# ── public entry point ─────────────────────────────────────────────────────────
+
+_HANDLERS = {
+    "pipeline_overview": _pipeline_overview,
+    "win_patterns": _win_patterns,
+    "loss_patterns": _loss_patterns,
+    "compare_won_lost": _compare_won_lost,
+    "gap_frequency": _gap_frequency,
+    "industry_benchmark": _industry_benchmark,
+    "stage_velocity": _stage_velocity,
+}
+
+
+def handle(mongo: MongoDBClient, *, query_type: str) -> dict:
+    if query_type not in VALID_QUERY_TYPES:
+        raise MCPError(
+            error_code=ErrorCode.INVALID_INPUT,
+            stage=Stage.PREFLIGHT,
+            message=f"query_type {query_type!r} is not valid",
+            hint={"valid_query_types": sorted(VALID_QUERY_TYPES)},
+            retryable=False,
+        )
+    try:
+        col = mongo._get_db().deals
+        result = _HANDLERS[query_type](col)
+        return {"ok": True, "query_type": query_type, **result}
+    except MCPError:
+        raise
+    except Exception as exc:
+        raise MCPError(
+            error_code=ErrorCode.STORAGE_ERROR,
+            stage=Stage.STORAGE,
+            message=str(exc),
+            retryable=True,
+        ) from exc

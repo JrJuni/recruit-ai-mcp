@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from deal_intel.errors import ErrorCode, MCPError, Stage
 from deal_intel.providers.llm import LLMProvider
@@ -88,7 +88,7 @@ def handle(mongo: MongoDBClient, llm: LLMProvider, *, deal_id: str) -> dict:
         ) from exc
 
     deal["bd_strategy"] = resp.text
-    deal["updated_at"] = datetime.now(timezone.utc).isoformat()
+    deal["updated_at"] = datetime.now(UTC).isoformat()
     try:
         mongo.upsert_deal(deal)
     except Exception:

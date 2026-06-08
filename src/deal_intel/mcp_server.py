@@ -1,14 +1,21 @@
 from __future__ import annotations
 
-import deal_intel._env  # noqa: F401 — triggers dotenv load at import time
-from deal_intel.errors import Stage, envelope_from_exception
 from fastmcp import FastMCP
 
+import deal_intel._env  # noqa: F401 — triggers dotenv load at import time
+from deal_intel.errors import Stage, envelope_from_exception
+
 app = FastMCP("deal-intel")
+_MAX_EMBEDDING_WARMUP_SECONDS = 30
 
 
 @app.tool()
-def create_deal(company: str, industry: str = "", deal_size_krw: int = 0) -> dict:
+def create_deal(
+    company: str,
+    industry: str = "",
+    deal_size_krw: int = 0,
+    expected_close_date: str = "",
+) -> dict:
     """Create a new deal for a prospect company."""
     try:
         from deal_intel import _context
@@ -19,6 +26,7 @@ def create_deal(company: str, industry: str = "", deal_size_krw: int = 0) -> dic
             company=company,
             industry=industry or None,
             deal_size_krw=deal_size_krw or None,
+            expected_close_date=expected_close_date or None,
         )
     except Exception as exc:
         return envelope_from_exception(exc, stage=Stage.STORAGE)
@@ -26,7 +34,13 @@ def create_deal(company: str, industry: str = "", deal_size_krw: int = 0) -> dic
 
 @app.tool()
 def add_meeting(deal_id: str, date: str, raw_notes: str) -> dict:
-    """Add meeting notes to an existing deal and extract MEDDPICC signals via LLM."""
+    """Add meeting notes and extract MEDDPICC signals. Updates meddpicc_latest.
+
+    Does NOT change the pipeline stage. When the notes clearly imply a stage
+    transition (e.g. contract signed → won, deal lost → lost), the response
+    includes a non-null `stage_suggestion`. Surface it to the user and call
+    update_stage only after they confirm — never auto-apply it.
+    """
     try:
         from deal_intel import _context
         from deal_intel.tools import add_meeting as _t
@@ -34,12 +48,35 @@ def add_meeting(deal_id: str, date: str, raw_notes: str) -> dict:
         return _t.handle(
             mongo=_context.mongo(),
             llm=_context.llm_provider(),
+            cfg=_context.config(),
+            embedding_provider=_context.embedding_provider(),
             deal_id=deal_id,
             date=date,
             raw_notes=raw_notes,
         )
     except Exception as exc:
         return envelope_from_exception(exc, stage=Stage.LLM)
+
+
+@app.tool()
+def update_stage(deal_id: str, new_stage: str) -> dict:
+    """Move a deal to a new pipeline stage and log it to stage_history.
+
+    Valid stages: discovery, qualification, proposal, negotiation, won, lost, stalled.
+    Returns days spent in the previous stage and the stuck threshold for the new stage.
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.tools import update_stage as _t
+
+        return _t.handle(
+            mongo=_context.mongo(),
+            cfg=_context.config(),
+            deal_id=deal_id,
+            new_stage=new_stage,
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.STORAGE)
 
 
 @app.tool()
@@ -56,12 +93,147 @@ def get_deal(deal_id: str) -> dict:
 
 @app.tool()
 def list_deals(stage: str = "", limit: int = 20) -> dict:
-    """List deals, optionally filtered by stage (discovery/qualification/proposal/negotiation/won/lost/stalled)."""
+    """List deals with pipeline health data: health_pct, gaps, stuck flag.
+
+    Optionally filter by stage (discovery/qualification/proposal/negotiation/won/lost/stalled).
+    Results are sorted: stuck deals first, then by health_pct descending.
+    """
     try:
         from deal_intel import _context
         from deal_intel.tools import list_deals as _t
 
-        return _t.handle(mongo=_context.mongo(), stage=stage or None, limit=limit)
+        return _t.handle(
+            mongo=_context.mongo(),
+            cfg=_context.config(),
+            stage=stage or None,
+            limit=limit,
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.STORAGE)
+
+
+@app.tool()
+def get_insights(query_type: str) -> dict:
+    """Run a BI aggregation query across all deals.
+
+    query_type options:
+    - pipeline_overview   : stage별 딜 수·평균 health·총 딜 사이즈
+    - win_patterns        : won 딜들의 MEDDPICC 차원별 평균 점수
+    - loss_patterns       : lost 딜들의 MEDDPICC 차원별 평균 점수
+    - compare_won_lost    : win vs loss 차원별 점수 차이 비교
+    - gap_frequency       : 활성 딜에서 가장 자주 등장하는 gap dimension
+    - industry_benchmark  : 업종별 평균 health_pct·승률·딜 규모
+    - stage_velocity      : 스테이지별 평균 체류 일수 (stage_history 기반)
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.tools import get_insights as _t
+
+        return _t.handle(mongo=_context.mongo(), query_type=query_type)
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.STORAGE)
+
+
+@app.tool()
+def get_customer_themes(
+    dimension: str = "all",
+    stage: str = "active",
+    industry: str = "",
+    top_k: int = 5,
+) -> dict:
+    """Rank recurring customer concerns by unique deal count with evidence.
+
+    dimension: all | identify_pain | decision_criteria | metrics
+    stage: active | all | discovery | qualification | proposal | negotiation | won | lost | stalled
+    industry: exact industry filter, or empty for all industries
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.tools import get_customer_themes as _t
+
+        return _t.handle(
+            mongo=_context.mongo(),
+            dimension=dimension,
+            stage=stage,
+            industry=industry or None,
+            top_k=top_k,
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.STORAGE)
+
+
+@app.tool()
+def search_deals(query: str, limit: int = 5) -> dict:
+    """Find deals semantically similar to the query.
+
+    Examples:
+    - "고객이 비용 절감에 어려움을 겪고 있는 딜"
+    - "champion이 강하고 의사결정 구조가 명확한 딜"
+    - "현대정밀과 유사한 패턴의 딜"
+
+    Returns deals ranked by semantic similarity with score (0–1, higher = more similar).
+    While the local model loads, returns warming_up=true so the caller can retry.
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.tools import search_deals as _t
+
+        embedding_provider = _context.embedding_provider()
+        if embedding_provider is None:
+            return {
+                "ok": False,
+                "error_code": "CONFIG_ERROR",
+                "stage": "preflight",
+                "message": "The local embedding provider is not installed.",
+                "hint": {"fix": 'pip install -e ".[embedding]"'},
+                "retryable": False,
+                "warming_up": False,
+            }
+        if embedding_provider.load_error:
+            return {
+                "ok": False,
+                "error_code": "UPSTREAM_ERROR",
+                "stage": "preflight",
+                "message": "The local embedding model failed to load.",
+                "hint": {"detail": embedding_provider.load_error},
+                "retryable": False,
+                "warming_up": False,
+            }
+        if not embedding_provider.is_ready:
+            warmup_status = embedding_provider.warmup_status
+            if warmup_status["elapsed_seconds"] >= _MAX_EMBEDDING_WARMUP_SECONDS:
+                return {
+                    "ok": False,
+                    "error_code": "UPSTREAM_ERROR",
+                    "stage": "preflight",
+                    "message": "The local embedding model warmup is stalled.",
+                    "hint": {
+                        **warmup_status,
+                        "fix": "Restart the MCP server and check stderr for warmup errors.",
+                    },
+                    "retryable": False,
+                    "warming_up": False,
+                }
+            return {
+                "ok": False,
+                "error_code": "UPSTREAM_ERROR",
+                "stage": "preflight",
+                "message": "The local embedding model is still loading. Retry shortly.",
+                "hint": {
+                    "retry_after_seconds": 5,
+                    **warmup_status,
+                },
+                "retryable": True,
+                "warming_up": True,
+            }
+
+        return _t.handle(
+            mongo=_context.mongo(),
+            embedding_provider=embedding_provider,
+            cfg=_context.config(),
+            query=query,
+            limit=limit,
+        )
     except Exception as exc:
         return envelope_from_exception(exc, stage=Stage.STORAGE)
 
@@ -83,12 +255,55 @@ def analyze_deal(deal_id: str) -> dict:
 
 
 def main() -> None:
-    # Pre-import heavy deps on main thread to avoid FastMCP worker-thread deadlock.
-    # (Lesson from event-intel-mcp: first pymongo import inside a worker thread can hang.)
+    # Pre-import native modules that can stall when first imported from a
+    # background thread on Windows. Combined cold import stays within startup budget.
+    from deal_intel.storage.mongodb import preload_driver
+
+    preload_driver()
+
     try:
-        import pymongo  # noqa: F401
+        import numpy  # noqa: F401
+        import scipy  # noqa: F401
+        import sklearn  # noqa: F401
+        import torch  # noqa: F401
     except ImportError:
         pass
+
+    # Warm the embedding model in a background thread so the first search_deals
+    # call doesn't stall. all-MiniLM-L6-v2 takes ~10s to load cold; warming it
+    # here means the model is ready by the time the user makes their first request.
+    import threading
+
+    def _warm_embedding() -> None:
+        import sys
+        import time
+        try:
+            # Let FastMCP finish importing and initialize stdio before PyTorch loads.
+            # Concurrent startup can leave PyTorch initialization stalled on Windows.
+            time.sleep(2)
+            from deal_intel._context import embedding_provider
+            ep = embedding_provider()
+            if ep is not None:
+                ep.warmup()
+        except Exception as exc:
+            print(f"[embed-warmup] FAILED: {exc}", file=sys.stderr, flush=True)
+
+    threading.Thread(target=_warm_embedding, daemon=True, name="embed-warmup").start()
+
+    def _ensure_mongo_indexes() -> None:
+        import sys
+        try:
+            from deal_intel import _context
+            _context.mongo().ensure_indexes()
+        except Exception as exc:
+            print(f"[mongo-indexes] FAILED: {exc}", file=sys.stderr, flush=True)
+
+    threading.Thread(
+        target=_ensure_mongo_indexes,
+        daemon=True,
+        name="mongo-indexes",
+    ).start()
+
     app.run()
 
 

@@ -4,6 +4,11 @@ import os
 from typing import Any
 
 
+def preload_driver() -> None:
+    """Import pymongo on the main thread before background MongoDB work starts."""
+    import pymongo  # noqa: F401
+
+
 class MongoDBClient:
     """MongoDB Atlas client. pymongo is imported lazily (cold-start guard)."""
 
@@ -21,9 +26,43 @@ class MongoDBClient:
                     "Add MONGODB_URI=mongodb+srv://... to .env (see .env.example)."
                 )
             from pymongo import MongoClient
-            self._client = MongoClient(self._uri)
+            self._client = MongoClient(
+                self._uri,
+                serverSelectionTimeoutMS=8_000,
+                connectTimeoutMS=8_000,
+                socketTimeoutMS=15_000,
+            )
             self._db = self._client[self._database_name]
         return self._db
+
+    def ensure_indexes(self) -> None:
+        """Create indexes if missing. Idempotent and safe to call on every startup."""
+        from pymongo import ASCENDING, DESCENDING
+        col = self._get_db().deals
+
+        # Point lookups by deal_id (also enforces uniqueness).
+        col.create_index([("deal_id", ASCENDING)], unique=True, name="deal_id_unique")
+
+        # list_deals: stage filter + updated_at sort (most common query path).
+        col.create_index(
+            [("deal_stage", ASCENDING), ("updated_at", DESCENDING)],
+            name="stage_updated",
+        )
+
+        # list_deals: no stage filter, updated_at sort only.
+        col.create_index([("updated_at", DESCENDING)], name="updated_desc")
+
+        # BI / get_insights: sort by health score (used in Phase 2).
+        col.create_index(
+            [("meddpicc_latest.health_pct", DESCENDING)],
+            name="health_pct_desc",
+        )
+
+        # Customer-theme BI: stage filter + multikey theme grouping.
+        col.create_index(
+            [("deal_stage", ASCENDING), ("customer_themes.theme_key", ASCENDING)],
+            name="stage_customer_theme",
+        )
 
     def ping(self) -> dict:
         if not self._uri:
@@ -57,3 +96,99 @@ class MongoDBClient:
             "updated_at", -1
         ).limit(limit)
         return list(cursor)
+
+    def count_deals(self, query: dict) -> int:
+        return self._get_db().deals.count_documents(query)
+
+    def aggregate_deals(self, pipeline: list[dict]) -> list[dict]:
+        return list(self._get_db().deals.aggregate(pipeline))
+
+    def list_deals_for_theme_backfill(self, *, limit: int = 0) -> list[dict]:
+        cursor = self._get_db().deals.find({}, {"_id": 0})
+        if limit > 0:
+            cursor = cursor.limit(limit)
+        return list(cursor)
+
+    # --- semantic search (Python-side cosine, M0-compatible) ---
+
+    def get_deals_for_search(self) -> list[dict]:
+        """Fetch all deals that have a summary_embedding for Python-side similarity ranking.
+
+        Returns only the fields needed for search results — summary_embedding is included
+        for scoring but stripped before returning to the caller (handled in search_deals tool).
+
+        Upgrade path: when cluster is M10+, replace the Python cosine loop in
+        tools/search_deals.py with $vectorSearch + search_by_embedding() below.
+        """
+        db = self._get_db()
+        cursor = db.deals.find(
+            {"summary_embedding": {"$exists": True, "$ne": None}},
+            {
+                "_id": 0,
+                "deal_id": 1,
+                "company": 1,
+                "deal_stage": 1,
+                "industry": 1,
+                "deal_size_krw": 1,
+                "meddpicc_latest.health_pct": 1,
+                "meddpicc_latest.gaps": 1,
+                "summary_embedding": 1,
+            },
+        )
+        return list(cursor)
+
+    # --- reserved for M10+ upgrade ---
+
+    def ensure_vector_index(self, dimensions: int = 384) -> None:
+        """Create Atlas Vector Search index. Requires M10+ cluster — no-op on M0."""
+        db = self._get_db()
+        try:
+            db.command({
+                "createSearchIndexes": "deals",
+                "indexes": [{
+                    "name": "deal_summary_vector",
+                    "type": "vectorSearch",
+                    "definition": {
+                        "fields": [{
+                            "type": "vector",
+                            "path": "summary_embedding",
+                            "numDimensions": dimensions,
+                            "similarity": "cosine",
+                        }]
+                    },
+                }],
+            })
+        except Exception as e:
+            msg = str(e).lower()
+            if "already exists" in msg or "duplicate" in msg:
+                pass
+            # M0 silently ignores — do not warn, not supported on free tier
+
+    def search_by_embedding(self, embedding: list[float], *, limit: int = 5) -> list[dict]:
+        """$vectorSearch aggregation — M10+ only. Use get_deals_for_search() on M0."""
+        col = self._get_db().deals
+        pipeline = [
+            {
+                "$vectorSearch": {
+                    "index": "deal_summary_vector",
+                    "path": "summary_embedding",
+                    "queryVector": embedding,
+                    "numCandidates": max(limit * 10, 50),
+                    "limit": limit,
+                }
+            },
+            {
+                "$project": {
+                    "_id": 0,
+                    "deal_id": 1,
+                    "company": 1,
+                    "deal_stage": 1,
+                    "industry": 1,
+                    "deal_size_krw": 1,
+                    "health_pct": "$meddpicc_latest.health_pct",
+                    "gaps": "$meddpicc_latest.gaps",
+                    "score": {"$meta": "vectorSearchScore"},
+                }
+            },
+        ]
+        return list(col.aggregate(pipeline))

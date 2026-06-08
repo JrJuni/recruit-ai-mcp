@@ -267,7 +267,10 @@ class ChatGPTOAuthProvider(LLMProvider):
             "response_type": "code",
             "client_id": self._CLIENT_ID,
             "redirect_uri": self._REDIRECT_URI,
-            "scope": "openid profile email offline_access api.connectors.read api.connectors.invoke",
+            "scope": (
+                "openid profile email offline_access "
+                "api.connectors.read api.connectors.invoke"
+            ),
             "code_challenge": code_challenge,
             "code_challenge_method": "S256",
             "id_token_add_organizations": "true",

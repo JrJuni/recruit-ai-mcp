@@ -1,19 +1,29 @@
 # Status
 
+## BI Reporting Milestone 0.1 (2026-06-08)
+
+- Runtime contracts for all 9 MCP tools recorded
+- Full test baseline: 17 passed
+- Ruff cleanup: all 28 pre-existing findings resolved; `ruff check .` passes
+- Live MongoDB Atlas read smoke: passed with 10 deals
+- Details: [baseline.md](baseline.md)
+
 진행 중인 작업과 최근 완료 항목. 장기 계획은 [backlog.md](backlog.md).
 
 ## 현재 (2026-06-08)
 
-### Phase 0 — 초기 스캐폴드 완료
+### Customer Themes BI MVP 완료
 
-- 5개 MCP 도구 구현: `create_deal`, `add_meeting`, `get_deal`, `list_deals`, `analyze_deal`
-- LLM provider (ChatGPT OAuth 기본 / Anthropic 옵션) — event-intel-mcp에서 이식
-- MongoDB Atlas 연동 준비 완료 (MONGODB_URI 설정 필요)
+- 9개 MCP 도구 등록, `get_customer_themes` 추가
+- `add_meeting`에서 MEDDPICC와 함께 고객 고민 주제를 통제 taxonomy로 추출
+- 고유 딜 기준 주제 빈도, coverage, 대표 회사·evidence 집계
+- 기존 데이터용 `backfill-customer-themes` CLI 추가
+- 기존 10개 딜의 customer themes backfill 완료
+- Atlas Charts용 aggregation pipeline 추가
+- M0 호환 Python cosine 기반 `search_deals`와 startup warmup guard 추가
 
 ## 다음 스텝
 
-1. **MongoDB Atlas M0 계정 생성** + `.env`에 `MONGODB_URI` 설정
-2. **패키지 설치**: `~/miniconda3/envs/event-intel/python.exe -m pip install -e ".[dev]"`
-3. **ChatGPT OAuth 로그인**: `deal-intel login-chatgpt`
-4. **Claude Desktop MCP 등록** 후 `create_deal`로 첫 번째 딜 생성 테스트
-5. Atlas Charts 연결 (BI 대시보드)
+1. BI Reporting Milestone 1.1 metric 계약 정의
+2. metric 경계값·누락값·종료 딜 fixture 테스트
+3. 공통 metric 계산 모듈 구현 전 계약 gate 검증

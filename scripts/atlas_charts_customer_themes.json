@@ -1,0 +1,60 @@
+[
+  {
+    "$match": {
+      "customer_themes.0": {
+        "$exists": true
+      }
+    }
+  },
+  {
+    "$unwind": "$customer_themes"
+  },
+  {
+    "$group": {
+      "_id": {
+        "theme_key": "$customer_themes.theme_key",
+        "deal_id": "$deal_id"
+      },
+      "label": {
+        "$first": "$customer_themes.label"
+      },
+      "importance": {
+        "$max": "$customer_themes.importance"
+      }
+    }
+  },
+  {
+    "$group": {
+      "_id": "$_id.theme_key",
+      "label": {
+        "$first": "$label"
+      },
+      "deal_count": {
+        "$sum": 1
+      },
+      "avg_importance": {
+        "$avg": "$importance"
+      }
+    }
+  },
+  {
+    "$sort": {
+      "deal_count": -1,
+      "avg_importance": -1
+    }
+  },
+  {
+    "$project": {
+      "_id": 0,
+      "theme_key": "$_id",
+      "label": 1,
+      "deal_count": 1,
+      "avg_importance": {
+        "$round": [
+          "$avg_importance",
+          1
+        ]
+      }
+    }
+  }
+]

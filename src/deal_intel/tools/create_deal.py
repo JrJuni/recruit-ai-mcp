@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from deal_intel.errors import ErrorCode, MCPError, Stage
 from deal_intel.storage.mongodb import MongoDBClient
@@ -13,6 +13,7 @@ def handle(
     company: str,
     industry: str | None,
     deal_size_krw: int | None,
+    expected_close_date: str | None = None,
 ) -> dict:
     if not company or not company.strip():
         raise MCPError(
@@ -21,7 +22,7 @@ def handle(
             message="company must not be empty",
             retryable=False,
         )
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
     deal = {
         "deal_id": str(uuid.uuid4()),
         "company": company.strip(),
@@ -29,7 +30,10 @@ def handle(
         "deal_size_krw": deal_size_krw,
         "contacts": [],
         "meetings": [],
+        "meddpicc_latest": {},
+        "stage_history": [{"stage": "discovery", "entered_at": now}],
         "deal_stage": "discovery",
+        "expected_close_date": expected_close_date,
         "close_reason": None,
         "bd_strategy": "",
         "gtm_notes": "",

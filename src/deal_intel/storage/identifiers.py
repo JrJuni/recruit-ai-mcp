@@ -47,7 +47,7 @@ def suggest_slug(s: str) -> str:
 
 
 def sanitize_slug(s: str, *, field_name: str = "slug") -> str:
-    """Return `s` if already valid. Otherwise raise MCPError(INVALID_INPUT) with suggested_slug hint."""
+    """Return a valid slug or raise INVALID_INPUT with a suggested slug."""
     if validate_slug(s):
         return s
     suggested = suggest_slug(s if isinstance(s, str) else "")
