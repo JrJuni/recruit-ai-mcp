@@ -1,5 +1,40 @@
 # Status
 
+## Latest Update - 2026-06-09
+
+### BI Reporting Milestone 2.2 완료
+
+- `save_report_csv` CSV 저장 모듈 추가
+- CSV 저장은 호출자가 명시한 `output_dir`에만 수행
+- filename: `{report_type}_YYYYMMDD_HHMMSS.csv`, `generated_at`은 UTC 기준으로 변환
+- Excel 한글 호환을 위해 `utf-8-sig` BOM 적용
+- CSV formula injection 방어: 첫 non-whitespace 문자가 `=`, `+`, `-`, `@`이면 single quote prefix
+- `dict`와 `list` cell은 `ensure_ascii=False` JSON으로 직렬화
+- 원본 회의록, 연락처, embedding은 M2.1 row 계약상 CSV 입력 surface에 포함하지 않음
+- 파일 쓰기 실패는 `IO_ERROR` / `storage` structured error로 반환
+- Targeted test: `12 passed`
+- Full pytest: `119 passed`
+- Ruff: `ruff check .` 통과
+- Atlas write smoke 없음: 2.2는 로컬 CSV 파일 저장만 수행하고 DB를 변경하지 않음
+
+다음 단계: Milestone 2.3 LLM 없는 Markdown 요약
+
+### BI Reporting Milestone 2.1 완료
+
+- `weekly_pipeline` report row generator 추가
+- Open deals only: `discovery`, `qualification`, `proposal`, `negotiation`, `stalled`
+- Terminal `won`, `lost`는 주간 파이프라인 row에서 제외
+- Row fields: company, industry, stage, amount, expected close, days in stage,
+  stuck/overdue, health, MEDDPICC gaps, last meeting date, primary pain,
+  primary decision criteria, attention reasons, data quality
+- Sorting: overdue, stuck, stalled, at risk, earliest expected close, largest amount, company
+- Raw notes/contact/vector 미노출 계약을 `docs/reports.md`에 기록
+- Targeted test: `7 passed`
+- Full pytest: `114 passed`
+- Ruff: `ruff check .` 통과
+- Atlas read smoke: `2026-06-09` 기준 row `7`, warnings `incomplete_data_quality`, raw notes/contact/vector 미노출 확인
+- Atlas write smoke 없음: 2.1은 read-only row 생성 작업
+
 진행 중인 작업과 최근 완료 항목. 장기 계획은 [backlog.md](backlog.md).
 
 ## 현재 (2026-06-09)

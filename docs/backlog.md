@@ -25,7 +25,9 @@ Milestone 1.2 상태:
 - 완료: `build_pipeline_health_summary`를 BI/CSV/Atlas 공통 계산기로 추가
 - 완료: `get_insights("pipeline_overview")`가 공통 계산기를 사용하도록 전환
 - 완료: `get_metrics(pipeline_health)` MCP 도구 구현
-- 다음: Weekly Pipeline 보고서 행 생성기
+- 완료: Weekly Pipeline 보고서 행 생성기
+- 완료: UTF-8 BOM CSV 저장과 formula injection 방어
+- 다음: LLM 없는 Markdown 요약
 
 ### #2 `get_metrics` MCP 도구
 
@@ -34,9 +36,9 @@ coverage와 warning을 반환한다. LLM과 embedding은 사용하지 않는다.
 
 ### #3 Weekly Pipeline 보고서
 
-1. 보고서 row 생성기
-2. UTF-8 BOM CSV와 formula injection 방어
-3. LLM 없는 Markdown 요약
+1. 완료: 보고서 row 생성기
+2. 완료: UTF-8 BOM CSV와 formula injection 방어
+3. 다음: LLM 없는 Markdown 요약
 4. `export_report(report_type="weekly_pipeline")` MCP 도구
 
 ### #4 Atlas Charts Pipeline Dashboard
