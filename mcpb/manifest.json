@@ -1,0 +1,71 @@
+{
+  "manifest_version": "0.2",
+  "name": "deal-intel-mcp",
+  "display_name": "Deal Intelligence MCP",
+  "version": "0.1.0",
+  "description": "Turn meeting notes into MEDDPICC-structured deal intelligence. 5 MCP tools, MongoDB Atlas storage, Claude or ChatGPT LLM backend.",
+  "long_description": "deal-intel-mcp captures consultation records and meeting notes, extracts MEDDPICC qualification signals via LLM, and stores them in MongoDB Atlas. Tools: create_deal (new deal), add_meeting (notes → MEDDPICC extraction), get_deal (full history), list_deals (stage filter), analyze_deal (BD strategy generation). Supports Anthropic Claude or ChatGPT Plus OAuth as LLM backends. Sibling project to event-intel-mcp (prospect discovery at exhibitions).",
+  "author": {
+    "name": "JrJuni",
+    "email": "tyrical@naver.com",
+    "url": "https://github.com/JrJuni"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JrJuni/deal-intel-mcp"
+  },
+  "homepage": "https://github.com/JrJuni/deal-intel-mcp",
+  "license": "MIT",
+  "keywords": ["mcp", "bd", "meddpicc", "deal", "crm", "sales-intelligence"],
+  "tools": [
+    {"name": "create_deal",   "description": "Create a new deal for a prospect company."},
+    {"name": "add_meeting",   "description": "Add meeting notes to a deal and auto-extract MEDDPICC signals via LLM."},
+    {"name": "get_deal",      "description": "Retrieve a deal with full meeting history and MEDDPICC scores."},
+    {"name": "list_deals",    "description": "List deals, optionally filtered by stage."},
+    {"name": "analyze_deal",  "description": "Analyze MEDDPICC gaps and generate BD strategy recommendations."}
+  ],
+  "user_config": {
+    "python_path": {
+      "type": "file",
+      "title": "Python interpreter path",
+      "description": "Path to the Python interpreter where deal-intel-mcp deps are installed (must have run `pip install -e .` against the repo). The default assumes the event-intel conda env — adjust if you created a separate deal-intel env.",
+      "default": "${HOME}/miniconda3/envs/event-intel/python.exe",
+      "required": true
+    },
+    "mongodb_uri": {
+      "type": "string",
+      "title": "MongoDB Atlas URI",
+      "description": "Connection string for your MongoDB Atlas cluster (M0 free tier works). Format: mongodb+srv://<user>:<password>@<cluster>.mongodb.net/?retryWrites=true&w=majority",
+      "sensitive": true,
+      "required": true
+    },
+    "use_chatgpt_oauth": {
+      "type": "boolean",
+      "title": "Use ChatGPT Plus/Pro subscription instead of an Anthropic API key",
+      "description": "Check this to drive the LLM with your ChatGPT subscription (OAuth, no extra cost) instead of an Anthropic API key. After installing, run `deal-intel login-chatgpt` once in a terminal to authenticate. Leave unchecked to use the Anthropic API key below.",
+      "default": true,
+      "required": false
+    },
+    "anthropic_api_key": {
+      "type": "string",
+      "title": "Anthropic API key",
+      "description": "For the Anthropic path. Leave blank if you checked 'Use ChatGPT' above, or to supply it via ANTHROPIC_API_KEY in the repo's .env instead.",
+      "sensitive": true,
+      "required": false
+    }
+  },
+  "server": {
+    "type": "python",
+    "entry_point": "server/launcher.py",
+    "mcp_config": {
+      "command": "${user_config.python_path}",
+      "args": ["-m", "deal_intel.mcp_server"],
+      "env": {
+        "MONGODB_URI": "${user_config.mongodb_uri}",
+        "ANTHROPIC_API_KEY": "${user_config.anthropic_api_key}",
+        "DEAL_INTEL_USE_CHATGPT_OAUTH": "${user_config.use_chatgpt_oauth}",
+        "PYTHONIOENCODING": "utf-8"
+      }
+    }
+  }
+}
