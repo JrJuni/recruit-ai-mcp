@@ -329,3 +329,25 @@ deal amount.
 `get_metrics(metric_type="pipeline_health")` is the direct MCP metric view over
 the same calculator. It supports exact `stage` and `industry` filters and
 returns the full summary surface without LLM or embedding work.
+
+## Milestone 4.1 - Deal Gaps
+
+`get_deal_gaps` is the first user-facing data-quality action view. It does not
+try to make every table field complete. Instead, it turns existing metric
+signals into prioritized customer-attack gaps:
+
+- missing or weak information needed for the next sales action
+- estimated or invalid forecast fields that reduce forecast trust
+- terminal deal postmortem fields such as `actual_close_date` and `close_reason`
+
+The tool reuses the shared metric primitives:
+
+- `assess_deal_data_quality`
+- `assess_pipeline_timing`
+- `classify_health`
+- `build_attention_reasons`
+- `meddpicc_latest.gaps`
+
+It is read-only, uses `list_deals_for_metrics()`, and does not call LLMs,
+embedding providers, or MongoDB writes. Raw meeting notes, contacts, and vectors
+stay out of the response.

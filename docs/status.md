@@ -2,6 +2,25 @@
 
 ## Latest Update - 2026-06-09
 
+### BI Reporting Milestone 4.1 get_deal_gaps 고객 공략 정보 공백 도구 완료
+
+- `get_deal_gaps` MCP 도구 추가, FastMCP 등록 기준 현재 13 tools
+- 목적은 table completeness가 아니라 고객 공략에 필요한 미확인 정보 노출
+- 우선순위는 Balanced 기준: sales action, forecast trust, postmortem 영향 반영
+- 입력: `as_of`, `stage`, `industry`, `deal_id`, `min_priority`, `limit`
+- 출력: reporting context, filters, summary, prioritized deals, warnings
+- 각 gap은 `gap_id`, `field`, `status`, `impact_area`, `severity`,
+  `reason`, `suggested_question`, `recommended_action` 반환
+- `deal_id` 지정 시 priority/limit과 무관하게 해당 딜 반환
+- Read-only: MongoDB write 없음, LLM 없음, embedding 없음
+- Metric read projection 사용: raw notes, contacts, summary_embedding 미노출
+- Targeted tests: `tests/test_deal_gaps.py tests/test_get_deal_gaps.py`
+  포함 regression `24 passed`
+- Full pytest: `168 passed`
+- Ruff: `ruff check .` 통과
+- Live Atlas read smoke: `ok=true`, deal count `22`, returned `10`,
+  sensitive field strings 미포함, MongoDB writes 없음
+
 ### BI Reporting Milestone 3.3 Atlas/get_metrics/CSV 교차 검증 완료
 
 - `deal_intel.reports.dashboard_crosscheck` 추가

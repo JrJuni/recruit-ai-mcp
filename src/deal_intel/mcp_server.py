@@ -236,6 +236,46 @@ def get_metrics(
 
 
 @app.tool()
+def get_deal_gaps(
+    as_of: str = "",
+    stage: str = "",
+    industry: str = "",
+    deal_id: str = "",
+    min_priority: str = "medium",
+    limit: int = 10,
+) -> dict:
+    """Show customer-attack information gaps that need sales follow-up.
+
+    Read-only. Uses the shared metric projection and does not call LLM,
+    embeddings, or write to MongoDB.
+
+    Optional filters:
+    - as_of: YYYY-MM-DD business date for stuck/overdue calculations
+    - stage: exact pipeline stage match
+    - industry: exact stored industry match
+    - deal_id: exact deal id; returns that deal regardless of priority
+    - min_priority: low | medium | high, defaults to medium
+    - limit: result limit, 1..50, defaults to 10
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.tools import get_deal_gaps as _t
+
+        return _t.handle(
+            mongo=_context.mongo(),
+            cfg=_context.config(),
+            as_of=as_of or None,
+            stage=stage or None,
+            industry=industry or None,
+            deal_id=deal_id or None,
+            min_priority=min_priority,
+            limit=limit,
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.STORAGE)
+
+
+@app.tool()
 def export_report(
     report_type: str = "weekly_pipeline",
     output_dir: str = "",
