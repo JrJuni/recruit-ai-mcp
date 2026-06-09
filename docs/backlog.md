@@ -131,6 +131,28 @@ analytics snapshot 기반 trend summary를 CSV와 Markdown으로 저장한다.
 provider ping, 작은 `chat_once` 1회, 그리고 가능하면 `add_meeting`의 LLM
 경로 1회다. 비용이 발생하므로 명시적으로 opt-in할 때만 수행한다.
 
+### Deferred: human-readable pipeline and performance CSV reports
+
+Do not implement immediately. Current `weekly_pipeline` and `pipeline_trend`
+CSV exports are functionally useful, but they are still close to the BI/API data
+shape. A future reporting pass should make CSV artifacts meaningfully different
+from the web dashboard: easier for humans to read, paste into weekly business
+reports, and review without expanding JSON cells.
+
+Known product questions:
+
+- Should `weekly_pipeline` flatten JSON-style fields such as primary pain,
+  decision criteria, attention reasons, and data quality into report-friendly
+  columns?
+- Should a separate `pipeline_performance` report exist for won/lost outcomes,
+  booked value, lost value, win rate, close dates, and close reasons?
+- Who is the intended reader: internal AE weekly review, executive status
+  report, customer success handoff, or investor-style performance summary?
+- How should CSV differ from Atlas Charts so it is not just another raw
+  dashboard export?
+
+Keep raw meeting notes, contacts, and embeddings excluded from every CSV report.
+
 ### #8 Customer Themes 확장
 
 Customer Themes CSV, 산업·stage 비교, 전용 Atlas 대시보드와 evidence drill-down.
