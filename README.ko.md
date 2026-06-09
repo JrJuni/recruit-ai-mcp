@@ -100,8 +100,8 @@ Claude Desktop → Settings → Extensions → 파일로 설치한다.
 
 ```
 create_deal / add_meeting / get_deal / update_stage / update_deal
-list_deals / get_metrics / get_deal_gaps / get_insights / get_customer_themes
-export_report / analyze_deal / search_deals
+list_deals / analyze_deal / get_metrics / get_deal_gaps / export_report
+get_insights / search_deals / get_customer_themes
 ```
 
 ---
@@ -527,15 +527,16 @@ Atlas Charts용 aggregation은 `scripts/atlas_charts_customer_themes.json`에 �
 ## 권장 사용 흐름
 
 ```
-1. 미팅 직후       → add_meeting (회의록 붙여넣기)
-2. 단계 진행 시    → update_stage
-3. 미팅 전 준비    → analyze_deal (다음 아젠다 파악)
-4. 주간 리뷰       → list_deals (막힌 딜 확인)
-5. 파이프라인 KPI  → get_metrics pipeline_health
-6. 월간 회고       → get_insights compare_won_lost / stage_velocity
-7. 유사 사례 참고  → search_deals
-8. 고객 고민 분석  → get_customer_themes
-9. 대시보드 확인   → Atlas Charts Weekly Pipeline Review
+1. 미팅 직후        → add_meeting (회의록 붙여넣기)
+2. 단계 진행 시     → update_stage
+3. 미팅 전 준비     → analyze_deal (다음 아젠다 파악)
+4. 추격/예측 전     → get_deal_gaps (아직 빠진 정보 확인)
+5. 주간 리뷰        → list_deals (막힌 딜 확인)
+6. 파이프라인 KPI   → get_metrics pipeline_health
+7. 월간 회고        → get_insights compare_won_lost / stage_velocity
+8. 유사 사례 참고   → search_deals
+9. 고객 고민 분석   → get_customer_themes
+10. 대시보드 확인   → Atlas Charts Weekly Pipeline Review
 ```
 
 ---

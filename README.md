@@ -98,8 +98,8 @@ You're done when these 13 tools appear in the tool list.
 
 ```
 create_deal / add_meeting / get_deal / update_stage / update_deal
-list_deals / get_metrics / get_deal_gaps / get_insights / get_customer_themes
-export_report / analyze_deal / search_deals
+list_deals / analyze_deal / get_metrics / get_deal_gaps / export_report
+get_insights / search_deals / get_customer_themes
 ```
 
 ---
@@ -522,15 +522,16 @@ The Atlas Charts aggregation is in `scripts/atlas_charts_customer_themes.json`.
 ## Recommended workflow
 
 ```
-1. Right after a meeting  → add_meeting (paste the note)
-2. On stage change        → update_stage
-3. Pre-meeting prep        → analyze_deal (figure out the next agenda)
-4. Weekly review           → list_deals (find stuck deals)
-5. Pipeline KPIs           → get_metrics pipeline_health
-6. Monthly retro           → get_insights compare_won_lost / stage_velocity
-7. Reference similar cases → search_deals
-8. Customer-concern analysis → get_customer_themes
-9. Dashboard               → Atlas Charts Weekly Pipeline Review
+1. Right after a meeting     → add_meeting (paste the note)
+2. On stage change           → update_stage
+3. Pre-meeting prep          → analyze_deal (figure out the next agenda)
+4. Before pursuing/forecast  → get_deal_gaps (what's still missing)
+5. Weekly review             → list_deals (find stuck deals)
+6. Pipeline KPIs             → get_metrics pipeline_health
+7. Monthly retro             → get_insights compare_won_lost / stage_velocity
+8. Reference similar cases   → search_deals
+9. Customer-concern analysis → get_customer_themes
+10. Dashboard                → Atlas Charts Weekly Pipeline Review
 ```
 
 ---
