@@ -13,10 +13,18 @@ _MAX_EMBEDDING_WARMUP_SECONDS = 30
 def create_deal(
     company: str,
     industry: str = "",
-    deal_size_krw: int = 0,
+    deal_size_krw: int | None = None,
+    deal_size_status: str = "",
+    deal_size_low_krw: int | None = None,
+    deal_size_high_krw: int | None = None,
+    deal_size_note: str = "",
     expected_close_date: str = "",
 ) -> dict:
     """Create a new deal for a prospect company.
+
+    deal_size_status can be: unknown, rough_estimate, customer_budget,
+    quoted, or strategic_zero. A zero amount is valid only with
+    strategic_zero; omit deal_size_krw when the amount is unknown.
 
     When expected_close_date is omitted, config supplies a default date with
     optional exact industry overrides.
@@ -30,7 +38,11 @@ def create_deal(
             cfg=_context.config(),
             company=company,
             industry=industry or None,
-            deal_size_krw=deal_size_krw or None,
+            deal_size_krw=deal_size_krw,
+            deal_size_status=deal_size_status or None,
+            deal_size_low_krw=deal_size_low_krw,
+            deal_size_high_krw=deal_size_high_krw,
+            deal_size_note=deal_size_note or None,
             expected_close_date=expected_close_date or None,
         )
     except Exception as exc:

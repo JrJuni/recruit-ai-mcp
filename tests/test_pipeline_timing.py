@@ -318,6 +318,200 @@ def test_create_deal_applies_default_close_date_and_records_source() -> None:
     assert mongo.saved is not None
     assert mongo.saved["expected_close_date"] == result["expected_close_date"]
     assert mongo.saved["expected_close_date_source"] == "config_default"
+    assert mongo.saved["deal_size_krw"] is None
+    assert mongo.saved["deal_size_status"] is None
+    assert mongo.saved["deal_size_low_krw"] is None
+    assert mongo.saved["deal_size_high_krw"] is None
+    assert mongo.saved["deal_size_note"] is None
+
+
+def test_create_deal_accepts_classified_value_range_and_note() -> None:
+    mongo = FakeMongo()
+
+    result = create_deal.handle(
+        mongo=mongo,
+        cfg={},
+        company="Budget Co",
+        industry="IT",
+        deal_size_krw=40_000_000,
+        deal_size_status=" rough_estimate ",
+        deal_size_low_krw=30_000_000,
+        deal_size_high_krw=50_000_000,
+        deal_size_note="  early scope from discovery call  ",
+    )
+
+    assert result["ok"] is True
+    assert result["deal_size_krw"] == 40_000_000
+    assert result["deal_size_status"] == "rough_estimate"
+    assert result["deal_size_low_krw"] == 30_000_000
+    assert result["deal_size_high_krw"] == 50_000_000
+    assert result["deal_size_note"] == "early scope from discovery call"
+    assert mongo.saved is not None
+    assert mongo.saved["deal_size_status"] == "rough_estimate"
+
+
+def test_create_deal_accepts_strategic_zero_without_dropping_amount() -> None:
+    mongo = FakeMongo()
+
+    result = create_deal.handle(
+        mongo=mongo,
+        cfg={},
+        company="Reference Co",
+        industry="Enterprise",
+        deal_size_krw=0,
+        deal_size_status="strategic_zero",
+        deal_size_note="reference project approved by user",
+    )
+
+    assert result["deal_size_krw"] == 0
+    assert result["deal_size_status"] == "strategic_zero"
+    assert mongo.saved is not None
+    assert mongo.saved["deal_size_krw"] == 0
+    assert mongo.saved["deal_size_status"] == "strategic_zero"
+
+
+def test_create_deal_requires_confirmation_for_bare_zero_before_storage() -> None:
+    mongo = FakeMongo()
+
+    with pytest.raises(MCPError) as exc_info:
+        create_deal.handle(
+            mongo=mongo,
+            cfg={},
+            company="Ambiguous Zero Co",
+            industry="IT",
+            deal_size_krw=0,
+        )
+
+    assert exc_info.value.error_code == ErrorCode.INVALID_INPUT
+    assert exc_info.value.stage == "preflight"
+    assert exc_info.value.message == (
+        "deal_size_krw=0 needs user confirmation before saving"
+    )
+    assert exc_info.value.hint == {
+        "ask_user": (
+            "이 0원은 전략적 무료/레퍼런스 딜인가요, "
+            "아니면 아직 금액 미정인가요?"
+        ),
+        "retry_options": [
+            {
+                "meaning": "amount_unknown",
+                "deal_size_status": "unknown",
+                "deal_size_krw": None,
+            },
+            {
+                "meaning": "strategic_zero_revenue",
+                "deal_size_status": "strategic_zero",
+                "deal_size_krw": 0,
+            },
+        ],
+    }
+    assert mongo.saved is None
+
+
+def test_create_deal_normalizes_unknown_zero_to_missing_amount() -> None:
+    mongo = FakeMongo()
+
+    result = create_deal.handle(
+        mongo=mongo,
+        cfg={},
+        company="Unknown Budget Co",
+        industry="IT",
+        deal_size_krw=0,
+        deal_size_status="unknown",
+        deal_size_low_krw=0,
+        deal_size_high_krw=0,
+    )
+
+    assert result["deal_size_krw"] is None
+    assert result["deal_size_status"] == "unknown"
+    assert result["deal_size_low_krw"] is None
+    assert result["deal_size_high_krw"] is None
+    assert mongo.saved is not None
+    assert mongo.saved["deal_size_krw"] is None
+    assert mongo.saved["deal_size_status"] == "unknown"
+
+
+def test_create_deal_requires_status_for_positive_amount_before_storage() -> None:
+    mongo = FakeMongo()
+
+    with pytest.raises(MCPError) as exc_info:
+        create_deal.handle(
+            mongo=mongo,
+            cfg={},
+            company="Unclassified Amount Co",
+            industry="IT",
+            deal_size_krw=10_000_000,
+        )
+
+    assert exc_info.value.error_code == ErrorCode.INVALID_INPUT
+    assert exc_info.value.stage == "preflight"
+    assert exc_info.value.message == (
+        "deal_size_status is required when deal_size_krw is provided"
+    )
+    assert exc_info.value.hint == {
+        "ask_user": (
+            "이 금액은 영업 추정, 고객 예산 확인, 견적 발송 중 "
+            "어떤 기준으로 저장할까요?"
+        ),
+        "retry_options": [
+            {
+                "meaning": "seller_estimate",
+                "deal_size_status": "rough_estimate",
+            },
+            {
+                "meaning": "customer_disclosed_budget",
+                "deal_size_status": "customer_budget",
+            },
+            {
+                "meaning": "formal_quote_sent",
+                "deal_size_status": "quoted",
+            },
+        ],
+    }
+    assert mongo.saved is None
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "issue"),
+    [
+        (
+            {"deal_size_krw": None, "deal_size_status": "quoted"},
+            "known_status_requires_positive_amount",
+        ),
+        (
+            {"deal_size_krw": 1, "deal_size_status": "unknown"},
+            "unknown_status_must_not_have_amount",
+        ),
+    ],
+)
+def test_create_deal_rejects_invalid_deal_value_before_storage(
+    kwargs: dict,
+    issue: str,
+) -> None:
+    mongo = FakeMongo()
+
+    with pytest.raises(MCPError) as exc_info:
+        create_deal.handle(
+            mongo=mongo,
+            cfg={},
+            company="Invalid Co",
+            industry=None,
+            **kwargs,
+        )
+
+    assert exc_info.value.error_code == ErrorCode.INVALID_INPUT
+    assert issue in exc_info.value.message
+    assert exc_info.value.hint == {
+        "valid_statuses": [
+            "unknown",
+            "rough_estimate",
+            "customer_budget",
+            "quoted",
+            "strategic_zero",
+        ],
+        "issue": issue,
+    }
+    assert mongo.saved is None
 
 
 def test_create_deal_rejects_invalid_user_date_as_input_error() -> None:
@@ -356,6 +550,52 @@ def test_mcp_create_deal_uses_industry_override(monkeypatch) -> None:
     assert result["ok"] is True
     assert result["expected_close_date"] == (before + timedelta(days=60)).isoformat()
     assert result["expected_close_date_source"] == "config_industry"
+
+
+def test_mcp_create_deal_forwards_value_classification(monkeypatch) -> None:
+    mongo = FakeMongo()
+    monkeypatch.setattr(_context, "mongo", lambda: mongo)
+    monkeypatch.setattr(_context, "config", lambda: {})
+
+    result = mcp_server.create_deal(
+        "Reference Co",
+        industry="Enterprise",
+        deal_size_krw=0,
+        deal_size_status="strategic_zero",
+        deal_size_note="reference project",
+    )
+
+    assert result["ok"] is True
+    assert result["deal_size_krw"] == 0
+    assert result["deal_size_status"] == "strategic_zero"
+    assert mongo.saved is not None
+    assert mongo.saved["deal_size_krw"] == 0
+    assert mongo.saved["deal_size_status"] == "strategic_zero"
+
+
+def test_mcp_create_deal_returns_confirmation_for_bare_zero(monkeypatch) -> None:
+    mongo = FakeMongo()
+    monkeypatch.setattr(_context, "mongo", lambda: mongo)
+    monkeypatch.setattr(_context, "config", lambda: {})
+
+    result = mcp_server.create_deal("Ambiguous Zero Co", deal_size_krw=0)
+
+    assert result["ok"] is False
+    assert result["error_code"] == ErrorCode.INVALID_INPUT
+    assert result["stage"] == "preflight"
+    assert result["hint"]["retry_options"] == [
+        {
+            "meaning": "amount_unknown",
+            "deal_size_status": "unknown",
+            "deal_size_krw": None,
+        },
+        {
+            "meaning": "strategic_zero_revenue",
+            "deal_size_status": "strategic_zero",
+            "deal_size_krw": 0,
+        },
+    ]
+    assert mongo.saved is None
 
 
 def test_list_deals_surfaces_timing_and_attention_fields() -> None:

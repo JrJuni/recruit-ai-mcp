@@ -2,6 +2,28 @@
 
 ## Latest Update - 2026-06-09
 
+### M3 Prep - create_deal 초기 금액 분류 입력 확장
+
+- `create_deal`이 `deal_size_status`, `deal_size_low_krw`,
+  `deal_size_high_krw`, `deal_size_note`를 입력받도록 확장
+- `deal_size_krw=0`이 MCP wrapper에서 `None`으로 사라지던 문제 수정
+- Part B 금액 계약을 저장 전 검증에 적용:
+  `unknown`, `rough_estimate`, `customer_budget`, `quoted`, `strategic_zero`
+- `deal_size_krw=0`만 들어오면 storage 접근 전 clarification error를 반환하여
+  사용자에게 전략적 0원 딜인지 금액 미정인지 확인하게 함
+- `deal_size_status=unknown`과 0 금액 필드가 함께 들어오면 금액 미정으로 보고
+  `deal_size_krw`, low/high를 `null`로 정규화
+- 의도적 0원 딜은 `deal_size_status=strategic_zero`일 때만 실제 0으로 저장
+- 양수 금액도 `deal_size_status` 없이 신규 저장하지 않고, `rough_estimate`,
+  `customer_budget`, `quoted` 중 하나를 확인하게 함
+- 기존 `get_metrics`, CSV/Markdown report, data-quality 계산은 같은
+  `assess_deal_value` 계약을 사용하므로 downstream metric surface 변경 없음
+- FastMCP 등록 smoke: 11 tools 유지, `create_deal` nullable 금액/범위 schema 확인
+- Targeted create_deal confirmation tests: `6 passed`
+- Full pytest: `141 passed`
+- Ruff: `ruff check .` 통과
+- Atlas write smoke 없음: 실제 새 딜 생성을 동반하므로 mock storage로 검증
+
 ### BI Reporting Milestone 2.4 완료
 
 - `export_report(report_type="weekly_pipeline")` MCP 도구 추가

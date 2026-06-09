@@ -37,7 +37,7 @@
 
 | 도구 | LLM 호출 | Embedding | 주요 기능 |
 |---|---|---|---|
-| `create_deal` | 없음 | 없음 | expected close 기본값 적용, 딜 생성, stage_history 초기화 |
+| `create_deal` | 없음 | 없음 | 초기 금액 분류 검증, expected close 기본값 적용, 딜 생성, stage_history 초기화 |
 | `add_meeting` | 2회 (분석 + 요약) | embed + store | MEDDPICC·고객 주제 추출, health_pct 재계산 |
 | `get_deal` | 없음 | 없음 | 딜 전체 조회 |
 | `update_stage` | 없음 | 없음 | stage_history 및 actual_close_date 기록, MEDDPICC 재계산 |
@@ -57,6 +57,10 @@
   "company":            "현대정밀",
   "industry":           "제조",
   "deal_size_krw":      200000000,
+  "deal_size_low_krw":  null,
+  "deal_size_high_krw": null,
+  "deal_size_status":   "quoted",
+  "deal_size_note":     "proposal sent after pricing call",
   "deal_stage":         "proposal",
   "expected_close_date": "2026-09-30",
   "expected_close_date_source": "user_provided",

@@ -166,6 +166,19 @@ counts as approval. LLM inference, meeting-note extraction, bulk backfill, and
 similar-deal estimation do not. The future update tool must enforce this
 boundary and store the user's optional rationale in `deal_size_note`.
 
+`create_deal` accepts the approved initial value fields directly:
+`deal_size_krw`, `deal_size_status`, `deal_size_low_krw`,
+`deal_size_high_krw`, and `deal_size_note`. The same validation contract above
+applies before storage. A bare `deal_size_krw: 0` does not save immediately;
+it returns a clarification error instructing the assistant to ask whether the
+deal is an intentional `strategic_zero` or an `unknown` amount. If the caller
+explicitly sends `deal_size_status: unknown` with zero amount fields, the
+system normalizes those amount fields to `null` before storage. A known status
+such as `quoted` still requires a positive amount. A positive amount supplied
+through `create_deal` also requires an explicit status (`rough_estimate`,
+`customer_budget`, or `quoted`) so new records do not enter BI as unclassified
+amounts.
+
 ## Part C - Stuck, Overdue, and Win Rate
 
 ### Stuck

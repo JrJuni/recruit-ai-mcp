@@ -40,7 +40,7 @@ All MCP boundaries return structured errors with:
 
 | Tool | Required inputs | Optional inputs | Success response | Persistence or external effects |
 |---|---|---|---|---|
-| `create_deal` | `company` | `industry`, `deal_size_krw`, `expected_close_date` | `ok`, `deal_id`, `company`, `expected_close_date`, `expected_close_date_source` | Applies the configured close-date default when omitted, upserts one deal, and initializes `discovery` stage history |
+| `create_deal` | `company` | `industry`, `deal_size_krw`, `deal_size_status`, `deal_size_low_krw`, `deal_size_high_krw`, `deal_size_note`, `expected_close_date` | `ok`, `deal_id`, `company`, deal value fields, `expected_close_date`, `expected_close_date_source` | Validates the initial deal-value classification, applies the configured close-date default when omitted, upserts one deal, and initializes `discovery` stage history |
 | `add_meeting` | `deal_id`, `date`, `raw_notes` | None | `ok`, `meeting_id`, `summary`, `meddpicc`, `meddpicc_latest`, `customer_themes`, `stage_suggestion`, `embedding_stored`, `usage` | Calls LLM, appends a meeting, recalculates deal signals, optionally stores an embedding, and upserts the deal |
 | `update_stage` | `deal_id`, `new_stage` | `actual_close_date` | `ok`, `deal_id`, `old_stage`, `new_stage`, `actual_close_date`, `days_in_previous_stage`, `stuck_threshold_days` | Appends stage history, records the actual terminal date, recalculates stage-aware MEDDPICC gaps, and upserts the deal |
 | `get_deal` | `deal_id` | None | `ok`, `deal` | Read only; includes full meeting history and raw notes |
@@ -55,6 +55,16 @@ All MCP boundaries return structured errors with:
 `get_metrics.metric_type` currently supports:
 
 - `pipeline_health`
+
+`create_deal` validates initial deal-value fields with the shared Part B metric
+contract before storage. Valid `deal_size_status` values are `unknown`,
+`rough_estimate`, `customer_budget`, `quoted`, and `strategic_zero`; zero is
+valid only with `strategic_zero`. A bare `deal_size_krw: 0` returns a
+preflight clarification error with retry options instead of saving. Explicit
+`deal_size_status: unknown` with zero amount fields is normalized to a missing
+amount before storage. A positive `deal_size_krw` without `deal_size_status`
+also returns a preflight clarification error so new records do not enter BI as
+unclassified amounts.
 
 `get_metrics` accepts exact-match `stage` and `industry` filters. Invalid
 metric types, invalid stages, invalid `as_of`, and invalid metric config fail

@@ -105,7 +105,10 @@ export_report / analyze_deal / search_deals
 |---|---|---|
 | `company` | 필수 | 고객사 이름 |
 | `industry` | 선택 | 업종 (예: "제조", "IT SaaS") |
-| `deal_size_krw` | 선택 | 예상 계약 규모 (원 단위, 예: 200000000) |
+| `deal_size_krw` | 선택 | 예상 계약 규모의 중앙값 (원 단위, 예: 200000000) |
+| `deal_size_status` | 금액 입력 시 필수 | 금액 상태: `unknown`, `rough_estimate`, `customer_budget`, `quoted`, `strategic_zero` |
+| `deal_size_low_krw` / `deal_size_high_krw` | 선택 | 추정 범위. 생략하면 metric 계산에서는 중앙값과 같게 본다 |
+| `deal_size_note` | 선택 | 금액 분류 근거나 사용자 메모 |
 | `expected_close_date` | 선택 | 예상 클로징 날짜. 생략 시 config 기본값 적용 |
 
 **결과 예시**:
@@ -114,6 +117,8 @@ export_report / analyze_deal / search_deals
   "ok": true,
   "deal_id": "a3f9...",
   "company": "현대정밀",
+  "deal_size_krw": 200000000,
+  "deal_size_status": "rough_estimate",
   "expected_close_date": "2026-06-15",
   "expected_close_date_source": "config_default"
 }
@@ -124,6 +129,16 @@ export_report / analyze_deal / search_deals
 예상 종료일을 생략하면 생성일로부터 기본 7일 뒤가 자동 입력된다. 이 날짜는
 확정 일정이 아니라 운영 기본값이다. 사용자가 직접 입력한 날짜는 항상 config보다
 우선한다.
+
+딜 금액을 입력할 때는 status도 같이 정해야 한다. 모르면
+`deal_size_status="unknown"`으로 두고 금액은 비워둔다. 양수 금액만 입력되면
+도구는 "영업 추정/고객 예산/견적 발송 중 어떤 기준인지" 확인을 요구한다. 0만
+입력되면 바로 저장하지 않고 "전략적 무료/레퍼런스 딜인지, 금액 미정인지" 확인을
+요구한다. 금액 미정으로 확인되면 `unknown`으로 저장하고 금액은 비운다. 무료
+샘플·레퍼런스 확보처럼 의도적인 0원 딜은 `deal_size_krw=0`과
+`deal_size_status="strategic_zero"`를 같이 넣어 저장한다. 고객 예산을 들었거나
+견적을 보낸 경우에는 각각 `customer_budget`, `quoted`를 쓰면 metric에서 검증된
+pipeline value로 집계된다.
 
 ```yaml
 pipeline:
