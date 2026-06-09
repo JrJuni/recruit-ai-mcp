@@ -518,6 +518,149 @@ class ChatGPTOAuthProvider(LLMProvider):
         }
 
 
+class OpenAIAPIProvider(LLMProvider):
+    """Official OpenAI API provider using the Responses API."""
+
+    _RESPONSES_URL = "https://api.openai.com/v1/responses"
+    _ALLOWED_REASONING_EFFORTS = frozenset({"none", "low", "medium", "high", "xhigh"})
+
+    def __init__(
+        self,
+        *,
+        model: str = "gpt-5.5",
+        api_key: str | None = None,
+        reasoning_effort: str | None = None,
+        base_url: str | None = None,
+    ) -> None:
+        if reasoning_effort in ("", "none", "null"):
+            reasoning_effort = None
+        if (
+            reasoning_effort is not None
+            and reasoning_effort not in self._ALLOWED_REASONING_EFFORTS
+        ):
+            raise ValueError(
+                "openai_api_reasoning_effort must be one of "
+                f"{sorted(self._ALLOWED_REASONING_EFFORTS)}, got {reasoning_effort!r}"
+            )
+        self.model = model
+        self._api_key = api_key or os.environ.get("OPENAI_API_KEY")
+        self._reasoning_effort = reasoning_effort
+        self._responses_url = (base_url or self._RESPONSES_URL).rstrip("/")
+
+    def _call(
+        self,
+        *,
+        instructions: str,
+        user_content: str,
+        max_tokens: int,
+        temperature: float,
+    ) -> LLMResponse:
+        if not self._api_key:
+            raise RuntimeError("OPENAI_API_KEY not set")
+
+        import httpx
+
+        payload: dict[str, Any] = {
+            "model": self.model,
+            "instructions": instructions,
+            "input": [
+                {
+                    "role": "user",
+                    "content": [{"type": "input_text", "text": user_content}],
+                }
+            ],
+            "max_output_tokens": max_tokens,
+            "store": False,
+            "temperature": temperature,
+        }
+        if self._reasoning_effort is not None:
+            payload["reasoning"] = {"effort": self._reasoning_effort}
+
+        resp = httpx.post(
+            self._responses_url,
+            headers={
+                "Authorization": f"Bearer {self._api_key}",
+                "Content-Type": "application/json",
+            },
+            json=payload,
+            timeout=120,
+        )
+        if resp.status_code >= 400:
+            raise RuntimeError(
+                f"OpenAI API returned {resp.status_code}: {_response_error_message(resp)}"
+            )
+
+        data = resp.json()
+        if data.get("error"):
+            raise RuntimeError(f"OpenAI API returned error: {data['error']!r}")
+        if data.get("status") not in (None, "completed"):
+            details = data.get("incomplete_details") or data.get("status")
+            raise RuntimeError(f"OpenAI API response did not complete: {details!r}")
+
+        text = _extract_openai_output_text(data)
+        usage = data.get("usage") or {}
+        return LLMResponse(
+            text=text,
+            usage={
+                "input_tokens": int(usage.get("input_tokens") or 0),
+                "output_tokens": int(usage.get("output_tokens") or 0),
+                "total_tokens": int(usage.get("total_tokens") or 0),
+                "cached_input_tokens": int(
+                    (usage.get("input_tokens_details") or {}).get("cached_tokens") or 0
+                ),
+                "reasoning_output_tokens": int(
+                    (usage.get("output_tokens_details") or {}).get("reasoning_tokens") or 0
+                ),
+            },
+            model=data.get("model", self.model),
+            stop_reason=data.get("status"),
+        )
+
+    def chat_once(
+        self,
+        *,
+        system: str,
+        user: str,
+        max_tokens: int = 4096,
+        temperature: float = 0.0,
+    ) -> LLMResponse:
+        return self._call(
+            instructions=system,
+            user_content=user,
+            max_tokens=max_tokens,
+            temperature=temperature,
+        )
+
+    def chat_cached(
+        self,
+        *,
+        system: str,
+        cached_context: str,
+        volatile_context: str,
+        task: str,
+        max_tokens: int = 4096,
+        temperature: float = 0.0,
+    ) -> LLMResponse:
+        # The Responses API supports prompt caching at the platform/model layer,
+        # but this provider keeps the project-level contract provider-neutral.
+        parts = [part for part in (cached_context, volatile_context, task) if part]
+        return self._call(
+            instructions=system,
+            user_content="\n\n".join(parts),
+            max_tokens=max_tokens,
+            temperature=temperature,
+        )
+
+    def ping(self) -> dict:
+        if not self._api_key:
+            return {
+                "status": "missing_key",
+                "message": "OPENAI_API_KEY not set",
+                "fix": "Set OPENAI_API_KEY in .env or ~/.deal-intel/config.yaml.",
+            }
+        return {"status": "ok", "model": self.model}
+
+
 def make_llm_provider(config: dict, *, model: str | None = None) -> LLMProvider:
     """Factory: reads llm.provider from config and returns the right provider."""
     provider_name = config.get("llm", {}).get("provider", "anthropic")
@@ -525,5 +668,40 @@ def make_llm_provider(config: dict, *, model: str | None = None) -> LLMProvider:
         oauth_model = config.get("llm", {}).get("chatgpt_oauth_model", "gpt-5.5")
         effort = config.get("llm", {}).get("chatgpt_oauth_reasoning_effort", "low")
         return ChatGPTOAuthProvider(model=oauth_model, reasoning_effort=effort)
+    if provider_name == "openai_api":
+        openai_model = model or config.get("llm", {}).get("openai_api_model", "gpt-5.5")
+        effort = config.get("llm", {}).get("openai_api_reasoning_effort")
+        return OpenAIAPIProvider(model=openai_model, reasoning_effort=effort)
     resolved = model or config.get("llm", {}).get("draft_model", "claude-sonnet-4-6")
     return AnthropicProvider(model=resolved)
+
+
+def _extract_openai_output_text(data: dict) -> str:
+    output_text = data.get("output_text")
+    if isinstance(output_text, str):
+        return output_text
+
+    text_parts: list[str] = []
+    for item in data.get("output", []) or []:
+        if not isinstance(item, dict) or item.get("type") != "message":
+            continue
+        for block in item.get("content", []) or []:
+            if not isinstance(block, dict):
+                continue
+            if block.get("type") == "output_text":
+                text_parts.append(str(block.get("text") or ""))
+    return "".join(text_parts)
+
+
+def _response_error_message(resp: Any) -> str:
+    try:
+        payload = resp.json()
+    except Exception:
+        return resp.text[:500]
+    if isinstance(payload, dict):
+        error = payload.get("error")
+        if isinstance(error, dict):
+            return str(error.get("message") or error)
+        if error:
+            return str(error)
+    return str(payload)[:500]

@@ -36,6 +36,25 @@ All MCP boundaries return structured errors with:
 }
 ```
 
+### LLM Provider Contract
+
+Valid `llm.provider` values:
+
+- `chatgpt_oauth` — default; uses ChatGPT Plus/Pro OAuth tokens from the local
+  `login-chatgpt` flow.
+- `openai_api` — uses the official OpenAI Responses API with `OPENAI_API_KEY`.
+- `anthropic` — uses `ANTHROPIC_API_KEY` through the Anthropic SDK.
+
+`DEAL_INTEL_LLM_PROVIDER` is the explicit install/bundle override and accepts
+the same values. `DEAL_INTEL_USE_CHATGPT_OAUTH` remains a legacy boolean
+override for older bundles. When both are present, `DEAL_INTEL_LLM_PROVIDER`
+wins.
+
+OpenAI API live smoke is not part of the current baseline because this local
+environment may not have API credits. The provider is covered by mock HTTP
+tests and should be live-smoked only when a disposable `OPENAI_API_KEY` is
+available.
+
 ### MCP Tool Contracts
 
 | Tool | Required inputs | Optional inputs | Success response | Persistence or external effects |

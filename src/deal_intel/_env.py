@@ -25,8 +25,14 @@ def load_config() -> dict:
             user = yaml.safe_load(f) or {}
         _deep_merge(config, user)
 
-    # mcpb user_config env override: DEAL_INTEL_USE_CHATGPT_OAUTH wins over defaults/user config.
-    # "true"/"1" → chatgpt_oauth, "false"/"0" → anthropic.
+    # mcpb user_config env override. DEAL_INTEL_LLM_PROVIDER is the explicit
+    # provider selector; DEAL_INTEL_USE_CHATGPT_OAUTH remains for older bundles.
+    provider_env = os.environ.get("DEAL_INTEL_LLM_PROVIDER", "").strip()
+    if provider_env in {"chatgpt_oauth", "anthropic", "openai_api"}:
+        config.setdefault("llm", {})["provider"] = provider_env
+        return config
+
+    # "true"/"1" -> chatgpt_oauth, "false"/"0" -> anthropic.
     _oauth_env = os.environ.get("DEAL_INTEL_USE_CHATGPT_OAUTH", "").lower()
     if _oauth_env in ("true", "1"):
         config.setdefault("llm", {})["provider"] = "chatgpt_oauth"

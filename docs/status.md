@@ -4,7 +4,38 @@ This file tracks the current workstream and the most recent completed
 milestones. Longer roadmap items live in [backlog.md](backlog.md), and durable
 contracts live in [baseline.md](baseline.md) and [metrics.md](metrics.md).
 
-## Latest Update - 2026-06-09
+## Latest Update - 2026-06-10
+
+### OpenAI API LLM provider support
+
+Implemented:
+
+- Added `OpenAIAPIProvider` using the official OpenAI Responses API.
+- Added `llm.provider: openai_api`.
+- Added `llm.openai_api_model` and `llm.openai_api_reasoning_effort`.
+- Added `OPENAI_API_KEY` support through `.env` and MCP bundle user config.
+- Added `DEAL_INTEL_LLM_PROVIDER` as the explicit provider override while
+  preserving legacy `DEAL_INTEL_USE_CHATGPT_OAUTH` behavior.
+- Bumped the MCP bundle manifest to `0.1.8`.
+- Kept the MCP tool surface unchanged at 18 tools.
+
+Verification:
+
+- OpenAI provider targeted tests:
+  `10 passed`
+- Related LLM/provider regression tests:
+  `27 passed`
+- Full pytest with workspace-local temp:
+  `226 passed`
+- Ruff:
+  `All checks passed`
+- MCP bundle manifest JSON:
+  valid
+- Live OpenAI API smoke:
+  not run because this environment does not currently have API credits/key;
+  provider behavior is covered with mock HTTP tests.
+
+## History
 
 ### BI Reporting Milestone 5.6 pipeline_trend metric
 
@@ -35,8 +66,6 @@ Verification so far:
 - Live Atlas read smoke:
   `ok=true`, `metric_type=pipeline_trend`, `lookback_days=7`,
   `snapshot_count=0`, expected insufficiency warnings returned
-
-## History
 
 ### BI Reporting Milestone 5.1-5.5 analytics snapshot foundation
 

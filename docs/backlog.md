@@ -111,30 +111,38 @@ context에서 `create_sample_data`와 `delete_sample_data`로만 관리한다.
 
 ## P2
 
-### #7 Customer Themes 확장
+### #7 OpenAI API provider support
+
+완료. `llm.provider: openai_api`가 공식 OpenAI Responses API를 사용하도록
+추가했다. `OPENAI_API_KEY`, `llm.openai_api_model`,
+`llm.openai_api_reasoning_effort`로 설정하며 기존 MCP tool surface는 그대로
+유지한다. 현재 환경에는 OpenAI API credit/key가 없어 live smoke는 mock HTTP
+테스트로 대체했다.
+
+### #8 Customer Themes 확장
 
 Customer Themes CSV, 산업·stage 비교, 전용 Atlas 대시보드와 evidence drill-down.
 
-### #8 Atlas Vector Search 전환 (M10+)
+### #9 Atlas Vector Search 전환 (M10+)
 
 M0 호환 Python cosine 기반 `search_deals`는 완료. 딜 수가 커져 M10+로 올릴 때
 `mongodb.vector_search: atlas`와 `deal_summary_vector` 인덱스로 전환하고 성능을 검증.
 
-### #9 in-app ChatGPT 로그인
+### #10 in-app ChatGPT 로그인
 
 현재 `login-chatgpt`는 CLI-only이며 브라우저 인증을 수행한다. MCP 도구화 시
 blocking 호출을 피하고 인증 상태와 재시도 계약부터 정의한다.
 
-### #10 Notion 연동
+### #11 Notion 연동
 
 Notion에서 작성한 회의록을 Notion API → `add_meeting`으로 자동 싱크.
 
-### #11 deal_stage 추천 확장
+### #12 deal_stage 추천 확장
 
 현재 명시적 회의록 신호는 `stage_suggestion`으로 제안한다. 향후 MEDDPICC 점수 기반
 추천을 추가하더라도 자동 변경하지 않고 사용자 확인 후 `update_stage`를 호출한다.
 
-### #12 확인 정책 config / Autopilot 모드
+### #13 확인 정책 config / Autopilot 모드
 
 현재 `create_deal`은 금액 입력 시 `deal_size_status` 확인을 강제하고,
 `add_meeting`은 stage 변경을 `stage_suggestion`으로만 제안한다. 이는 데이터 품질에는
@@ -166,10 +174,10 @@ workflow:
 
 ## P3
 
-### #13 event-intel-mcp 연결
+### #14 event-intel-mcp 연결
 event-intel-mcp의 prospect → deal 전환 트리거. `prospect_id` 필드는 이미 스키마에 있음.
 
-### #14 성공 사례 GTM 확산 리포트
+### #15 성공 사례 GTM 확산 리포트
 
 현재 semantic search 결과와 won/lost 데이터가 충분히 누적된 뒤 유사 딜 패턴 기반
 GTM 전략 리포트를 추가한다.
