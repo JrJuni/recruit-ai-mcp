@@ -512,6 +512,78 @@ def get_customer_themes(
 
 
 @app.tool()
+def get_customer_theme_breakdown(
+    dimension: str = "all",
+    stage: str = "active",
+    industry: str = "",
+    group_by: str = "stage",
+    top_k: int = 5,
+) -> dict:
+    """Compare recurring customer themes by stage, industry, or dimension.
+
+    Read-only. Uses curated customer_themes only; does not return raw meeting
+    notes, contacts, or embeddings.
+
+    dimension: all | identify_pain | decision_criteria | metrics
+    stage: active | all | discovery | qualification | proposal | negotiation | won | lost | stalled
+    industry: exact industry filter, or empty for all industries
+    group_by: stage | industry | dimension
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.tools import get_customer_theme_breakdown as _t
+
+        return _t.handle(
+            mongo=_context.mongo(),
+            dimension=dimension,
+            stage=stage,
+            industry=industry or None,
+            group_by=group_by,
+            top_k=top_k,
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.STORAGE)
+
+
+@app.tool()
+def get_customer_theme_evidence(
+    theme_key: str,
+    dimension: str = "all",
+    stage: str = "active",
+    industry: str = "",
+    limit: int = 10,
+    min_importance: int = 1,
+) -> dict:
+    """Return curated evidence examples for one customer theme.
+
+    Read-only. Evidence is the structured snippet already extracted into
+    customer_themes; raw meeting notes, contacts, and embeddings are excluded.
+
+    theme_key: controlled taxonomy key, e.g. compliance_security
+    dimension: all | identify_pain | decision_criteria | metrics
+    stage: active | all | discovery | qualification | proposal | negotiation | won | lost | stalled
+    industry: exact industry filter, or empty for all industries
+    limit: 1..50
+    min_importance: 1..5
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.tools import get_customer_theme_evidence as _t
+
+        return _t.handle(
+            mongo=_context.mongo(),
+            theme_key=theme_key,
+            dimension=dimension,
+            stage=stage,
+            industry=industry or None,
+            limit=limit,
+            min_importance=min_importance,
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.STORAGE)
+
+
+@app.tool()
 def search_deals(query: str, limit: int = 5) -> dict:
     """Find deals semantically similar to the query.
 

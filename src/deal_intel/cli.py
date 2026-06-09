@@ -67,7 +67,7 @@ def render_atlas_dashboard(
     dashboard: str = typer.Option(
         "weekly_pipeline_review",
         "--dashboard",
-        help="Dashboard id: weekly_pipeline_review or pipeline_trend.",
+        help="Dashboard id: weekly_pipeline_review, pipeline_trend, or customer_themes.",
     ),
     chart_id: str | None = typer.Option(
         None,

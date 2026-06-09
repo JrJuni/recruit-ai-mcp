@@ -6,6 +6,48 @@ contracts live in [baseline.md](baseline.md) and [metrics.md](metrics.md).
 
 ## Latest Update - 2026-06-10
 
+### BI Reporting Milestone 6.1-M6.3 Customer Themes expansion
+
+Implemented:
+
+- Added `get_customer_theme_breakdown` MCP tool.
+  - Compares curated customer themes by `stage`, `industry`, or `dimension`.
+  - Supports `dimension`, `stage`, `industry`, `group_by`, and `top_k`.
+- Added `get_customer_theme_evidence` MCP tool.
+  - Returns curated evidence snippets for one `theme_key`.
+  - Supports `dimension`, `stage`, `industry`, `limit`, and `min_importance`.
+- Added pure `customer_theme_insights` calculation module for breakdown and
+  drill-down behavior.
+- Added versioned Atlas Charts spec:
+  `atlas/charts/customer_themes.v1.json`.
+- Added `Customer Themes Review` dashboard source over `deals`.
+- Extended `render-atlas-dashboard` with `--dashboard customer_themes`.
+- Kept the M6 read paths free of LLM calls, embedding calls, and MongoDB
+  writes.
+- Raw meeting notes, contacts, and embeddings remain excluded from the new
+  read paths.
+
+Verification:
+
+- M6.1-M6.2 targeted tests:
+  `18 passed`
+- M6.3 Atlas chart targeted tests:
+  `15 passed`
+- M6 related regression tests:
+  `69 passed`
+- Full pytest with workspace-local temp:
+  `245 passed`
+- Ruff:
+  `All checks passed`
+- CLI render smoke:
+  `render-atlas-dashboard --dashboard customer_themes --chart-id theme_overview`
+  printed a rendered Atlas aggregation pipeline
+- Live Atlas read-only smoke:
+  `get_customer_theme_breakdown` returned `deals_analyzed=13`,
+  `deals_with_evidence=13`, `group_count=4`; `get_customer_theme_evidence`
+  returned `unique_deal_count=10`, `evidence_count=21`; Customer Themes Atlas
+  aggregations returned rows for all 4 charts
+
 ### BI Reporting Milestone 5.8 Atlas trend chart
 
 Implemented:

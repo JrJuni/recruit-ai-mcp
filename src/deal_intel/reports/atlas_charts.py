@@ -18,6 +18,7 @@ from deal_intel.schema.pipeline_trends import (
 
 WEEKLY_PIPELINE_DASHBOARD = "weekly_pipeline_review"
 PIPELINE_TREND_DASHBOARD = "pipeline_trend"
+CUSTOMER_THEMES_DASHBOARD = "customer_themes"
 
 DEFAULT_WEEKLY_PIPELINE_SPEC = (
     Path(__file__).resolve().parents[3]
@@ -31,11 +32,18 @@ DEFAULT_PIPELINE_TREND_SPEC = (
     / "charts"
     / "pipeline_trend.v1.json"
 )
+DEFAULT_CUSTOMER_THEMES_SPEC = (
+    Path(__file__).resolve().parents[3]
+    / "atlas"
+    / "charts"
+    / "customer_themes.v1.json"
+)
 DEFAULT_DASHBOARD_SPEC = DEFAULT_WEEKLY_PIPELINE_SPEC
 DEFAULT_DASHBOARD = WEEKLY_PIPELINE_DASHBOARD
 DASHBOARD_SPECS = {
     WEEKLY_PIPELINE_DASHBOARD: DEFAULT_WEEKLY_PIPELINE_SPEC,
     PIPELINE_TREND_DASHBOARD: DEFAULT_PIPELINE_TREND_SPEC,
+    CUSTOMER_THEMES_DASHBOARD: DEFAULT_CUSTOMER_THEMES_SPEC,
 }
 
 
@@ -48,6 +56,12 @@ def load_weekly_pipeline_dashboard_spec(path: str | Path | None = None) -> dict:
 def load_pipeline_trend_dashboard_spec(path: str | Path | None = None) -> dict:
     """Load the version-managed Atlas Charts trend dashboard spec."""
     spec_path = Path(path) if path is not None else DEFAULT_PIPELINE_TREND_SPEC
+    return json.loads(spec_path.read_text(encoding="utf-8"))
+
+
+def load_customer_themes_dashboard_spec(path: str | Path | None = None) -> dict:
+    """Load the version-managed Atlas Charts customer themes dashboard spec."""
+    spec_path = Path(path) if path is not None else DEFAULT_CUSTOMER_THEMES_SPEC
     return json.loads(spec_path.read_text(encoding="utf-8"))
 
 
@@ -92,6 +106,18 @@ def render_pipeline_trend_dashboard_spec(
     """Render Atlas Charts trend placeholders using reporting config."""
     spec = load_pipeline_trend_dashboard_spec(path)
     tokens = _render_tokens(cfg, as_of=as_of, lookback_days=lookback_days)
+    return _render_spec(spec, tokens)
+
+
+def render_customer_themes_dashboard_spec(
+    cfg: dict,
+    *,
+    as_of: str | date | None = None,
+    path: str | Path | None = None,
+) -> dict:
+    """Render the customer themes dashboard spec."""
+    spec = load_customer_themes_dashboard_spec(path)
+    tokens = _render_tokens(cfg, as_of=as_of)
     return _render_spec(spec, tokens)
 
 

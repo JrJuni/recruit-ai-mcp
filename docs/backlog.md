@@ -155,7 +155,13 @@ Keep raw meeting notes, contacts, and embeddings excluded from every CSV report.
 
 ### #8 Customer Themes 확장
 
-Customer Themes CSV, 산업·stage 비교, 전용 Atlas 대시보드와 evidence drill-down.
+완료: M6.1-M6.3. `get_customer_theme_breakdown`이 stage·industry·dimension별
+customer theme 비교를 제공하고, `get_customer_theme_evidence`가 raw notes 없이
+curated evidence drill-down을 제공한다. `Customer Themes Review` Atlas dashboard
+spec도 버전 관리한다.
+
+Deferred: Customer Themes CSV는 사람이 읽기 좋은 reporting artifact의 역할이
+명확해진 뒤 별도 태스크로 진행한다.
 
 ### #9 Atlas Vector Search 전환 (M10+)
 

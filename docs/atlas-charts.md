@@ -1,7 +1,8 @@
 # Atlas Charts Dashboard
 
 This document records the Atlas Charts setup path for the `Weekly Pipeline
-Review` and `Pipeline Trend Review` dashboards in MongoDB Atlas Charts.
+Review`, `Pipeline Trend Review`, and `Customer Themes Review` dashboards in
+MongoDB Atlas Charts.
 
 Metric definitions remain in [metrics.md](metrics.md). Report/CSV contracts
 remain in [reports.md](reports.md).
@@ -11,12 +12,14 @@ remain in [reports.md](reports.md).
 - Dashboard titles:
   - `Weekly Pipeline Review`
   - `Pipeline Trend Review`
+  - `Customer Themes Review`
 - Data sources:
   - `TestCluster` / `deal_intel` / `deals`
   - `TestCluster` / `deal_intel` / `analytics_snapshots`
 - Versioned specs:
   - [weekly_pipeline_review.v1.json](../atlas/charts/weekly_pipeline_review.v1.json)
   - [pipeline_trend.v1.json](../atlas/charts/pipeline_trend.v1.json)
+  - [customer_themes.v1.json](../atlas/charts/customer_themes.v1.json)
 - Renderer: `deal_intel.reports.atlas_charts`
 - CLI helper: `deal-intel render-atlas-dashboard`
 - LLM / embedding: none
@@ -48,6 +51,12 @@ Pipeline trend dashboard spec:
 ~/miniconda3/envs/event-intel/python.exe -m deal_intel.cli render-atlas-dashboard --dashboard pipeline_trend --as-of 2026-06-10 --lookback-days 7 --output outputs/atlas_charts/pipeline_trend_20260610.json
 ```
 
+Customer themes dashboard spec:
+
+```bash
+~/miniconda3/envs/event-intel/python.exe -m deal_intel.cli render-atlas-dashboard --dashboard customer_themes --as-of 2026-06-10 --output outputs/atlas_charts/customer_themes_20260610.json
+```
+
 Single chart pipeline:
 
 ```bash
@@ -58,6 +67,12 @@ Pipeline trend single chart pipeline:
 
 ```bash
 ~/miniconda3/envs/event-intel/python.exe -m deal_intel.cli render-atlas-dashboard --dashboard pipeline_trend --as-of 2026-06-10 --lookback-days 7 --chart-id trend_kpis
+```
+
+Customer themes single chart pipeline:
+
+```bash
+~/miniconda3/envs/event-intel/python.exe -m deal_intel.cli render-atlas-dashboard --dashboard customer_themes --as-of 2026-06-10 --chart-id theme_overview
 ```
 
 The single-chart output is already a JSON array, so it can be pasted directly
@@ -109,6 +124,23 @@ If the snapshot history is still sparse, `trend_kpis` will still render a
 single row with zeros/nulls and `trend_delta_bars` will render the known metric
 delta rows. That is expected until enough deal events create snapshots.
 
+## Create The Customer Themes Dashboard
+
+1. In MongoDB Atlas, open the project that contains `TestCluster`.
+2. Open Atlas Charts.
+3. Create a dashboard named `Customer Themes Review`.
+4. Add each chart below using data source `deal_intel.deals`.
+5. In the Chart Builder Query bar, paste the rendered pipeline for that chart
+   and click `Apply`.
+6. Save each chart back to the `Customer Themes Review` dashboard.
+
+This dashboard is intentionally exploratory. It should help answer:
+
+- Which customer pains are most common across active deals?
+- Which decision criteria dominate each stage?
+- Which industries have different pain patterns?
+- Which curated evidence snippets justify the theme ranking?
+
 ## Chart Contract
 
 | Chart ID | Title | Chart Type | Primary Fields |
@@ -125,6 +157,21 @@ delta rows. That is expected until enough deal events create snapshots.
 |---|---|---|---|
 | `trend_kpis` | Pipeline Trend KPIs | Table | `window_start`, `window_end`, `lookback_days`, `snapshot_count`, start/end/delta fields for active/open count, open pipeline value, avg health, attention, won, lost |
 | `trend_delta_bars` | Pipeline Trend Delta | Bar or Table | `metric`, `start_value`, `end_value`, `delta` |
+
+## Customer Themes Chart Contract
+
+| Chart ID | Title | Chart Type | Primary Fields |
+|---|---|---|---|
+| `theme_overview` | Top Customer Themes | Bar or Table | `theme_key`, `label`, `deal_count`, `avg_importance` |
+| `decision_criteria_by_stage` | Decision Criteria By Stage | Grouped Bar or Table | `stage`, `theme_key`, `label`, `count`, `avg_importance` |
+| `pain_by_industry` | Pain By Industry | Grouped Bar or Table | `industry`, `theme_key`, `label`, `count`, `avg_importance` |
+| `theme_evidence_drilldown` | Theme Evidence Drill-down | Table | `company`, `industry`, `deal_stage`, `theme_key`, `label`, `dimension`, `importance`, `evidence`, `meeting_date` |
+
+Suggested customer themes layout:
+
+1. Top row: `theme_overview`
+2. Middle row: `decision_criteria_by_stage`, `pain_by_industry`
+3. Bottom row: `theme_evidence_drilldown`
 
 Suggested trend layout:
 
@@ -156,6 +203,10 @@ After creating the dashboard:
 - `Pipeline Trend Review` uses `analytics_snapshots`, not `deals`.
 - `trend_kpis` and `trend_delta_bars` contain no raw notes, contacts, or
   embeddings.
+- `Customer Themes Review` uses `deal_intel.deals` and only selected
+  `customer_themes.evidence`, not raw meeting notes.
+- `theme_evidence_drilldown` contains no contacts, embeddings, or raw meeting
+  notes.
 
 Milestone 3.3 is the formal cross-check between:
 

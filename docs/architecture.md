@@ -6,7 +6,7 @@
 [Claude Desktop / Codex — 자연어 입력]
          │ stdio JSON-RPC (FastMCP)
          ▼
-[deal-intel-mcp 서버  18 tools]
+[deal-intel-mcp 서버  20 tools]
          │
          ├─ LLM Provider ──────────────────────────────────────────────────
          │    add_meeting: MEDDPICC + customer_themes 추출 (구조화 JSON)
@@ -34,7 +34,7 @@
                    deal_summary_vector     : summary_embedding cosine 384d
 ```
 
-## 18개 MCP 도구
+## 20개 MCP 도구
 
 | 도구 | LLM 호출 | Embedding | 주요 기능 |
 |---|---|---|---|
@@ -54,6 +54,8 @@
 | `export_report` | 없음 | 없음 | weekly_pipeline / pipeline_trend CSV·Markdown 파일 생성 |
 | `get_insights` | 없음 | 없음 | 7가지 BI 집계와 legacy insight query |
 | `get_customer_themes` | 없음 | 없음 | 고객 고민 주제별 고유 딜 수·근거 집계 |
+| `get_customer_theme_breakdown` | 없음 | 없음 | 고객 주제를 stage·industry·dimension별로 비교 |
+| `get_customer_theme_evidence` | 없음 | 없음 | 특정 고객 주제의 curated evidence drill-down |
 | `analyze_deal` | 1회 (전략) | 없음 | 갭 분석 + BD 전략 생성 |
 | `search_deals` | 없음 | query embed | Python cosine 기본, M10+에서 `$vectorSearch` 선택 |
 
@@ -191,6 +193,10 @@ src/deal_intel/
     add_meeting.py      MEDDPICC 추출 LLM → 요약 LLM → meddpicc_latest 재계산 → 임베딩 저장
     get_customer_themes.py
                         customer_themes를 고유 deal 기준으로 집계
+    get_customer_theme_breakdown.py
+                        customer_themes를 stage·industry·dimension별로 비교
+    get_customer_theme_evidence.py
+                        raw notes 없이 curated theme evidence drill-down
     backfill_customer_themes.py
                         기존 meetings에 customer_themes를 idempotent backfill
     get_deal.py         단순 조회
