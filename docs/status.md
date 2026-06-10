@@ -6,6 +6,37 @@ contracts live in [baseline.md](baseline.md) and [metrics.md](metrics.md).
 
 ## Latest Update - 2026-06-10
 
+### Deal review local smoke CLI
+
+Implemented:
+
+- Added `deal-intel smoke-deal-review`.
+- The command exercises the same read-only `get_deal_review` handler path
+  without requiring Claude Desktop or another MCP client.
+- Supports exact `--deal-id`, company substring `--company`, `--limit`,
+  `--as-of`, and `--json`.
+- Text output summarizes review band, alert level, uncertainty, evidence
+  coverage, missing information, confirmed risks, recommended questions, and
+  warnings.
+- JSON output returns the full structured tool response for repeatable local
+  smoke checks.
+- Successful smoke output omits raw notes, contacts, embeddings, and even the
+  restricted field names themselves.
+
+Verification:
+
+- New CLI targeted tests:
+  `5 passed`
+- Related deal review regression tests:
+  `15 passed`
+- Full pytest with workspace-local temp:
+  `260 passed`
+- Ruff:
+  `All checks passed`
+- Live Atlas read-only smoke:
+  `smoke-deal-review --as-of 2026-06-10 --limit 2` returned two deal reviews
+  and `Sensitive field check: passed`
+
 ### Deal review quality hardening
 
 Implemented:
