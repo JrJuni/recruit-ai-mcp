@@ -1,4 +1,4 @@
-# Atlas Charts Dashboard
+﻿# Atlas Charts Dashboard
 
 This document records the Atlas Charts setup path for the `Weekly Pipeline
 Review`, `Pipeline Trend Review`, and `Customer Themes Review` dashboards in
@@ -139,17 +139,33 @@ This dashboard is intentionally exploratory. It should help answer:
 - Which customer pains are most common across active deals?
 - Which decision criteria dominate each stage?
 - Which industries have different pain patterns?
+- Which cross-industry tags have different pain patterns?
 - Which curated evidence snippets justify the theme ranking?
 
 ## Chart Contract
 
+Weekly Pipeline chart pipelines start with:
+
+```json
+{"$match": {"archived": {"$ne": true}}}
+```
+
+If you already created the dashboard manually in Atlas, re-render and re-paste
+the Weekly Pipeline chart pipelines after this contract changes. Existing Atlas
+Charts do not automatically update from repository JSON files.
+
 | Chart ID | Title | Chart Type | Primary Fields |
 |---|---|---|---|
-| `pipeline_kpis` | Pipeline KPIs | Table | `deal_count`, `active_deal_count`, `open_deal_count`, `active_pipeline_value_krw`, `open_pipeline_value_krw`, `avg_health_pct`, `health_coverage_pct`, `stuck_deal_count`, `overdue_deal_count`, `attention_deal_count` |
-| `stage_breakdown` | Stage Breakdown | Bar or Table | `stage`, `count`, `pipeline_value_krw`, `avg_health_pct`, `health_coverage_pct`, `stuck_count`, `overdue_count` |
+| `pipeline_kpis` | Pipeline KPIs | Table | `deal_count`, `active_deal_count`, `open_deal_count`, `active_pipeline_value_amount`, `open_pipeline_value_amount`, `avg_health_pct`, `health_coverage_pct`, `stuck_deal_count`, `overdue_deal_count`, `attention_deal_count` |
+| `stage_breakdown` | Stage Breakdown | Bar or Table | `stage`, `count`, `pipeline_value_amount`, `avg_health_pct`, `health_coverage_pct`, `stuck_count`, `overdue_count` |
 | `health_bands` | Health Bands | Donut | `health_band`, `count` |
-| `attention_deals` | Stuck / Overdue / At Risk Deals | Table | `company`, `industry`, `deal_stage`, `deal_size_krw`, `expected_close_date`, `days_in_stage`, `is_stuck`, `is_overdue`, `health_pct`, `health_band`, `attention_reasons` |
+| `attention_deals` | Stuck / Overdue / At Risk Deals | Table | `company`, `industry`, `customer_segment`, `deal_stage`, `deal_size_amount`, `deal_size_currency`, `expected_close_date`, `days_in_stage`, `is_stuck`, `is_overdue`, `health_pct`, `health_band`, `attention_reasons` |
 | `meddpicc_gap_distribution` | MEDDPICC Gap Distribution | Bar | `gap`, `count` |
+
+The v1 Atlas dashboard is intended for a single reporting currency per
+dashboard. Python metrics and CSV/Markdown reports detect mixed currencies and
+return per-currency breakdowns; re-check Atlas values against `get_metrics`
+when operating with more than one currency.
 
 ## Trend Chart Contract
 
@@ -165,13 +181,20 @@ This dashboard is intentionally exploratory. It should help answer:
 | `theme_overview` | Top Customer Themes | Bar or Table | `theme_key`, `label`, `deal_count`, `avg_importance` |
 | `decision_criteria_by_stage` | Decision Criteria By Stage | Grouped Bar or Table | `stage`, `theme_key`, `label`, `count`, `avg_importance` |
 | `pain_by_industry` | Pain By Industry | Grouped Bar or Table | `industry`, `theme_key`, `label`, `count`, `avg_importance` |
-| `theme_evidence_drilldown` | Theme Evidence Drill-down | Table | `company`, `industry`, `deal_stage`, `theme_key`, `label`, `dimension`, `importance`, `evidence`, `meeting_date` |
+| `pain_by_industry_tag` | Pain By Industry Tag | Grouped Bar or Table | `industry_tag`, `theme_key`, `label`, `count`, `avg_importance` |
+| `theme_evidence_drilldown` | Theme Evidence Drill-down | Table | `company`, `industry`, `customer_segment`, `deal_stage`, `theme_key`, `label`, `dimension`, `importance`, `evidence`, `interaction_type`, `source_confidence`, `source_label`, `subject`, `interaction_date` |
+
+`pain_by_industry` groups by the single primary `industry`. Use it when you want
+the same vertical boundary as pipeline and forecast metrics. `pain_by_industry_tag`
+unwinds `industry_tags`, so one cross-industry account can appear in multiple
+semantic tag groups.
 
 Suggested customer themes layout:
 
 1. Top row: `theme_overview`
 2. Middle row: `decision_criteria_by_stage`, `pain_by_industry`
-3. Bottom row: `theme_evidence_drilldown`
+3. Optional middle/bottom card: `pain_by_industry_tag`
+4. Bottom row: `theme_evidence_drilldown`
 
 Suggested trend layout:
 
@@ -189,24 +212,27 @@ Suggested layout:
 After creating the dashboard:
 
 - No rendered pipeline contains `{{...}}` placeholders.
-- `pipeline_kpis.open_pipeline_value_krw` matches
-  `get_metrics(metric_type="pipeline_health").kpis.open_pipeline_value_krw`.
-- `pipeline_kpis.active_pipeline_value_krw` matches the same `get_metrics`
+- `pipeline_kpis.open_pipeline_value_amount` matches
+  `get_metrics(metric_type="pipeline_health").kpis.open_pipeline_value_amount`.
+- `pipeline_kpis.active_pipeline_value_amount` matches the same `get_metrics`
   result.
 - `pipeline_kpis.avg_health_pct`, `health_coverage_pct`, `stuck_deal_count`,
   `overdue_deal_count`, and `attention_deal_count` match `get_metrics`.
 - `stage_breakdown` stage order is:
   `discovery`, `qualification`, `proposal`, `negotiation`, `stalled`, `won`,
   `lost`.
-- `attention_deals` contains no `meetings.raw_notes`, `contacts`, or
-  `summary_embedding`.
+- `attention_deals` contains no `meetings.raw_notes`,
+  `interactions.raw_content`, `contacts`, or `summary_embedding`.
 - `Pipeline Trend Review` uses `analytics_snapshots`, not `deals`.
 - `trend_kpis` and `trend_delta_bars` contain no raw notes, contacts, or
   embeddings.
 - `Customer Themes Review` uses `deal_intel.deals` and only selected
-  `customer_themes.evidence`, not raw meeting notes.
-- `theme_evidence_drilldown` contains no contacts, embeddings, or raw meeting
-  notes.
+  `customer_themes.evidence`, not raw meeting notes or raw interaction
+  content.
+- `pain_by_industry` uses primary `industry`; `pain_by_industry_tag` uses
+  `industry_tags` and may count one deal in multiple tag groups.
+- `theme_evidence_drilldown` contains no contacts, embeddings, raw meeting
+  notes, or raw interaction content.
 
 Milestone 3.3 is the formal cross-check between:
 

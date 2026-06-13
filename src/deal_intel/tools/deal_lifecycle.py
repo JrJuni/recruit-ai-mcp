@@ -76,6 +76,11 @@ def safe_deal_snapshot(deal: dict) -> dict[str, Any]:
         for meeting in meetings:
             if isinstance(meeting, dict):
                 meeting.pop("raw_notes", None)
+    interactions = snapshot.get("interactions")
+    if isinstance(interactions, list):
+        for interaction in interactions:
+            if isinstance(interaction, dict):
+                interaction.pop("raw_content", None)
     return snapshot
 
 
@@ -84,6 +89,7 @@ def lifecycle_summary(deal: dict) -> dict[str, Any]:
         "deal_id": deal.get("deal_id"),
         "company": deal.get("company"),
         "industry": deal.get("industry"),
+        "customer_segment": deal.get("customer_segment"),
         "deal_stage": deal.get("deal_stage"),
         "archived": deal.get("archived") is True,
         "archived_at": deal.get("archived_at"),

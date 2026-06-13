@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from copy import deepcopy
 from datetime import UTC, date, datetime
@@ -31,7 +31,7 @@ def _deal(*, stage: str = "discovery") -> dict:
         ],
         "expected_close_date": "2026-06-30",
         "expected_close_date_source": "config_default",
-        "deal_size_krw": 10_000_000,
+        "deal_size_amount": 10_000_000,
         "deal_size_status": "rough_estimate",
         "meetings": [],
         "meddpicc_latest": {},
@@ -41,7 +41,7 @@ def _deal(*, stage: str = "discovery") -> dict:
     if stage in {"won", "lost"}:
         deal["expected_close_date"] = None
         deal["expected_close_date_source"] = None
-        deal["deal_size_krw"] = None
+        deal["deal_size_amount"] = None
         deal["deal_size_status"] = None
         deal["meetings"] = [{"date": "2026-05-20"}]
         deal["meddpicc_latest"] = {"filled_count": 1, "health_pct": 80}
@@ -102,6 +102,22 @@ def test_qualified_deal_requires_meeting_and_health_assessment() -> None:
     assert result.field_statuses["meetings"] == DataQualityStatus.MISSING
     assert result.field_statuses["health_assessment"] == DataQualityStatus.MISSING
     assert result.is_complete is False
+
+
+def test_qualified_deal_accepts_canonical_interaction_as_meeting_evidence() -> None:
+    deal = _deal(stage="qualification")
+    deal["interactions"] = [
+        {
+            "interaction_id": "i1",
+            "date": "2026-06-10",
+            "interaction_type": "user_interview",
+            "source_confidence": "customer_stated",
+        }
+    ]
+
+    result = assess_deal_data_quality(deal)
+
+    assert result.field_statuses["meetings"] == DataQualityStatus.VALID
 
 
 def test_terminal_quality_requires_actual_close_and_lost_reason() -> None:
@@ -171,7 +187,7 @@ def test_get_insights_and_mcp_forward_reporting_context(monkeypatch) -> None:
         def list_deals_for_metrics(self) -> list[dict]:
             open_deal = _deal()
             won_deal = _deal(stage="won")
-            won_deal["deal_size_krw"] = 99_000_000
+            won_deal["deal_size_amount"] = 99_000_000
             won_deal["deal_size_status"] = "quoted"
             won_deal["actual_close_date"] = "2026-06-01"
             return [open_deal, won_deal]
@@ -193,8 +209,10 @@ def test_get_insights_and_mcp_forward_reporting_context(monkeypatch) -> None:
     assert direct["as_of"] == "2026-06-08"
     assert direct["timezone"] == "Asia/Seoul"
     assert direct["total_deals"] == 2
-    assert direct["total_size_krw"] == 10_000_000
-    assert direct["kpis"]["open_pipeline_value_krw"] == 10_000_000
+    assert direct["total_size_amount"] == 10_000_000
+    assert direct["total_size_currency"] == "KRW"
+    assert direct["mixed_total_size_currency"] is False
+    assert direct["kpis"]["open_pipeline_value_amount"] == 10_000_000
     assert "stage_breakdown" in direct
     assert "pipeline_values" in direct
     assert via_mcp["ok"] is True
@@ -253,6 +271,7 @@ def test_metrics_read_path_excludes_raw_notes_contacts_and_vectors() -> None:
     assert db.deals.projection == {
         "_id": 0,
         "meetings.raw_notes": 0,
+        "interactions.raw_content": 0,
         "contacts": 0,
         "summary_embedding": 0,
     }

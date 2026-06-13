@@ -1,308 +1,830 @@
 # Backlog
 
-장기 계획, 미구현 항목. 진행 중/직전 완료는 [status.md](status.md).
+English is the source language for this document. Korean summaries belong only
+in `README.ko.md` and `AGENTS.ko.md`.
 
----
+## Reading Note
 
-## P1 — BI Reporting MVP
+Read the current streams first. Historical milestone summaries are preserved at
+the bottom for traceability, but they are not active planning material.
 
-각 항목은 독립 서브 태스크로 구현하고 targeted test와 전체 회귀 gate를 통과한 뒤
-다음 항목으로 이동한다.
+When this file conflicts with code, tests, or contract docs, prefer:
 
-### #1 Metric 계약과 공통 계산
+1. source code,
+2. tests,
+3. `docs/baseline.md` and area contract docs,
+4. this backlog.
 
-1. 완료: Active/Open/Stalled 범위와 health assessment 정의
-2. 완료: config 기반 health band와 경계값 fixture 테스트
-3. 완료: pipeline value, 추정 범위, 전략적 0원, 금액 coverage 정의
-4. 완료: stuck/overdue, win rate, expected close 기본값 정의
-5. 완료: 데이터 품질 coverage, reporting timezone, 재현 가능한 `as_of`
-6. 완료: `get_insights`와 향후 CSV가 공유할 순수 계산 모듈
+## Current Active Streams
 
-현재 계약: [metrics.md](metrics.md)
+### Product Roadmap To v1.0 And v2.0
 
-Milestone 1.2 상태:
+Goal: keep the MVP useful for one-person or small AI-assisted sales teams while
+preserving a clear path to deeper customization.
 
-- 완료: `build_pipeline_health_summary`를 BI/CSV/Atlas 공통 계산기로 추가
-- 완료: `get_insights("pipeline_overview")`가 공통 계산기를 사용하도록 전환
-- 완료: `get_metrics(pipeline_health)` MCP 도구 구현
-- 완료: Weekly Pipeline 보고서 행 생성기
-- 완료: UTF-8 BOM CSV 저장과 formula injection 방어
-- 완료: LLM 없는 Markdown 요약
-- 완료: `export_report(report_type="weekly_pipeline")` MCP 도구
-- 완료: Atlas Charts Pipeline Dashboard와 교차 검증
+Current positioning:
 
-### #2 `get_metrics` MCP 도구
+- The default product is an AI-assisted sales/deal-intelligence record and
+  review tool for teams without a mature CRM or dedicated sales operations
+  function.
+- Different industries have different deal tempo, expected close windows,
+  qualification signals, and reporting expectations. Configuration is therefore
+  a product feature, not just an implementation detail.
+- The MVP should stay simple enough for sample/local evaluation, but the core
+  data model should avoid unnecessary Korea-only or MEDDPICC-only assumptions
+  where the migration cost is still low.
 
-완료. `pipeline_health`와 `pipeline_trend`를 지원한다. stage·industry 필터,
-KPI, stage별 집계, coverage, warning, snapshot 기반 추세를 반환한다.
-LLM과 embedding은 사용하지 않는다.
+Recommended implementation order:
 
-### #3 Weekly Pipeline 보고서
+1. Full-profile MongoDB operational hardening.
+   - Keep ordinary MongoDB features that work on Atlas Free/M0 in `full`, not
+     `pro`.
+   - First slice: version the normal index contract, add read-only Mongo
+     doctor checks, and add a permissive deals collection validator with
+     dry-run/apply CLI commands.
+   - Later slices can evaluate change streams and time-series collections only
+     after the core full/Mongo path is stable.
+2. Pro profile skeleton and infrastructure path.
+   - Add the paid-infra upgrade path around MongoDB M10+, Atlas Vector Search,
+     and related MongoDB ecosystem features where they provide real value.
+   - Keep `sample` and `full` working without paid infrastructure.
+   - MongoDB features that work on Atlas Free/M0 and improve normal real-data
+     operation belong in `full`, not `pro`.
+   - P-Pro.1/P-Pro.2 skeleton decisions: no silent Atlas fallback, version the
+     `deal_summary_vector` index spec, default OpenAI API usage to
+     `gpt-5.4-mini`, add a dry-run/apply vector-index CLI, and defer live
+     OpenAI/Atlas smoke until paid infra is available.
+3. v1.0 distribution decision.
+   - Confirm the first external distribution path after the MVP package is
+     stable enough: git-clone assisted install, MCPB, uvx/Python-native, or a
+     thin npx wrapper.
+4. Review, usage visibility, and CSV/report quality improvements.
+   - Improve human-readable deal review and reporting artifacts using external
+     feedback after the architecture is stable enough to trial.
+   - Add a usage/cost visibility tool so users can inspect LLM call volume and
+     estimated provider spend from the MCP surface instead of relying on
+     external dashboards only.
+5. Other MVP polish and issue fixes.
+6. Qualification framework abstraction for v2.0.
+   - Defer full MEDDPICC abstraction until after v1.0.
+   - Do it on a dedicated branch or separate repository if needed, because it
+     touches extraction prompts, score calculation, gap logic, reports,
+     dashboards, tests, and user mental models.
 
-1. 완료: 보고서 row 생성기
-2. 완료: UTF-8 BOM CSV와 formula injection 방어
-3. 완료: LLM 없는 Markdown 요약
-4. 완료: `export_report(report_type="weekly_pipeline")` MCP 도구
+MongoDB feature placement rule:
 
-CSV Reporting MVP Gate 통과. 다음 단계는 실제 주간 회의에서 CSV/Markdown
-보고서를 사용해 본 뒤 Atlas Charts 대시보드와 교차 검증을 진행한다.
+- `full` should include MongoDB-backed features that run on Atlas Free/M0 and
+  help ordinary teams operate real data, such as schema validation, ordinary
+  indexes, bounded change-stream consumers that respect Free-cluster filter
+  limits, and time-series collections for analytics snapshots/events if they
+  materially simplify the product.
+- `pro` should be reserved for paid infrastructure, paid API defaults, scale
+  paths, or admin automation that assumes capabilities beyond Free/M0, such as
+  dedicated search/analytics nodes, Atlas Vector Search at scale, paid-tier
+  cluster operations, and API-key LLM operation by default.
+- Before promoting a MongoDB ecosystem feature to `full`, add a mock/contract
+  test and, when practical, a Free-cluster smoke note. If the feature creates
+  paid-infra or cost risk, keep it in `pro`.
 
-### #4 Atlas Charts Pipeline Dashboard
+### LLM Cost And Host-App Delegation
 
-1. 완료: `Weekly Pipeline Review` aggregation JSON 버전 관리
-2. 완료: KPI, stage별 건수·금액, health band, stuck/overdue, MEDDPICC gap
-   pipeline을 실제 Atlas read smoke로 검증
-3. 완료: Atlas UI dashboard 구성 runbook과 `render-atlas-dashboard` CLI 추가
-4. 완료: MongoDB Atlas UI에서 `Weekly Pipeline Review` dashboard 구성 및
-   6개 chart 화면 확인
-5. 완료: `get_metrics`, CSV/Markdown, Atlas Charts aggregation 주요 KPI 교차 검증
+Goal: reduce provider cost and latency while preserving extraction quality for
+persistent deal intelligence.
 
-Atlas Charts MVP 완료. 다음 BI 작업은 실제 주간 리뷰에서 사용해 본 뒤 데이터 품질
-또는 추세 분석으로 이동한다.
+Design stance:
 
-### #5 데이터 품질
+- The host app LLM, such as Claude Desktop, Codex, or ChatGPT, should handle
+  explanation, synthesis, user-facing wording, setup guidance, and
+  confirmation questions from deterministic MCP payloads.
+- The server-side LLM provider should be reserved for work that creates or
+  updates persistent structured deal intelligence: interaction extraction,
+  customer-theme extraction/backfills, and explicit strategy generation.
+- Read-only BI, reports, reviews, gap lists, metrics, and dashboard support
+  should remain LLM-free.
+- Any new tool that calls the server-side LLM must state that cost/latency in
+  its tool contract and docs.
 
-완료: M4.3 deal lifecycle safety layer. `archive_deal`, `restore_deal`,
-`delete_deal`을 추가했다. 기본 BI/read path는 archived deal을
-`{"archived": {"$ne": true}}`로 제외하며, legacy document는 계속 보인다.
-hard delete는 `dry_run=true`가 기본이고, 실제 삭제는 archived deal에 대해
-사용자 확인, exact company match, 삭제 사유, safe audit snapshot 저장 후에만
-수행한다.
+Current product decision:
 
-완료: M4.4 onboarding/demo sample data. 샘플 데이터는 운영 DB의
-`is_sample` 필터가 아니라 `mongodb.demo_database` 기반 별도 demo database
-context에서 `create_sample_data`와 `delete_sample_data`로만 관리한다.
-두 도구 모두 `dry_run=true`가 기본이며 실제 write/delete는
-`confirmed_by_user=true`가 필요하다.
+- Keep `add_interaction` quality-first for now. It currently makes two LLM
+  calls per run: structured extraction and a short summary. Merging those calls
+  is a valid later optimization, but not worth the output-quality and JSON
+  parsing risk at current usage levels.
+- GPT-5.4 mini pricing as of 2026-06-14 is low enough that a typical
+  one-person/small-team BD workflow does not justify weakening extraction
+  quality for cost alone. A rough high-activity day with 20 emails and 5
+  meetings is estimated around a few hundred KRW; ordinary usage should usually
+  be below that. Monthly cost is expected to be in the low-thousands KRW range
+  for this scale.
+- The expected savings from merging the two `add_interaction` calls would not
+  cleanly halve the total run cost because output tokens, prompt complexity,
+  parsing retries, and quality regression risk still remain.
 
-`data_quality` metric, 누락 정보 보고서, Claude/Codex 보완 흐름을 각각 별도
-태스크로 구현한다.
+Near-term candidates:
 
-완료: `get_deal_gaps` read-only customer-attack gap view. table completeness가
-아니라 다음 영업 액션, forecast trust, postmortem에 필요한 미확인 정보를
-우선순위화한다. MongoDB write, LLM, embedding은 사용하지 않는다.
+1. Reclassify `analyze_deal` as an optional strategy-generation tool.
+   - Prefer `get_deal_review` for default deal review because it is
+     deterministic and LLM-free.
+   - Use `analyze_deal` only when the user explicitly asks for generated BD
+     strategy text or wants to persist `bd_strategy`.
+2. Add a usage/cost visibility tool for v1 polish.
+   - Report server-side LLM calls by tool, provider, model, and date window
+     where usage metadata is available.
+   - Estimate cost with a versioned pricing table and clearly label the result
+     as an estimate.
+   - Start with LLM usage; MongoDB/Atlas and embedding runtime cost can remain
+     future work.
+   - Avoid raw content, prompts, API keys, OAuth tokens, and MongoDB URIs in
+     usage payloads.
+3. Keep customer-theme backfill as an explicit maintenance/admin flow.
+   - It is for legacy meeting data, migration, and theme logic refreshes rather
+     than day-to-day user interaction.
+   - Document that it may incur LLM cost when run over many historical
+     meetings.
+4. Keep batch/deferred interaction processing as a long-term optimization
+   candidate.
+   - Useful if usage grows enough that many interactions are captured daily.
+   - Not urgent for v1 because it adds operational complexity and asks users to
+     think about save-vs-enrich timing.
+5. Consider host-assisted extraction later.
+   - A host app could pass a structured extraction payload into a validation
+     tool, but this needs careful schema validation and source handling because
+     host prompts are less reproducible than server-side extraction.
 
-완료: `update_deal` value-only MVP. 기존 딜의 `deal_size_*` 필드는
-`confirmed_by_user=true`와 `deal_size_note` 근거가 있을 때만 수정하고,
-`deal_value_history`를 남긴다.
+Acceptance principles:
 
-완료: `update_deal` metadata 확장. `company`, `industry`,
-`expected_close_date`, `actual_close_date`, `close_reason`은
-`confirmed_by_user=true`와 사용자 승인 근거(`update_note`)가 있을 때만
-수정한다. stage 변경은 계속 `update_stage`로만 처리한다.
+- No LLM calls in read-only BI/reporting paths.
+- No silent downgrade in data quality: any future raw-only/deferred intake must
+  clearly show that health/themes are not updated yet.
+- No secret exposure in cost/usage reports.
+- Natural-language smoke tests should still answer common read-only questions
+  without server-side LLM calls.
 
-남은 범위: `add_meeting` 등 LLM 기반 경로는 향후
-`deal_value_suggestion`만 반환하고 금액 필드를 자동 변경하지 않는다.
+### User Memory MCP Tools
 
-### #6 추세 분석
+Goal: let non-developer users teach the assistant their sales motion, reporting
+preferences, taxonomy corrections, metric-tuning feedback, and evidence policy
+without manually editing files.
 
-완료: M5.1-M5.5 trend foundation. `analytics_snapshots` 저장 계약을 추가하고
-`create_deal`, `add_meeting`, `update_stage`에 non-blocking snapshot 기록을
-연결했다. Snapshot은 `event_id` 기준 idempotent upsert이며, 실패해도 원래
-딜 작업은 중단하지 않고 응답에 warning만 반환한다.
+Design stance:
 
-완료: M5.6 `pipeline_trend` metric. `get_metrics`에서
-`metric_type="pipeline_trend"`를 지원하며, 기본 7일 lookback으로
-`analytics_snapshots`의 시작/종료 latest snapshot을 비교한다.
+- `user_docs/` is the repo-local user memory area.
+- User-created documents are allowed, including documents the user explicitly
+  asks an AI assistant to create.
+- The MCP surface should be a narrow user-memory API, not a
+  general-purpose file editor.
+- Built-in categories are useful defaults, but custom Markdown documents should
+  be allowed through safe slugs so teams can create notes such as
+  `pricing-objections.md` or `public-sector-sales-notes.md`.
 
-완료: M5.7 trend CSV. `export_report(report_type="pipeline_trend")`가
-analytics snapshot 기반 trend summary를 CSV와 Markdown으로 저장한다.
+Implemented tools:
 
-완료: M5.8 Atlas trend chart. `Pipeline Trend Review` dashboard spec을
-버전 관리하고 `render-atlas-dashboard --dashboard pipeline_trend`로
-렌더링할 수 있게 했다. Atlas aggregation read smoke도 통과했다.
+- `record_user_memory`
+  - Append durable feedback to a built-in category file or a user-requested
+    custom Markdown document.
+  - Use only when the user explicitly says to remember, record, store, or update
+    a durable preference.
+- `get_user_memory`
+  - Read relevant memory documents so the AI assistant can adapt responses,
+    reports, taxonomy suggestions, and metric-tuning proposals.
 
-남은 범위: M6 Customer Themes expansion.
+Safety rules:
 
----
+- Restrict writes to `user_docs/` or a configured user-memory directory.
+- Allow only safe Markdown file slugs directly under that directory.
+- Reject path traversal, absolute paths, hidden files, executable extensions,
+  and nested paths unless a later policy explicitly allows them.
+- Append by default; full-document rewrites require an explicit cleanup or
+  consolidation request.
+- Never store API keys, OAuth tokens, MongoDB URIs, private keys, session
+  cookies, or other credential-like strings. Mask low-risk accidental snippets
+  when possible and reject high-risk secret-shaped values.
 
-## P2
+Implemented:
 
-### #7 OpenAI API provider support
+- Shared `user_memory` module with path resolution, slug validation,
+  category/custom-document routing, and secret scanning.
+- MCP `get_user_memory` read tool.
+- MCP `record_user_memory` append tool.
+- Docs, MCPB manifest, and MCP tool-surface updates.
 
-완료. `llm.provider: openai_api`가 공식 OpenAI Responses API를 사용하도록
-추가했다. `OPENAI_API_KEY`, `llm.openai_api_model`,
-`llm.openai_api_reasoning_effort`로 설정하며 기존 MCP tool surface는 그대로
-유지한다. 현재 환경에는 OpenAI API credit/key가 없어 live smoke는 mock HTTP
-테스트로 대체했다.
+Deferred:
 
-추후 검증 필요: disposable `OPENAI_API_KEY`와 API credit이 준비되면
-`llm.provider: openai_api`로 최소 live smoke를 수행한다. 검증 범위는
-provider ping, 작은 `chat_once` 1회, 그리고 가능하면 `add_meeting`의 LLM
-경로 1회다. 비용이 발생하므로 명시적으로 opt-in할 때만 수행한다.
+- Optional CLI helpers only if packaging or smoke tests need them.
+- Future cleanup/consolidation tools for rewriting user-memory documents after
+  explicit user request.
 
-### Deferred: human-readable pipeline and performance CSV reports
+### Currency Abstraction - Implemented 2026-06-12
 
-Do not implement immediately. Current `weekly_pipeline` and `pipeline_trend`
-CSV exports are functionally useful, but they are still close to the BI/API data
-shape. A future reporting pass should make CSV artifacts meaningfully different
-from the web dashboard: easier for humans to read, paste into weekly business
-reports, and review without expanding JSON cells.
+Goal: remove currency-specific field names from the core schema so the product
+can serve non-KRW teams without making every metric/report feel tied to one
+market.
 
-Known product questions:
+Preferred v1 canonical fields:
 
-- Should `weekly_pipeline` flatten JSON-style fields such as primary pain,
-  decision criteria, attention reasons, and data quality into report-friendly
-  columns?
-- Should a separate `pipeline_performance` report exist for won/lost outcomes,
-  booked value, lost value, win rate, close dates, and close reasons?
-- Who is the intended reader: internal AE weekly review, executive status
-  report, customer success handoff, or investor-style performance summary?
-- How should CSV differ from Atlas Charts so it is not just another raw
-  dashboard export?
+- `deal_size_amount`
+- `deal_size_low_amount`
+- `deal_size_high_amount`
+- `deal_size_currency`
 
-Keep raw meeting notes, contacts, and embeddings excluded from every CSV report.
-
-### #8 Customer Themes 확장
-
-완료: M6.1-M6.3. `get_customer_theme_breakdown`이 stage·industry·dimension별
-customer theme 비교를 제공하고, `get_customer_theme_evidence`가 raw notes 없이
-curated evidence drill-down을 제공한다. `Customer Themes Review` Atlas dashboard
-spec도 버전 관리한다.
-
-Deferred: Customer Themes CSV는 사람이 읽기 좋은 reporting artifact의 역할이
-명확해진 뒤 별도 태스크로 진행한다.
-
-### #9 Atlas Vector Search 전환 (M10+)
-
-M0 호환 Python cosine 기반 `search_deals`는 완료. 딜 수가 커져 M10+로 올릴 때
-`mongodb.vector_search: atlas`와 `deal_summary_vector` 인덱스로 전환하고 성능을 검증.
-
-### #10 in-app ChatGPT 로그인
-
-현재 `login-chatgpt`는 CLI-only이며 브라우저 인증을 수행한다. MCP 도구화 시
-blocking 호출을 피하고 인증 상태와 재시도 계약부터 정의한다.
-
-### #11 MongoDB-free zero-config sample mode
-
-Notion 연동 전에 MongoDB/Atlas 종속성이 없는 순수 샘플 버전을 만든다.
-목표는 비개발자, 친구 리뷰, AI 에이전트 자동 탐색/테스트가 `MONGODB_URI`,
-Atlas project, API credit 없이도 바로 MCP 도구를 호출해 볼 수 있게 하는 것이다.
-
-운영 원칙:
-
-- 필수 외부 의존성은 무료 GPT/ChatGPT OAuth 인증만 둔다.
-- MongoDB, Atlas Charts, Atlas Vector Search, paid API key는 요구하지 않는다.
-- 샘플 데이터는 repo fixture 또는 로컬 app data에 포함하고, 기본 실행 시 자동으로
-  읽힌다.
-- write tool은 로컬 sandbox/sample store에만 기록하며 실제 Atlas에는 절대 쓰지 않는다.
-- read-only BI, customer themes, gaps, reports는 샘플 데이터만으로 동작해야 한다.
-- LLM이 필요한 도구는 GPT OAuth provider를 사용하되, BI/reporting 경로는 계속
-  LLM/embedding 없이 동작한다.
-- AI 에이전트가 자동으로 긁어가서 테스트할 수 있도록 `list_deals`,
-  `get_metrics`, `get_deal_gaps`, `get_customer_theme_*`, `export_report`의
-  happy path를 zero-config smoke로 고정한다.
-
-구현 후보:
-
-1. `storage.backend: mongo | local_sample` config 추가
-2. `LocalSampleClient` 또는 storage adapter 추가
-3. bundled sample fixtures와 reset/delete sample 명령 추가
-4. MCP startup 시 Mongo env가 없으면 명시적으로 sample mode로 안내
-5. zero-config smoke test와 README/quickstart 별도 섹션 추가
-
-이 모드는 제품 체험/검증용이며, 실제 운영 데이터와 장기 BI는 MongoDB backend를
-기준으로 유지한다.
-
-### #12 Notion 연동
-
-Notion에서 작성한 회의록을 Notion API → `add_meeting`으로 자동 싱크.
-
-### #13 deal_stage 추천 확장
-
-현재 명시적 회의록 신호는 `stage_suggestion`으로 제안한다. 향후 MEDDPICC 점수 기반
-추천을 추가하더라도 자동 변경하지 않고 사용자 확인 후 `update_stage`를 호출한다.
-
-### #14 확인 정책 config / Autopilot 모드
-
-현재 `create_deal`은 금액 입력 시 `deal_size_status` 확인을 강제하고,
-`add_meeting`은 stage 변경을 `stage_suggestion`으로만 제안한다. 이는 데이터 품질에는
-좋지만, 일부 사용자는 "AI가 보수적으로 추정해서 먼저 결과물을 만들고 나중에
-고치기"를 선호할 수 있다.
-
-M3 이후 별도 태스크로 다음 운영 모드를 config화한다.
-
-- `strict`: 현재 동작. 금액 분류, 0원 딜, stage 변경은 사용자 확인 필요.
-- `assistant_default`: AI/assistant가 보수적 기본값을 넣고 warning을 반환.
-  예: 양수 금액 + status 누락 시 `rough_estimate`.
-- `autopilot`: 가능한 한 진행하고 data quality/report에서 추정값과 warning을 노출.
-
-초기 config 후보:
+Configuration:
 
 ```yaml
-workflow:
-  confirmation_mode: strict  # strict | assistant_default | autopilot
-  require_confirmation_for:
-    deal_value_classification: true
-    stage_change_from_meeting: true
-    terminal_stage_change: true
+deal_value:
+  default_currency: KRW
 ```
 
-구현 시 기존 metric의 `estimated` / `confirmed` coverage와 연결해서, autopilot이
-편하더라도 BI에서 추정값과 확인값은 계속 분리한다.
+Implementation stance:
 
-### Deferred: unknown-first scoring and uncertainty calibration
+- Do not preserve `_krw` fields as a long-term public contract. There are no
+  external users yet, so schema clarity is worth the one-time migration.
+- Existing fixture/sample data, tests, reports, metrics, Atlas chart specs, and
+  docs should move to the generic names together.
+- If compatibility aliases are needed during implementation, keep them local to
+  migration/read helpers and remove or mark them temporary before v1.0.
+- Output labels should include currency explicitly, for example
+  `pipeline_value_amount` plus `currency`, or user-facing labels such as
+  `Pipeline value (configured currency)`.
 
-현재 MEDDPICC/health scoring에서 미습득 정보를 중립값처럼 `3/5`로 다루면,
-"모른다"가 "평균적으로 괜찮다"로 섞여 assistant 답변이 과신할 위험이 있다.
-향후 metric engine 조정 시 다음 방향을 논의한다.
+Acceptance criteria:
 
-Partial progress: `get_deal_review`는 legacy `health_pct`와
-`evidence_coverage_pct`를 분리하고, `uncertainty_level`, `review_band`,
-`alert_level`을 반환한다. 남은 범위는 기존 metric engine, dashboard, report의
-scoring semantics 전반 조정이다.
+- `create_deal` and `update_deal` accept the new amount/currency fields.
+- Pipeline metrics no longer expose single-currency canonical keys.
+- Reports and Atlas specs render values with the configured/default currency.
+- Local sample fixtures and Mongo migration paths use the new schema.
+- Full pytest, Ruff, natural smoke, report smoke, and Atlas chart render tests
+  pass.
 
-- 미습득 정보는 기본 점수 `3`이 아니라 `unknown`으로 유지한다.
-- health/fit score는 확인된 evidence만으로 계산하고, 별도
-  `uncertainty_score` 또는 `evidence_coverage`를 함께 노출한다.
-- unknown이 많을수록 forecast confidence와 deal-review confidence를 낮춘다.
-- `analyze_deal`, `get_deal_gaps`, `get_metrics`, dashboard 표현에서
-  "낮은 점수"와 "모르는 상태"를 분리한다.
-- "수주 확률"처럼 calibration되지 않은 숫자 표현은 evidence와 uncertainty가
-  충분히 쌓이기 전까지 금지하거나 warning을 붙인다.
+Follow-up:
 
-### Deferred: industry taxonomy normalization
+- Atlas Charts remain easiest to operate as one reporting currency per
+  dashboard. Python metrics and reports already detect mixed currencies and
+  expose per-currency breakdowns.
 
-현재 `industry` 필드는 순수 산업 분류가 아니라 산업, 회사 규모, 성장 단계가 섞인
-자유 형식 문자열로 쓰이는 경우가 있다. 예: `IT 스타트업·Series B`,
-`UAM·항공모빌리티·Pre-IPO`, `제조·중견기업`, `이커머스·대기업`.
+### Industry And Customer Segment Taxonomy Cleanup
 
-이 상태에서 `Pain By Industry`, industry filter, industry benchmark,
-expected-close industry override를 해석하면 실제로는 산업별 비교가 아니라
-raw segment별 비교가 된다. M6.4에서는 dashboard 확인만 진행하고, 데이터 모델
-정규화는 별도 태스크로 미룬다.
+Status: field support, read-only audit, and confirmed cleanup CLI are
+implemented; existing live data cleanup is still an operator action because
+medium-confidence rows require judgment.
 
-후보 스키마:
+Goal: keep `industry` useful for real vertical analysis while still preserving
+account-stage and account-segment labels that matter for BD strategy.
 
-- `industry`: 제조, 금융, 이커머스, 헬스케어, 에너지, 게임, 물류 등 순수 산업
-- `sub_industry`: 핀테크, 항공모빌리티, B2B SaaS 등 세부 업종
-- `company_segment`: 스타트업, 중견기업, 대기업, 공공, 준공기업 등
-- `funding_stage`: Series B, Pre-IPO 등 투자/성장 단계
-- `industry_raw`: 기존 입력값 보존
+Rules:
 
-영향 범위:
+- `industry` should be a true business vertical, such as Finance, Retail,
+  Healthcare, Logistics, Manufacturing, Education, Government, Insurance,
+  Gaming, or Energy.
+- `customer_segment` should hold maturity, ownership, market segment, or
+  funding-stage labels such as startup, enterprise, mid_market,
+  public_sector, Series B, or Pre-IPO.
+- Expected-close defaults should prefer `days_by_segment`, then
+  `days_by_industry`, then `default_days`.
 
-- `create_deal` / `update_deal` 입력 계약
-- `get_metrics`, `get_deal_gaps`, `export_report`, customer theme tools의
-  industry filter
-- Atlas `pain_by_industry`, industry benchmark, expected close industry override
-- 기존 MongoDB 문서 backfill 또는 migration 정책
+Deferred work:
 
----
+- Review medium-confidence rows manually. These rows include sensemaking
+  explanations because choosing between two plausible industries can change
+  charts, reporting groups, and future search behavior.
+- Add optional `customer_segment` filters/grouping to Customer Themes and Atlas
+  Charts after the existing dashboard is stable.
 
-## P3
+### Qualification Framework Abstraction v2.0
 
-### #15 event-intel-mcp 연결
-event-intel-mcp의 prospect → deal 전환 트리거. `prospect_id` 필드는 이미 스키마에 있음.
+Goal: eventually allow teams to replace or extend the default MEDDPICC
+qualification model without forking the whole product.
 
-### #16 성공 사례 GTM 확산 리포트
+Timing:
 
-현재 semantic search 결과와 won/lost 데이터가 충분히 누적된 뒤 유사 딜 패턴 기반
-GTM 전략 리포트를 추가한다.
+- Deferred until after v1.0.
+- Treat as v2.0 work on a dedicated branch or separate repository if the
+  blast radius grows.
 
----
+Why deferred:
 
-## 의도적 OOS
+- The current code intentionally uses MEDDPICC as the default operating model.
+- The dimension list is embedded in extraction prompts, health calculation,
+  stage-aware gap logic, deal review, reports, Atlas chart specs, tests, and
+  docs.
+- Generalizing this before the MVP has real user feedback risks turning the
+  product into a framework before the core workflow is proven.
 
-- **Web UI**: CLI + Claude Desktop으로 충분. 별도 결정 시 새 product.
-- **실시간 CRM 동기 (Salesforce/HubSpot)**: v0 scope 밖. CSV export를 우선한다.
+Minimum future concept:
+
+- A qualification framework has:
+  - `framework_id`
+  - dimensions with `key`, `label`, `weight`, score scale, and extraction
+    description
+  - optional stage-aware gap rules
+  - optional framework-specific report labels
+- Custom dimensions without stage rules should still work with simple
+  threshold-based gap detection.
+- Extraction descriptions are mandatory for custom dimensions. A dimension
+  without instructions becomes a dead metric because the LLM will not know what
+  evidence to collect.
+
+### F-Mongo - Full-Profile MongoDB Hardening
+
+Goal: make the normal MongoDB-backed `full` path operationally diagnosable and
+safe on Atlas Free/M0 before spending effort on paid-infrastructure Pro paths.
+
+Implemented slices:
+
+- Versioned ordinary MongoDB index contract in code.
+- `MongoDBClient.ensure_indexes()` now applies the shared contract.
+- Read-only index/schema readiness checks.
+- Permissive v1 `deals` collection validator resource.
+- Permissive v1 `analytics_snapshots` and `delete_audit_logs` validator
+  resources.
+- CLI admin commands:
+
+```bash
+deal-intel mongo doctor
+deal-intel mongo doctor --offline --json
+deal-intel mongo apply-indexes --json
+deal-intel mongo apply-indexes --apply
+deal-intel mongo apply-schema --json
+deal-intel mongo apply-schema --collection analytics_snapshots --json
+deal-intel mongo apply-schema --collection delete_audit_logs --json
+deal-intel mongo apply-schema --collection all --json
+deal-intel mongo apply-schema --apply
+```
+
+Rules:
+
+- `mongo doctor` is read-only.
+- `apply-indexes` and `apply-schema` are dry-run unless `--apply` is provided.
+- `apply-vector-index` is also dry-run unless `--apply` is provided and should
+  be used only for the Pro/M10+ Atlas Vector Search path.
+- Schema validation starts as `warn + moderate`; do not switch to hard
+  `error` enforcement until the document model is stable and existing Atlas
+  data has been audited.
+- Keep this CLI/admin first. Add an MCP developer-surface tool only if users
+  actually need to diagnose MongoDB from inside Claude/Codex chat.
+
+Next candidate units:
+
+1. Optional live Atlas smoke:
+   - `deal-intel mongo doctor --json`
+   - `deal-intel mongo apply-indexes --json`
+   - `deal-intel mongo apply-schema --collection all --json`
+   - `deal-intel mongo apply-schema --collection all --apply` only after
+     manual confirmation.
+   - `deal-intel mongo apply-vector-index --apply` only on an M10+ Pro cluster.
+2. Evaluate whether `analytics_snapshots` should remain a normal collection or
+   get a separate time-series/event collection after v1.0.
+3. Evaluate bounded change-stream consumers only when there is a clear product
+   workflow that benefits from them.
+
+### Z5 - Profile and Config Rollout
+
+Goal: keep one package while making first-run setup clear for `sample`, `full`,
+and `pro`.
+
+Next candidate units:
+
+1. Optional live Atlas smoke for local personal -> MongoDB migration when a
+   disposable target database is available.
+2. Reinstall smoke with `deal-intel-mcp-0.1.13.mcpb` after the safe config
+   update manifest change.
+3. Decide whether release bundles need signing before external distribution.
+
+Principle: human-facing setup starts with `full`. `sample` remains an optional
+zero-config evaluation path for AI agents, demos, and users who explicitly do
+not want to configure MongoDB yet.
+
+### Deal Review Quality
+
+Goal: make deal review feel useful to real sales operators, not like a toy
+scorecard.
+
+Backlog items:
+
+- Implemented in v2: deal reviews now separate health quality, evidence
+  coverage, confirmed risks, missing information, uncertainty, objective
+  actionable gaps, and judgment-sensitive gap observations. Keep report and
+  natural-language rendering aligned with this contract.
+- Revisit MEDDPICC unknown-first scoring. Missing evidence should increase
+  uncertainty instead of masquerading as neutral strength.
+- Keep uncalibrated win-probability numbers suppressed unless a real
+  probability contract exists.
+- Use smoke packs to compare natural-language deal reviews across multiple
+  companies.
+- Add a dedicated corner-case synthetic dataset for deal review quality:
+  - about 10 fictional accounts,
+  - each with 1-3 synthetic evidence items such as meeting notes, customer email
+    replies, user interviews, or internal notes,
+  - intentionally cover suspicious edge cases: high health but weak evidence,
+    low health with complete evidence, terminal won/lost postmortem gaps,
+    strategic-zero deals, unknown amount in early discovery, rough estimate in
+    negotiation, conflicting email vs meeting signals, internal-only optimism,
+    overdue but otherwise healthy deals, and judgment-sensitive competition or
+    champion gaps.
+  - Use this as a QA fixture for `get_deal_review`,
+    `smoke-deal-review-audit`, natural-language answer quality, and future
+    rendered report review. Keep it fictional and free of raw real customer
+    data.
+- Natural Smoke QA expanded to 12 deterministic questions covering pipeline
+  health, specific deal review, riskiest deals, high-health uncertainty,
+  closing gaps, postmortem gaps, decision criteria themes, evidence drill-down,
+  email/interview-backed themes, pipeline trend, actionability separation, and
+  interaction source coverage.
+- Implemented in v2, with follow-up rendering work still useful: separate
+  objective CTA triggers from judgment-sensitive gap observations.
+  - Objective triggers can produce explicit CTAs: overdue close dates,
+    missed commitments, missing actual close dates for won/lost deals, missing
+    close reasons for lost deals, or clearly required initiation steps.
+  - Judgment-sensitive MEDDPICC gaps should usually be shown as gap points
+    rather than prescriptive actions: competition, champion quality, economic
+    buyer mapping, or decision criteria can depend on account context and BD
+    strategy.
+  - Reporting language should avoid making uncertain qualitative gaps sound
+    like mandatory next actions. Example: "competition gap exists" is safer
+    than "prepare competitor comparison and close negotiation" unless the
+    account evidence objectively supports that action.
+  - Current implementation: `get_deal_gaps` and `get_deal_review` gap rows
+    include `actionability` and `cta_policy`; both expose `actionable_gaps` and
+    `gap_observations`.
+  - Weekly pipeline rows and Markdown reports render objective action items
+    separately from gap observations.
+  - Remaining follow-up: future document/Word renderers and LLM answer
+    templates should keep the same distinction instead of flattening all gaps
+    into recommended actions.
+
+### Customer Interaction Intake
+
+Goal: expand from "meeting-note intake" to a lightweight customer interaction
+intelligence layer that can ingest emails, interviews, call summaries, and
+internal notes without pretending every input is the same kind of evidence.
+
+Priority: high, after the current Deal Review Quality loop and before deeper
+Reporting/Pro infrastructure work. This improves local mode usefulness and
+real-world data capture more than another dashboard/report would right now.
+
+Candidate implementation units:
+
+1. `add_interaction` read/write contract.
+   - Inputs: `deal_id`, `date`, `interaction_type`, `direction`, `content`,
+     optional `participants`, `subject`, `source_confidence`.
+   - Interaction types: `meeting`, `email_thread`, `user_interview`,
+     `call_summary`, `internal_note`.
+   - Direction: `inbound`, `outbound`, `mixed`, `internal`.
+   - Store source metadata so later scoring can distinguish customer-stated
+     evidence from AE/internal notes or outbound claims.
+2. Storage compatibility.
+   - Keep `add_meeting` as a short-lived backward-compatible wrapper.
+   - P3.2 decision: new records live under canonical `interactions`; old
+     `meetings` remain supported as a legacy read fallback.
+   - BI/report/search paths must continue to exclude raw content unless the
+     user asks for single-deal detail.
+3. Extraction prompt update.
+   - Replace "meeting notes" assumptions with "customer interaction content".
+   - Treat inbound customer email and direct user interview quotes as stronger
+     evidence than outbound email or internal notes.
+   - Outbound/internal-only content should create suggested follow-up questions
+     or uncertainty, not confirmed MEDDPICC strength.
+4. Evidence and uncertainty model.
+   - Feed interaction source metadata into the unknown-first scoring work.
+   - Distinguish confirmed risk, missing information, unconfirmed internal
+     hypothesis, and customer-stated evidence.
+5. Sample/local UX.
+   - Add at least one sample email thread and one user interview fixture.
+   - Add smoke questions such as "What did customers say in emails?" and
+     "Which interview quotes support this pain?".
+
+Open decision points:
+
+- Whether to expose a new MCP tool only (`add_interaction`) or also add CLI
+  import helpers for pasted email/interview files.
+- Whether to add redaction/encryption policy for retained `raw_content` in
+  local/full/pro storage.
+- Whether outbound emails should update MEDDPICC scores immediately or only
+  create weak/unconfirmed evidence.
+
+Current implementation note:
+
+- P3.0 exposed `add_meeting` in sample/local mode for user-created local
+  personal deals.
+- P3.1 added `add_interaction` as a meeting-compatible intake path for
+  `meeting`, `email_thread`, `user_interview`, `call_summary`, and
+  `internal_note`.
+- P3.2 switched new writes to canonical `deal.interactions` only. `meetings`
+  is now legacy read fallback, and helpers merge/dedupe both sources for
+  existing data.
+- P3.2 stores `interactions.raw_content` in local/full/pro storage for future
+  redaction/security modules, but excludes it from BI/list/report/delete-audit
+  paths.
+- Custom interaction types must be registered under
+  `interactions.custom_types`; arbitrary types are rejected.
+- `outbound_unconfirmed` and `internal` inputs are stored with source metadata
+  but do not update MEDDPICC health or customer-theme counts unless the caller
+  explicitly marks the source as stronger evidence.
+- P3.4 added source-aware sample evidence:
+  - bundled fixture deals now include canonical `interactions` records while
+    preserving legacy `meetings` for compatibility,
+  - one inbound `email_thread` and one `user_interview` are included as
+    curated evidence examples,
+  - customer-theme evidence rows expose safe source metadata so agents can
+    distinguish meeting, email, and interview support without reading raw
+    content.
+- P3.5 added source-aware filters to `get_customer_theme_evidence`:
+  `interaction_type` and `source_confidence`. This lets agents answer
+  questions like "show only email-backed evidence" without reading raw
+  interaction content.
+- P3.6 added source-aware rendering:
+  - customer-theme evidence rows include a human-readable `source_label`,
+  - weekly pipeline rows and Markdown reports show primary pain / decision
+    criteria source labels,
+  - the natural-question smoke summary includes a Source Evidence section so
+    source-aware answers can be checked without reopening an MCP client.
+- P3.7 closed the MVP intake contract:
+  - `add_interaction` responses include `source_policy` so clients can explain
+    confirmed-evidence versus stored-unconfirmed behavior,
+  - first-run guidance now describes meeting, email, interview, call-summary,
+    and internal-note intake through the single public tool,
+  - policy text remains response-only and does not expand restricted BI/list/
+    report projections.
+
+#### P3.3 cleanup: single public intake surface
+
+Goal: make the codebase easier for outside users and fork authors to
+understand by removing "meeting tool vs interaction tool" ambiguity.
+`add_interaction` should become the single public intake concept; meeting notes
+are just `interaction_type: meeting`.
+
+First cleanup implemented on 2026-06-11:
+
+- `sample` and `standard` surfaces expose `add_interaction`, not
+  `add_meeting`.
+- `add_meeting` remains registered only on the `developer` surface as a
+  deprecated compatibility alias.
+- README, MCPB manifest text, baseline/tool-surface docs, AGENTS/CLAUDE rules,
+  and primary tests now point new integrations to `add_interaction`.
+- Runtime surface counts are now `sample=17`, `standard=21`, `developer=24`.
+
+Why now:
+
+- P3.2 already made `deal.interactions` the canonical storage path.
+- Keeping `add_meeting` as a second first-class tool creates duplicate mental
+  models for users and future contributors.
+- The repo is intended to be reused by others, so public API clarity matters
+  more than preserving a convenience alias forever.
+
+Remaining implementation units:
+
+1. Code cleanup.
+   - Stop adding new feature logic to `src/deal_intel/tools/add_meeting.py`.
+   - Keep the wrapper tiny or remove it once no test/docs path needs it.
+   - Keep legacy `deal.meetings` read fallback in `schema.interactions`; that
+     is data compatibility, not a public write API.
+2. Final alias removal.
+   - Remove `src/deal_intel/tools/add_meeting.py` and the MCP handler after at
+     least one compatibility window, or when no supported client path needs it.
+   - Keep one release note explaining the replacement call:
+     `add_interaction(interaction_type="meeting", direction="inbound", ...)`.
+3. Legacy data compatibility.
+   - Keep `deal.meetings` read fallback covered by tests even after the write
+     alias is removed.
+
+Acceptance criteria:
+
+- No user tutorial or README happy path requires `add_meeting`.
+- `interaction_type: meeting` through `add_interaction` covers the former
+  `add_meeting` behavior.
+- If `add_meeting` remains, it is visibly deprecated and excluded from default
+  user-facing surfaces, or there is a documented reason to keep it for one more
+  release.
+- Legacy `deal.meetings` read fallback remains covered by tests.
+- Full pytest, Ruff, MCP/tool-surface count smoke, and MCPB manifest tests pass.
+
+### Account People Graph
+
+Goal: eventually track customer-side people and relationships as queryable
+deal intelligence, especially Champion, Economic Buyer, decision committee,
+procurement, security, legal, and blockers.
+
+Priority: medium-long term. Do not implement before the deal review quality and
+interaction intake work, but keep the design in mind because it will become a
+natural query key for BD workflows.
+
+Possible shape:
+
+- Store people in a separate local NoSQL/Mongo collection or RDBMS-like table
+  keyed by normalized company/account identity.
+- Link people to deals by `company`/`account_id` and optionally `deal_id`.
+- Track role labels such as `champion`, `economic_buyer`, `decision_maker`,
+  `influencer`, `blocker`, `procurement`, `security`, and `legal`.
+- Track confidence and evidence source:
+  direct customer statement, meeting note, email thread, internal AE note, or
+  inferred/unconfirmed.
+- Let BD ask questions like:
+  "Who is the champion at this account?",
+  "Do we know the economic buyer?",
+  "Who blocks security approval?",
+  "Which accounts lack a mapped decision committee?".
+
+Implementation cautions:
+
+- Avoid turning this into a full CRM too early.
+- Keep raw contact details out of default BI/report paths.
+- Prefer explicit source/confidence metadata over silently treating every
+  extracted person as confirmed.
+- Decide later whether this belongs in MongoDB collections, local JSON/SQLite,
+  or a small relational layer. The key requirement is account/company-indexed
+  lookup and safe links back to deals.
+
+### Customer Themes
+
+Goal: make customer theme analysis more operationally useful.
+
+Backlog items:
+
+- Split `industry` from company maturity/stage taxonomy. Current data can mix
+  true industry with descriptors such as startup, series stage, or enterprise.
+- Defer customer-theme CSV until the human-readable reporting artifact has a
+  clearer user and use case.
+- Keep raw notes, contacts, and embeddings out of customer-theme dashboards and
+  evidence responses.
+
+### Reporting
+
+Goal: make CSV/Markdown reports meaningfully different from Atlas dashboards.
+
+Deferred questions:
+
+- Should `weekly_pipeline` flatten primary pain, decision criteria, attention
+  reasons, and data quality into reader-friendly columns?
+- Should a separate `pipeline_performance` report exist for won/lost outcomes,
+  booked value, lost value, win rate, close dates, and close reasons?
+- Who is the intended reader: AE weekly review, executive status report,
+  customer success handoff, or investor-style performance summary?
+- How should CSV differ from Atlas Charts rather than being another raw
+  dashboard export?
+
+### Packaging
+
+Goal: make the project easy for non-developers and fast evaluators.
+
+Current MVP stance:
+
+- `docs/mvp-readiness.md` is the full-by-default external MVP gate, with
+  optional zero-config sample checks for AI evaluation.
+- npx/uvx wrappers are useful, but not required before the first MVP trial.
+- Packaging work should not preempt sample/local UX completion unless it
+  directly reduces first-run confusion.
+- `docs/distribution-plan.md` records the wrapper rollout order:
+  package-data readiness first, then uvx/Python-native distribution, with npx
+  as a thin convenience wrapper after the core package can run without a git
+  checkout.
+
+Backlog items:
+
+- Keep one repository and one package.
+- Expose `sample`, `full`, and `pro` through config profiles, not separate
+  repositories.
+- Keep the config-driven `sample`, `standard`, and `developer` MCP tool
+  surfaces aligned with the actual tool set before a stable external release.
+- Keep local personal mode safe for temporary user data. The `sample` profile
+  starts with bundled fictional data, then switches active reads to local
+  `deals.json` once a user creates personal deals. Reset/export is now
+  available; real team/shared operation still uses MongoDB-backed `full`.
+- Consider whether natural-language smoke tools should remain CLI-only in
+  production bundles.
+- Keep the dry-run-first local-to-Mongo migration path conservative; before
+  release, live-smoke it against a disposable database.
+- Keep `tests/test_mcpb_manifest.py` as the repo-local contract check for
+  manifest fields, tool list alignment, environment mapping, and launcher
+  behavior.
+- Rebuild and attach a fresh `.mcpb` artifact after bundle manifest changes.
+  Current local artifact target: `deal-intel-mcp-0.1.13.mcpb`; unsigned.
+
+### Cost And Query Optimization
+
+Goal: keep MongoDB reads cheap, predictable, and aligned across MCP, reports,
+and Atlas Charts.
+
+Next candidate units:
+
+1. Deferred BI metrics allowlist projection.
+   - Convert `list_deals_for_metrics()` from blacklist-style projection to
+     allowlist-style projection after BI/review/report field contracts
+     stabilize.
+2. Optional Atlas `explain`/index smoke on a disposable or production-safe
+   database.
+   - O3 added the intended index contracts in code and tests, but did not run
+     live Atlas index creation/explain as part of the local validation loop.
+
+Audit record:
+
+- See [query-audit.md](query-audit.md).
+
+Completed:
+
+- O3 index contract:
+  - Added `(archived, deal_stage, updated_at desc)` for list views.
+  - Added `(as_of, occurred_at, created_at)` for trend reads.
+
+### Pro Infrastructure
+
+Goal: define the paid-infrastructure upgrade path without making it mandatory.
+
+Backlog items:
+
+- Live smoke `openai_api` once disposable API credit is available.
+- Add Atlas Vector Search validation for M10+ clusters.
+- Explore MongoDB Change Streams, Time Series Collections, and Schema
+  Validation after the core MVP is stable.
+
+## Historical Milestone Summary
+
+### M1 - Metric Foundation
+
+Completed:
+
+- Metric contracts for pipeline populations, health bands, value coverage,
+  stuck/overdue, win rate, data quality, and reporting context.
+- Shared `build_pipeline_health_summary`.
+- `get_metrics(metric_type="pipeline_health")`.
+
+See `docs/metrics.md` and `docs/baseline.md`.
+
+### M2 - Weekly Reporting
+
+Completed:
+
+- Weekly pipeline row builder.
+- UTF-8 BOM CSV export with formula-injection protection.
+- LLM-free Markdown summary.
+- `export_report(report_type="weekly_pipeline")`.
+
+See `docs/reports.md`.
+
+### M3 - Atlas Charts
+
+Completed:
+
+- Weekly Pipeline Review dashboard specs.
+- Atlas UI setup runbook.
+- Cross-check between `get_metrics`, CSV/Markdown, and Atlas aggregations.
+
+See `docs/atlas-charts.md`.
+
+### M4 - Data Quality and Lifecycle
+
+Completed:
+
+- `get_deal_gaps`.
+- `update_deal` for confirmed value and selected metadata fields.
+- `archive_deal`, `restore_deal`, and `delete_deal` safety layer.
+- `create_sample_data` and `delete_sample_data` for demo database management.
+
+Remaining ideas:
+
+- Deal value suggestions from LLM paths should remain suggestions until user
+  confirmation.
+- Confirmation strictness may eventually become configurable by user mode.
+
+### M5 - Trend Analysis
+
+Completed:
+
+- `analytics_snapshots` foundation.
+- Non-blocking snapshot writes from create/add-meeting/update-stage.
+- Idempotent snapshot events.
+- `get_metrics(metric_type="pipeline_trend")`.
+- `export_report(report_type="pipeline_trend")`.
+- Pipeline Trend Review Atlas chart specs.
+
+### M6 - Customer Themes
+
+Completed:
+
+- `get_customer_theme_breakdown`.
+- `get_customer_theme_evidence`.
+- Customer Themes Review Atlas dashboard specs.
+
+Deferred:
+
+- Human-readable Customer Themes CSV.
+- Stronger taxonomy cleanup around industry versus maturity/stage.
+
+### Z1-Z4 - Zero-Config Sample Mode
+
+Completed:
+
+- Storage backend contract.
+- Bundled fictional sample fixture.
+- `LocalSampleClient`.
+- Startup diagnostics and `storage-status`.
+
+Local sample mode is intentionally read-only for the first MVP.
+
+### Z5 - Config Profiles
+
+Completed:
+
+- `sample`, `full`, and `pro` profile definitions.
+- `deal-intel config profiles`.
+- `deal-intel config show`.
+
+Remaining work is tracked in the current active stream above.

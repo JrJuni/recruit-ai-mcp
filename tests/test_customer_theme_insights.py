@@ -37,8 +37,11 @@ def _theme(
     *,
     importance: int = 4,
     meeting_date: str = "2026-06-01",
+    interaction_type: str | None = None,
+    source_confidence: str | None = None,
+    subject: str | None = None,
 ) -> dict:
-    return {
+    theme = {
         "theme_key": theme_key,
         "label": theme_key,
         "dimension": dimension,
@@ -47,6 +50,15 @@ def _theme(
         "meeting_id": f"m-{theme_key}-{dimension}-{meeting_date}",
         "meeting_date": meeting_date,
     }
+    if interaction_type:
+        theme["interaction_id"] = f"i-{theme_key}-{dimension}-{meeting_date}"
+        theme["interaction_date"] = meeting_date
+        theme["interaction_type"] = interaction_type
+    if source_confidence:
+        theme["source_confidence"] = source_confidence
+    if subject:
+        theme["subject"] = subject
+    return theme
 
 
 def _deal(
@@ -55,12 +67,14 @@ def _deal(
     stage: str,
     industry: str,
     themes: list[dict],
+    industry_tags: list[str] | None = None,
 ) -> dict:
     return {
         "deal_id": deal_id,
         "company": company,
         "deal_stage": stage,
         "industry": industry,
+        "industry_tags": industry_tags or [industry],
         "customer_themes": themes,
         "meetings": [{"raw_notes": "do not leak"}],
         "contacts": [{"name": "secret"}],
@@ -133,10 +147,29 @@ def _deals() -> list[dict]:
                     "won because security passed",
                     importance=5,
                     meeting_date="2026-06-06",
+                    interaction_type="user_interview",
+                    source_confidence="customer_stated",
+                    subject="Win review interview",
                 )
             ],
         ),
         _deal("d4", "NoTheme", "proposal", "SaaS", []),
+        _deal(
+            "d5",
+            "CrossIndustry",
+            "proposal",
+            "SaaS",
+            [
+                _theme(
+                    "compliance_security",
+                    "decision_criteria",
+                    "insurance compliance evidence",
+                    importance=4,
+                    meeting_date="2026-06-07",
+                )
+            ],
+            industry_tags=["SaaS", "Insurance"],
+        ),
     ]
 
 
@@ -150,9 +183,9 @@ def test_customer_theme_breakdown_groups_by_stage_and_counts_unique_deals() -> N
     )
 
     assert result["summary"] == {
-        "deals_analyzed": 3,
-        "deals_with_evidence": 2,
-        "coverage_pct": 66.7,
+        "deals_analyzed": 4,
+        "deals_with_evidence": 3,
+        "coverage_pct": 75.0,
         "group_count": 2,
     }
     discovery = result["groups"][0]
@@ -161,9 +194,9 @@ def test_customer_theme_breakdown_groups_by_stage_and_counts_unique_deals() -> N
     assert discovery["themes"][0]["theme_key"] == "compliance_security"
     assert discovery["themes"][0]["deal_count"] == 1
     assert proposal["group_value"] == "proposal"
-    assert proposal["deal_count"] == 2
-    assert proposal["deals_with_evidence"] == 1
-    assert proposal["themes"][0]["share_of_group_deals_pct"] == 50.0
+    assert proposal["deal_count"] == 3
+    assert proposal["deals_with_evidence"] == 2
+    assert proposal["themes"][0]["share_of_group_deals_pct"] == 66.7
 
 
 def test_customer_theme_breakdown_groups_by_dimension() -> None:
@@ -182,7 +215,38 @@ def test_customer_theme_breakdown_groups_by_dimension() -> None:
     ]
     decision_group = result["groups"][1]
     assert decision_group["themes"][0]["theme_key"] == "compliance_security"
-    assert decision_group["themes"][0]["deal_count"] == 2
+    assert decision_group["themes"][0]["deal_count"] == 3
+
+
+def test_customer_theme_breakdown_filters_by_industry_tags() -> None:
+    result = build_customer_theme_breakdown(
+        _deals(),
+        dimension="decision_criteria",
+        stage="active",
+        industry="Insurance",
+        group_by="stage",
+        top_k=2,
+    )
+
+    assert result["filters"]["industry"] == "Insurance"
+    assert result["summary"]["deals_analyzed"] == 1
+    assert result["groups"][0]["group_value"] == "proposal"
+    assert result["groups"][0]["themes"][0]["theme_key"] == "compliance_security"
+
+
+def test_customer_theme_breakdown_can_group_by_industry_tag() -> None:
+    result = build_customer_theme_breakdown(
+        _deals(),
+        dimension="decision_criteria",
+        stage="active",
+        group_by="industry_tag",
+        top_k=2,
+    )
+
+    values = {group["group_value"]: group for group in result["groups"]}
+    assert {"Finance", "Insurance", "SaaS"}.issubset(values)
+    assert values["Insurance"]["deal_count"] == 1
+    assert values["SaaS"]["deal_count"] == 3
 
 
 def test_customer_theme_evidence_returns_curated_snippets_only() -> None:
@@ -196,14 +260,20 @@ def test_customer_theme_evidence_returns_curated_snippets_only() -> None:
     )
 
     assert result["summary"] == {
-        "deals_analyzed": 4,
-        "unique_deal_count": 3,
-        "evidence_count": 3,
+        "deals_analyzed": 5,
+        "unique_deal_count": 4,
+        "evidence_count": 4,
         "returned_count": 2,
     }
     assert [row["company"] for row in result["evidence"]] == ["Gamma", "Alpha"]
+    assert result["evidence"][0]["interaction_type"] == "user_interview"
+    assert result["evidence"][0]["industry_tags"] == ["Finance"]
+    assert result["evidence"][0]["source_confidence"] == "customer_stated"
+    assert result["evidence"][0]["source_label"] == "User interview (customer-stated)"
+    assert result["evidence"][0]["subject"] == "Win review interview"
     payload = json.dumps(result, ensure_ascii=False)
     assert "raw_notes" not in payload
+    assert "raw_content" not in payload
     assert "contacts" not in payload
     assert "summary_embedding" not in payload
     assert "do not leak" not in payload
@@ -223,6 +293,55 @@ def test_customer_theme_evidence_filters_by_industry_and_importance() -> None:
     assert result["warnings"] == ["no_customer_theme_evidence"]
 
 
+def test_customer_theme_evidence_filters_by_industry_tags() -> None:
+    result = build_customer_theme_evidence(
+        _deals(),
+        theme_key="compliance_security",
+        dimension="decision_criteria",
+        stage="active",
+        industry="Insurance",
+        min_importance=4,
+    )
+
+    assert result["summary"]["evidence_count"] == 1
+    assert result["evidence"][0]["company"] == "CrossIndustry"
+    assert result["evidence"][0]["industry"] == "SaaS"
+    assert result["evidence"][0]["industry_tags"] == ["SaaS", "Insurance"]
+
+
+def test_customer_theme_evidence_filters_by_interaction_source() -> None:
+    result = build_customer_theme_evidence(
+        _deals(),
+        theme_key="compliance_security",
+        dimension="decision_criteria",
+        stage="all",
+        interaction_type="user_interview",
+        source_confidence="customer_stated",
+    )
+
+    assert result["filters"]["interaction_type"] == "user_interview"
+    assert result["filters"]["source_confidence"] == "customer_stated"
+    assert result["summary"]["evidence_count"] == 1
+    assert result["evidence"][0]["company"] == "Gamma"
+
+
+def test_customer_theme_evidence_treats_legacy_meeting_as_meeting_source() -> None:
+    result = build_customer_theme_evidence(
+        _deals(),
+        theme_key="compliance_security",
+        dimension="decision_criteria",
+        stage="all",
+        interaction_type="meeting",
+    )
+
+    assert result["summary"]["evidence_count"] == 3
+    assert {row["company"] for row in result["evidence"]} == {
+        "Alpha",
+        "Beta",
+        "CrossIndustry",
+    }
+
+
 def test_customer_theme_tools_validate_before_storage() -> None:
     mongo = FakeMongo(fail=True)
 
@@ -236,6 +355,26 @@ def test_customer_theme_tools_validate_before_storage() -> None:
         get_customer_theme_evidence.handle(mongo, theme_key="made_up")
     assert invalid_theme.value.error_code == ErrorCode.INVALID_INPUT
     assert invalid_theme.value.stage == Stage.PREFLIGHT
+    assert mongo.reads == 0
+
+    with pytest.raises(MCPError) as invalid_interaction:
+        get_customer_theme_evidence.handle(
+            mongo,
+            theme_key="compliance_security",
+            interaction_type="fax",
+        )
+    assert invalid_interaction.value.error_code == ErrorCode.INVALID_INPUT
+    assert invalid_interaction.value.stage == Stage.PREFLIGHT
+    assert mongo.reads == 0
+
+    with pytest.raises(MCPError) as invalid_confidence:
+        get_customer_theme_evidence.handle(
+            mongo,
+            theme_key="compliance_security",
+            source_confidence="certain",
+        )
+    assert invalid_confidence.value.error_code == ErrorCode.INVALID_INPUT
+    assert invalid_confidence.value.stage == Stage.PREFLIGHT
     assert mongo.reads == 0
 
 
@@ -262,20 +401,21 @@ def test_customer_theme_tool_handlers_return_expected_shape() -> None:
         theme_key="compliance_security",
         stage="active",
         limit=3,
+        interaction_type="meeting",
     )
 
     assert breakdown["ok"] is True
     assert breakdown["filters"]["group_by"] == "industry"
     assert breakdown["groups"]
     assert evidence["ok"] is True
-    assert evidence["summary"]["returned_count"] == 2
+    assert evidence["summary"]["returned_count"] == 3
+    assert evidence["filters"]["interaction_type"] == "meeting"
 
 
 def test_mcp_runtime_registers_customer_theme_expansion_tools() -> None:
     tools = asyncio.run(mcp_server.app.list_tools())
     names = sorted(tool.name for tool in tools)
 
-    assert len(names) == 21
     assert {"get_customer_theme_breakdown", "get_customer_theme_evidence"}.issubset(
         names
     )

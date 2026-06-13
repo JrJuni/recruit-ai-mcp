@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 from datetime import date
@@ -17,6 +17,7 @@ def _deal(
     company: str | None = None,
     stage: str = "discovery",
     industry: str = "IT",
+    customer_segment: str = "startup",
     amount: int | None = 10_000_000,
     amount_status: str | None = "quoted",
     health_pct: float | None = 80,
@@ -25,13 +26,16 @@ def _deal(
     expected_close_date_source: str | None = "user_provided",
     meetings: list[dict] | None = None,
     customer_themes: list[dict] | None = None,
+    meddpicc_gaps: list[str] | None = None,
 ) -> dict:
     return {
         "deal_id": deal_id,
         "company": company or f"Company {deal_id}",
         "industry": industry,
+        "customer_segment": customer_segment,
         "deal_stage": stage,
-        "deal_size_krw": amount,
+        "deal_size_amount": amount,
+        "deal_size_currency": "KRW",
         "deal_size_status": amount_status,
         "stage_history": [{"stage": stage, "entered_at": entered_at}],
         "expected_close_date": expected_close_date,
@@ -46,7 +50,7 @@ def _deal(
             {
                 "filled_count": 1,
                 "health_pct": health_pct,
-                "gaps": ["economic_buyer"],
+                "gaps": meddpicc_gaps if meddpicc_gaps is not None else ["economic_buyer"],
             }
             if health_pct is not None
             else {}
@@ -61,8 +65,11 @@ def _theme(
     importance: int,
     meeting_date: str = "2026-06-01",
     theme_key: str = "operational_efficiency",
+    interaction_type: str | None = None,
+    source_confidence: str | None = None,
+    subject: str | None = None,
 ) -> dict:
-    return {
+    theme = {
         "theme_key": theme_key,
         "label": "Theme",
         "dimension": dimension,
@@ -71,6 +78,15 @@ def _theme(
         "meeting_id": f"meeting-{importance}",
         "meeting_date": meeting_date,
     }
+    if interaction_type:
+        theme["interaction_id"] = f"interaction-{importance}"
+        theme["interaction_date"] = meeting_date
+        theme["interaction_type"] = interaction_type
+    if source_confidence:
+        theme["source_confidence"] = source_confidence
+    if subject:
+        theme["subject"] = subject
+    return theme
 
 
 def test_weekly_pipeline_rows_include_open_deals_only_and_safe_fields() -> None:
@@ -87,6 +103,7 @@ def test_weekly_pipeline_rows_include_open_deals_only_and_safe_fields() -> None:
     assert result["filters"] == {"stage": None, "industry": None}
     assert result["row_count"] == 1
     assert result["rows"][0]["deal_id"] == "open-1"
+    assert result["rows"][0]["deal_size_currency"] == "KRW"
     payload = json.dumps(result, ensure_ascii=False)
     assert "raw_notes" not in payload
     assert "contacts" not in payload
@@ -170,6 +187,38 @@ def test_weekly_pipeline_sorting_prioritizes_attention_then_close_date_and_value
     assert result["rows"][2]["attention_reasons"] == ["stalled"]
 
 
+def test_weekly_pipeline_rows_split_objective_actions_from_gap_observations() -> None:
+    result = build_weekly_pipeline_rows(
+        [
+            _deal(
+                "judgment-gap",
+                stage="negotiation",
+                health_pct=82,
+                expected_close_date="2026-06-01",
+                meddpicc_gaps=["competition"],
+            )
+        ],
+        as_of=AS_OF,
+    )
+
+    row = result["rows"][0]
+    assert row["meddpicc_gaps"] == ["competition"]
+    assert [item["gap_id"] for item in row["objective_action_items"]] == [
+        "attention:overdue"
+    ]
+    assert all(
+        not item["field"].startswith("meddpicc.")
+        for item in row["objective_action_items"]
+    )
+
+    observation = next(
+        item for item in row["gap_observations"]
+        if item["field"] == "meddpicc.competition"
+    )
+    assert observation["actionability"] == "needs_human_judgment"
+    assert observation["cta_policy"] == "observation_only"
+
+
 def test_stage_and_industry_filters_apply_before_row_generation() -> None:
     result = build_weekly_pipeline_rows(
         [
@@ -229,6 +278,43 @@ def test_primary_pain_and_decision_criteria_choose_importance_then_latest() -> N
     assert row["primary_pain"]["evidence"] == "critical current pain"
     assert row["primary_decision_criteria"]["evidence"] == (
         "latest same-priority criterion"
+    )
+
+
+def test_primary_theme_preserves_safe_source_label_metadata() -> None:
+    result = build_weekly_pipeline_rows(
+        [
+            _deal(
+                "source-theme",
+                customer_themes=[
+                    _theme(
+                        "identify_pain",
+                        evidence="email says manual follow-up is too slow",
+                        importance=5,
+                        interaction_type="email_thread",
+                        source_confidence="customer_stated",
+                        subject="Re: follow-up process",
+                    ),
+                    _theme(
+                        "decision_criteria",
+                        evidence="interview confirms audit export is mandatory",
+                        importance=5,
+                        interaction_type="user_interview",
+                        source_confidence="customer_stated",
+                        subject="Buyer interview",
+                    ),
+                ],
+            )
+        ],
+        as_of=AS_OF,
+    )
+
+    row = result["rows"][0]
+    assert row["primary_pain"]["source_label"] == "Email thread (customer-stated)"
+    assert row["primary_pain"]["source_confidence"] == "customer_stated"
+    assert row["primary_pain"]["subject"] == "Re: follow-up process"
+    assert row["primary_decision_criteria"]["source_label"] == (
+        "User interview (customer-stated)"
     )
 
 

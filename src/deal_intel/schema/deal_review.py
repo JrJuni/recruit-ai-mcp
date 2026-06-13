@@ -1,6 +1,7 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from collections.abc import Iterable
+from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Any
 
@@ -9,6 +10,7 @@ from deal_intel.schema.deal_gaps import (
     QUESTION_BY_MEDDPICC_GAP,
     build_deal_gaps_summary,
 )
+from deal_intel.schema.gap_actionability import annotate_gap_actionability
 from deal_intel.schema.metrics import (
     DataQualityStatus,
     DealValueStatus,
@@ -39,12 +41,79 @@ WEAK_SIGNAL_MAX = 2.99
 STRONG_SIGNAL_MIN = 4.0
 
 
+@dataclass(frozen=True)
+class DealReviewSettings:
+    """Configurable thresholds for deal-review interpretation."""
+
+    coverage_low_max: float = COVERAGE_LOW_MAX
+    coverage_high_min: float = COVERAGE_HIGH_MIN
+
+    @classmethod
+    def from_config(cls, cfg: dict | None) -> DealReviewSettings:
+        review_cfg = ((cfg or {}).get("deal_review") or {})
+        coverage_cfg = review_cfg.get("evidence_coverage") or {}
+        return cls(
+            coverage_low_max=_float_config(
+                coverage_cfg.get("low_max"),
+                default=COVERAGE_LOW_MAX,
+                name="deal_review.evidence_coverage.low_max",
+            ),
+            coverage_high_min=_float_config(
+                coverage_cfg.get("high_min"),
+                default=COVERAGE_HIGH_MIN,
+                name="deal_review.evidence_coverage.high_min",
+            ),
+        ).validate()
+
+    def validate(self) -> DealReviewSettings:
+        if not 0 <= self.coverage_low_max < self.coverage_high_min <= 100:
+            raise ValueError(
+                "deal_review evidence coverage thresholds must satisfy "
+                "0 <= low_max < high_min <= 100"
+            )
+        return self
+
+
+def _float_config(value: Any, *, default: float, name: str) -> float:
+    if value is None:
+        return default
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{name} must be a number")
+    return float(value)
+
+
+def _coerce_review_settings(
+    settings: DealReviewSettings | dict | None,
+) -> DealReviewSettings:
+    if settings is None:
+        return DealReviewSettings()
+    if isinstance(settings, DealReviewSettings):
+        return settings.validate()
+    if isinstance(settings, dict):
+        if "coverage_low_max" in settings or "coverage_high_min" in settings:
+            return DealReviewSettings(
+                coverage_low_max=_float_config(
+                    settings.get("coverage_low_max"),
+                    default=COVERAGE_LOW_MAX,
+                    name="coverage_low_max",
+                ),
+                coverage_high_min=_float_config(
+                    settings.get("coverage_high_min"),
+                    default=COVERAGE_HIGH_MIN,
+                    name="coverage_high_min",
+                ),
+            ).validate()
+        return DealReviewSettings.from_config(settings)
+    raise ValueError("review_settings must be a DealReviewSettings, dict, or None")
+
+
 def build_deal_review(
     deal: dict,
     *,
     as_of: date,
     health_thresholds: HealthBandThresholds | None = None,
     timing_settings: PipelineTimingSettings | None = None,
+    review_settings: DealReviewSettings | dict | None = None,
 ) -> dict:
     """Build an evidence-aware deal review without LLM or storage access."""
     if not isinstance(as_of, date) or isinstance(as_of, datetime):
@@ -52,6 +121,7 @@ def build_deal_review(
 
     health_thresholds = health_thresholds or HealthBandThresholds()
     timing_settings = timing_settings or PipelineTimingSettings()
+    settings = _coerce_review_settings(review_settings)
 
     stage = deal.get("deal_stage")
     meddpicc_latest = deal.get("meddpicc_latest") or {}
@@ -64,14 +134,22 @@ def build_deal_review(
     )
     data_quality = assess_deal_data_quality(deal)
     value = assess_deal_value(deal)
-    coverage = _evidence_coverage(meddpicc_latest)
+    coverage = _evidence_coverage(meddpicc_latest, settings=settings)
     scorecard = _scorecard(meddpicc_latest)
-    gaps = _gap_rows(
+    raw_gaps = _gap_rows(
         deal,
         as_of=as_of,
         health_thresholds=health_thresholds,
         timing_settings=timing_settings,
     )
+    gaps = [_with_gap_actionability(gap) for gap in raw_gaps]
+    actionable_gaps = [
+        gap for gap in gaps if gap.get("cta_policy") == "cta_allowed"
+    ]
+    gap_observations = [
+        gap for gap in gaps if gap.get("cta_policy") != "cta_allowed"
+    ]
+    missing_information = _missing_information(gaps)
     confirmed_risks = _confirmed_risks(
         meddpicc_latest,
         health_band=health_band,
@@ -79,15 +157,24 @@ def build_deal_review(
         attention_reasons=attention_reasons,
         value_status=value.status,
         value_valid=value.is_valid,
+        settings=settings,
     )
     uncertainty_level = _uncertainty_level(
         coverage_pct=coverage["coverage_pct"],
         health_band=health_band,
         data_quality=data_quality,
+        missing_information=missing_information,
+        value_status=value.status,
+        value_valid=value.is_valid,
+        settings=settings,
     )
     review_band = _review_band(
         health_band=health_band,
         coverage_pct=coverage["coverage_pct"],
+        missing_information=missing_information,
+        confirmed_risks=confirmed_risks,
+        data_quality=data_quality,
+        settings=settings,
     )
     alert_level = _alert_level(
         review_band=review_band,
@@ -102,16 +189,29 @@ def build_deal_review(
         attention_reasons=attention_reasons,
         data_quality_statuses=data_quality.field_statuses,
         confirmed_risks=confirmed_risks,
+        settings=settings,
+    )
+    assessment = _assessment(
+        health_band=health_band,
+        coverage=coverage,
+        uncertainty_level=uncertainty_level,
+        review_band=review_band,
+        alert_level=alert_level,
+        confirmed_risks=confirmed_risks,
     )
 
     return {
+        "review_version": "v2",
         "deal_id": deal.get("deal_id"),
         "company": deal.get("company"),
         "industry": deal.get("industry"),
+        "customer_segment": deal.get("customer_segment"),
         "deal_stage": stage,
-        "deal_size_krw": deal.get("deal_size_krw"),
+        "deal_size_amount": deal.get("deal_size_amount"),
+        "deal_size_currency": deal.get("deal_size_currency") or "KRW",
         "deal_size_status": deal.get("deal_size_status"),
         "expected_close_date": deal.get("expected_close_date"),
+        "assessment": assessment,
         "health_interpretation": {
             "legacy_health_pct": meddpicc_latest.get("health_pct"),
             "health_band": health_band.value,
@@ -122,6 +222,10 @@ def build_deal_review(
             "uncertainty_level": uncertainty_level,
             "review_band": review_band,
             "alert_level": alert_level,
+            "forecast_confidence": _forecast_confidence(
+                value_status=value.status,
+                value_valid=value.is_valid,
+            ),
             "explanation": _interpretation_text(
                 review_band=review_band,
                 alert_level=alert_level,
@@ -129,25 +233,31 @@ def build_deal_review(
         },
         "scorecard": scorecard,
         "attention_reasons": attention_reasons,
-        "missing_information": _missing_information(gaps),
+        "actionable_gaps": actionable_gaps,
+        "gap_observations": gap_observations,
+        "missing_information": missing_information,
         "confirmed_risks": confirmed_risks,
         "known_signals": _known_signals(scorecard, value_status=value.status),
         "recommended_questions": _recommended_questions(gaps, scorecard),
-        "recommended_actions": _recommended_actions(gaps, confirmed_risks),
+        "recommended_actions": _recommended_actions(actionable_gaps, confirmed_risks),
         "data_quality": data_quality.to_dict(),
         "warnings": warnings,
     }
 
 
-def _evidence_coverage(meddpicc_latest: dict) -> dict:
+def _evidence_coverage(
+    meddpicc_latest: dict,
+    *,
+    settings: DealReviewSettings,
+) -> dict:
     filled = _filled_count(meddpicc_latest)
     total = len(MEDDPICC_DIMENSIONS)
     coverage_pct = round(filled / total * 100, 1) if total else None
     if coverage_pct is None:
         level = "unknown"
-    elif coverage_pct < COVERAGE_LOW_MAX:
+    elif coverage_pct < settings.coverage_low_max:
         level = "low"
-    elif coverage_pct < COVERAGE_HIGH_MIN:
+    elif coverage_pct < settings.coverage_high_min:
         level = "medium"
     else:
         level = "high"
@@ -157,6 +267,34 @@ def _evidence_coverage(meddpicc_latest: dict) -> dict:
         "coverage_pct": coverage_pct,
         "coverage_level": level,
     }
+
+
+def _assessment(
+    *,
+    health_band: HealthBand,
+    coverage: dict,
+    uncertainty_level: str,
+    review_band: str,
+    alert_level: str,
+    confirmed_risks: list[dict],
+) -> dict:
+    return {
+        "health_quality": health_band.value,
+        "evidence_coverage_pct": coverage["coverage_pct"],
+        "evidence_coverage_level": coverage["coverage_level"],
+        "uncertainty": uncertainty_level,
+        "confirmed_risk_level": _confirmed_risk_level(confirmed_risks),
+        "review_band": review_band,
+        "alert_level": alert_level,
+    }
+
+
+def _confirmed_risk_level(confirmed_risks: list[dict]) -> str:
+    if any(risk.get("severity") == "alert" for risk in confirmed_risks):
+        return "alert"
+    if any(risk.get("severity") == "watch" for risk in confirmed_risks):
+        return "watch"
+    return "none"
 
 
 def _filled_count(meddpicc_latest: dict) -> int:
@@ -228,6 +366,10 @@ def _gap_rows(
     return [gap for gap in gaps if isinstance(gap, dict)]
 
 
+def _with_gap_actionability(gap: dict) -> dict:
+    return annotate_gap_actionability(gap)
+
+
 def _missing_information(gaps: list[dict]) -> list[dict]:
     result = []
     for gap in gaps:
@@ -243,6 +385,8 @@ def _missing_information(gaps: list[dict]) -> list[dict]:
                 "reason": gap.get("reason"),
                 "suggested_question": gap.get("suggested_question"),
                 "recommended_action": gap.get("recommended_action"),
+                "actionability": gap.get("actionability"),
+                "cta_policy": gap.get("cta_policy"),
             }
         )
     return result
@@ -256,10 +400,11 @@ def _confirmed_risks(
     attention_reasons: list[str],
     value_status: DealValueStatus | None,
     value_valid: bool,
+    settings: DealReviewSettings,
 ) -> list[dict]:
     risks = []
-    high_coverage = coverage_pct is not None and coverage_pct >= COVERAGE_HIGH_MIN
-    medium_or_high = coverage_pct is not None and coverage_pct >= COVERAGE_LOW_MAX
+    high_coverage = coverage_pct is not None and coverage_pct >= settings.coverage_high_min
+    medium_or_high = coverage_pct is not None and coverage_pct >= settings.coverage_low_max
 
     if high_coverage and health_band == HealthBand.AT_RISK:
         risks.append(
@@ -409,34 +554,61 @@ def _uncertainty_level(
     coverage_pct: float | None,
     health_band: HealthBand,
     data_quality: Any,
+    missing_information: list[dict],
+    value_status: DealValueStatus | None,
+    value_valid: bool,
+    settings: DealReviewSettings,
 ) -> str:
-    if coverage_pct is None or coverage_pct < COVERAGE_LOW_MAX:
+    if coverage_pct is None or coverage_pct < settings.coverage_low_max:
         return "high"
     if health_band == HealthBand.UNASSESSED:
         return "high"
-    if coverage_pct < COVERAGE_HIGH_MIN:
+    if not value_valid:
+        return "high"
+    if any(status == DataQualityStatus.INVALID for status in data_quality.field_statuses.values()):
+        return "high"
+    if coverage_pct < settings.coverage_high_min:
         return "medium"
-    if data_quality.confirmed_coverage_pct is not None and data_quality.confirmed_coverage_pct < 70:
+    if missing_information:
+        return "medium"
+    if value_status == DealValueStatus.ROUGH_ESTIMATE:
+        return "medium"
+    if not data_quality.is_confirmed_complete:
         return "medium"
     return "low"
 
 
-def _review_band(*, health_band: HealthBand, coverage_pct: float | None) -> str:
-    if coverage_pct is None or coverage_pct < COVERAGE_LOW_MAX:
+def _review_band(
+    *,
+    health_band: HealthBand,
+    coverage_pct: float | None,
+    missing_information: list[dict],
+    confirmed_risks: list[dict],
+    data_quality: Any,
+    settings: DealReviewSettings,
+) -> str:
+    if coverage_pct is None or coverage_pct < settings.coverage_low_max:
         if health_band == HealthBand.HEALTHY:
             return "promising_but_unproven"
         return "insufficient_evidence"
     if health_band == HealthBand.UNASSESSED:
         return "insufficient_evidence"
     if health_band == HealthBand.HEALTHY:
-        if coverage_pct >= COVERAGE_HIGH_MIN:
+        if (
+            coverage_pct >= settings.coverage_high_min
+            and not missing_information
+            and not confirmed_risks
+            and data_quality.is_confirmed_complete
+        ):
             return "verified_healthy"
+        if confirmed_risks:
+            return "watch_with_evidence"
         return "promising_but_unproven"
     if health_band == HealthBand.AT_RISK:
-        if coverage_pct >= COVERAGE_HIGH_MIN:
+        if coverage_pct >= settings.coverage_high_min:
             return "confirmed_risk"
         return "unclear_with_risk_signals"
-    if coverage_pct >= COVERAGE_HIGH_MIN:
+    if coverage_pct >= settings.coverage_high_min:
         return "watch_with_evidence"
     return "watch_unproven"
 
@@ -458,6 +630,8 @@ def _alert_level(
         return "alert"
     if any(status == DataQualityStatus.INVALID for status in data_quality_statuses.values()):
         return "alert"
+    if confirmed_risks:
+        return "watch"
     if actionable_attention or review_band in {
         "promising_but_unproven",
         "unclear_with_risk_signals",
@@ -470,6 +644,24 @@ def _alert_level(
     return "none"
 
 
+def _forecast_confidence(
+    *,
+    value_status: DealValueStatus | None,
+    value_valid: bool,
+) -> str:
+    if not value_valid:
+        return "invalid"
+    if value_status == DealValueStatus.QUOTED:
+        return "quoted"
+    if value_status == DealValueStatus.STRATEGIC_ZERO:
+        return "strategic_zero"
+    if value_status == DealValueStatus.CUSTOMER_BUDGET:
+        return "customer_indicated"
+    if value_status == DealValueStatus.ROUGH_ESTIMATE:
+        return "estimated"
+    return "unknown"
+
+
 def _warnings(
     *,
     review_band: str,
@@ -478,16 +670,17 @@ def _warnings(
     attention_reasons: list[str],
     data_quality_statuses: dict[str, DataQualityStatus],
     confirmed_risks: list[dict],
+    settings: DealReviewSettings,
 ) -> list[str]:
     actionable_attention = _actionable_attention_reasons(
         review_band=review_band,
         attention_reasons=attention_reasons,
     )
     warnings = ["win_probability_suppressed"]
-    if coverage_pct is None or coverage_pct < COVERAGE_LOW_MAX:
+    if coverage_pct is None or coverage_pct < settings.coverage_low_max:
         warnings.append("insufficient_evidence")
     if health_band == HealthBand.HEALTHY and (
-        coverage_pct is None or coverage_pct < COVERAGE_HIGH_MIN
+        coverage_pct is None or coverage_pct < settings.coverage_high_min
     ):
         warnings.append("overconfidence_warning")
     if confirmed_risks:

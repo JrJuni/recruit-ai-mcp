@@ -1,4 +1,4 @@
-# Reporting Contract
+﻿# Reporting Contract
 
 This document records report-specific contracts. Metric definitions remain in
 [metrics.md](metrics.md).
@@ -46,8 +46,10 @@ Terminal deals, `won` and `lost`, are excluded from weekly pipeline rows.
 - `deal_id`
 - `company`
 - `industry`
+- `customer_segment`
 - `deal_stage`
-- `deal_size_krw`
+- `deal_size_amount`
+- `deal_size_currency`
 - `deal_size_status`
 - `expected_close_date`
 - `days_in_stage`
@@ -63,12 +65,35 @@ Terminal deals, `won` and `lost`, are excluded from weekly pipeline rows.
 - `primary_pain`
 - `primary_decision_criteria`
 - `attention_reasons`
+- `objective_action_items`
+- `gap_observations`
 - `data_quality`
 
 `primary_pain` is selected from `customer_themes` where
 `dimension == "identify_pain"`. `primary_decision_criteria` is selected where
 `dimension == "decision_criteria"`. Selection order is highest `importance`,
 then latest `meeting_date`.
+
+Primary theme objects include safe source metadata when available:
+
+- `interaction_id`
+- `interaction_date`
+- `interaction_type`
+- `source_confidence`
+- `source_label`
+- `subject`
+- legacy `meeting_id` / `meeting_date`
+
+`source_label` is a human-readable label such as
+`Email thread (customer-stated)` or `User interview (customer-stated)`. It is
+derived from structured source metadata and does not require exposing raw
+interaction content.
+
+`objective_action_items` contains only CTA-safe gaps such as overdue close
+dates, stuck stages, and explicitly stalled deals. `gap_observations` contains
+judgment-sensitive gaps such as MEDDPICC competition, champion, economic buyer,
+decision criteria, and at-risk health observations. Consumers should not flatten
+`gap_observations` into prescriptive next actions.
 
 ### Sorting
 
@@ -87,11 +112,12 @@ Rows are sorted for weekly review attention:
 Weekly pipeline rows must not include:
 
 - `meetings.raw_notes`
+- `interactions.raw_content`
 - `contacts`
 - `summary_embedding`
 
 Evidence snippets in `customer_themes` may be included because they are already
-curated report evidence, not raw meeting notes.
+curated report evidence, not raw meeting notes or raw interaction content.
 
 ### Warnings
 
@@ -242,13 +268,15 @@ aggregation. This keeps CSV and Markdown numbers aligned.
 The fixed metric surface includes:
 
 - `open_deal_count`
-- `pipeline_value_krw`
+- `pipeline_value_amount`
 - `known_amount_count`
 - `amount_coverage_pct`
 - `avg_health_pct`
 - `assessed_health_count`
 - `health_coverage_pct`
 - `attention_deal_count`
+- `objective_action_item_count`
+- `gap_observation_count`
 - `overdue_count`
 - `stuck_count`
 - `stalled_count`
@@ -267,10 +295,22 @@ The generated body includes:
 
 1. KPI table
 2. Risk deals table, based on `attention_reasons`
-3. Data quality table
-4. Warning code list
+3. Objective Action Items table, based only on `objective_action_items`
+4. Gap Observations table, based on `gap_observations`
+5. Customer Evidence table, based on primary curated pain / decision criteria
+   snippets and their `source_label`
+6. Data quality table
+7. Warning code list
 
 Risk deal tables escape Markdown table separators and newlines in cell values.
+The Objective Action Items section is for objective CTA triggers. The Gap
+Observations section is for judgment-sensitive gaps and includes
+`actionability` so readers can decide the next move without the report
+over-prescribing qualitative BD judgment.
+
+The Customer Evidence section renders only curated `customer_themes` snippets
+plus safe source labels. It must not render `meetings.raw_notes`,
+`interactions.raw_content`, contacts, or embeddings.
 
 ### Non-Goals
 
@@ -298,7 +338,7 @@ MCP.
 | Parameter | Required | Contract |
 |---|---|---|
 | `report_type` | optional | Defaults to `weekly_pipeline`; other values fail preflight |
-| `output_dir` | optional | Explicit local directory. Defaults to `reporting.output_dir` or `outputs/reports` |
+| `output_dir` | optional | Explicit local directory. Defaults to `reporting.output_dir` or `~/.deal-intel/reports` |
 | `stage` | optional | Exact valid stage match |
 | `industry` | optional | Exact stored industry match |
 | `as_of` | optional | `YYYY-MM-DD` business date for stuck/overdue calculations |
@@ -316,7 +356,7 @@ MCP.
   "row_count": 7,
   "warnings": [],
   "metrics": {},
-  "output_dir": "C:/absolute/path/outputs/reports",
+  "output_dir": "C:/Users/example/.deal-intel/reports",
   "artifacts": {
     "csv": {
       "path": "C:/absolute/path/weekly_pipeline_20260609_123456.csv",
@@ -424,7 +464,7 @@ CSV and Markdown artifacts.
 | Parameter | Required | Contract |
 |---|---|---|
 | `report_type` | optional | `pipeline_trend` for this report |
-| `output_dir` | optional | Explicit local directory. Defaults to `reporting.output_dir` or `outputs/reports` |
+| `output_dir` | optional | Explicit local directory. Defaults to `reporting.output_dir` or `~/.deal-intel/reports` |
 | `stage` | optional | Exact valid snapshot `deal_stage` match |
 | `industry` | optional | Exact stored snapshot industry match |
 | `as_of` | optional | `YYYY-MM-DD` business end date |

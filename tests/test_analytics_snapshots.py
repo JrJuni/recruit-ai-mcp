@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 from copy import deepcopy
@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from types import SimpleNamespace
 
 from deal_intel.storage.mongodb import MongoDBClient
-from deal_intel.tools import add_meeting, create_deal, update_stage
+from deal_intel.tools import add_interaction, add_meeting, create_deal, update_stage
 from deal_intel.tools.analytics_snapshot import (
     build_analytics_snapshot,
     record_analytics_snapshot,
@@ -95,10 +95,12 @@ def _deal(**overrides) -> dict:
         "deal_id": "deal-1",
         "company": "Test Co",
         "industry": "IT",
+        "industry_tags": ["IT"],
+        "customer_segment": "enterprise",
         "deal_stage": "proposal",
-        "deal_size_krw": 25_000_000,
-        "deal_size_low_krw": None,
-        "deal_size_high_krw": None,
+        "deal_size_amount": 25_000_000,
+        "deal_size_low_amount": None,
+        "deal_size_high_amount": None,
         "deal_size_status": "quoted",
         "expected_close_date": "2026-06-20",
         "expected_close_date_source": "user_provided",
@@ -133,6 +135,9 @@ def test_build_analytics_snapshot_is_safe_and_metric_shaped() -> None:
     assert snapshot["source"] == "deal_intel_mcp"
     assert snapshot["event_id"] == "event-1"
     assert snapshot["deal_id"] == "deal-1"
+    assert snapshot["industry_tags"] == ["IT"]
+    assert snapshot["customer_segment"] == "enterprise"
+    assert snapshot["deal_size_currency"] == "KRW"
     assert snapshot["health_band"] == "healthy"
     assert snapshot["meddpicc_gap_count"] == 1
     assert snapshot["meddpicc_gaps"] == ["champion"]
@@ -176,6 +181,9 @@ def test_mongodb_lists_analytics_snapshots_with_safe_projection() -> None:
     }
     projection = mongo._db.analytics_snapshots.projection
     assert projection["_id"] == 0
+    assert projection["industry_tags"] == 1
+    assert projection["customer_segment"] == 1
+    assert projection["deal_size_currency"] == 1
     assert "raw_notes" not in projection
     assert "contacts" not in projection
     assert "summary_embedding" not in projection
@@ -233,7 +241,7 @@ def test_create_deal_records_analytics_snapshot_after_deal_upsert() -> None:
         cfg={},
         company="New Co",
         industry="IT",
-        deal_size_krw=None,
+        deal_size_amount=None,
     )
 
     assert result["ok"] is True
@@ -274,6 +282,39 @@ def test_add_meeting_records_analytics_snapshot_for_meeting_event() -> None:
     assert result["analytics_snapshot"]["ok"] is True
     assert result["analytics_snapshot"]["event_type"] == "add_meeting"
     assert result["meeting_id"] in result["analytics_snapshot"]["event_id"]
+    assert len(mongo.snapshots) == 1
+
+
+def test_add_interaction_records_analytics_snapshot_for_interaction_event() -> None:
+    mongo = FakeSnapshotMongo(_deal(deal_stage="discovery", meetings=[]))
+    analysis = json.dumps(
+        {
+            "meddpicc": {
+                "identify_pain": {
+                    "score": 4,
+                    "evidence": "Manual reporting takes too long",
+                }
+            },
+            "customer_themes": [],
+        }
+    )
+    llm = FakeLLM([analysis, "Customer wants faster reporting."])
+
+    result = add_interaction.handle(
+        mongo=mongo,
+        llm=llm,
+        cfg={"meddpicc": {"weights": {}}},
+        deal_id="deal-1",
+        date="2026-06-09",
+        interaction_type="email_thread",
+        direction="inbound",
+        content="Customer reply: manual reporting takes too long.",
+    )
+
+    assert result["ok"] is True
+    assert result["analytics_snapshot"]["ok"] is True
+    assert result["analytics_snapshot"]["event_type"] == "add_interaction"
+    assert result["interaction_id"] in result["analytics_snapshot"]["event_id"]
     assert len(mongo.snapshots) == 1
 
 

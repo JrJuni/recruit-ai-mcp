@@ -1,14 +1,21 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from datetime import UTC, date, datetime
 
 from deal_intel.errors import ErrorCode, MCPError, Stage
+from deal_intel.schema.industry_taxonomy import (
+    IndustryProfile,
+    IndustryTaxonomyError,
+    normalize_industry_profile,
+)
 from deal_intel.schema.metrics import (
+    DEFAULT_DEAL_CURRENCY,
     OPEN_STAGES,
     TERMINAL_STAGES,
     DealValueStatus,
     assess_deal_value,
 )
+from deal_intel.schema.taxonomy_audit import infer_industry_metadata
 from deal_intel.storage.mongodb import MongoDBClient
 
 
@@ -19,11 +26,14 @@ def handle(
     deal_size_status: str | None = None,
     deal_size_note: str | None = None,
     confirmed_by_user: bool = False,
-    deal_size_krw: int | None = None,
-    deal_size_low_krw: int | None = None,
-    deal_size_high_krw: int | None = None,
+    deal_size_amount: int | None = None,
+    deal_size_low_amount: int | None = None,
+    deal_size_high_amount: int | None = None,
+    deal_size_currency: str | None = None,
     company: str | None = None,
     industry: str | None = None,
+    industry_tags: str | list[str] | None = None,
+    customer_segment: str | None = None,
     expected_close_date: str | None = None,
     actual_close_date: str | None = None,
     close_reason: str | None = None,
@@ -50,13 +60,16 @@ def handle(
 
     value_update_requested = _value_update_requested(
         deal_size_status=deal_size_status,
-        deal_size_krw=deal_size_krw,
-        deal_size_low_krw=deal_size_low_krw,
-        deal_size_high_krw=deal_size_high_krw,
+        deal_size_amount=deal_size_amount,
+        deal_size_low_amount=deal_size_low_amount,
+        deal_size_high_amount=deal_size_high_amount,
+        deal_size_currency=deal_size_currency,
     )
     metadata_update_requested = _metadata_update_requested(
         company=company,
         industry=industry,
+        industry_tags=industry_tags,
+        customer_segment=customer_segment,
         expected_close_date=expected_close_date,
         actual_close_date=actual_close_date,
         close_reason=close_reason,
@@ -69,13 +82,16 @@ def handle(
             hint={
                 "value_fields": [
                     "deal_size_status",
-                    "deal_size_krw",
-                    "deal_size_low_krw",
-                    "deal_size_high_krw",
+                    "deal_size_amount",
+                    "deal_size_low_amount",
+                    "deal_size_high_amount",
+                    "deal_size_currency",
                 ],
                 "metadata_fields": [
                     "company",
                     "industry",
+                    "industry_tags",
+                    "customer_segment",
                     "expected_close_date",
                     "actual_close_date",
                     "close_reason",
@@ -104,14 +120,16 @@ def handle(
     old_metadata = _deal_metadata_snapshot(deal)
     new_value = old_value
     new_metadata = old_metadata
+    taxonomy_warnings: list[dict] = []
     if status is not None and value_note is not None:
         new_value = _build_updated_value(
             old_value,
             status=status,
             note=value_note,
-            deal_size_krw=deal_size_krw,
-            deal_size_low_krw=deal_size_low_krw,
-            deal_size_high_krw=deal_size_high_krw,
+            deal_size_amount=deal_size_amount,
+            deal_size_low_amount=deal_size_low_amount,
+            deal_size_high_amount=deal_size_high_amount,
+            deal_size_currency=deal_size_currency,
         )
         assessment = assess_deal_value(new_value)
         if not assessment.is_valid:
@@ -126,11 +144,13 @@ def handle(
                 retryable=False,
             )
     if metadata_update_requested:
-        new_metadata = _build_updated_metadata(
+        new_metadata, taxonomy_warnings = _build_updated_metadata(
             deal,
             current=old_metadata,
             company=company,
             industry=industry,
+            industry_tags=industry_tags,
+            customer_segment=customer_segment,
             expected_close_date=expected_close_date,
             actual_close_date=actual_close_date,
             close_reason=close_reason,
@@ -152,6 +172,7 @@ def handle(
             "changed_value_fields": [],
             "changed_metadata_fields": [],
             "storage_written": False,
+            "taxonomy_warnings": taxonomy_warnings,
         }
 
     now = datetime.now(UTC).isoformat()
@@ -200,21 +221,24 @@ def handle(
         "changed_value_fields": changed_value_fields,
         "changed_metadata_fields": changed_metadata_fields,
         "storage_written": True,
+        "taxonomy_warnings": taxonomy_warnings,
     }
 
 
 def _value_update_requested(
     *,
     deal_size_status: str | None,
-    deal_size_krw: int | None,
-    deal_size_low_krw: int | None,
-    deal_size_high_krw: int | None,
+    deal_size_amount: int | None,
+    deal_size_low_amount: int | None,
+    deal_size_high_amount: int | None,
+    deal_size_currency: str | None,
 ) -> bool:
     return (
         bool((deal_size_status or "").strip())
-        or deal_size_krw is not None
-        or deal_size_low_krw is not None
-        or deal_size_high_krw is not None
+        or bool((deal_size_currency or "").strip())
+        or deal_size_amount is not None
+        or deal_size_low_amount is not None
+        or deal_size_high_amount is not None
     )
 
 
@@ -222,6 +246,8 @@ def _metadata_update_requested(
     *,
     company: str | None,
     industry: str | None,
+    industry_tags: str | list[str] | None,
+    customer_segment: str | None,
     expected_close_date: str | None,
     actual_close_date: str | None,
     close_reason: str | None,
@@ -231,11 +257,12 @@ def _metadata_update_requested(
         for value in (
             company,
             industry,
+            customer_segment,
             expected_close_date,
             actual_close_date,
             close_reason,
         )
-    )
+    ) or _has_industry_tags_value(industry_tags)
 
 
 def _parse_status(value: str) -> DealValueStatus:
@@ -290,9 +317,10 @@ def _clean_metadata_note(value: str | None, *, fallback: str | None = None) -> s
 
 def _deal_value_snapshot(deal: dict) -> dict:
     return {
-        "deal_size_krw": deal.get("deal_size_krw"),
-        "deal_size_low_krw": deal.get("deal_size_low_krw"),
-        "deal_size_high_krw": deal.get("deal_size_high_krw"),
+        "deal_size_amount": deal.get("deal_size_amount"),
+        "deal_size_low_amount": deal.get("deal_size_low_amount"),
+        "deal_size_high_amount": deal.get("deal_size_high_amount"),
+        "deal_size_currency": deal.get("deal_size_currency") or DEFAULT_DEAL_CURRENCY,
         "deal_size_status": deal.get("deal_size_status"),
         "deal_size_note": deal.get("deal_size_note"),
     }
@@ -302,6 +330,8 @@ def _deal_metadata_snapshot(deal: dict) -> dict:
     return {
         "company": deal.get("company"),
         "industry": deal.get("industry"),
+        "industry_tags": deal.get("industry_tags"),
+        "customer_segment": deal.get("customer_segment"),
         "expected_close_date": deal.get("expected_close_date"),
         "expected_close_date_source": deal.get("expected_close_date_source"),
         "actual_close_date": deal.get("actual_close_date"),
@@ -314,41 +344,57 @@ def _build_updated_value(
     *,
     status: DealValueStatus,
     note: str,
-    deal_size_krw: int | None,
-    deal_size_low_krw: int | None,
-    deal_size_high_krw: int | None,
+    deal_size_amount: int | None,
+    deal_size_low_amount: int | None,
+    deal_size_high_amount: int | None,
+    deal_size_currency: str | None,
 ) -> dict:
     if status == DealValueStatus.UNKNOWN:
         return {
-            "deal_size_krw": None,
-            "deal_size_low_krw": None,
-            "deal_size_high_krw": None,
+            "deal_size_amount": None,
+            "deal_size_low_amount": None,
+            "deal_size_high_amount": None,
+            "deal_size_currency": (
+                (deal_size_currency or "").strip().upper()
+                or current.get("deal_size_currency")
+                or DEFAULT_DEAL_CURRENCY
+            ),
             "deal_size_status": status.value,
             "deal_size_note": note,
         }
     if status == DealValueStatus.STRATEGIC_ZERO:
         return {
-            "deal_size_krw": 0,
-            "deal_size_low_krw": 0 if deal_size_low_krw == 0 else None,
-            "deal_size_high_krw": 0 if deal_size_high_krw == 0 else None,
+            "deal_size_amount": 0,
+            "deal_size_low_amount": 0 if deal_size_low_amount == 0 else None,
+            "deal_size_high_amount": 0 if deal_size_high_amount == 0 else None,
+            "deal_size_currency": (
+                (deal_size_currency or "").strip().upper()
+                or current.get("deal_size_currency")
+                or DEFAULT_DEAL_CURRENCY
+            ),
             "deal_size_status": status.value,
             "deal_size_note": note,
         }
     return {
-        "deal_size_krw": (
-            deal_size_krw
-            if deal_size_krw is not None
-            else current.get("deal_size_krw")
+        "deal_size_amount": (
+            deal_size_amount
+            if deal_size_amount is not None
+            else current.get("deal_size_amount")
         ),
-        "deal_size_low_krw": (
-            deal_size_low_krw
-            if deal_size_low_krw is not None
-            else current.get("deal_size_low_krw")
+        "deal_size_low_amount": (
+            deal_size_low_amount
+            if deal_size_low_amount is not None
+            else current.get("deal_size_low_amount")
         ),
-        "deal_size_high_krw": (
-            deal_size_high_krw
-            if deal_size_high_krw is not None
-            else current.get("deal_size_high_krw")
+        "deal_size_high_amount": (
+            deal_size_high_amount
+            if deal_size_high_amount is not None
+            else current.get("deal_size_high_amount")
+        ),
+        "deal_size_currency": (
+            (deal_size_currency or "").strip().upper()
+            or current.get("deal_size_currency")
+            or DEFAULT_DEAL_CURRENCY
         ),
         "deal_size_status": status.value,
         "deal_size_note": note,
@@ -361,16 +407,41 @@ def _build_updated_metadata(
     current: dict,
     company: str | None,
     industry: str | None,
+    industry_tags: str | list[str] | None,
+    customer_segment: str | None,
     expected_close_date: str | None,
     actual_close_date: str | None,
     close_reason: str | None,
-) -> dict:
+) -> tuple[dict, list[dict]]:
     stage = deal.get("deal_stage")
     updated = dict(current)
+    taxonomy_warnings: list[dict] = []
     if _has_text(company):
         updated["company"] = _clean_text(company, "company")
-    if _has_text(industry):
-        updated["industry"] = _clean_text(industry, "industry")
+    if _has_text(industry) or _has_industry_tags_value(industry_tags):
+        segment_for_inference = (
+            customer_segment
+            if _has_text(customer_segment)
+            else (None if _has_text(industry) else current.get("customer_segment"))
+        )
+        profile, inferred_segment = _normalize_industry_or_raise(
+            industry=industry if _has_text(industry) else current.get("industry"),
+            industry_tags=industry_tags
+            if _has_industry_tags_value(industry_tags)
+            else None,
+            existing_industry_tags=current.get("industry_tags"),
+            customer_segment=segment_for_inference,
+        )
+        updated["industry"] = profile.industry
+        updated["industry_tags"] = profile.industry_tags
+        taxonomy_warnings.extend(profile.warnings)
+        if not _has_text(customer_segment) and inferred_segment:
+            updated["customer_segment"] = inferred_segment
+    if _has_text(customer_segment):
+        updated["customer_segment"] = _clean_text(
+            customer_segment,
+            "customer_segment",
+        )
     if _has_text(expected_close_date):
         if stage not in OPEN_STAGES:
             raise MCPError(
@@ -411,11 +482,102 @@ def _build_updated_metadata(
                 retryable=False,
             )
         updated["close_reason"] = _clean_text(close_reason, "close_reason")
-    return updated
+    return updated, taxonomy_warnings
+
+
+def _normalize_industry_or_raise(
+    *,
+    industry: str | None,
+    industry_tags: str | list[str] | None,
+    existing_industry_tags: list[str] | None,
+    customer_segment: str | None,
+):
+    explicit_industry = _clean_optional_text(industry) is not None
+    explicit_tags = _industry_tags_list(industry_tags)
+    inferred = infer_industry_metadata(
+        current_industry=industry,
+        current_segment=customer_segment,
+        current_industry_tags=explicit_tags
+        or ([] if explicit_industry else list(existing_industry_tags or [])),
+    )
+    if inferred["suggested_industry"]:
+        profile = normalize_industry_profile(
+            industry=inferred["suggested_industry"],
+            industry_tags=inferred["suggested_industry_tags"] or industry_tags,
+            existing_industry_tags=None if explicit_industry else existing_industry_tags,
+        )
+        warnings = list(profile.warnings)
+        if (
+            inferred["suggested_industry"] != _clean_optional_text(industry)
+            or inferred["suggested_customer_segment"]
+            != _clean_optional_text(customer_segment)
+        ):
+            warnings.append(
+                {
+                    "code": "auto_classified_industry_metadata",
+                    "field": "industry",
+                    "value": industry,
+                    "message": (
+                        "Normalized industry metadata from a mixed or localized label."
+                    ),
+                }
+            )
+        return (
+            IndustryProfile(
+                industry=profile.industry,
+                industry_tags=profile.industry_tags,
+                warnings=warnings,
+            ),
+            inferred["suggested_customer_segment"],
+        )
+    try:
+        profile = normalize_industry_profile(
+            industry=industry,
+            industry_tags=industry_tags,
+            existing_industry_tags=existing_industry_tags,
+        )
+        return profile, _clean_optional_text(customer_segment)
+    except IndustryTaxonomyError as exc:
+        raise MCPError(
+            error_code=ErrorCode.INVALID_INPUT,
+            stage=Stage.PREFLIGHT,
+            message=str(exc),
+            hint={
+                "field": exc.field,
+                "value": exc.value,
+                "candidates": exc.candidates,
+                "fix": (
+                    "Choose one value for industry and pass the other applicable "
+                    "verticals as industry_tags."
+                ),
+            },
+            retryable=False,
+        ) from exc
+
+
+def _industry_tags_list(value: str | list[str] | None) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [item.strip() for item in value.replace("/", ",").split(",") if item.strip()]
+    return [str(item).strip() for item in value if str(item).strip()]
+
+
+def _clean_optional_text(value: str | None) -> str | None:
+    cleaned = (value or "").strip()
+    return cleaned or None
 
 
 def _has_text(value: str | None) -> bool:
     return bool((value or "").strip())
+
+
+def _has_industry_tags_value(value: str | list[str] | None) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, str):
+        return bool(value.strip())
+    return any(str(item).strip() for item in value)
 
 
 def _clean_text(value: str | None, field_name: str) -> str:

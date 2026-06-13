@@ -1,9 +1,16 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from collections.abc import Iterable
 from datetime import date, datetime
 from typing import Any
 
+from deal_intel.schema.deal_gaps import MEDDPICC_FIELD_LABELS
+from deal_intel.schema.evidence_sources import evidence_source_label
+from deal_intel.schema.gap_actionability import (
+    CTA_POLICY_ALLOWED,
+    annotate_gap_actionability,
+)
+from deal_intel.schema.interactions import iter_interactions
 from deal_intel.schema.metrics import (
     OPEN_STAGES,
     VALID_STAGES,
@@ -26,8 +33,10 @@ COLUMNS = [
     "deal_id",
     "company",
     "industry",
+    "customer_segment",
     "deal_stage",
-    "deal_size_krw",
+    "deal_size_amount",
+    "deal_size_currency",
     "deal_size_status",
     "expected_close_date",
     "days_in_stage",
@@ -43,6 +52,8 @@ COLUMNS = [
     "primary_pain",
     "primary_decision_criteria",
     "attention_reasons",
+    "objective_action_items",
+    "gap_observations",
     "data_quality",
 ]
 
@@ -118,13 +129,20 @@ def _build_row(
         health_band=health_band,
         timing=timing,
     )
+    meddpicc_gaps = _meddpicc_gaps(meddpicc_latest)
+    attention_gaps = _attention_gap_rows(
+        timing=timing,
+        attention_reasons=attention_reasons,
+    )
     themes = _theme_candidates(deal)
     return {
         "deal_id": deal.get("deal_id"),
         "company": deal.get("company"),
         "industry": deal.get("industry"),
+        "customer_segment": deal.get("customer_segment"),
         "deal_stage": deal.get("deal_stage"),
-        "deal_size_krw": deal.get("deal_size_krw"),
+        "deal_size_amount": deal.get("deal_size_amount"),
+        "deal_size_currency": deal.get("deal_size_currency") or "KRW",
         "deal_size_status": deal.get("deal_size_status"),
         "expected_close_date": deal.get("expected_close_date"),
         "days_in_stage": timing.days_in_stage,
@@ -139,7 +157,7 @@ def _build_row(
             else None
         ),
         "health_band": health_band.value,
-        "meddpicc_gaps": _meddpicc_gaps(meddpicc_latest),
+        "meddpicc_gaps": meddpicc_gaps,
         "last_meeting_date": _last_meeting_date(deal),
         "primary_pain": _select_primary_theme(themes, THEME_DIMENSION_PAIN),
         "primary_decision_criteria": _select_primary_theme(
@@ -147,6 +165,17 @@ def _build_row(
             THEME_DIMENSION_DECISION_CRITERIA,
         ),
         "attention_reasons": attention_reasons,
+        "objective_action_items": [
+            gap for gap in attention_gaps if gap["cta_policy"] == CTA_POLICY_ALLOWED
+        ],
+        "gap_observations": [
+            *[
+                gap
+                for gap in attention_gaps
+                if gap["cta_policy"] != CTA_POLICY_ALLOWED
+            ],
+            *_meddpicc_gap_observations(meddpicc_gaps),
+        ],
         "data_quality": assess_deal_data_quality(deal).to_dict(),
     }
 
@@ -158,13 +187,109 @@ def _meddpicc_gaps(meddpicc_latest: dict) -> list[str]:
     return [str(item) for item in gaps]
 
 
+def _meddpicc_gap_observations(gaps: list[str]) -> list[dict]:
+    rows = []
+    for gap_name in gaps:
+        label = MEDDPICC_FIELD_LABELS.get(gap_name, gap_name)
+        rows.append(
+            annotate_gap_actionability(
+                {
+                    "gap_id": f"meddpicc:{gap_name}",
+                    "field": f"meddpicc.{gap_name}",
+                    "label": label,
+                    "status": "missing",
+                    "impact_area": "sales_action",
+                    "severity": "medium",
+                    "reason": f"MEDDPICC gap remains open: {label}.",
+                }
+            )
+        )
+    return rows
+
+
+def _attention_gap_rows(
+    *,
+    timing: Any,
+    attention_reasons: list[str],
+) -> list[dict]:
+    rows = []
+    if "overdue" in attention_reasons:
+        rows.append(
+            annotate_gap_actionability(
+                {
+                    "gap_id": "attention:overdue",
+                    "field": "expected_close_date",
+                    "label": "Overdue close date",
+                    "status": "attention",
+                    "impact_area": "sales_action",
+                    "severity": "high",
+                    "reason": (
+                        "Expected close date is overdue by "
+                        f"{timing.overdue_days or 0} day(s)."
+                    ),
+                    "recommended_action": "review_close_plan",
+                }
+            )
+        )
+    if "stuck" in attention_reasons:
+        rows.append(
+            annotate_gap_actionability(
+                {
+                    "gap_id": "attention:stuck",
+                    "field": "deal_stage",
+                    "label": "Stage is stuck",
+                    "status": "attention",
+                    "impact_area": "sales_action",
+                    "severity": "medium",
+                    "reason": (
+                        "Deal has stayed in the current active stage past the "
+                        "stuck threshold."
+                    ),
+                    "recommended_action": "review_next_step",
+                }
+            )
+        )
+    if "stalled" in attention_reasons:
+        rows.append(
+            annotate_gap_actionability(
+                {
+                    "gap_id": "attention:stalled",
+                    "field": "deal_stage",
+                    "label": "Stage is stalled",
+                    "status": "attention",
+                    "impact_area": "sales_action",
+                    "severity": "medium",
+                    "reason": "Deal is explicitly marked stalled.",
+                    "recommended_action": "review_reactivation_path",
+                }
+            )
+        )
+    if "at_risk" in attention_reasons:
+        rows.append(
+            annotate_gap_actionability(
+                {
+                    "gap_id": "attention:at_risk",
+                    "field": "meddpicc.health",
+                    "label": "At-risk health",
+                    "status": "weak_signal",
+                    "impact_area": "sales_action",
+                    "severity": "high",
+                    "reason": (
+                        "MEDDPICC health is at risk; review the underlying "
+                        "evidence before prescribing an action."
+                    ),
+                }
+            )
+        )
+    return rows
+
+
 def _last_meeting_date(deal: dict) -> str | None:
     dates = [
         parsed
         for parsed in (
-            _parse_iso_date(meeting.get("date"))
-            for meeting in deal.get("meetings", [])
-            if isinstance(meeting, dict)
+            _parse_iso_date(interaction.get("date"))
+            for interaction in iter_interactions(deal)
         )
         if parsed is not None
     ]
@@ -177,20 +302,23 @@ def _theme_candidates(deal: dict) -> list[dict]:
         return [theme for theme in deal_themes if isinstance(theme, dict)]
 
     themes = []
-    for meeting in deal.get("meetings", []):
-        if not isinstance(meeting, dict):
+    for interaction in iter_interactions(deal):
+        interaction_themes = interaction.get("customer_themes")
+        if not isinstance(interaction_themes, list):
             continue
-        meeting_themes = meeting.get("customer_themes")
-        if not isinstance(meeting_themes, list):
-            continue
-        for theme in meeting_themes:
+        for theme in interaction_themes:
             if not isinstance(theme, dict):
                 continue
             themes.append(
                 {
                     **theme,
-                    "meeting_id": meeting.get("meeting_id"),
-                    "meeting_date": meeting.get("date"),
+                    "interaction_id": interaction.get("interaction_id"),
+                    "interaction_date": interaction.get("date"),
+                    "interaction_type": interaction.get("interaction_type"),
+                    "source_confidence": interaction.get("source_confidence"),
+                    "subject": interaction.get("subject"),
+                    "meeting_id": interaction.get("meeting_id"),
+                    "meeting_date": interaction.get("date"),
                 }
             )
     return themes
@@ -219,6 +347,12 @@ def _select_primary_theme(themes: list[dict], dimension: str) -> dict | None:
         "label": selected.get("label"),
         "evidence": selected.get("evidence"),
         "importance": _importance(selected),
+        "interaction_id": selected.get("interaction_id"),
+        "interaction_date": selected.get("interaction_date"),
+        "interaction_type": selected.get("interaction_type"),
+        "source_confidence": selected.get("source_confidence"),
+        "source_label": evidence_source_label(selected),
+        "subject": selected.get("subject"),
         "meeting_id": selected.get("meeting_id"),
         "meeting_date": selected.get("meeting_date"),
     }
@@ -256,7 +390,7 @@ def _expected_close_sort_value(value: Any) -> date:
 def _valid_amount(row: dict) -> int:
     assessment = assess_deal_value(row)
     if assessment.is_valid and assessment.is_known:
-        return assessment.amount_krw or 0
+        return assessment.amount or 0
     return 0
 
 

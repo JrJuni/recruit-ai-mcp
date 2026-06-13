@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from copy import deepcopy
 
@@ -25,7 +25,10 @@ def sample_preview(deals: list[dict], *, limit: int = 3) -> list[dict]:
             "company": deal["company"],
             "deal_stage": deal["deal_stage"],
             "industry": deal["industry"],
-            "deal_size_krw": deal["deal_size_krw"],
+            "industry_tags": deal.get("industry_tags") or [],
+            "customer_segment": deal.get("customer_segment"),
+            "deal_size_amount": deal["deal_size_amount"],
+            "deal_size_currency": deal["deal_size_currency"],
             "health_pct": deal["meddpicc_latest"].get("health_pct"),
         }
         for deal in deals[:limit]
@@ -38,6 +41,7 @@ def _build_deal(
     loaded_at: str,
     company: str,
     industry: str,
+    customer_segment: str,
     stage: str,
     amount: int | None,
     amount_status: str,
@@ -62,16 +66,20 @@ def _build_deal(
         "deal_id": deal_id,
         "company": company,
         "industry": industry,
-        "deal_size_krw": amount,
-        "deal_size_low_krw": None,
-        "deal_size_high_krw": None,
+        "industry_tags": [industry],
+        "customer_segment": customer_segment,
+        "deal_size_amount": amount,
+        "deal_size_low_amount": None,
+        "deal_size_high_amount": None,
+        "deal_size_currency": "KRW",
         "deal_size_status": amount_status,
         "deal_size_note": "Fictional demo amount for onboarding.",
         "deal_value_history": [
             {
                 "updated_at": _BASE_CREATED_AT,
                 "source": "sample_data",
-                "deal_size_krw": amount,
+                "deal_size_amount": amount,
+                "deal_size_currency": "KRW",
                 "deal_size_status": amount_status,
                 "deal_size_note": "Fictional demo amount for onboarding.",
             }
@@ -212,6 +220,7 @@ _SAMPLE_ROWS = [
     {
         "company": "Northstar AI",
         "industry": "SaaS",
+        "customer_segment": "startup",
         "stage": "discovery",
         "amount": 26_000_000,
         "amount_status": "rough_estimate",
@@ -229,6 +238,7 @@ _SAMPLE_ROWS = [
     {
         "company": "PaveBridge",
         "industry": "Finance",
+        "customer_segment": "enterprise",
         "stage": "negotiation",
         "amount": 92_000_000,
         "amount_status": "quoted",
@@ -246,6 +256,7 @@ _SAMPLE_ROWS = [
     {
         "company": "ShopNext",
         "industry": "Commerce",
+        "customer_segment": "enterprise",
         "stage": "proposal",
         "amount": 156_000_000,
         "amount_status": "quoted",
@@ -263,6 +274,7 @@ _SAMPLE_ROWS = [
     {
         "company": "Hanul Energy",
         "industry": "Energy",
+        "customer_segment": "public_sector",
         "stage": "lost",
         "amount": 95_000_000,
         "amount_status": "rough_estimate",
@@ -280,6 +292,7 @@ _SAMPLE_ROWS = [
     {
         "company": "Arcana Games",
         "industry": "Gaming",
+        "customer_segment": "startup",
         "stage": "won",
         "amount": 18_000_000,
         "amount_status": "quoted",
@@ -297,6 +310,7 @@ _SAMPLE_ROWS = [
     {
         "company": "MediHub Group",
         "industry": "Healthcare",
+        "customer_segment": "enterprise",
         "stage": "won",
         "amount": 110_500_000,
         "amount_status": "quoted",
@@ -314,6 +328,7 @@ _SAMPLE_ROWS = [
     {
         "company": "GreenLogistics",
         "industry": "Logistics",
+        "customer_segment": "enterprise",
         "stage": "negotiation",
         "amount": 210_000_000,
         "amount_status": "customer_budget",
@@ -331,6 +346,7 @@ _SAMPLE_ROWS = [
     {
         "company": "ClearSkin Lab",
         "industry": "Consumer",
+        "customer_segment": "startup",
         "stage": "won",
         "amount": 1_890_000,
         "amount_status": "quoted",
@@ -348,6 +364,7 @@ _SAMPLE_ROWS = [
     {
         "company": "EduContent Korea",
         "industry": "Education",
+        "customer_segment": "mid_market",
         "stage": "stalled",
         "amount": 58_000_000,
         "amount_status": "rough_estimate",
@@ -365,6 +382,7 @@ _SAMPLE_ROWS = [
     {
         "company": "Hyundai Precision Demo",
         "industry": "Manufacturing",
+        "customer_segment": "mid_market",
         "stage": "qualification",
         "amount": 48_000_000,
         "amount_status": "quoted",

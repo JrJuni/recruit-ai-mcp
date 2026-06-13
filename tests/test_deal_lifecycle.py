@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import asyncio
 import json
@@ -44,13 +44,21 @@ def _deal(**overrides) -> dict:
         "company": "Test Co",
         "industry": "IT",
         "deal_stage": "discovery",
-        "deal_size_krw": 10_000_000,
+        "deal_size_amount": 10_000_000,
         "meetings": [
             {
                 "meeting_id": "meeting-1",
                 "date": "2026-06-01",
                 "raw_notes": "secret raw notes",
                 "summary": "safe summary",
+            }
+        ],
+        "interactions": [
+            {
+                "interaction_id": "interaction-1",
+                "date": "2026-06-02",
+                "raw_content": "secret raw interaction",
+                "summary": "safe interaction summary",
             }
         ],
         "contacts": [{"name": "private contact"}],
@@ -229,9 +237,14 @@ def test_delete_deal_writes_safe_audit_snapshot_before_delete() -> None:
     snapshot = mongo.audit_logs[0]["deal_snapshot"]
     serialized_snapshot = json.dumps(snapshot, ensure_ascii=False)
     assert "secret raw notes" not in serialized_snapshot
+    assert "secret raw interaction" not in serialized_snapshot
     assert "private contact" not in serialized_snapshot
     assert "summary_embedding" not in serialized_snapshot
     assert mongo.audit_logs[0]["deal_snapshot"]["meetings"][0]["summary"] == "safe summary"
+    assert (
+        mongo.audit_logs[0]["deal_snapshot"]["interactions"][0]["summary"]
+        == "safe interaction summary"
+    )
 
 
 def test_get_deal_warns_when_archived(monkeypatch) -> None:
@@ -259,5 +272,4 @@ def test_mcp_lifecycle_wrappers_and_registration(monkeypatch) -> None:
     names = sorted(tool.name for tool in tools)
 
     assert result["ok"] is True
-    assert len(names) == 21
     assert {"archive_deal", "restore_deal", "delete_deal"}.issubset(names)

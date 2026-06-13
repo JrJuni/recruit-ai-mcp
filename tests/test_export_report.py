@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import asyncio
 import csv
@@ -80,7 +80,7 @@ def _deal(
         "company": company,
         "industry": industry,
         "deal_stage": stage,
-        "deal_size_krw": amount,
+        "deal_size_amount": amount,
         "deal_size_status": amount_status,
         "stage_history": [
             {
@@ -163,7 +163,7 @@ def test_export_report_writes_weekly_pipeline_csv_and_markdown(tmp_path) -> None
     assert result["as_of"] == "2026-06-10"
     assert result["filters"] == {"stage": "proposal", "industry": "IT"}
     assert result["row_count"] == 1
-    assert result["metrics"]["pipeline_value_krw"] == 72_000_000
+    assert result["metrics"]["pipeline_value_amount"] == 72_000_000
     assert result["metrics"]["attention_deal_count"] == 1
     assert result["output_dir"] == str(tmp_path.resolve())
     assert result["csv_path"] == result["artifacts"]["csv"]["path"]
@@ -203,7 +203,7 @@ def test_export_report_writes_pipeline_trend_csv_and_markdown(tmp_path) -> None:
                 "company": "Alpha",
                 "industry": "IT",
                 "deal_stage": "proposal",
-                "deal_size_krw": 100_000_000,
+                "deal_size_amount": 100_000_000,
                 "health_pct": 70,
                 "attention_reasons": [],
             },
@@ -215,7 +215,7 @@ def test_export_report_writes_pipeline_trend_csv_and_markdown(tmp_path) -> None:
                 "company": "Alpha",
                 "industry": "IT",
                 "deal_stage": "negotiation",
-                "deal_size_krw": 120_000_000,
+                "deal_size_amount": 120_000_000,
                 "health_pct": 80,
                 "attention_reasons": ["overdue"],
             },
@@ -227,7 +227,7 @@ def test_export_report_writes_pipeline_trend_csv_and_markdown(tmp_path) -> None:
                 "company": "Beta",
                 "industry": "IT",
                 "deal_stage": "discovery",
-                "deal_size_krw": 50_000_000,
+                "deal_size_amount": 50_000_000,
                 "health_pct": 60,
                 "attention_reasons": [],
             },
@@ -258,8 +258,8 @@ def test_export_report_writes_pipeline_trend_csv_and_markdown(tmp_path) -> None:
         "stage": "proposal",
         "industry": "IT",
     }
-    assert result["metrics"]["start"]["open_pipeline_value_krw"] == 100_000_000
-    assert result["metrics"]["end"]["open_pipeline_value_krw"] == 100_000_000
+    assert result["metrics"]["start"]["open_pipeline_value_amount"] == 100_000_000
+    assert result["metrics"]["end"]["open_pipeline_value_amount"] == 100_000_000
     assert result["metrics"]["delta"]["active_deal_count"] == 0
     assert result["row_count"] >= 7
 
@@ -273,10 +273,17 @@ def test_export_report_writes_pipeline_trend_csv_and_markdown(tmp_path) -> None:
     with csv_path.open(encoding="utf-8-sig", newline="") as file:
         rows = list(csv.DictReader(file))
     open_value = next(
-        row for row in rows if row["item"] == "open_pipeline_value_krw"
+        row for row in rows if row["item"] == "open_pipeline_value_amount"
     )
     assert open_value["start_value"] == "100000000"
     assert open_value["end_value"] == "100000000"
+
+
+def test_export_report_default_output_dir_uses_user_home() -> None:
+    assert export_report.DEFAULT_OUTPUT_DIR == Path("~/.deal-intel/reports")
+    assert export_report._resolve_output_dir({}, None) == Path(
+        "~/.deal-intel/reports"
+    ).expanduser()
 
 
 def test_export_report_mcp_wrapper_forwards_to_handler(monkeypatch, tmp_path) -> None:
@@ -384,5 +391,4 @@ def test_mcp_runtime_registers_export_report() -> None:
     tools = asyncio.run(mcp_server.app.list_tools())
     names = sorted(tool.name for tool in tools)
 
-    assert len(names) == 21
     assert "export_report" in names

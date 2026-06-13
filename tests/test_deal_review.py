@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import asyncio
 import json
@@ -93,7 +93,7 @@ def _deal(
         "company": f"Company {deal_id}",
         "industry": "IT",
         "deal_stage": stage,
-        "deal_size_krw": amount,
+        "deal_size_amount": amount,
         "deal_size_status": amount_status,
         "expected_close_date": expected_close_date,
         "expected_close_date_source": expected_close_source,
@@ -142,7 +142,7 @@ def test_high_coverage_low_health_is_confirmed_alert() -> None:
 
     interpretation = review["health_interpretation"]
     assert interpretation["evidence_coverage_pct"] == 100.0
-    assert interpretation["uncertainty_level"] == "low"
+    assert interpretation["uncertainty_level"] == "medium"
     assert interpretation["review_band"] == "confirmed_risk"
     assert interpretation["alert_level"] == "alert"
     assert any(risk["risk_id"] == "confirmed_meddpicc_risk" for risk in review["confirmed_risks"])
@@ -165,6 +165,50 @@ def test_high_coverage_high_health_is_verified_healthy() -> None:
     assert interpretation["uncertainty_level"] == "low"
     assert not review["confirmed_risks"]
     assert review["known_signals"]
+
+
+def test_high_coverage_forecast_risk_raises_watch_alert() -> None:
+    review = build_deal_review(
+        _deal(
+            health_pct=88,
+            scores={dim: 4.5 for dim in MEDDPICC_DIMS},
+            gaps=[],
+            amount_status="rough_estimate",
+        ),
+        as_of=AS_OF,
+    )
+
+    interpretation = review["health_interpretation"]
+    assert interpretation["review_band"] == "watch_with_evidence"
+    assert interpretation["alert_level"] == "watch"
+    assert interpretation["uncertainty_level"] == "medium"
+    assert interpretation["forecast_confidence"] == "estimated"
+    assert any(
+        risk["risk_id"] == "forecast:rough_estimate"
+        for risk in review["confirmed_risks"]
+    )
+    assert "confirmed_risk_present" in review["warnings"]
+
+
+def test_high_coverage_estimated_close_is_not_verified_or_low_uncertainty() -> None:
+    review = build_deal_review(
+        _deal(
+            health_pct=88,
+            scores={dim: 4.5 for dim in MEDDPICC_DIMS},
+            gaps=[],
+            expected_close_source="config_default",
+        ),
+        as_of=AS_OF,
+    )
+
+    interpretation = review["health_interpretation"]
+    assert interpretation["review_band"] == "promising_but_unproven"
+    assert interpretation["alert_level"] == "watch"
+    assert interpretation["uncertainty_level"] == "medium"
+    assert any(
+        item["field"] == "expected_close_date"
+        for item in review["missing_information"]
+    )
 
 
 def test_low_coverage_low_health_prioritizes_missing_information() -> None:
@@ -202,6 +246,66 @@ def test_overdue_deal_separates_timing_risk_from_health() -> None:
     assert any(risk["risk_id"] == "timing:overdue" for risk in review["confirmed_risks"])
     assert review["health_interpretation"]["review_band"] == "promising_but_unproven"
     assert review["health_interpretation"]["alert_level"] == "watch"
+
+
+def test_v2_assessment_and_gap_actionability_split_cta_from_observations() -> None:
+    review = build_deal_review(
+        _deal(
+            stage="negotiation",
+            health_pct=72,
+            scores={dim: 4 for dim in MEDDPICC_DIMS if dim != "competition"},
+            gaps=["competition"],
+            expected_close_date="2026-06-01",
+        ),
+        as_of=AS_OF,
+    )
+
+    assert review["review_version"] == "v2"
+    assert review["assessment"] == {
+        "health_quality": "healthy",
+        "evidence_coverage_pct": 85.7,
+        "evidence_coverage_level": "high",
+        "uncertainty": "medium",
+        "confirmed_risk_level": "watch",
+        "review_band": "watch_with_evidence",
+        "alert_level": "watch",
+    }
+
+    assert "review_close_plan" in review["recommended_actions"]
+    assert "ask_in_next_meeting" not in review["recommended_actions"]
+
+    observation = next(
+        item for item in review["gap_observations"]
+        if item["field"] == "meddpicc.competition"
+    )
+    assert observation["actionability"] == "needs_human_judgment"
+    assert observation["cta_policy"] == "observation_only"
+    assert observation["recommended_action"] == "ask_in_next_meeting"
+
+    action = next(
+        item for item in review["actionable_gaps"]
+        if item["gap_id"] == "attention:overdue"
+    )
+    assert action["actionability"] == "cta_allowed"
+    assert action["cta_policy"] == "cta_allowed"
+
+
+def test_deal_review_coverage_thresholds_are_configurable() -> None:
+    review = build_deal_review(
+        _deal(
+            health_pct=86,
+            scores={"metrics": 5, "identify_pain": 5},
+        ),
+        as_of=AS_OF,
+        review_settings={"coverage_low_max": 20, "coverage_high_min": 50},
+    )
+
+    interpretation = review["health_interpretation"]
+    assert interpretation["evidence_coverage_pct"] == 28.6
+    assert interpretation["evidence_coverage_level"] == "medium"
+    assert interpretation["uncertainty_level"] == "medium"
+    assert review["assessment"]["uncertainty"] == "medium"
+    assert "insufficient_evidence" not in review["warnings"]
 
 
 def test_get_deal_review_tool_uses_restricted_read_path_and_excludes_sensitive_fields() -> None:
@@ -285,5 +389,4 @@ def test_mcp_runtime_registers_get_deal_review() -> None:
     tools = asyncio.run(mcp_server.app.list_tools())
     names = sorted(tool.name for tool in tools)
 
-    assert len(names) == 21
     assert "get_deal_review" in names

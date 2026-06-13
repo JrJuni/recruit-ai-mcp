@@ -91,8 +91,8 @@ def normalize_stage_signal(raw: Any) -> dict | None:
     """Validate an optional stage-change signal from the LLM.
 
     Returns None unless the notes clearly point at a valid pipeline stage.
-    This is only ever surfaced to the user as a suggestion — add_meeting never
-    changes deal_stage automatically; the user must confirm via update_stage.
+    This is only ever surfaced to the user as a suggestion. Intake tools never
+    change deal_stage automatically; the user must confirm via update_stage.
     """
     if not isinstance(raw, dict):
         return None
@@ -132,17 +132,19 @@ def parse_meeting_analysis(text: str) -> tuple[dict, list[dict], dict | None]:
 
 
 def rebuild_deal_customer_themes(deal: dict) -> list[dict]:
-    """Flatten meeting themes onto the deal for M0 aggregation and Atlas Charts."""
+    """Flatten interaction themes onto the deal for M0 aggregation and Atlas Charts."""
+    from deal_intel.schema.interactions import iter_interactions
+
     flattened = []
     seen: set[tuple[str, str, str, str]] = set()
-    for meeting in deal.get("meetings", []):
-        themes = normalize_customer_themes(meeting.get("customer_themes"))
-        meeting["customer_themes"] = themes
-        meeting_id = str(meeting.get("meeting_id") or "")
-        meeting_date = str(meeting.get("date") or "")
+    for interaction in iter_interactions(deal):
+        themes = normalize_customer_themes(interaction.get("customer_themes"))
+        interaction_id = str(interaction.get("interaction_id") or "")
+        interaction_date = str(interaction.get("date") or "")
+        meeting_id = str(interaction.get("meeting_id") or interaction_id)
         for theme in themes:
             identity = (
-                meeting_id,
+                interaction_id,
                 theme["theme_key"],
                 theme["dimension"],
                 theme["evidence"],
@@ -153,8 +155,11 @@ def rebuild_deal_customer_themes(deal: dict) -> list[dict]:
             flattened.append(
                 {
                     **theme,
+                    "interaction_id": interaction_id,
+                    "interaction_date": interaction_date,
+                    "interaction_type": interaction.get("interaction_type"),
                     "meeting_id": meeting_id,
-                    "meeting_date": meeting_date,
+                    "meeting_date": interaction_date,
                 }
             )
     return flattened

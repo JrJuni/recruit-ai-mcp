@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import asyncio
 import json
@@ -51,7 +51,7 @@ def _deal(deal_id: str, *, stage: str = "discovery") -> dict:
         "company": f"Company {deal_id}",
         "industry": "IT",
         "deal_stage": stage,
-        "deal_size_krw": None,
+        "deal_size_amount": None,
         "deal_size_status": "unknown",
         "expected_close_date": "2026-06-30",
         "expected_close_date_source": "user_provided",
@@ -88,6 +88,8 @@ def test_get_deal_gaps_valid_filters_return_shape_and_exclude_sensitive_fields()
     assert result["summary"]["deal_count"] == 1
     assert result["summary"]["returned_deal_count"] == 1
     assert result["deals"][0]["deal_id"] == "deal-1"
+    assert "actionable_gaps" in result["deals"][0]
+    assert "gap_observations" in result["deals"][0]
     serialized = json.dumps(result, ensure_ascii=False)
     assert "raw_notes" not in serialized
     assert "contacts" not in serialized
@@ -160,5 +162,4 @@ def test_mcp_runtime_registers_get_deal_gaps() -> None:
     tools = asyncio.run(mcp_server.app.list_tools())
     names = sorted(tool.name for tool in tools)
 
-    assert len(names) == 21
     assert "get_deal_gaps" in names

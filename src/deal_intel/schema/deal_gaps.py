@@ -1,10 +1,14 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from collections import Counter
 from collections.abc import Iterable
 from datetime import date, datetime
 from typing import Any
 
+from deal_intel.schema.gap_actionability import (
+    CTA_POLICY_ALLOWED,
+    annotate_gap_actionability,
+)
 from deal_intel.schema.metrics import (
     ACTIVE_STAGES,
     OPEN_STAGES,
@@ -92,13 +96,13 @@ FIELD_HINTS = {
         "suggested_question": (
             "최근 미팅에서 확인된 pain, decision criteria, next step은 무엇인가요?"
         ),
-        "recommended_action": "add_meeting_notes",
+        "recommended_action": "add_interaction_evidence",
     },
     "health_assessment": {
         "impact_area": "sales_action",
         "reason": "Qualified-or-later deal has no usable MEDDPICC health assessment.",
         "suggested_question": "MEDDPICC 기준으로 아직 확인하지 못한 항목은 무엇인가요?",
-        "recommended_action": "add_or_refresh_meeting_notes",
+        "recommended_action": "add_or_refresh_interaction_evidence",
     },
     "actual_close_date": {
         "impact_area": "postmortem",
@@ -157,7 +161,7 @@ def build_deal_gaps_summary(
         key=lambda row: (
             -row["priority_score"],
             -len(row["attention_reasons"]),
-            -(row["deal_size_krw"] or 0),
+            -(row["deal_size_amount"] or 0),
             str(row["company"] or ""),
         )
     )
@@ -257,13 +261,22 @@ def _build_deal_gap_row(
     )
     gaps = _dedupe_gaps(gaps)
     priority_score = max((gap.pop("_score") for gap in gaps), default=0)
+    gaps = [annotate_gap_actionability(gap) for gap in gaps]
+    actionable_gaps = [
+        gap for gap in gaps if gap.get("cta_policy") == CTA_POLICY_ALLOWED
+    ]
+    gap_observations = [
+        gap for gap in gaps if gap.get("cta_policy") != CTA_POLICY_ALLOWED
+    ]
 
     return {
         "deal_id": deal.get("deal_id"),
         "company": deal.get("company"),
         "industry": deal.get("industry"),
+        "customer_segment": deal.get("customer_segment"),
         "deal_stage": deal.get("deal_stage"),
-        "deal_size_krw": deal.get("deal_size_krw"),
+        "deal_size_amount": deal.get("deal_size_amount"),
+        "deal_size_currency": deal.get("deal_size_currency") or "KRW",
         "deal_size_status": deal.get("deal_size_status"),
         "expected_close_date": deal.get("expected_close_date"),
         "health_pct": meddpicc_latest.get("health_pct"),
@@ -272,6 +285,8 @@ def _build_deal_gap_row(
         "priority_score": priority_score,
         "priority_band": _priority_band(priority_score),
         "gaps": gaps,
+        "actionable_gaps": actionable_gaps,
+        "gap_observations": gap_observations,
     }
 
 
@@ -519,7 +534,7 @@ def _priority_score(deal: dict, base_score: int, attention_reasons: list[str]) -
         "won": 15,
         "lost": 15,
     }.get(str(deal.get("deal_stage") or ""), 0)
-    value = deal.get("deal_size_krw")
+    value = deal.get("deal_size_amount")
     value_bonus = 0
     if isinstance(value, int) and not isinstance(value, bool):
         if value >= 100_000_000:

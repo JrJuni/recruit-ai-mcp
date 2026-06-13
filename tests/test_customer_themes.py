@@ -11,7 +11,7 @@ from deal_intel.schema.customer_themes import (
     rebuild_deal_customer_themes,
 )
 from deal_intel.tools import (
-    add_meeting,
+    add_interaction,
     backfill_customer_themes,
     get_customer_themes,
 )
@@ -34,6 +34,7 @@ class FakeMongo:
         self.saved: list[dict] = []
         self.aggregate_result: list[dict] = []
         self.count_results: list[int] = []
+        self.count_queries: list[dict] = []
         self.pipeline = None
 
     def get_deal(self, deal_id: str):
@@ -46,7 +47,8 @@ class FakeMongo:
         deals = deepcopy(self.deals)
         return deals[:limit] if limit > 0 else deals
 
-    def count_deals(self, _query: dict) -> int:
+    def count_deals(self, query: dict) -> int:
+        self.count_queries.append(deepcopy(query))
         return self.count_results.pop(0)
 
     def aggregate_deals(self, pipeline: list[dict]) -> list[dict]:
@@ -144,7 +146,7 @@ def test_rebuild_deal_customer_themes_flattens_meeting_provenance() -> None:
     assert result[0]["meeting_date"] == "2026-06-01"
 
 
-def test_add_meeting_persists_customer_themes_without_extra_llm_call() -> None:
+def test_add_interaction_meeting_persists_customer_themes() -> None:
     mongo = FakeMongo(
         [
             {
@@ -173,23 +175,27 @@ def test_add_meeting_persists_customer_themes_without_extra_llm_call() -> None:
     )
     llm = FakeLLM([analysis, "회의 요약"])
 
-    result = add_meeting.handle(
+    result = add_interaction.handle(
         mongo=mongo,
         llm=llm,
         cfg={"meddpicc": {"weights": {}}},
         deal_id="d1",
         date="2026-06-08",
-        raw_notes="수작업 보고가 오래 걸린다.",
+        interaction_type="meeting",
+        direction="inbound",
+        content="수작업 보고가 오래 걸린다.",
     )
 
     assert result["customer_themes"][0]["theme_key"] == "operational_efficiency"
     assert mongo.saved[0]["customer_themes"][0]["meeting_id"] == result["meeting_id"]
-    assert mongo.saved[0]["meetings"][0]["summary"] == "회의 요약"
+    assert mongo.saved[0]["customer_themes"][0]["interaction_id"] == result["meeting_id"]
+    assert mongo.saved[0]["meetings"] == []
+    assert mongo.saved[0]["interactions"][0]["summary"] == "회의 요약"
     # No closing language in the notes → no stage suggestion.
     assert result["stage_suggestion"] is None
 
 
-def test_add_meeting_suggests_stage_without_changing_it() -> None:
+def test_add_interaction_meeting_suggests_stage_without_changing_it() -> None:
     mongo = FakeMongo(
         [
             {
@@ -216,13 +222,15 @@ def test_add_meeting_suggests_stage_without_changing_it() -> None:
     )
     llm = FakeLLM([analysis, "계약 체결"])
 
-    result = add_meeting.handle(
+    result = add_interaction.handle(
         mongo=mongo,
         llm=llm,
         cfg={"meddpicc": {"weights": {}}},
         deal_id="d1",
         date="2026-06-13",
-        raw_notes="RFP 최종 선정 통보. 계약 서명 완료. CLOSED WON.",
+        interaction_type="meeting",
+        direction="inbound",
+        content="RFP 최종 선정 통보. 계약 서명 완료. CLOSED WON.",
     )
 
     # Suggestion is surfaced...
@@ -234,7 +242,7 @@ def test_add_meeting_suggests_stage_without_changing_it() -> None:
     assert mongo.saved[0]["deal_stage"] == "discovery"
 
 
-def test_add_meeting_omits_suggestion_when_signal_matches_current_stage() -> None:
+def test_add_interaction_meeting_omits_suggestion_when_signal_matches_current_stage() -> None:
     mongo = FakeMongo(
         [{"deal_id": "d1", "company": "테스트", "deal_stage": "won", "meetings": []}]
     )
@@ -252,13 +260,15 @@ def test_add_meeting_omits_suggestion_when_signal_matches_current_stage() -> Non
     )
     llm = FakeLLM([analysis, "온보딩 진행"])
 
-    result = add_meeting.handle(
+    result = add_interaction.handle(
         mongo=mongo,
         llm=llm,
         cfg={"meddpicc": {"weights": {}}},
         deal_id="d1",
         date="2026-06-13",
-        raw_notes="온보딩 진행 중.",
+        interaction_type="meeting",
+        direction="inbound",
+        content="온보딩 진행 중.",
     )
 
     # Signal equals the current stage → nothing to suggest.
@@ -296,6 +306,35 @@ def test_get_customer_themes_counts_unique_deals_and_adds_shares() -> None:
     assert mongo.pipeline[0]["$match"]["archived"] == {"$ne": True}
     assert mongo.pipeline[0]["$match"]["deal_stage"] == {"$nin": ["won", "lost"]}
     assert {"$match": {"customer_themes.dimension": "decision_criteria"}} in mongo.pipeline
+
+
+def test_get_customer_themes_industry_filter_matches_primary_or_tags() -> None:
+    mongo = FakeMongo()
+    mongo.count_results = [3, 2]
+    mongo.aggregate_result = []
+
+    result = get_customer_themes.handle(
+        mongo,
+        dimension="all",
+        stage="active",
+        industry="보험",
+        top_k=5,
+    )
+
+    expected_scope = {
+        "archived": {"$ne": True},
+        "deal_stage": {"$nin": ["won", "lost"]},
+        "$or": [
+            {"industry": {"$in": ["Insurance"]}},
+            {"industry_tags": {"$in": ["Insurance"]}},
+        ],
+    }
+    assert result["filters"]["industry"] == "보험"
+    assert mongo.count_queries[0] == expected_scope
+    assert mongo.pipeline[0]["$match"] == {
+        **expected_scope,
+        "customer_themes.0": {"$exists": True},
+    }
 
 
 def test_backfill_is_idempotent_and_rebuilds_deal_themes() -> None:

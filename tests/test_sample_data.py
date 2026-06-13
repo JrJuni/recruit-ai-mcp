@@ -225,7 +225,11 @@ def test_mcp_sample_data_wrappers_use_demo_database(monkeypatch) -> None:
 
     import deal_intel.storage.mongodb as mongodb_module
 
-    monkeypatch.setattr(_context, "config", lambda: _cfg())
+    monkeypatch.setattr(
+        _context,
+        "config",
+        lambda: {**_cfg(), "tools": {"surface": "developer"}},
+    )
     monkeypatch.setattr(mongodb_module, "MongoDBClient", FakeMongoFactory)
 
     result = mcp_server.create_sample_data()
@@ -235,5 +239,5 @@ def test_mcp_sample_data_wrappers_use_demo_database(monkeypatch) -> None:
     assert result["ok"] is True
     assert result["dry_run"] is True
     assert created_clients[0].database_name == "deal_intel_demo"
-    assert len(names) == 21
+    assert len(names) == 27
     assert {"create_sample_data", "delete_sample_data"}.issubset(names)

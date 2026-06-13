@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import asyncio
 from copy import deepcopy
@@ -29,10 +29,13 @@ def _deal(**overrides) -> dict:
         "deal_id": "deal-1",
         "company": "Test Co",
         "industry": "IT",
+        "industry_tags": ["IT"],
+        "customer_segment": "startup",
         "deal_stage": "discovery",
-        "deal_size_krw": 18_000_000,
-        "deal_size_low_krw": None,
-        "deal_size_high_krw": None,
+        "deal_size_amount": 18_000_000,
+        "deal_size_low_amount": None,
+        "deal_size_high_amount": None,
+        "deal_size_currency": "KRW",
         "deal_size_status": None,
         "deal_size_note": None,
         "expected_close_date": "2026-06-30",
@@ -93,9 +96,10 @@ def test_update_deal_sets_status_and_preserves_existing_amount() -> None:
     assert result["ok"] is True
     assert result["old_deal_value"]["deal_size_status"] is None
     assert result["new_deal_value"] == {
-        "deal_size_krw": 18_000_000,
-        "deal_size_low_krw": None,
-        "deal_size_high_krw": None,
+        "deal_size_amount": 18_000_000,
+        "deal_size_low_amount": None,
+        "deal_size_high_amount": None,
+        "deal_size_currency": "KRW",
         "deal_size_status": "quoted",
         "deal_size_note": "signed order form confirmed by user",
     }
@@ -112,18 +116,18 @@ def test_update_deal_updates_amount_range_and_history() -> None:
         mongo=mongo,
         deal_id="deal-1",
         deal_size_status="customer_budget",
-        deal_size_krw=20_000_000,
-        deal_size_low_krw=15_000_000,
-        deal_size_high_krw=25_000_000,
+        deal_size_amount=20_000_000,
+        deal_size_low_amount=15_000_000,
+        deal_size_high_amount=25_000_000,
         deal_size_note="customer disclosed budget range",
         confirmed_by_user=True,
     )
 
-    assert result["new_deal_value"]["deal_size_krw"] == 20_000_000
+    assert result["new_deal_value"]["deal_size_amount"] == 20_000_000
     assert result["new_deal_value"]["deal_size_status"] == "customer_budget"
     assert mongo.saved is not None
-    assert mongo.saved["deal_size_low_krw"] == 15_000_000
-    assert mongo.saved["deal_value_history"][-1]["deal_size_high_krw"] == 25_000_000
+    assert mongo.saved["deal_size_low_amount"] == 15_000_000
+    assert mongo.saved["deal_value_history"][-1]["deal_size_high_amount"] == 25_000_000
 
 
 def test_update_deal_unknown_clears_amount_fields() -> None:
@@ -137,10 +141,10 @@ def test_update_deal_unknown_clears_amount_fields() -> None:
         confirmed_by_user=True,
     )
 
-    assert result["new_deal_value"]["deal_size_krw"] is None
+    assert result["new_deal_value"]["deal_size_amount"] is None
     assert result["new_deal_value"]["deal_size_status"] == "unknown"
     assert mongo.saved is not None
-    assert mongo.saved["deal_size_krw"] is None
+    assert mongo.saved["deal_size_amount"] is None
 
 
 def test_update_deal_updates_metadata_with_confirmation_and_history() -> None:
@@ -150,8 +154,9 @@ def test_update_deal_updates_metadata_with_confirmation_and_history() -> None:
         mongo=mongo,
         deal_id="deal-1",
         industry="제조",
+        customer_segment="enterprise",
         expected_close_date="2026-07-15",
-        update_note="user confirmed industry and close forecast",
+        update_note="user confirmed industry, segment, and close forecast",
         confirmed_by_user=True,
     )
 
@@ -159,24 +164,76 @@ def test_update_deal_updates_metadata_with_confirmation_and_history() -> None:
     assert result["changed_value_fields"] == []
     assert result["changed_metadata_fields"] == [
         "industry",
+        "industry_tags",
+        "customer_segment",
         "expected_close_date",
         "expected_close_date_source",
     ]
     assert result["changed_fields"] == [
         "industry",
+        "industry_tags",
+        "customer_segment",
         "expected_close_date",
         "expected_close_date_source",
     ]
     assert mongo.saved is not None
-    assert mongo.saved["industry"] == "제조"
+    assert mongo.saved["industry"] == "Manufacturing"
+    assert mongo.saved["industry_tags"] == ["Manufacturing"]
+    assert mongo.saved["customer_segment"] == "enterprise"
     assert mongo.saved["expected_close_date"] == "2026-07-15"
     assert mongo.saved["expected_close_date_source"] == "user_provided"
     history = mongo.saved["deal_metadata_history"][-1]
     assert history["source"] == "update_deal"
-    assert history["update_note"] == "user confirmed industry and close forecast"
+    assert history["update_note"] == "user confirmed industry, segment, and close forecast"
     assert history["old_values"]["expected_close_date"] == "2026-06-30"
+    assert history["old_values"]["industry"] == "IT"
+    assert history["new_values"]["industry"] == "Manufacturing"
+    assert history["new_values"]["industry_tags"] == ["Manufacturing"]
+    assert history["old_values"]["customer_segment"] == "startup"
     assert history["new_values"]["expected_close_date"] == "2026-07-15"
+    assert history["new_values"]["customer_segment"] == "enterprise"
     assert "deal_value_history" not in mongo.saved
+
+
+def test_update_deal_updates_industry_tags_without_changing_primary() -> None:
+    mongo = FakeMongo(_deal(industry="Finance", industry_tags=["Finance"]))
+
+    result = update_deal.handle(
+        mongo=mongo,
+        deal_id="deal-1",
+        industry_tags="보험/SaaS",
+        update_note="user confirmed cross-industry tags",
+        confirmed_by_user=True,
+    )
+
+    assert result["changed_metadata_fields"] == ["industry_tags"]
+    assert result["new_deal_metadata"]["industry"] == "Finance"
+    assert result["new_deal_metadata"]["industry_tags"] == [
+        "Finance",
+        "Insurance",
+        "SaaS",
+    ]
+    assert mongo.saved is not None
+    assert mongo.saved["industry_tags"] == ["Finance", "Insurance", "SaaS"]
+
+
+def test_update_deal_auto_classifies_mixed_industry_metadata() -> None:
+    mongo = FakeMongo(_deal())
+
+    result = update_deal.handle(
+        mongo=mongo,
+        deal_id="deal-1",
+        industry="보험·금융·대기업",
+        update_note="user confirmed industry",
+        confirmed_by_user=True,
+    )
+
+    assert result["ok"] is True
+    assert result["new_deal_metadata"]["industry"] == "Insurance"
+    assert result["new_deal_metadata"]["industry_tags"] == ["Insurance", "Finance"]
+    assert result["new_deal_metadata"]["customer_segment"] == "enterprise"
+    assert mongo.saved is not None
+    assert mongo.saved["industry"] == "Insurance"
 
 
 def test_update_deal_updates_terminal_postmortem_fields() -> None:
@@ -259,14 +316,14 @@ def test_update_deal_combines_value_and_metadata_updates() -> None:
         deal_id="deal-1",
         deal_size_status="quoted",
         deal_size_note="quote sent and user confirmed",
-        deal_size_krw=20_000_000,
+        deal_size_amount=20_000_000,
         expected_close_date="2026-07-01",
         update_note="user confirmed revised close date",
         confirmed_by_user=True,
     )
 
     assert result["changed_value_fields"] == [
-        "deal_size_krw",
+        "deal_size_amount",
         "deal_size_status",
         "deal_size_note",
     ]
@@ -290,7 +347,7 @@ def test_update_deal_rejects_invalid_value_combination_before_storage() -> None:
             mongo=mongo,
             deal_id="deal-1",
             deal_size_status="quoted",
-            deal_size_krw=0,
+            deal_size_amount=0,
             deal_size_note="bad value",
             confirmed_by_user=True,
         )
@@ -340,6 +397,7 @@ def test_mcp_update_deal_forwards_metadata_update(monkeypatch) -> None:
     result = mcp_server.update_deal(
         "deal-1",
         industry="Finance",
+        customer_segment="enterprise",
         expected_close_date="2026-07-20",
         update_note="user confirmed metadata",
         confirmed_by_user=True,
@@ -348,11 +406,15 @@ def test_mcp_update_deal_forwards_metadata_update(monkeypatch) -> None:
     assert result["ok"] is True
     assert result["changed_metadata_fields"] == [
         "industry",
+        "industry_tags",
+        "customer_segment",
         "expected_close_date",
         "expected_close_date_source",
     ]
     assert mongo.saved is not None
     assert mongo.saved["industry"] == "Finance"
+    assert mongo.saved["industry_tags"] == ["Finance"]
+    assert mongo.saved["customer_segment"] == "enterprise"
 
 
 def test_mcp_runtime_update_deal_exposes_metadata_params() -> None:
@@ -363,6 +425,8 @@ def test_mcp_runtime_update_deal_exposes_metadata_params() -> None:
     assert {
         "company",
         "industry",
+        "industry_tags",
+        "customer_segment",
         "expected_close_date",
         "actual_close_date",
         "close_reason",

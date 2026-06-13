@@ -1,10 +1,14 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from datetime import UTC, datetime
 from typing import Any
 
 from deal_intel.reports.weekly_pipeline import REPORT_TYPE
-from deal_intel.schema.metrics import HealthBand, assess_deal_value
+from deal_intel.schema.metrics import (
+    DEFAULT_DEAL_CURRENCY,
+    HealthBand,
+    assess_deal_value,
+)
 
 WARNING_LABELS = {
     "no_open_deals": "No open deals",
@@ -69,13 +73,27 @@ def _summarize_rows(rows: list[dict]) -> dict:
     known_value_assessments = [
         item for item in value_assessments if item.is_valid and item.is_known
     ]
+    amount_by_currency = {
+        currency: sum(
+            assessment.amount or 0
+            for assessment in known_value_assessments
+            if assessment.currency == currency
+        )
+        for currency in sorted({item.currency for item in known_value_assessments})
+    }
+    currencies = sorted(amount_by_currency) or [DEFAULT_DEAL_CURRENCY]
+    mixed_currency = len(amount_by_currency) > 1
     row_count = len(rows)
     attention_deal_count = sum(bool(row.get("attention_reasons")) for row in rows)
     return {
         "open_deal_count": row_count,
-        "pipeline_value_krw": sum(
-            assessment.amount_krw or 0 for assessment in known_value_assessments
+        "pipeline_value_amount": (
+            None if mixed_currency else amount_by_currency.get(currencies[0], 0)
         ),
+        "pipeline_value_currency": None if mixed_currency else currencies[0],
+        "pipeline_value_currencies": currencies,
+        "mixed_pipeline_value_currency": mixed_currency,
+        "pipeline_value_by_currency": amount_by_currency,
         "known_amount_count": len(known_value_assessments),
         "amount_coverage_pct": _pct(len(known_value_assessments), row_count),
         "avg_health_pct": (
@@ -86,6 +104,12 @@ def _summarize_rows(rows: list[dict]) -> dict:
         "assessed_health_count": len(health_values),
         "health_coverage_pct": _pct(len(health_values), row_count),
         "attention_deal_count": attention_deal_count,
+        "objective_action_item_count": sum(
+            len(row.get("objective_action_items") or []) for row in rows
+        ),
+        "gap_observation_count": sum(
+            len(row.get("gap_observations") or []) for row in rows
+        ),
         "overdue_count": sum(row.get("is_overdue") is True for row in rows),
         "stuck_count": sum(row.get("is_stuck") is True for row in rows),
         "stalled_count": sum(row.get("deal_stage") == "stalled" for row in rows),
@@ -145,7 +169,10 @@ def _build_markdown(
             ["Metric", "Value"],
             [
                 ["Open deals", str(metrics["open_deal_count"])],
-                ["Pipeline value", _format_krw(metrics["pipeline_value_krw"])],
+                [
+                    "Pipeline value",
+                    _format_pipeline_value(metrics),
+                ],
                 [
                     "Known amount coverage",
                     _format_ratio(
@@ -164,6 +191,11 @@ def _build_markdown(
                     ),
                 ],
                 ["Attention deals", str(metrics["attention_deal_count"])],
+                [
+                    "Objective action items",
+                    str(metrics["objective_action_item_count"]),
+                ],
+                ["Gap observations", str(metrics["gap_observation_count"])],
                 ["Overdue", str(metrics["overdue_count"])],
                 ["Stuck", str(metrics["stuck_count"])],
                 ["At risk", str(metrics["at_risk_count"])],
@@ -174,6 +206,18 @@ def _build_markdown(
         "## Risk Deals",
         "",
         *_risk_deal_section(rows),
+        "",
+        "## Objective Action Items",
+        "",
+        *_objective_action_section(rows),
+        "",
+        "## Gap Observations",
+        "",
+        *_gap_observation_section(rows),
+        "",
+        "## Customer Evidence",
+        "",
+        *_customer_evidence_section(rows),
         "",
         "## Data Quality",
         "",
@@ -217,25 +261,132 @@ def _risk_deal_section(rows: list[dict]) -> list[str]:
     if not risk_rows:
         return ["No risk deals."]
     return _table(
-        ["Company", "Stage", "Amount", "Expected close", "Health", "Reasons"],
+        [
+            "Company",
+            "Stage",
+            "Amount",
+            "Expected close",
+            "Health",
+            "Reasons",
+            "Objective actions",
+        ],
         [
             [
                 row.get("company"),
                 row.get("deal_stage"),
-                _format_krw(_valid_amount(row)),
+                _format_money(
+                    _valid_amount(row),
+                    currency=row.get("deal_size_currency") or DEFAULT_DEAL_CURRENCY,
+                ),
                 row.get("expected_close_date") or "N/A",
                 _format_health(row),
                 ", ".join(str(reason) for reason in row.get("attention_reasons", [])),
+                _format_action_items(row.get("objective_action_items") or []),
             ]
             for row in risk_rows
         ],
     )
 
 
+def _objective_action_section(rows: list[dict]) -> list[str]:
+    action_rows = [
+        (row, action)
+        for row in rows
+        for action in row.get("objective_action_items") or []
+        if isinstance(action, dict)
+    ]
+    if not action_rows:
+        return ["No objective action items."]
+    return _table(
+        ["Company", "Trigger", "Recommended action", "Reason"],
+        [
+            [
+                row.get("company"),
+                action.get("label") or action.get("gap_id"),
+                action.get("recommended_action") or "review",
+                action.get("reason"),
+            ]
+            for row, action in action_rows
+        ],
+    )
+
+
+def _gap_observation_section(rows: list[dict]) -> list[str]:
+    observation_rows = [
+        (row, observation)
+        for row in rows
+        for observation in row.get("gap_observations") or []
+        if isinstance(observation, dict)
+    ]
+    if not observation_rows:
+        return ["No gap observations."]
+    return _table(
+        ["Company", "Gap", "Actionability", "Reason"],
+        [
+            [
+                row.get("company"),
+                observation.get("label") or observation.get("field"),
+                observation.get("actionability"),
+                observation.get("reason"),
+            ]
+            for row, observation in observation_rows
+        ],
+    )
+
+
+def _customer_evidence_section(rows: list[dict]) -> list[str]:
+    evidence_rows = [
+        row
+        for row in rows
+        if isinstance(row.get("primary_pain"), dict)
+        or isinstance(row.get("primary_decision_criteria"), dict)
+    ]
+    if not evidence_rows:
+        return ["No primary customer evidence."]
+    return _table(
+        ["Company", "Primary pain", "Pain source", "Decision criteria", "DC source"],
+        [
+            [
+                row.get("company"),
+                _format_theme(row.get("primary_pain")),
+                _format_theme_source(row.get("primary_pain")),
+                _format_theme(row.get("primary_decision_criteria")),
+                _format_theme_source(row.get("primary_decision_criteria")),
+            ]
+            for row in evidence_rows
+        ],
+    )
+
+
+def _format_theme(theme: Any) -> str:
+    if not isinstance(theme, dict):
+        return "N/A"
+    evidence = str(theme.get("evidence") or "").strip()
+    label = str(theme.get("label") or theme.get("theme_key") or "").strip()
+    if label and evidence:
+        return f"{label}: {evidence}"
+    return evidence or label or "N/A"
+
+
+def _format_theme_source(theme: Any) -> str:
+    if not isinstance(theme, dict):
+        return "N/A"
+    return str(theme.get("source_label") or "Unknown source")
+
+
+def _format_action_items(actions: list[dict]) -> str:
+    values = [
+        str(action.get("recommended_action") or action.get("gap_id"))
+        for action in actions
+        if isinstance(action, dict)
+    ]
+    return ", ".join(values) if values else "none"
+
+
 def _valid_amount(row: dict) -> int:
     assessment = assess_deal_value(row)
     if assessment.is_valid and assessment.is_known:
-        return assessment.amount_krw or 0
+        return assessment.amount or 0
     return 0
 
 
@@ -276,10 +427,28 @@ def _filter_value(value: Any) -> str:
     return str(value) if value not in (None, "") else "all"
 
 
-def _format_krw(value: int | float | None) -> str:
+def _format_pipeline_value(metrics: dict) -> str:
+    if metrics.get("mixed_pipeline_value_currency") is True:
+        return _format_currency_breakdown(metrics.get("pipeline_value_by_currency"))
+    return _format_money(
+        metrics.get("pipeline_value_amount"),
+        currency=metrics.get("pipeline_value_currency") or DEFAULT_DEAL_CURRENCY,
+    )
+
+
+def _format_currency_breakdown(value: Any) -> str:
+    if not isinstance(value, dict) or not value:
+        return "N/A"
+    return ", ".join(
+        _format_money(amount, currency=str(currency))
+        for currency, amount in sorted(value.items())
+    )
+
+
+def _format_money(value: int | float | None, *, currency: str) -> str:
     if value is None:
         return "N/A"
-    return f"{int(value):,} KRW"
+    return f"{int(value):,} {currency}"
 
 
 def _format_pct(value: float | None) -> str:

@@ -73,6 +73,14 @@ def test_storage_read_paths_apply_legacy_safe_archived_filter() -> None:
             "summary_embedding": {"$exists": True, "$ne": None},
         },
     ]
+    list_projection = db.deals.find_calls[0][1]
+    assert list_projection == {
+        "_id": 0,
+        "meetings.raw_notes": 0,
+        "interactions.raw_content": 0,
+        "contacts": 0,
+        "summary_embedding": 0,
+    }
 
 
 def test_atlas_vector_search_pipeline_excludes_archived_deals() -> None:
@@ -82,6 +90,8 @@ def test_atlas_vector_search_pipeline_excludes_archived_deals() -> None:
     client.search_by_embedding([0.1, 0.2], limit=3)
 
     pipeline = db.deals.aggregate_calls[0]
+    assert pipeline[0]["$vectorSearch"]["index"] == "deal_summary_vector"
+    assert pipeline[0]["$vectorSearch"]["numCandidates"] == 50
     assert {"$match": {"archived": {"$ne": True}}} in pipeline
 
 
