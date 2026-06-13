@@ -92,7 +92,7 @@ If archived content conflicts with code or active contract docs, prefer:
   value genuinely requires otherwise.
 - The only Korean-maintained companion docs are `README.ko.md` and
   `AGENTS.ko.md`.
-- Update the Korean companion docs when Juni explicitly asks for Korean doc
+- Update the Korean companion docs when the maintainer explicitly asks for Korean doc
   updates; otherwise translate on demand in chat.
 - Put durable contracts in contract docs, not only in `status.md`.
 - Add new failures to `lesson-learned.md`, but avoid realistic secret-shaped

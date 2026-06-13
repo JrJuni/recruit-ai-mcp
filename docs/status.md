@@ -185,7 +185,7 @@ Validation:
 - Natural question smoke passed:
   `OK: True`, `questions=12`, `direct=6`, `derived=6`, no sensitive failures,
   no blocked questions. Output:
-  `C:\Users\JuniBecky\Downloads\outputs\smoke\natural-question-pack-20260614_010543`.
+  `<local-output-dir>\\smoke\\natural-question-pack-20260614_010543`.
 
 ### User memory MCP tools
 

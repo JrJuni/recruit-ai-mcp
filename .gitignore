@@ -20,6 +20,11 @@ env/
 
 # Project secrets & outputs
 .env
+.env.*
+!.env.example
+.deal-intel/
+config/local.yaml
+config/*.local.yaml
 outputs/*
 !outputs/.gitkeep
 

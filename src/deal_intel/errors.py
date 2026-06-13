@@ -1,4 +1,4 @@
-"""MCP error envelope — ported from event-intel-mcp, deal domain codes."""
+"""MCP error envelope with deal domain codes."""
 from __future__ import annotations
 
 from enum import StrEnum

@@ -81,8 +81,8 @@ Run these before calling a build "MVP-ready".
 ### 1. Source And Tests
 
 ```powershell
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m pytest -q
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m ruff check .
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m pytest -q
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m ruff check .
 git diff --check
 ```
 
@@ -96,9 +96,9 @@ Pass criteria:
 ### 2. Full Profile Smoke
 
 ```powershell
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli config profiles
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli config doctor --offline
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli smoke-profile --profile full --offline
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli config profiles
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli config doctor --offline
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli smoke-profile --profile full --offline
 ```
 
 Pass criteria:
@@ -114,8 +114,8 @@ Pass criteria:
 Run this only for AI-first evaluation, demos, or no-MongoDB environments.
 
 ```powershell
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli config init --profile sample --dry-run
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli smoke-profile --profile sample
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli config init --profile sample --dry-run
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli smoke-profile --profile sample
 ```
 
 Pass criteria:
@@ -130,8 +130,8 @@ Run this when the change touches MongoDB-backed behavior. Do not substitute the
 sample smoke for this gate.
 
 ```powershell
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli smoke-profile --profile full --offline
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli config doctor --offline
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli smoke-profile --profile full --offline
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli config doctor --offline
 ```
 
 Pass criteria:
@@ -147,7 +147,7 @@ Pass criteria:
 ```powershell
 $env:DEAL_INTEL_STORAGE_BACKEND='local_sample'
 $env:DEAL_INTEL_TOOLS_SURFACE='auto'
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli smoke-natural-questions --as-of 2026-06-10
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli smoke-natural-questions --as-of 2026-06-10
 ```
 
 Pass criteria:
@@ -165,7 +165,7 @@ Pass criteria:
 
 ```powershell
 $env:DEAL_INTEL_STORAGE_BACKEND='local_sample'
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli smoke-deal-review-audit --as-of 2026-06-10 --limit 20
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli smoke-deal-review-audit --as-of 2026-06-10 --limit 20
 ```
 
 Pass criteria:
@@ -180,7 +180,7 @@ Pass criteria:
 Run the relevant tests:
 
 ```powershell
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m pytest tests\test_tool_surfaces.py tests\test_mcpb_manifest.py -q
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m pytest tests\test_tool_surfaces.py tests\test_mcpb_manifest.py -q
 ```
 
 Pass criteria:
@@ -195,10 +195,10 @@ Pass criteria:
 ### 6. Local Personal Data Safety
 
 ```powershell
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli local-data status
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli local-data export
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli local-data reset
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli local-data migrate-to-mongo
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli local-data status
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli local-data export
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli local-data reset
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli local-data migrate-to-mongo
 ```
 
 Pass criteria:

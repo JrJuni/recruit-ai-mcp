@@ -356,7 +356,7 @@ MCP.
   "row_count": 7,
   "warnings": [],
   "metrics": {},
-  "output_dir": "C:/Users/example/.deal-intel/reports",
+  "output_dir": "<user-home>/.deal-intel/reports",
   "artifacts": {
     "csv": {
       "path": "C:/absolute/path/weekly_pipeline_20260609_123456.csv",
@@ -407,7 +407,7 @@ The Atlas Charts dashboard setup path is recorded in
 and config placeholder rendering. The CLI exposes that renderer:
 
 ```bash
-~/miniconda3/envs/event-intel/python.exe -m deal_intel.cli render-atlas-dashboard --as-of 2026-06-09 --chart-id pipeline_kpis
+~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --as-of 2026-06-09 --chart-id pipeline_kpis
 ```
 
 The rendered chart pipeline is a JSON array suitable for the Atlas Charts Query
@@ -429,7 +429,7 @@ must agree:
 The CLI command is:
 
 ```bash
-~/miniconda3/envs/event-intel/python.exe -m deal_intel.cli crosscheck-weekly-dashboard --as-of 2026-06-09 --output-dir outputs/m3_3_crosscheck
+~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli crosscheck-weekly-dashboard --as-of 2026-06-09 --output-dir outputs/m3_3_crosscheck
 ```
 
 The command reads MongoDB, writes local CSV/Markdown report artifacts, executes

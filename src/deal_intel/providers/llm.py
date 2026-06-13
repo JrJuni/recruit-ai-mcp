@@ -1,8 +1,4 @@
-"""LLM provider abstraction — ported from event-intel-mcp.
-
-Changes from original:
-  - _TOKEN_PATH: ~/.event-intel/ → ~/.deal-intel/
-"""
+"""LLM provider abstraction for configured chat providers."""
 from __future__ import annotations
 
 import os

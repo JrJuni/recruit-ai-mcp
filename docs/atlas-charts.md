@@ -42,37 +42,37 @@ Always render placeholders before pasting a pipeline into Atlas Charts.
 Full dashboard spec:
 
 ```bash
-~/miniconda3/envs/event-intel/python.exe -m deal_intel.cli render-atlas-dashboard --as-of 2026-06-09 --output outputs/atlas_charts/weekly_pipeline_review_20260609.json
+~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --as-of 2026-06-09 --output outputs/atlas_charts/weekly_pipeline_review_20260609.json
 ```
 
 Pipeline trend dashboard spec:
 
 ```bash
-~/miniconda3/envs/event-intel/python.exe -m deal_intel.cli render-atlas-dashboard --dashboard pipeline_trend --as-of 2026-06-10 --lookback-days 7 --output outputs/atlas_charts/pipeline_trend_20260610.json
+~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --dashboard pipeline_trend --as-of 2026-06-10 --lookback-days 7 --output outputs/atlas_charts/pipeline_trend_20260610.json
 ```
 
 Customer themes dashboard spec:
 
 ```bash
-~/miniconda3/envs/event-intel/python.exe -m deal_intel.cli render-atlas-dashboard --dashboard customer_themes --as-of 2026-06-10 --output outputs/atlas_charts/customer_themes_20260610.json
+~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --dashboard customer_themes --as-of 2026-06-10 --output outputs/atlas_charts/customer_themes_20260610.json
 ```
 
 Single chart pipeline:
 
 ```bash
-~/miniconda3/envs/event-intel/python.exe -m deal_intel.cli render-atlas-dashboard --as-of 2026-06-09 --chart-id pipeline_kpis
+~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --as-of 2026-06-09 --chart-id pipeline_kpis
 ```
 
 Pipeline trend single chart pipeline:
 
 ```bash
-~/miniconda3/envs/event-intel/python.exe -m deal_intel.cli render-atlas-dashboard --dashboard pipeline_trend --as-of 2026-06-10 --lookback-days 7 --chart-id trend_kpis
+~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --dashboard pipeline_trend --as-of 2026-06-10 --lookback-days 7 --chart-id trend_kpis
 ```
 
 Customer themes single chart pipeline:
 
 ```bash
-~/miniconda3/envs/event-intel/python.exe -m deal_intel.cli render-atlas-dashboard --dashboard customer_themes --as-of 2026-06-10 --chart-id theme_overview
+~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --dashboard customer_themes --as-of 2026-06-10 --chart-id theme_overview
 ```
 
 The single-chart output is already a JSON array, so it can be pasted directly
@@ -243,7 +243,7 @@ Milestone 3.3 is the formal cross-check between:
 Run it with:
 
 ```bash
-~/miniconda3/envs/event-intel/python.exe -m deal_intel.cli crosscheck-weekly-dashboard --as-of 2026-06-09 --output-dir outputs/m3_3_crosscheck
+~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli crosscheck-weekly-dashboard --as-of 2026-06-09 --output-dir outputs/m3_3_crosscheck
 ```
 
 The command uses the same versioned aggregation pipelines as the dashboard, so a

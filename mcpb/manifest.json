@@ -50,7 +50,7 @@
     "python_path": {
       "type": "file",
       "title": "Python interpreter path",
-      "description": "Path to the Python interpreter where deal-intel-mcp is installed (must have run `pip install -e .`). Example: C:\\Users\\<you>\\miniconda3\\envs\\event-intel\\python.exe",
+      "description": "Path to the Python interpreter where deal-intel-mcp is installed (must have run `pip install -e .`). Example: C:\\Users\\<you>\\miniconda3\\envs\\deal-intel\\python.exe",
       "required": true
     },
     "storage_backend": {

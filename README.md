@@ -136,11 +136,13 @@ tier is enough for the default full profile.
 **Step 1 - Install the package**
 
 ```bash
-# reuse the event-intel conda env
-~/miniconda3/envs/event-intel/python.exe -m pip install -e ".[embedding]"
+# use the conda env where you want to install deal-intel-mcp
+~/miniconda3/envs/deal-intel/python.exe -m pip install -e ".[embedding]"
 ```
 
 Adding `[embedding]` also installs `sentence-transformers` (for similar-deal search).
+If you chose a different environment name, replace the Python path with the
+output of `import sys; print(sys.executable)` from that environment.
 
 **Step 2 - Configure the default full profile**
 
@@ -259,8 +261,8 @@ Temporary PowerShell session:
 
 ```powershell
 $env:DEAL_INTEL_STORAGE_BACKEND='local_sample'
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli storage-status
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli smoke-natural-questions --as-of 2026-06-10
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli storage-status
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli smoke-natural-questions --as-of 2026-06-10
 ```
 
 Persistent sample profile:
@@ -687,13 +689,13 @@ When you'd rather see it on screen than as CSV/Markdown, use the Atlas Charts da
 Render command:
 
 ```bash
-~/miniconda3/envs/event-intel/python.exe -m deal_intel.cli render-atlas-dashboard --as-of 2026-06-09 --output outputs/atlas_charts/weekly_pipeline_review_20260609.json
+~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --as-of 2026-06-09 --output outputs/atlas_charts/weekly_pipeline_review_20260609.json
 ```
 
 To paste a single chart into the Atlas Query bar:
 
 ```bash
-~/miniconda3/envs/event-intel/python.exe -m deal_intel.cli render-atlas-dashboard --as-of 2026-06-09 --chart-id pipeline_kpis
+~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --as-of 2026-06-09 --chart-id pipeline_kpis
 ```
 
 The five managed chart ids are `pipeline_kpis`, `stage_breakdown`, `health_bands`, `attention_deals`, `meddpicc_gap_distribution`.
@@ -701,7 +703,7 @@ The five managed chart ids are `pipeline_kpis`, `stage_breakdown`, `health_bands
 Cross-check the dashboard numbers:
 
 ```bash
-~/miniconda3/envs/event-intel/python.exe -m deal_intel.cli crosscheck-weekly-dashboard --as-of 2026-06-09 --output-dir outputs/m3_3_crosscheck
+~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli crosscheck-weekly-dashboard --as-of 2026-06-09 --output-dir outputs/m3_3_crosscheck
 ```
 
 ---
@@ -791,7 +793,7 @@ industry-tag groupings.
 To backfill themes onto existing data, run this first:
 
 ```bash
-~/miniconda3/envs/event-intel/python.exe -m deal_intel.cli backfill-customer-themes --apply
+~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli backfill-customer-themes --apply
 ```
 
 The versioned Atlas Charts spec is in

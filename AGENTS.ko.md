@@ -1,7 +1,7 @@
 # AGENTS.ko.md
 
 이 파일은 `AGENTS.md`의 한국어 companion 문서다. 최신 source of truth는
-항상 `AGENTS.md`이며, 이 파일은 Juni가 한국어 문서 업데이트를 요청했을 때
+항상 `AGENTS.md`이며, 이 파일은 관리자가 한국어 문서 업데이트를 요청했을 때
 함께 갱신한다.
 
 ## 문서 언어 정책
@@ -41,7 +41,7 @@ Atlas Charts에서 쓸 수 있게 한다.
 
 ## 작업 루프
 
-Juni가 선호하는 루프:
+관리자가 선호하는 루프:
 
 1. 큰 작업 단위와 다음 서브태스크를 먼저 정한다.
 2. 복잡하거나 제품 의사결정이 필요한 일은 계획, 리스크, 검증 기준,
@@ -55,7 +55,7 @@ Juni가 선호하는 루프:
 Windows에서 pytest를 돌릴 때는 기본 `%TEMP%`를 쓰지 말고 레포 내부 temp를 쓴다.
 
 ```powershell
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m pytest -q --basetemp=.tmp\pytest-full
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m pytest -q --basetemp=.tmp\pytest-full
 ```
 
 Codex/Claude sandbox에서는 `%TEMP%` 아래 `pytest-of-*` 경로가 읽기 불가일 수

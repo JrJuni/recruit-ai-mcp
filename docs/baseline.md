@@ -7,7 +7,7 @@ changing shared deal or MCP behavior.
 
 ### Runtime
 
-- Python: 3.11.15 (`event-intel` conda environment)
+- Python: 3.11.15 (Python 3.11 conda environment)
 - FastMCP runtime registration: 9 tools
 - MongoDB database: `deal_intel`
 - Atlas read smoke: passed
@@ -254,7 +254,7 @@ interaction content, contacts, or embeddings.
 Command:
 
 ```powershell
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m pytest -q --basetemp=.tmp\pytest-full
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m pytest -q --basetemp=.tmp\pytest-full
 ```
 
 Result:
@@ -270,7 +270,7 @@ The warning is an external OpenTelemetry `SelectableGroups` deprecation warning.
 Command:
 
 ```powershell
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m ruff check .
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m ruff check .
 ```
 
 Milestone 0.1 initially measured 28 existing Ruff findings.

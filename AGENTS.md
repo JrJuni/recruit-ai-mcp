@@ -40,7 +40,7 @@ failure or decision; do not load them wholesale for ordinary tasks.
   external value genuinely requires otherwise.
 - The only Korean-maintained companion docs are `README.ko.md` and
   `AGENTS.ko.md`.
-- Update the Korean companion docs when Juni explicitly asks for a Korean doc
+- Update the Korean companion docs when the maintainer explicitly asks for a Korean doc
   update. Otherwise keep implementation docs English-first and translate on
   demand in chat.
 
@@ -50,18 +50,18 @@ Use the conda environment Python directly. Do not use bare `python` or `py` on
 Windows.
 
 ```powershell
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m pip install -e ".[dev,embedding]"
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m ruff check .
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m pip install -e ".[dev,embedding]"
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m ruff check .
 ```
 
 Useful CLI checks:
 
 ```powershell
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli storage-status
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli config profiles
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli config show
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli config doctor
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli config init --profile sample --dry-run
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli storage-status
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli config profiles
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli config show
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli config doctor
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli config init --profile sample --dry-run
 ```
 
 For temporary zero-config sample mode:
@@ -72,7 +72,7 @@ $env:DEAL_INTEL_STORAGE_BACKEND='local_sample'
 
 ## Working Loop
 
-Juni's preferred loop:
+Preferred maintainer loop:
 
 1. Decide the large workstream and the next subtask.
 2. For complex or product-sensitive tasks, write the detailed plan, risks,

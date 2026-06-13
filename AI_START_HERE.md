@@ -48,11 +48,21 @@ If you do not want to set up MongoDB yet, we can run the sample mode first, but
 that is a trial path, not the default real-data setup.
 ```
 
-Use the conda environment Python directly. On Juni's machine this is usually:
+Use the conda environment Python directly. First help the user identify the
+interpreter path for the environment where `deal-intel-mcp` is installed. For a
+new local setup, the recommended environment name is `deal-intel`:
 
 ```powershell
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli config profiles
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli config show
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -c "import sys; print(sys.executable)"
+```
+
+Use the printed path in later commands and in the MCPB `Python interpreter path`
+field. In examples below, replace the path if the user chose a different conda
+environment:
+
+```powershell
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli config profiles
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli config show
 ```
 
 Then guide the user through the `full` path:
@@ -66,14 +76,14 @@ Then guide the user through the `full` path:
 6. Run:
 
 ```powershell
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli config doctor --offline
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli smoke-profile --profile full --offline
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli config doctor --offline
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli smoke-profile --profile full --offline
 ```
 
 If Atlas is reachable and the user wants a live storage check:
 
 ```powershell
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli storage-status
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli storage-status
 ```
 
 ## Optional Zero-Config Trial
@@ -83,8 +93,8 @@ needs a fast product-shape check before asking the user to configure Atlas.
 
 ```powershell
 $env:DEAL_INTEL_STORAGE_BACKEND='local_sample'
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli smoke-profile --profile sample
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli smoke-natural-questions --as-of 2026-06-10
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli smoke-profile --profile sample
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli smoke-natural-questions --as-of 2026-06-10
 ```
 
 Sample mode starts with immutable fictional data. If the user creates their own

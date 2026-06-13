@@ -46,28 +46,17 @@ The Python interpreter path is the full path to the `python.exe` inside the
 conda environment where `deal-intel-mcp` is installed. MCPB needs this exact
 path.
 
-On Juni's current machine, the working path is:
+A newly created `deal-intel` environment will usually resolve to an absolute
+path similar to this placeholder:
 
 ```text
-C:\Users\JuniBecky\miniconda3\envs\event-intel\python.exe
-```
-
-For a newly created `deal-intel` environment, it will usually look like:
-
-```text
-C:\Users\<you>\miniconda3\envs\deal-intel\python.exe
+<absolute-path-to-your-conda-env>\python.exe
 ```
 
 To confirm the correct path, run:
 
 ```powershell
 & "$HOME\miniconda3\envs\deal-intel\python.exe" -c "import sys; print(sys.executable)"
-```
-
-If using the existing `event-intel` environment, run:
-
-```powershell
-& "$HOME\miniconda3\envs\event-intel\python.exe" -c "import sys; print(sys.executable)"
 ```
 
 Use the printed value in the MCPB field named `Python interpreter path`.
@@ -111,12 +100,6 @@ Install the package:
 & "$HOME\miniconda3\envs\deal-intel\python.exe" -m pip install -e ".[dev,embedding]"
 ```
 
-If the user already has the shared `event-intel` env, use:
-
-```powershell
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m pip install -e ".[dev,embedding]"
-```
-
 ## 6. Configure Full Mode
 
 Use full mode for real data:
@@ -125,7 +108,8 @@ Use full mode for real data:
 & "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli config switch full
 ```
 
-If using the `event-intel` env, replace the Python path accordingly.
+If the user chose a different environment name, replace the Python path with
+the value printed by `sys.executable`.
 
 Set secrets outside chat. Options:
 

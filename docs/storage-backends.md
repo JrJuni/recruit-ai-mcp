@@ -299,7 +299,7 @@ smoke failures point users toward the sample path instead of failing silently.
 The new CLI command is:
 
 ```powershell
-& "$HOME\miniconda3\envs\event-intel\python.exe" -m deal_intel.cli storage-status
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli storage-status
 ```
 
 Temporary sample mode:

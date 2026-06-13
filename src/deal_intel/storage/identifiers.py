@@ -1,4 +1,4 @@
-"""Slug sanitization + validation + suggestion — ported from event-intel-mcp.
+"""Slug sanitization, validation, and suggestion helpers.
 
     sanitize_slug(s)  -> str    # raises MCPError(INVALID_INPUT) with suggested_slug on failure
     validate_slug(s)  -> bool   # pure boolean predicate, no raise
