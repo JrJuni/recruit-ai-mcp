@@ -40,7 +40,7 @@ Green:
 - Local mode can create/update/stage/archive/delete local personal deals, then
   export, reset, or migrate them to MongoDB through dry-run-first commands.
 - Natural-question smoke has a deterministic 12-question pack.
-- Claude Desktop MCPB `0.1.14` packs successfully and reflects the current
+- Claude Desktop MCPB `0.1.15` packs successfully and reflects the current
   installer fields.
 
 Yellow:
@@ -251,8 +251,8 @@ From `mcpb/`:
 
 ```powershell
 mcpb validate manifest.json
-mcpb pack . deal-intel-mcp-0.1.14.mcpb
-mcpb info deal-intel-mcp-0.1.14.mcpb
+mcpb pack . deal-intel-mcp-0.1.15.mcpb
+mcpb info deal-intel-mcp-0.1.15.mcpb
 ```
 
 Pass criteria:
@@ -263,7 +263,7 @@ Pass criteria:
 - Reinstall smoke in Claude Desktop should show the expected sample or standard
   surface based on selected config.
 - For the current package, the latest known build is
-  `deal-intel-mcp-0.1.14.mcpb` with an unsigned-package warning only.
+  `deal-intel-mcp-0.1.15.mcpb` with an unsigned-package warning only.
 
 ## User Trial Script
 

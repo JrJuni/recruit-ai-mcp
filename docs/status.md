@@ -37,6 +37,45 @@ Validation:
 - `ruff check .`: passed.
 - `mcpb validate mcpb/manifest.json`: passed.
 
+### Full-profile demo sample dataset
+
+Implemented:
+
+- Added a generated 22-deal fictional full-profile sample dataset as a bundled
+  package resource.
+- Reworked `create_sample_data` to load the public sample from package
+  resources instead of constructing a smaller inline Python fixture.
+- Kept the existing safety model: `full` mode starts empty for new users,
+  sample seeding is opt-in, writes target the demo database, dry-run remains
+  the default, and actual writes still require explicit confirmation.
+- Removed raw notes, raw interaction content, contacts, embeddings, legacy KRW
+  shadow fields, and internal metadata history from the bundled sample payload.
+
+Notes:
+
+- This dataset is for Atlas-backed demos and public screenshots. It is separate
+  from the zero-config `local_sample` fixture.
+- This change is packaged as `0.1.15`.
+
+Validation:
+
+- `pytest tests/test_sample_data.py tests/test_mcpb_manifest.py -q
+  -p no:cacheprovider --basetemp .pytest-full-sample-targeted`: `16 passed`,
+  `1` third-party deprecation warning.
+- `ruff check src/deal_intel/tools/sample_dataset.py tests/test_sample_data.py
+  tests/test_mcpb_manifest.py`: passed.
+- `mcpb validate mcpb/manifest.json`: passed.
+- `pytest -q -p no:cacheprovider --basetemp .pytest-full-sample-full`:
+  `547 passed`, `1` third-party
+  deprecation warning.
+- `ruff check .`: passed.
+- `git diff --check`: passed.
+- `pip wheel . --no-deps --no-build-isolation --no-cache-dir --wheel-dir
+  .tmp-wheel`: passed.
+- Wheel inspection confirmed
+  `deal_intel/resources/sample_datasets/weekly_pipeline_demo.v2.json` is
+  included.
+
 ### Post-v1 roadmap finalized
 
 Implemented:
