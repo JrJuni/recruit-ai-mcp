@@ -56,6 +56,13 @@ new local setup, the recommended environment name is `deal-intel`:
 & "$HOME\miniconda3\envs\deal-intel\python.exe" -c "import sys; print(sys.executable)"
 ```
 
+If the package is not installed yet, have the user clone or download the repo,
+open a terminal in the repo root, and run:
+
+```powershell
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m pip install -e ".[embedding]"
+```
+
 Use the printed path in later commands and in the MCPB `Python interpreter path`
 field. In examples below, replace the path if the user chose a different conda
 environment:
@@ -114,9 +121,9 @@ When installing the MCPB, recommend:
 
 Expected visible tool counts:
 
-- `sample`: 20 tools
-- `standard` / `full`: 24 tools
-- `developer`: 27 tools
+- `sample`: 21 tools
+- `standard` / `full`: 25 tools
+- `developer`: 28 tools
 
 After restart, ask Claude/Codex to run `config_doctor` first.
 
@@ -130,6 +137,32 @@ Show me the current deal list.
 Which deal needs attention first?
 What are customers most often concerned about?
 ```
+
+## Tool Selection Defaults
+
+Prefer deterministic read tools for normal questions:
+
+- Pipeline health / KPI / trend -> `get_metrics`
+- Pipeline table / stuck deals at a glance -> `list_deals`
+- One deal's stored history -> `get_deal`
+- One deal's status, risk, uncertainty, and next questions -> `get_deal_review`
+- Missing customer or forecast information -> `get_deal_gaps`
+- CSV/Markdown file output -> `export_report`
+- Server-side LLM usage / rough cost check -> `get_usage`
+- Customer concern or decision-criteria ranking -> `get_customer_themes`
+- Stage/industry/tag theme comparison -> `get_customer_theme_breakdown`
+- Evidence snippets for one theme -> `get_customer_theme_evidence`
+
+Use LLM/write tools only when the user intent requires them:
+
+- New evidence to store and score -> `add_interaction`
+- Confirmed stage transition -> `update_stage`
+- Confirmed metadata/value correction -> `update_deal`
+- Optional generated BD strategy memo -> `analyze_deal`
+
+Do not use `analyze_deal` as the default deal-review tool. It calls the
+configured server-side LLM and may persist `bd_strategy`. For routine review,
+use `get_deal_review` first.
 
 For new evidence, use `add_interaction` as the single public intake:
 

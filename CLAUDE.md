@@ -33,6 +33,10 @@ Append-only or historical docs such as `docs/lesson-learned.md` and old
 sections of `docs/backlog.md` are archive material. Search them for a specific
 failure or decision; do not load them wholesale for ordinary tasks.
 
+Before public release, package handoff, MCPB rebuild, or major install-doc
+changes, run the `launch-hygiene` skill if available and follow the public
+launch hygiene gate in `docs/mvp-readiness.md`.
+
 ## Documentation Language Policy
 
 - English is the source language for repository docs, contracts, status,
@@ -89,9 +93,9 @@ Preferred maintainer loop:
 
 Source of truth: `src/deal_intel/mcp_server.py`.
 
-Current tool count: 26.
+Current tool count: 28.
 
-- Config/readiness: `config_doctor`
+- Config/readiness: `config_doctor`, `update_config`
 - Write/lifecycle: `create_deal`, `add_interaction`, `update_stage`,
   `update_deal`, `archive_deal`, `restore_deal`, `delete_deal`
 - Deprecated compatibility: `add_meeting` (developer surface only; use
@@ -100,7 +104,7 @@ Current tool count: 26.
 - Migration: `migrate_local_data`
 - Read/review: `get_deal`, `list_deals`, `get_deal_gaps`,
   `get_deal_review`
-- BI/reporting: `get_insights`, `get_metrics`, `export_report`
+- BI/reporting: `get_insights`, `get_metrics`, `get_usage`, `export_report`
 - User memory: `get_user_memory`, `record_user_memory`
 - Customer themes: `get_customer_themes`, `get_customer_theme_breakdown`,
   `get_customer_theme_evidence`

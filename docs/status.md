@@ -12,6 +12,181 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-14
 
+### v1 readiness gate rerun
+
+Validation:
+
+- Full regression:
+  `pytest -q -p no:cacheprovider --basetemp .tmp\pytest-v1-readiness`:
+  `533 passed, 1 warning`.
+- Ruff:
+  `ruff check .`: `All checks passed`.
+- Config doctor:
+  `config doctor --offline`: `OK`, profile `full`, storage `mongo`, tool
+  surface `standard`, `25` exposed tools, storage ping skipped as expected.
+- Full profile smoke:
+  `smoke-profile --profile full --offline`: `OK`; no writes, no LLM
+  completions, no embeddings, no Atlas admin calls.
+- Sample profile smoke:
+  `DEAL_INTEL_STORAGE_BACKEND=local_sample smoke-profile --profile sample`:
+  `OK`, `21` exposed tools.
+- Natural-question smoke:
+  `DEAL_INTEL_STORAGE_BACKEND=local_sample smoke-natural-questions --as-of
+  2026-06-10 --output-dir .tmp\v1-readiness-natural`: `OK`, `12/12` pass,
+  no sensitive failures, no blocked questions.
+- Report export default-path smoke:
+  local-sample `export_report(report_type="weekly_pipeline", as_of="2026-06-10")`
+  succeeded with `USERPROFILE` pointed at `.tmp`; output resolved under
+  `.tmp\.deal-intel\reports`, confirming the user-home default path policy.
+- MCPB manifest:
+  `mcpb validate mcpb\manifest.json`: manifest schema validation passes.
+- Hygiene scan:
+  no tracked personal path / stale tool-count matches. Expected placeholder
+  matches remain only in `.env.example`, install docs, and secret-redaction
+  tests.
+
+### v1 polish: README / AI start scan
+
+Implemented:
+
+- Scanned `README.md` and `AI_START_HERE.md` for stale tool counts, personal
+  local paths, old environment names, and sample/full guidance drift.
+- Clarified that users should clone/download the repository and run install
+  commands from the repository root.
+- Added an explicit `python -m deal_intel.cli ...` fallback when the
+  `deal-intel` console script is not on PATH.
+- Added the missing install step to `AI_START_HERE.md` for agents helping a
+  fresh user.
+
+Validation:
+
+- Targeted:
+  `pytest tests/test_tool_surfaces.py tests/test_mcpb_manifest.py -q -p
+  no:cacheprovider --basetemp .tmp\pytest-readme-ai-scan`:
+  `30 passed, 1 warning`.
+- Ruff:
+  `ruff check .`: `All checks passed`.
+- Hygiene scan:
+  no README/AI_START matches for personal local paths, old environment names,
+  or stale tool-count phrasing.
+
+### v1 polish: output path hardening
+
+Implemented:
+
+- Hardened report output path resolution so relative `output_dir` values are
+  scoped under `~/.deal-intel/` instead of the current working directory.
+- Preserved absolute paths and `~` paths as explicit user choices.
+- Mapped the legacy relative `outputs/reports` value to
+  `~/.deal-intel/reports` to avoid MCPB/host-app write failures.
+- Moved the default natural-question smoke output directory from repo-local
+  `outputs/smoke/...` to `~/.deal-intel/smoke/...`.
+- Updated report docs to explain relative-path scoping.
+- Aligned report export polish details:
+  - `export_report` docs now mention both `weekly_pipeline` and
+    `pipeline_trend`.
+  - direct CSV export expands `~` like Markdown export.
+  - output directory strings with control characters fail preflight.
+
+Validation:
+
+- Targeted:
+  `pytest tests/test_export_report.py tests/test_cli_deal_review_smoke.py -q
+  -p no:cacheprovider --basetemp .tmp\pytest-output-paths`:
+  `24 passed, 1 warning`.
+- Targeted report polish:
+  `pytest tests/test_export_report.py tests/test_csv_export.py
+  tests/test_cli_deal_review_smoke.py -q -p no:cacheprovider --basetemp
+  .tmp\pytest-report-polish`: `31 passed, 1 warning`.
+- Full regression:
+  `pytest -q -p no:cacheprovider --basetemp .tmp\pytest-report-polish-full`:
+  `533 passed, 1 warning`.
+- Ruff:
+  `ruff check .`: `All checks passed`.
+
+### v1 polish: tool selection and usage visibility
+
+Implemented:
+
+- Clarified high-traffic MCP tool descriptions so host AIs can choose between
+  adjacent tools more reliably.
+- Repositioned `get_deal_review` as the default LLM-free one-deal review tool.
+- Repositioned `analyze_deal` as optional server-side LLM strategy generation
+  that may persist `bd_strategy`.
+- Added persisted LLM usage metadata for new `add_interaction` calls and
+  `analyze_deal` strategy generation.
+- Added `get_usage` MCP tool and `deal-intel usage` CLI command.
+- `get_usage` summarizes usage by provider, tool, and operation, with
+  date-window filters.
+- Cost estimates are conservative: ChatGPT OAuth is treated as subscription
+  backed with zero incremental API estimate; API-provider costs are calculated
+  only when `usage.pricing` is configured.
+- Updated tool-surface counts to `sample=21`, `standard=25`,
+  `developer=28`.
+
+Validation:
+
+- Targeted:
+  `pytest tests/test_usage.py tests/test_add_interaction.py
+  tests/test_local_sample_backend.py tests/test_tool_surfaces.py
+  tests/test_mcpb_manifest.py -q -p no:cacheprovider --basetemp
+  .tmp\pytest-p2-targeted`: `64 passed, 1 warning`.
+- Full regression:
+  `pytest -q -p no:cacheprovider --basetemp .tmp\pytest-p2-full`:
+  `528 passed, 1 warning`.
+- Ruff:
+  `ruff check .`: `All checks passed`.
+- CLI smoke:
+  `DEAL_INTEL_STORAGE_BACKEND=local_sample deal-intel usage --json`: `ok=true`
+  with `no_persisted_usage_metadata_found`, as expected for bundled sample data
+  before any new server-side LLM usage is written.
+- Hygiene scan:
+  no tracked personal path / stale tool-count matches found outside generated
+  output folders.
+
+### Public launch hygiene stream
+
+Documented:
+
+- Created a reusable Codex `launch-hygiene` skill for public-release hygiene
+  audits.
+- Added `Public Launch Hygiene` to `docs/backlog.md`.
+- Added a public launch hygiene gate to `docs/mvp-readiness.md`.
+
+Decision:
+
+- Treat launch hygiene as a v1 release gate, not as packaging polish.
+- Run it before v1.0 tagging, package handoff, MCPB rebuilds, or major install
+  guide changes.
+- Use explicit scans for personal/local leakage, secret/config handling,
+  fresh-clone reproducibility, doc/code alignment, and generated artifact
+  hygiene.
+- Avoid reintroducing exact private local identifiers into tracked docs. Use
+  placeholder scan terms and keep concrete local values in ignored local config
+  only.
+
+### MCP tool design roadmap triage
+
+Documented:
+
+- Added `MCP Tool Design Cleanup` to `docs/backlog.md`.
+- Updated `docs/mvp-readiness.md` so v1 polish focuses on tool-description and
+  first-run guidance, not disruptive tool renaming.
+
+Decision:
+
+- Treat tool-description guidance as v1 polish because it directly reduces AI
+  host confusion when choosing between adjacent tools.
+- Treat customer-theme consolidation as post-v1. It is a real design cleanup,
+  but current natural-question smoke already passes and the workflow should be
+  shaped with real host usage traces.
+- Keep `update_deal` as-is for v1 while it remains one coherent confirmed
+  metadata-correction workflow. Revisit only if unrelated decision types enter
+  the tool.
+- Defer response verbosity controls and broad tool namespace changes to
+  post-v2 or later. They are useful only after real traces show token pressure
+  or a breaking-version cleanup is already planned.
+
 ### Cost-aware host LLM boundary
 
 Documented:

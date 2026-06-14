@@ -95,9 +95,9 @@ You can still override `llm.openai_api_model` or switch `llm.provider` to
 
 MCP tools are profile-filtered by default:
 
-- `sample`: 20 zero-config/local personal tools
-- `standard`: 24 normal real-data tools
-- `developer`: all 27 tools, including demo seed/cleanup helpers
+- `sample`: 21 zero-config/local personal tools
+- `standard`: 25 normal real-data tools
+- `developer`: all 28 tools, including demo seed/cleanup helpers
 
 Use `tools.surface: developer` or `DEAL_INTEL_TOOLS_SURFACE=developer` only
 when you intentionally want the full maintainer/debug surface.
@@ -135,14 +135,23 @@ tier is enough for the default full profile.
 
 **Step 1 - Install the package**
 
+Clone or download this repository first, then run the install command from the
+repository root. The examples below use a conda environment named `deal-intel`;
+if you chose a different name, replace the Python path with the path printed by
+`import sys; print(sys.executable)` from that environment.
+
 ```bash
-# use the conda env where you want to install deal-intel-mcp
+# run from the deal-intel-mcp repository root
 ~/miniconda3/envs/deal-intel/python.exe -m pip install -e ".[embedding]"
 ```
 
 Adding `[embedding]` also installs `sentence-transformers` (for similar-deal search).
-If you chose a different environment name, replace the Python path with the
-output of `import sys; print(sys.executable)` from that environment.
+After install, the `deal-intel` console command should be available in that
+environment. If your shell cannot find it, use the explicit module form:
+
+```bash
+~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli config profiles
+```
 
 **Step 2 - Configure the default full profile**
 
@@ -228,7 +237,7 @@ deal-intel login-chatgpt
 
 Then restart Claude Desktop.
 
-You're done when the MCP tool list loads. The server registers 27 internal
+You're done when the MCP tool list loads. The server registers 28 internal
 tools, then exposes a profile-filtered surface; `src/deal_intel/mcp_server.py`
 and `docs/baseline.md` are the source of truth.
 
@@ -237,7 +246,7 @@ config_doctor / update_config
 create_deal / add_interaction / get_deal / update_stage / update_deal
 archive_deal / restore_deal / delete_deal / migrate_local_data
 list_deals / get_insights / get_metrics / get_deal_gaps / get_deal_review
-export_report / get_user_memory / record_user_memory
+get_usage / export_report / get_user_memory / record_user_memory
 get_customer_themes / get_customer_theme_breakdown / get_customer_theme_evidence
 search_deals / analyze_deal
 ```
@@ -564,19 +573,24 @@ Specify `as_of="YYYY-MM-DD"` to re-run date-based calculations against the same 
 
 ---
 
-### 7. `analyze_deal` - MEDDPICC gap analysis + BD strategy
+### 7. `analyze_deal` - optional generated BD strategy
 
-**When to use**: When a deal is stuck or you're planning the next meeting. The LLM analyzes gaps and proposes concrete actions.
+**When to use**: Only when you explicitly want the server-side LLM to write a BD strategy memo or persist `bd_strategy` back onto the deal.
+
+For routine deal status, risk, uncertainty, and next-question review, prefer
+`get_deal_review`. For "what information are we missing?" use
+`get_deal_gaps`. Those read paths are deterministic, LLM-free, and cheaper.
 
 **Example**:
 ```
-Analyze the Hyundai Precision deal. Where is it weak, and what should I do next meeting'
+Generate a BD strategy memo for the Hyundai Precision deal.
 ```
 
 The result includes:
 - a summary of current MEDDPICC health
 - concrete responses per weak dimension
 - a recommended agenda for the next meeting
+- persisted `bd_strategy` when the tool succeeds
 
 ---
 
@@ -584,12 +598,17 @@ The result includes:
 
 **When to use**: For instant BI questions in Claude/Codex like "how's pipeline health right now'", "how many at-risk deals'", "show pipeline value and health by stage."
 
-The first version supports only `pipeline_health`.
+This is the default read tool for numeric pipeline answers. Do not use
+`list_deals` to hand-calculate KPIs, and do not use `get_insights` unless the
+question is about a legacy/special BI pattern such as win/loss comparison or
+stage velocity.
+
+Supported metric types are `pipeline_health` and `pipeline_trend`.
 
 **Parameters**:
 | Parameter | Required | Description |
 |---|---|---|
-| `metric_type` | optional | Currently only `pipeline_health` |
+| `metric_type` | optional | `pipeline_health` or `pipeline_trend` |
 | `stage` | optional | Exact match against the stored stage |
 | `industry` | optional | Exact match against the stored industry |
 | `as_of` | optional | Base date for stuck/overdue calculation, `YYYY-MM-DD` |
@@ -622,6 +641,10 @@ Show stuck/overdue status for IT-industry deals
 
 This is not a table-completeness checker. It prioritizes missing or weak information by practical sales impact and forecast trust. It is read-only, uses no LLM, uses no embedding, and excludes raw notes, raw interaction content, contacts, and vectors.
 
+Use this for missing-information questions across the pipeline or for a single
+deal. Use `get_deal_review` when the user wants a broader one-deal status/risk
+review.
+
 **Parameters**:
 | Parameter | Required | Description |
 |---|---|---|
@@ -650,17 +673,19 @@ For this deal_id, what should I confirm next'
 
 ---
 
-### 10. `export_report` - generate a weekly pipeline report
+### 10. `export_report` - generate a pipeline report
 
 **When to use**: When you need a file to share or for a meeting, like "make this week's pipeline report."
 
-The first version supports only `weekly_pipeline` and produces CSV and Markdown with the same timestamp.
+Use `export_report` only when the user wants files. For chat-only KPI answers,
+use `get_metrics` instead. The report path produces CSV and Markdown with the
+same timestamp.
 
 **Parameters**:
 | Parameter | Required | Description |
 |---|---|---|
-| `report_type` | optional | Currently only `weekly_pipeline` |
-| `output_dir` | optional | Save path. Omitted -> `reporting.output_dir` or `~/.deal-intel/reports` |
+| `report_type` | optional | `weekly_pipeline` or `pipeline_trend`; defaults to `weekly_pipeline` |
+| `output_dir` | optional | Save path. Omitted -> `reporting.output_dir` or `~/.deal-intel/reports`; relative paths are scoped under `~/.deal-intel/` |
 | `stage` | optional | Exact match against the stored stage |
 | `industry` | optional | Exact match against the stored industry |
 | `as_of` | optional | Base date for stuck/overdue calculation, `YYYY-MM-DD` |
@@ -678,6 +703,26 @@ Make this week's pipeline report
 ```
 ```
 Export the proposal stage only as a weekly pipeline report
+```
+
+---
+
+### 11. `get_usage` - inspect server-side LLM usage
+
+**When to use**: When you want to know how much server-side LLM work this MCP
+has performed, such as token counts, call counts, and safe cost estimates.
+
+This is read-only. It never returns prompts, raw notes, raw emails, API keys,
+OAuth tokens, or MongoDB URIs. ChatGPT OAuth is shown as subscription-backed
+with zero incremental API estimate. API-provider costs are estimated only when
+you configure `usage.pricing`.
+
+**Example**:
+```
+Show my Deal Intelligence MCP usage this month.
+```
+```
+Show usage since 2026-06-01.
 ```
 
 ---
@@ -708,9 +753,14 @@ Cross-check the dashboard numbers:
 
 ---
 
-### 11. `get_insights` - pipeline BI analysis
+### 12. `get_insights` - legacy/special BI analysis
 
 **When to use**: To aggregate all deal data and spot patterns. Good for monthly reviews and learning win/loss patterns.
+
+Prefer `get_metrics` for current pipeline-health KPIs. Prefer customer theme
+tools for customer concerns, decision criteria, and evidence. `get_insights`
+remains useful for special BI variants such as win/loss comparison, gap
+frequency, industry benchmark, and stage velocity.
 
 You can specify `as_of`; the response includes `timezone` and a UTC `generated_at`. These label the current collection snapshot - they don't reconstruct historical document state.
 
@@ -739,9 +789,13 @@ Which dimension is most often missing'
 
 ---
 
-### 12. `search_deals` - semantic similar-deal search
+### 13. `search_deals` - semantic similar-deal search
 
 **When to use**: When you want to reference how past deals in similar situations played out. Search in natural language.
+
+Do not use semantic search for frequency/ranking questions such as "what do
+customers worry about most?" Use `get_customer_themes` for that. `search_deals`
+is for similar-case retrieval in Mongo-backed mode.
 
 **Example**:
 ```
@@ -767,9 +821,12 @@ Any deals with a pattern similar to Hyundai Precision'
 
 ---
 
-### 13. `get_customer_themes` - frequency of customer concerns / selection criteria
+### 14. `get_customer_themes` - frequency of customer concerns / selection criteria
 
 **When to use**: To group meeting evidence across deals and see the topics customers worry about most. It counts by unique deal (not by meeting) and returns representative companies and evidence.
+
+For "show me examples" follow up with `get_customer_theme_evidence`. For
+stage/industry/tag comparison, use `get_customer_theme_breakdown`.
 
 **Example**:
 ```
@@ -808,14 +865,16 @@ Customer Themes dashboard setup, including the optional
 ```
 1. Right after customer evidence -> add_interaction (meeting/email/interview/call)
 2. On stage change           -> update_stage
-3. Pre-meeting prep          -> analyze_deal (figure out the next agenda)
+3. One-deal status/risk      -> get_deal_review
 4. Before pursuing/forecast  -> get_deal_gaps (what's still missing)
-5. Weekly review             -> list_deals (find stuck deals)
-6. Pipeline KPIs             -> get_metrics pipeline_health
-7. Monthly retro             -> get_insights compare_won_lost / stage_velocity
-8. Reference similar cases   -> search_deals
-9. Customer-concern analysis -> get_customer_themes
-10. Dashboard                -> Atlas Charts Weekly Pipeline Review
+5. Optional strategy memo    -> analyze_deal (LLM-written BD strategy)
+6. Weekly review             -> list_deals (find stuck deals)
+7. Pipeline KPIs             -> get_metrics pipeline_health
+8. Usage / cost check        -> get_usage
+9. Monthly retro             -> get_insights compare_won_lost / stage_velocity
+10. Reference similar cases  -> search_deals
+11. Customer-concern analysis -> get_customer_themes
+12. Dashboard                -> Atlas Charts Weekly Pipeline Review
 ```
 
 ---
@@ -825,7 +884,7 @@ Customer Themes dashboard setup, including the optional
 Current source of truth:
 
 - MCP server: `src/deal_intel/mcp_server.py`
-- Current tool count: 27
+- Current tool count: 28
 - Detailed contract: [`docs/baseline.md`](docs/baseline.md)
 - Documentation map: [`docs/README.md`](docs/README.md)
 - User memory samples: [`user_docs/README.md`](user_docs/README.md)
@@ -834,7 +893,7 @@ Current source of truth:
 [Claude Desktop / Codex - natural-language input]
          | stdio JSON-RPC
          v
-[deal-intel-mcp  FastMCP server  27 tools]
+[deal-intel-mcp  FastMCP server  28 tools]
          |
          |-- LLM Provider
          |     |-- ChatGPT OAuth (default, Plus/Pro subscription)
