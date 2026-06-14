@@ -12,6 +12,29 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-15
 
+### v1 public README positioning and English install guide
+
+Implemented:
+
+- Revised README positioning for public audiences such as r/mcp, HN, and
+  MongoDB community readers.
+- Reframed the project as a self-owned deal memory layer and lightweight first
+  CRM-like layer for solo founders and early teams, rather than a generic sales
+  SaaS or mature Salesforce replacement.
+- Added explicit "What it does" and "What it is not" sections to make scope and
+  limitations clear.
+- Moved MEDDPICC from the first-line pitch into the internal deal-health
+  explanation.
+- Added [AI_FULL_INSTALL_GUIDE.md](../AI_FULL_INSTALL_GUIDE.md), an English
+  full-mode install guide for AI-assisted setup.
+- Updated [AI_START_HERE.md](../AI_START_HERE.md) to prefer the English guide
+  while keeping the Korean guide linked.
+
+Validation:
+
+- Public-surface scan found no personal path/name exposure. Secret-like matches
+  were limited to `.env.example` placeholders and redaction tests.
+
 ### v1 polish wrap-up: install guide and public demo copy
 
 Implemented:

@@ -2,13 +2,23 @@
 
 **English** | [Korean](README.ko.md)
 
-A B2B sales-support MCP server: paste a meeting note and it scores the deal on MEDDPICC, then turns the result into pipeline metrics, reports, dashboards, and deal-review prompts.
+Deal Intelligence MCP is a self-owned deal memory layer for solo founders,
+early AI teams, and lightweight BD teams.
+
+It turns meeting notes, customer email replies, interviews, call summaries, and
+internal notes into structured deal signals: what is known, what is missing,
+which accounts need attention, and what should be reviewed before the next
+conversation.
+
+For mature sales organizations, it is not a Salesforce replacement. For early
+teams whose current system is scattered notes, spreadsheets, email threads, and
+memory, it can act as a lightweight first CRM-like layer: your data, your
+MongoDB or local storage, your LLM provider, queried from Claude Desktop,
+Codex, or another MCP-capable host.
 
 The default operating path is MongoDB Atlas-backed `full` mode, including the
 free/M0 tier. A bundled no-MongoDB `sample` mode exists for AI agents, quick
-evaluation, and demos, but real team use should start from `full`. Drive it by
-talking - in Claude Desktop, or in Codex with the MCP connected. No separate CRM
-app.
+evaluation, and demos, but real team use should start from `full`.
 
 If an AI assistant is helping you set this up, point it at
 [`AI_START_HERE.md`](AI_START_HERE.md) first. That file is intentionally short
@@ -16,10 +26,37 @@ and tells the assistant to start with `full`, use `sample` only for an explicit
 zero-config trial, and run `config_doctor` before deeper troubleshooting.
 For a short public/community demo script, use
 [`docs/public-demo-script.md`](docs/public-demo-script.md).
+For an English full-mode walkthrough aimed at AI-assisted installation, use
+[`AI_FULL_INSTALL_GUIDE.md`](AI_FULL_INSTALL_GUIDE.md).
 For a Korean full-mode walkthrough aimed at non-developer users, use
 [`AI_FULL_INSTALL_GUIDE.ko.md`](AI_FULL_INSTALL_GUIDE.ko.md).
 
 ---
+
+## What it does
+
+- Stores deal records and customer evidence in your MongoDB Atlas database, or
+  in local sample/personal storage for zero-config trials.
+- Converts messy customer evidence into structured deal fields, health signals,
+  follow-up gaps, customer themes, and weekly review artifacts.
+- Lets an AI host answer normal questions such as "which deal needs attention
+  first?", "what are customers worried about?", or "make this week's pipeline
+  report".
+- Keeps read-only BI, review, reporting, and export paths deterministic and
+  LLM-free, so the host app can narrate results without extra server-side model
+  calls.
+- Exposes diagnostics (`config_doctor`, storage checks, usage/cost summaries)
+  instead of hiding setup and data-quality problems.
+
+## What it is not
+
+- It is not an autonomous closer. It structures evidence; you still make the
+  sales judgment.
+- It is not yet a mature CRM suite with permissions, contact ownership,
+  calendar/email sync, workflow automation, or enterprise integrations.
+- It is not a hosted SaaS that owns your deal data. The normal full path uses
+  your MongoDB Atlas project and your selected LLM provider.
+- It does not claim revenue lift numbers. If the data is incomplete, it says so.
 
 ## Live demo
 
@@ -52,9 +89,12 @@ LLM-free so the host app can do the final narration without extra API cost.
 
 ---
 
-## What is this?
+## How deal health works
 
-**MEDDPICC** is a deal-qualification framework used in B2B sales. It scores "is this customer actually likely to buy'" across seven dimensions.
+Internally, the project uses MEDDPICC, a B2B deal-qualification framework, to
+turn messy evidence into comparable deal signals. You do not need to be a
+sales expert to use the tool; the user-facing output is framed as health,
+missing information, risk signals, customer themes, and next questions.
 
 | Dimension | What it measures |
 |---|---|
@@ -64,12 +104,13 @@ LLM-free so the host app can do the final narration without extra API cost.
 | **D**ecision Process | How the internal approval process runs |
 | **I**dentify Pain | The customer's core problem and its urgency |
 | **C**hampion | Whether you have an internal advocate |
-| **C**ompetition | How you fight competitors and the status quo |
+| **C**ompetition | How you compare with competitors and the status quo |
 
-Paste a meeting note and the LLM extracts these seven automatically. In `full`
-mode, the result persists real deal data in MongoDB Atlas and powers pattern
-analysis. In optional `sample` mode, the same read/review surfaces run against
-bundled fictional data so AI agents can evaluate the tool without setup.
+When you add customer evidence, the server-side LLM extracts these signals and
+stores the structured result. In `full` mode, real deal data persists in
+MongoDB Atlas and powers pattern analysis. In optional `sample` mode, the same
+read/review surfaces run against bundled fictional data so AI agents can
+evaluate the tool without setup.
 
 ---
 
