@@ -12,6 +12,36 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-15
 
+### Post-v1 roadmap finalized
+
+Implemented:
+
+- Replaced the old v1-to-v2 backlog order with a post-v1 roadmap centered on
+  product depth and extensibility before no-clone packaging.
+- Set the post-v1 priority order:
+  1. public v1 release and feedback capture;
+  2. developer-focused `docs/architecture.md` expansion;
+  3. qualification-framework abstraction with MEDDPICC as the default;
+  4. tool namespace and customer-theme workflow cleanup;
+  5. MongoDB Pro path;
+  6. report quality v2;
+  7. deal review quality v2;
+  8. broader usage/cost tracking;
+  9. full npx bootstrapper.
+- Updated the distribution plan so `npx` is framed as a future full
+  bootstrapper, not a thin wrapper or immediate post-v1 priority.
+
+Rationale:
+
+- The highest post-v1 risk is hardcoded product assumptions becoming expensive
+  to undo, especially qualification-framework assumptions.
+- Architecture documentation should be expanded before large v2 changes so AI
+  agents and human contributors can find the right modules, contracts, tests,
+  and coupling points quickly.
+- Packaging convenience remains important, but it should not outrank framework
+  abstraction, tool-surface cleanup, MongoDB Pro validation, or report/review
+  quality.
+
 ### v1 public README positioning and English install guide
 
 Implemented:

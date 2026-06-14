@@ -7,6 +7,8 @@ This plan keeps MVP priorities straight:
    full-by-default MVP readiness path.
 3. Wrapper work should be mechanical only after the Python package is safe to
    run outside a repo checkout.
+4. Post-v1 wrapper work should produce a full bootstrapper, not a thin wrapper
+   that merely moves the Python path problem into Node.js.
 
 ## Current MVP Distribution
 
@@ -144,23 +146,25 @@ Cons:
 - Claude Desktop MCPB still needs a configured Python command or launcher.
 - Needs package-data readiness first.
 
-### D3. npx wrapper
+### D3. Full npx bootstrapper
 
-Goal: provide a familiar "try this command" path for users who already have
-Node.js.
+Goal: provide a true no-git-clone command path once the product architecture is
+stable enough for a broader non-developer install surface.
 
 Target UX after npm publish:
 
 ```bash
-npx deal-intel-mcp setup --python /path/to/python --profile sample
-npx deal-intel-mcp doctor --python /path/to/python --offline
-npx deal-intel-mcp smoke --python /path/to/python
+npx deal-intel-mcp setup
+npx deal-intel-mcp doctor
+npx deal-intel-mcp smoke
+npx deal-intel-mcp mcp
 ```
 
 Pros:
 
 - Familiar to many AI-assisted setup flows.
-- Can bundle a launcher that guides setup and copies runtime files.
+- Can guide Python discovery, package installation, config checks, sample/full
+  profile selection, and MCP startup from one entry point.
 - Can avoid requiring users to learn `uv`.
 
 Cons:
@@ -169,6 +173,8 @@ Cons:
 - Adds a second packaging ecosystem.
 - Must be careful not to hide Python install failures behind Node errors.
 - Should not become a second implementation of the app.
+- Should not ship as a thin wrapper that still requires users to understand
+  Python interpreter paths before they can try the product.
 
 ### D4. MCPB installer polish
 
@@ -183,18 +189,24 @@ Tasks:
 
 ## Which Distribution To Implement First?
 
-Recommendation: **D1 external MVP readiness first, then D2 uvx**.
+Recommendation: **D1 external MVP readiness first. Defer no-clone wrappers
+until after the post-v1 product-shape work.**
 
 Reason:
 
 - D0 already fixed the first package portability layer.
 - D1 validates the current external trial path before new wrappers are added.
-- D2 keeps the first no-git-clone path Python-native.
-- npx remains useful later as a convenience wrapper, but it should delegate to
-  the same package-ready Python entry points instead of carrying product logic.
+- The next high-priority work is product architecture and extensibility:
+  architecture-map expansion, qualification-framework abstraction, tool/theme
+  cleanup, MongoDB Pro path, and report/review quality.
+- D2 can still be useful as a Python-native distribution layer and may become
+  infrastructure for D3.
+- D3 should be implemented as a full bootstrapper near the end of the post-v1
+  sequence, not as the first packaging follow-up.
 
-If the product goal shifts toward a Claude Desktop-first non-developer audience,
-then D3 can move ahead of D2, but it should still remain a thin wrapper.
+If the product goal shifts toward a Claude Desktop-first non-developer audience
+before v2 architecture work finishes, revisit D3. The bar should still be a
+complete guided bootstrapper, not a thin command alias.
 
 ## Acceptance Criteria
 

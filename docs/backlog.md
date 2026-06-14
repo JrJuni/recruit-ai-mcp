@@ -17,59 +17,107 @@ When this file conflicts with code, tests, or contract docs, prefer:
 
 ## Current Active Streams
 
-### Product Roadmap To v1.0 And v2.0
+### Post-v1 / v2 Roadmap
 
-Goal: keep the MVP useful for one-person or small AI-assisted sales teams while
-preserving a clear path to deeper customization.
+Goal: turn the v1 MVP into a customizable deal-intelligence framework while
+keeping the product usable for one-person or small AI-assisted sales teams.
 
 Current positioning:
 
-- The default product is an AI-assisted sales/deal-intelligence record and
-  review tool for teams without a mature CRM or dedicated sales operations
-  function.
-- Different industries have different deal tempo, expected close windows,
-  qualification signals, and reporting expectations. Configuration is therefore
-  a product feature, not just an implementation detail.
-- The MVP should stay simple enough for sample/local evaluation, but the core
-  data model should avoid unnecessary Korea-only or MEDDPICC-only assumptions
-  where the migration cost is still low.
+- v1 is a public MVP: useful enough to try, honest about limitations, and
+  optimized for AI-assisted setup with `full`/MongoDB as the default real-data
+  path.
+- v2 should deepen the product and architecture before adding a no-clone
+  wrapper. The main risk after v1 is not installation friction; it is hardcoded
+  product assumptions becoming expensive to undo.
+- MEDDPICC remains the default qualification framework, not the permanent
+  product identity. The system should eventually support user-defined
+  qualification dimensions, weights, extraction hints, and stage rules.
+- MongoDB Free/M0-compatible hardening belongs in `full`; paid-infra paths such
+  as Atlas Vector Search at scale belong in `pro`.
+- A future `npx` path should be a real full bootstrapper, not a thin wrapper
+  that still asks non-developers to understand Python packaging details.
 
 Recommended implementation order:
 
-1. Full-profile MongoDB operational hardening.
-   - Keep ordinary MongoDB features that work on Atlas Free/M0 in `full`, not
-     `pro`.
-   - First slice: version the normal index contract, add read-only Mongo
-     doctor checks, and add a permissive deals collection validator with
-     dry-run/apply CLI commands.
-   - Later slices can evaluate change streams and time-series collections only
-     after the core full/Mongo path is stable.
-2. Pro profile skeleton and infrastructure path.
-   - Add the paid-infra upgrade path around MongoDB M10+, Atlas Vector Search,
-     and related MongoDB ecosystem features where they provide real value.
-   - Keep `sample` and `full` working without paid infrastructure.
-   - MongoDB features that work on Atlas Free/M0 and improve normal real-data
-     operation belong in `full`, not `pro`.
-   - P-Pro.1/P-Pro.2 skeleton decisions: no silent Atlas fallback, version the
-     `deal_summary_vector` index spec, default OpenAI API usage to
-     `gpt-5.4-mini`, add a dry-run/apply vector-index CLI, and defer live
-     OpenAI/Atlas smoke until paid infra is available.
-3. v1.0 distribution decision.
-   - Confirm the first external distribution path after the MVP package is
-     stable enough: git-clone assisted install, MCPB, uvx/Python-native, or a
-     thin npx wrapper.
-4. Review, usage visibility, and CSV/report quality improvements.
-   - Improve human-readable deal review and reporting artifacts using external
-     feedback after the architecture is stable enough to trial.
-   - Add a usage/cost visibility tool so users can inspect LLM call volume and
-     estimated provider spend from the MCP surface instead of relying on
-     external dashboards only.
-5. Other MVP polish and issue fixes.
-6. Qualification framework abstraction for v2.0.
-   - Defer full MEDDPICC abstraction until after v1.0.
-   - Do it on a dedicated branch or separate repository if needed, because it
-     touches extraction prompts, score calculation, gap logic, reports,
-     dashboards, tests, and user mental models.
+1. v1 public release and feedback capture.
+   - Ship the current MVP with the git-clone/MCPB-assisted install path.
+   - Use `config_doctor`, natural-question smoke, deal-review audit, and launch
+     hygiene as the public-release gate.
+   - Capture external feedback as issues or `user_docs` notes, then reduce
+     repeatable problems into tests, fixtures, or docs updates.
+2. Architecture developer map expansion.
+   - Expand [architecture.md](architecture.md) before the next major feature
+     track so AI agents and human contributors can navigate the code without
+     rereading the whole repository.
+   - Cover runtime surfaces, MCP tool groups, CLI groups, storage adapters,
+     metric/report/review/theme/search/usage engines, data flows, side effects,
+     and "when editing X, check Y" coupling notes.
+   - Acceptance: every public MCP tool and major internal engine has an owner
+     module, key inputs/outputs, side effects, adjacent modules, relevant tests,
+     and a short "do not break" note.
+3. Qualification framework abstraction v2.
+   - Convert MEDDPICC from hardcoded dimensions into the default configurable
+     framework.
+   - Define a framework schema with dimension key, display name, description,
+     weight, scoring scale, extraction hints, and optional stage rules.
+   - Keep stage rules optional so custom dimensions can work safely without
+     expert configuration.
+   - Move toward unknown-first scoring and explicit uncertainty instead of
+     treating missing evidence as neutral confidence.
+   - Update extraction, health scoring, gap logic, reviews, reports, Atlas
+     chart specs, smoke fixtures, and docs together.
+4. Tool namespace and customer-theme workflow cleanup.
+   - Revisit the tool surface through user intent rather than internal module
+     boundaries.
+   - Keep the major mental groups clear: Config, Intake, Lifecycle/CRUD,
+     Read/Query, Review/Export, Themes, Usage, Sample/Admin.
+   - Evaluate consolidating `get_customer_themes`,
+     `get_customer_theme_breakdown`, and `get_customer_theme_evidence` behind
+     a clearer progressive-disclosure workflow.
+   - Strengthen tool descriptions with "use this when..." and "for X, use Y
+     instead" guidance to reduce host-agent confusion.
+5. MongoDB Pro Track.
+   - Keep Free/M0-compatible schema validation, ordinary indexes, and bounded
+     doctor checks in `full`.
+   - Build the paid-infra upgrade path around MongoDB M10+, Atlas Vector Search,
+     vector-index doctor/apply commands, and live smoke notes.
+   - Do not silently fall back from Atlas vector search to Python cosine in
+     `pro`; report the mismatch and provide the required setup action.
+   - Consider change streams and time-series collections only when they
+     simplify real product workflows, not because the platform supports them.
+6. Report Quality v2.
+   - Treat `export_report` as meeting/manager-report generation, not a ledger
+     dump.
+   - Keep deterministic metrics as the source of truth, but allow host-assisted
+     narrative generation or an explicit cost-visible server-side narrative
+     mode.
+   - Prefer polished Markdown/DOCX/PDF-style output for weekly review; reserve
+     CSV for ledger-style `export_data`.
+7. Deal Review Quality v2.
+   - Revisit review scoring after framework abstraction.
+   - Separate evidence-rich but risky deals from evidence-poor deals with high
+     uncertainty.
+   - Preserve the CTA vs observation distinction: objective missing items such
+     as dates or committed next steps can produce actions; subjective gaps such
+     as competition/context should often be observations unless stronger
+     evidence supports action.
+   - Add corner-case synthetic datasets from realistic meetings, emails, and
+     user interviews to stress the review engine.
+8. Usage and cost tracking v2.
+   - Extend the v1 usage tool beyond LLM calls when useful: report generation,
+     embedding/search work, MongoDB/Atlas assumptions, and maintenance
+     backfills.
+   - Keep cost numbers explicitly labeled as estimates unless pulled from a
+     provider billing API.
+9. Full npx bootstrapper.
+   - Defer until the product shape is stable enough that packaging does not
+     hide architecture churn.
+   - Target a true no-git-clone flow: install/check/run commands that can guide
+     Python discovery, package installation, config doctor, smoke tests, and MCP
+     startup.
+   - Do not ship a thin `npx` wrapper as the main post-v1 answer if it still
+     requires users to manually understand the Python install path.
 
 MongoDB feature placement rule:
 
