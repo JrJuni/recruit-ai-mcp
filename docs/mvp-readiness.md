@@ -34,8 +34,9 @@ Green:
 - Customer interaction intake supports meeting notes, email threads, user
   interviews, call summaries, and internal notes through one public tool:
   `add_interaction`.
-- LLM usage/cost visibility is planned as v1 polish so users can see estimated
-  provider spend from the MCP surface.
+- LLM usage/cost visibility is available through `get_usage` and
+  `deal-intel usage` so users can see estimated provider spend from the MCP
+  surface.
 - Local mode can create/update/stage/archive/delete local personal deals, then
   export, reset, or migrate them to MongoDB through dry-run-first commands.
 - Natural-question smoke has a deterministic 12-question pack.
@@ -65,18 +66,11 @@ Not MVP-blocking:
 - OpenAI API live smoke with paid credits.
 - Deep account people graph / CRM-like contact model.
 
-V1 polish candidates before broader public release:
+Remaining v1 polish candidates before broader public release:
 
-- Add an MCP usage tool focused on LLM call counts, token usage, and estimated
-  provider spend.
-- Improve MCP tool descriptions and first-run docs so AI hosts can clearly
-  choose between adjacent tools. Each high-traffic tool should say when to use
-  it, when not to use it, and which neighboring tool to prefer for adjacent
-  tasks.
-- Improve CSV/Markdown report readability so exported artifacts have a clearer
-  role than Atlas Charts or chat-rendered dashboards.
-- Reposition `analyze_deal` as optional generated strategy text, with
-  `get_deal_review` as the default LLM-free review.
+- Keep validating tool-selection descriptions through natural-question smoke
+  traces and real host usage.
+- Polish public demo copy and first-run screenshots before broader launch.
 
 Post-v1 tool design cleanup:
 

@@ -14,6 +14,8 @@ If an AI assistant is helping you set this up, point it at
 [`AI_START_HERE.md`](AI_START_HERE.md) first. That file is intentionally short
 and tells the assistant to start with `full`, use `sample` only for an explicit
 zero-config trial, and run `config_doctor` before deeper troubleshooting.
+For a short public/community demo script, use
+[`docs/public-demo-script.md`](docs/public-demo-script.md).
 For a Korean full-mode walkthrough aimed at non-developer users, use
 [`AI_FULL_INSTALL_GUIDE.ko.md`](AI_FULL_INSTALL_GUIDE.ko.md).
 
@@ -894,6 +896,12 @@ To backfill themes onto existing data, run this first:
 ```bash
 ~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli backfill-customer-themes --apply
 ```
+
+`backfill-customer-themes` is a maintenance/migration command for historical
+meeting records. It may call the configured server-side LLM once per processed
+meeting, so run the dry-run first, consider `--limit`, and avoid treating it as
+normal daily intake. New emails, interviews, calls, and meetings should go
+through `add_interaction`.
 
 The versioned Atlas Charts spec is in
 `atlas/charts/customer_themes.v1.json`. See `docs/atlas-charts.md` for the

@@ -12,6 +12,36 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-15
 
+### v1 polish: tool-selection guidance and public demo script
+
+Implemented:
+
+- Tightened MCP tool descriptions for high-traffic adjacent tools:
+  - `get_deal_review` as the default one-deal status/risk/uncertainty review;
+  - `analyze_deal` as optional LLM-generated BD strategy that may persist
+    `bd_strategy`;
+  - `export_report` as manager/team meeting reports with a host-app polish
+    prompt;
+  - `export_data` as Excel/CSV ledgers and record exports;
+  - customer-theme tools split as ranking, breakdown, and evidence.
+- Clarified `backfill-customer-themes` as a maintenance/migration command, not
+  normal daily intake, and documented that large historical runs may incur
+  server-side LLM cost.
+- Added [public-demo-script.md](public-demo-script.md), a five-question demo
+  path for public/community posts and first-look walkthroughs.
+- Linked the public demo script from README and AI_START_HERE.
+- Updated MVP readiness notes now that usage visibility and report/data-export
+  polish are implemented.
+
+Validation:
+
+- Targeted:
+  `pytest tests/test_tool_surfaces.py tests/test_mcpb_manifest.py -q
+  --basetemp=.tmp\pytest-tool-guidance`: `30 passed, 1 warning`.
+- Targeted Ruff:
+  `ruff check src\deal_intel\mcp_server.py src\deal_intel\cli.py`:
+  `All checks passed`.
+
 ### v1 polish: split spreadsheet data export from human reports
 
 Implemented:

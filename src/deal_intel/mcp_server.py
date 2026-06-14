@@ -730,9 +730,11 @@ def get_deal_review(deal_id: str, as_of: str = "") -> dict:
     """Review one deal with health quality separated from evidence coverage.
 
     This is the default tool for one-deal status, risk, uncertainty, and next
-    questions/actions. It is LLM-free and safer for routine deal review. Use
-    analyze_deal only when the user explicitly asks for generated BD strategy
-    prose or wants to persist bd_strategy.
+    questions/actions. It is LLM-free and safer for routine deal review.
+    Prefer this over analyze_deal for ordinary questions such as "how is this
+    deal going?", "what should I check next?", or "why is this deal risky?".
+    Use analyze_deal only when the user explicitly asks for generated BD
+    strategy prose or wants to persist bd_strategy.
 
     Read-only. Uses restricted BI projection and does not call LLM, embeddings,
     or write to MongoDB. The response suppresses uncalibrated win-probability
@@ -799,7 +801,10 @@ def export_report(
 
     Supported report_type values: weekly_pipeline, pipeline_trend.
     Current implementation writes Markdown plus compatibility CSV artifacts;
-    the CSV is not the primary user-facing report surface.
+    the CSV is not the primary user-facing report surface. The response also
+    includes a deterministic briefing and a host_report_prompt that Claude,
+    Codex, or ChatGPT can use to polish the report prose without changing
+    source-of-truth numbers.
     Optional filters:
     - stage: exact pipeline stage match
     - industry: exact stored industry match
@@ -837,9 +842,10 @@ def export_data(
     """Export spreadsheet-ready CSV data, not a human narrative report.
 
     Use this when the user asks for Excel/CSV-ready deal records, an open deal
-    table, a closed deal ledger, or raw-but-safe reporting data for their own
-    analysis. For manager/team meeting narrative reports, use export_report
-    instead. For chat-only KPI answers, use get_metrics.
+    table, a closed deal ledger, monthly/quarterly records, or raw-but-safe
+    reporting data for their own analysis. For manager/team meeting narrative
+    reports, use export_report instead. For chat-only KPI answers, use
+    get_metrics.
 
     Supported dataset values:
     - open_deals: active/stalled pipeline ledger with health, timing, gaps
@@ -940,9 +946,10 @@ def get_customer_themes(
     """Rank recurring customer concerns by unique deal count with evidence.
 
     Use this for questions like "what do customers worry about most?" or "what
-    decision criteria appear most often?" For stage/industry comparisons, use
-    get_customer_theme_breakdown. For concrete snippets, use
-    get_customer_theme_evidence.
+    decision criteria appear most often?" This is the main entry point for
+    theme ranking. Do not use it for stage/industry comparison tables; use
+    get_customer_theme_breakdown. Do not use it when the user asks for concrete
+    quotes/snippets for one known theme; use get_customer_theme_evidence.
 
     dimension: all | identify_pain | decision_criteria | metrics
     stage: active | all | discovery | qualification | proposal | negotiation | won | lost | stalled
@@ -973,9 +980,11 @@ def get_customer_theme_breakdown(
 ) -> dict:
     """Compare recurring customer themes by stage, industry, industry tag, or dimension.
 
-    Use this after or alongside get_customer_themes when the user wants a
-    breakdown by stage, primary industry, industry tag, or theme dimension. For
-    representative snippets, use get_customer_theme_evidence.
+    Use this after or alongside get_customer_themes when the user wants to
+    compare theme patterns by stage, primary industry, industry tag, or theme
+    dimension. Do not use it as the default "top customer concerns" tool; use
+    get_customer_themes for ranking. For representative snippets, use
+    get_customer_theme_evidence.
 
     Read-only. Uses curated customer_themes only; does not return raw meeting
     notes, contacts, or embeddings.
@@ -1014,8 +1023,10 @@ def get_customer_theme_evidence(
 ) -> dict:
     """Return curated evidence examples for one customer theme.
 
-    Use this when the user asks "show examples/evidence" for a known theme. Do
-    not use it to rank themes from scratch; use get_customer_themes first.
+    Use this when the user asks "show examples/evidence" for one known theme
+    key. Do not use it to rank themes from scratch; use get_customer_themes
+    first. Do not use it for stage/industry comparison tables; use
+    get_customer_theme_breakdown.
 
     Read-only. Evidence is the structured snippet already extracted into
     customer_themes; raw meeting notes, raw interaction content, contacts, and
@@ -1154,7 +1165,8 @@ def analyze_deal(deal_id: str) -> dict:
     next-meeting strategy, or wants bd_strategy persisted. It calls the
     configured server-side LLM and may write the generated strategy back to the
     deal. For routine status/risk/uncertainty review, use get_deal_review. For
-    missing-info prioritization, use get_deal_gaps.
+    missing-info prioritization, use get_deal_gaps. Do not call this just
+    because the user asks "how is this deal going?"; start with get_deal_review.
     """
     try:
         from deal_intel import _context

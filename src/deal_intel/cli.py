@@ -1027,7 +1027,11 @@ def backfill_customer_themes(
     apply: bool = typer.Option(
         False,
         "--apply",
-        help="Write extracted themes to MongoDB. Without this flag, run as dry-run.",
+        help=(
+            "Write extracted themes to MongoDB. Without this flag, run as "
+            "dry-run. This maintenance command may call the configured LLM "
+            "for each processed historical meeting."
+        ),
     ),
     force: bool = typer.Option(
         False,
@@ -1036,7 +1040,11 @@ def backfill_customer_themes(
     ),
     limit: int = typer.Option(0, "--limit", min=0, help="Maximum deals to scan; 0 means all."),
 ) -> None:
-    """Extract customer themes for existing meeting records."""
+    """Extract customer themes for existing meeting records.
+
+    Maintenance/migration flow, not normal daily intake. Use add_interaction
+    for new evidence. Large backfills may incur server-side LLM cost.
+    """
     from deal_intel import _context
     from deal_intel.tools import backfill_customer_themes as _t
 
