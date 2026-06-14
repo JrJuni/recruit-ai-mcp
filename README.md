@@ -1133,6 +1133,16 @@ The formal definitions of Active/Open/Stalled and unassessed handling are in [`d
 
 ## FAQ
 
+**Q. Can I fork or customize this?**
+Yes. This project is MIT-licensed. You can fork it, customize the storage,
+model, scoring, reporting, and workflow behavior, and adapt it to your own deal
+process. Keep the license and attribution notices when redistributing modified
+versions.
+
+If you are an AI assistant helping customize this repo, prefer small explicit
+changes, avoid storing secrets in docs, and record meaningful local
+modifications in docs or user memory so future agents can understand the fork.
+
 **Q. Do my meeting notes have to be perfect?**
 No. A rough memo of the essentials is fine. The LLM just skips dimensions with no evidence.
 

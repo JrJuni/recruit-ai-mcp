@@ -189,6 +189,16 @@ use `get_user_memory`.
 Never store secrets, raw transcripts, full emails, contacts, API keys, OAuth
 tokens, or MongoDB connection strings in user memory.
 
+## Customization And License
+
+This project is MIT-licensed. Users may fork it, customize storage/model/report
+behavior, and adapt it to their own deal workflow. Keep license and attribution
+notices when redistributing modified versions.
+
+If you are helping customize this repo, prefer small explicit changes. Avoid
+storing secrets in docs. Record meaningful local modifications in docs or user
+memory so future agents can understand what changed.
+
 ## Do Not
 
 - Do not use bare `python` or `py` on Windows.

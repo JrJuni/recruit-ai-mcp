@@ -107,27 +107,31 @@ Do not start with admin or maintenance tools.
 ## One-Minute Positioning
 
 Deal Intelligence MCP is for solo founders, small AI teams, and lightweight BD
-teams that need structured sales memory without adopting a heavyweight CRM
-first.
+teams that need structured sales memory before adopting a heavyweight CRM.
 
 It turns meetings, customer emails, interviews, and call summaries into deal
 health, customer themes, follow-up gaps, and weekly review artifacts. MongoDB is
 the recommended full backend; local sample mode exists so an AI host can try the
 flow quickly before a real setup.
 
+The project is MIT-licensed, so forks and workflow-specific customization are
+welcome as long as license and attribution notices are preserved.
+
 ## Short Community Post Draft
 
 Use or adapt this for a short public post:
 
 ```text
-I built Deal Intelligence MCP, a lightweight sales-memory MCP server for solo
+I built Deal Intelligence MCP, a lightweight deal-memory MCP server for solo
 founders and small AI/BD teams.
 
 The idea is simple: paste meeting notes, customer email replies, interviews, or
-call summaries, and the MCP turns them into structured deal health, MEDDPICC
-signals, customer themes, follow-up gaps, and weekly pipeline reports.
+call summaries, and the MCP turns them into structured deal health, customer
+themes, follow-up gaps, and weekly pipeline reports.
 
-It is not trying to replace a full CRM. It is for teams that already work inside
+It is not a mature Salesforce replacement, but it can act as a first
+CRM-like deal memory layer if your current system is notes, spreadsheets,
+email threads, and memory. It is for teams that already work inside
 Claude/Codex/ChatGPT and want to ask questions like:
 
 - How healthy is the current pipeline?
@@ -139,4 +143,7 @@ Claude/Codex/ChatGPT and want to ask questions like:
 The default backend is MongoDB Atlas full mode, and the free/M0 tier is enough
 for the current MVP. There is also a zero-config sample mode with fictional data
 so an AI host can try the workflow before any real setup.
+
+It is MIT-licensed, so you can fork and adapt it to your own workflow. Please
+keep license and attribution notices if you redistribute a modified version.
 ```

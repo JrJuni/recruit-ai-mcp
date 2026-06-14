@@ -242,3 +242,14 @@ that real team operation is designed around MongoDB-backed full mode.
 - For destructive actions such as delete, explain dry-run and archive gates.
 - For low-risk classification/taxonomy, draft a recommendation first and let
   the user correct it when needed.
+
+## 13. Customization And License
+
+This project is MIT-licensed. Users may fork it, customize the storage, model,
+scoring, reporting, and workflow behavior, and adapt it to their own deal
+process. Keep license and attribution notices when redistributing modified
+versions.
+
+If you are helping customize this repo, prefer small explicit changes. Do not
+store secrets in docs. Record meaningful local modifications in docs or user
+memory so future agents can understand what changed.

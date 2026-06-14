@@ -29,6 +29,10 @@ Implemented:
   full-mode install guide for AI-assisted setup.
 - Updated [AI_START_HERE.md](../AI_START_HERE.md) to prefer the English guide
   while keeping the Korean guide linked.
+- Added MIT customization guidance to README, AI agent setup docs, and the
+  public demo script: forks/custom workflows are welcome, but license and
+  attribution notices should be preserved and meaningful local changes should be
+  recorded for future agents.
 
 Validation:
 
