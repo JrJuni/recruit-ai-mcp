@@ -10,7 +10,166 @@ Read the newest section first. Older sections are retained as an archive for
 traceability and should be searched by topic, milestone, or file path rather
 than loaded wholesale.
 
-## Latest Update - 2026-06-14
+## Latest Update - 2026-06-15
+
+### v1 polish: split spreadsheet data export from human reports
+
+Implemented:
+
+- Added `export_data`, a deterministic CSV/Excel export layer separate from
+  human-facing `export_report`.
+- Added `deal_intel.reports.data_export.build_data_export` with three datasets:
+  `open_deals`, `all_deals`, and `closed_deals`.
+- Registered `export_data` in MCP and tool-surface contracts for sample,
+  standard, and developer surfaces.
+- Updated reporting architecture docs to treat:
+  - `export_data` as spreadsheet/ledger data extraction;
+  - `export_report` as the human report/document layer;
+  - deterministic metrics/data packs as the source of truth for any
+    host-assisted report prose.
+- Updated baseline, query audit, and tool-surface docs with the new contract.
+- Added report-facing briefing fields to `weekly_pipeline` Markdown/export
+  output:
+  - `briefing`
+  - `briefing_sections`
+  - `host_report_prompt`
+- Added a meeting agenda section to weekly pipeline Markdown.
+- Documented that host-app prose polishing may improve readability, but
+  deterministic metrics, company names, stages, amounts, health scores, and
+  warning codes remain the source of truth.
+
+Validation:
+
+- Targeted:
+  `pytest tests/test_export_data.py tests/test_tool_surfaces.py
+  tests/test_mcpb_manifest.py tests/test_config_doctor.py
+  tests/test_cli_config_profiles.py tests/test_sample_data.py -q
+  --basetemp=.tmp\pytest-export-data-expanded`: `61 passed, 1 warning`.
+- Report regression:
+  `pytest tests/test_export_report.py tests/test_weekly_pipeline_report.py
+  tests/test_weekly_pipeline_markdown.py -q
+  --basetemp=.tmp\pytest-report-regression-after-export-data`:
+  `29 passed, 1 warning`.
+- Full regression:
+  `pytest -q --basetemp=.tmp\pytest-export-data-full`:
+  `544 passed, 1 warning`.
+- Ruff:
+  `ruff check .`: `All checks passed`.
+- Local sample smoke:
+  `export_data(dataset="open_deals", as_of="2026-06-10")` with an explicit
+  workspace output directory generated a CSV successfully (`row_count=8`).
+- Report host-prompt regression:
+  `pytest tests/test_weekly_pipeline_markdown.py tests/test_export_report.py -q
+  --basetemp=.tmp\pytest-report-host-prompt-rerun`: `20 passed, 1 warning`.
+- Targeted report Ruff:
+  `ruff check src\deal_intel\reports\markdown_summary.py
+  src\deal_intel\tools\export_report.py tests\test_weekly_pipeline_markdown.py
+  tests\test_export_report.py`: `All checks passed`.
+- Full regression after report-host-prompt polish:
+  `pytest -q --basetemp=.tmp\pytest-report-export-full`:
+  `544 passed, 1 warning`.
+- Full Ruff after report-host-prompt polish:
+  `ruff check .`: `All checks passed`.
+- Local sample report smoke:
+  `export_report(report_type="weekly_pipeline", as_of="2026-06-10",
+  language="ko")` generated CSV and Markdown successfully (`row_count=8`) and
+  returned `briefing` plus `host_report_prompt`.
+
+Note:
+
+- A sandbox-only smoke using a relative `.tmp/...` output path failed because
+  relative output paths are intentionally scoped under `~/.deal-intel/`, and
+  this Codex sandbox cannot write to the user home directory. Re-running with a
+  workspace absolute path passed.
+
+Open follow-up:
+
+- `export_report` still writes a compatibility CSV artifact. The human report
+  layer now exposes a host-app polish prompt, but a future unit may still add a
+  DOCX/PDF writer if file-native executive reports become important.
+
+## Previous Update - 2026-06-14
+
+### v1 polish: weekly pipeline Markdown narrative
+
+Implemented:
+
+- Reworked `weekly_pipeline` Markdown from a raw section dump into a meeting
+  narrative:
+  - executive summary;
+  - core KPI table;
+  - key deal watchlist;
+  - stage breakdown;
+  - issues to watch, split into objective action items and judgment-sensitive
+    gap observations;
+  - next-week action flow;
+  - customer evidence and data-quality appendices.
+- Kept the CSV/report row contract unchanged. Markdown now owns presentation
+  and deterministic narrative only; row builders and metric modules remain the
+  source of truth for business semantics.
+- Changed Markdown artifact writes to `utf-8-sig` so generated `.md` reports
+  open more reliably in Windows desktop apps.
+- Updated `docs/reports.md` and `docs/architecture.md` to record the narrative
+  responsibility boundary.
+
+Validation:
+
+- Targeted:
+  `pytest tests/test_weekly_pipeline_markdown.py tests/test_export_report.py -q
+  --basetemp=.tmp\pytest-report-polish`: `20 passed, 1 warning`.
+- Markdown BOM fix:
+  `pytest tests/test_export_report.py tests/test_weekly_pipeline_markdown.py -q
+  --basetemp=.tmp\pytest-markdown-bom`: `20 passed, 1 warning`.
+- Full regression:
+  `pytest -q --basetemp=.tmp\pytest-report-narrative-full`: `538 passed,
+  1 warning`.
+- Ruff:
+  `ruff check .`: `All checks passed`.
+
+### Architecture documentation discipline
+
+Implemented:
+
+- Added a concrete reporting data-pipeline section to `docs/architecture.md`.
+- Documented the responsibilities of `export_report`, `weekly_pipeline`,
+  `markdown_summary`, `csv_export`, `markdown_export`, `pipeline_trend`,
+  Atlas chart rendering, and dashboard cross-checking.
+- Clarified that `markdown_summary` renders human-facing Markdown and computes
+  Markdown-level summary metrics from report rows, while BI-wide metric
+  semantics should stay in `schema.metrics`, `schema.pipeline_metrics`, report
+  row builders, or trend calculators.
+- Added an AGENTS/CLAUDE working-loop rule: changes to data pipelines,
+  calculators, report/export flows, storage read paths, MCP orchestration, or
+  module responsibility boundaries must update `docs/architecture.md`.
+
+Decision:
+
+- Promoted the architecture-documentation habit into the reusable local Codex
+  skill `architecture-map` and linked it from AGENTS/CLAUDE.
+
+### v1 polish: report language setting
+
+Implemented:
+
+- Added `reporting.language` with supported values `en` and `ko`.
+- `weekly_pipeline` Markdown now localizes report headings, KPI labels, stage
+  labels, health bands, attention reasons, objective actions, gap
+  actionability, warning labels, and source labels.
+- `pipeline_trend` Markdown now localizes its title, KPI table labels, and
+  stage-change section labels.
+- `export_report` returns `language` and validates invalid language config
+  before storage reads.
+- `update_config` can now preview/apply `reporting_language` so Claude/Codex
+  App users can switch report language without hand-editing config files.
+
+Validation:
+
+- Targeted:
+  `pytest tests/test_weekly_pipeline_markdown.py tests/test_export_report.py
+  tests/test_config_writer.py tests/test_config_doctor.py -q -p
+  no:cacheprovider --basetemp .tmp\pytest-report-language`: `47 passed,
+  1 warning`.
+- Ruff targeted report/config files: `All checks passed`.
 
 ### v1 readiness gate rerun
 

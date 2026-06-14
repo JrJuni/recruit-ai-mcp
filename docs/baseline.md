@@ -57,20 +57,20 @@ available.
 
 ### MCP Tool Contracts
 
-The Python server keeps all 28 handler functions available internally, but MCP
+The Python server keeps all 29 handler functions available internally, but MCP
 clients see a config-filtered tool surface:
 
 - `tools.surface: auto` resolves from the effective profile.
-- `sample` exposes 21 tools for bundled/local personal sample mode.
-- `standard` exposes 25 tools for normal MongoDB-backed operation.
-- `developer` exposes all 28 tools, including demo database seed/cleanup.
+- `sample` exposes 22 tools for bundled/local personal sample mode.
+- `standard` exposes 26 tools for normal MongoDB-backed operation.
+- `developer` exposes all 29 tools, including demo database seed/cleanup.
 - Invalid `tools.surface` config exposes only `config_doctor` and
   `update_config` so setup can be diagnosed and repaired.
 
 | Tool | Required inputs | Optional inputs | Success response | Persistence or external effects |
 |---|---|---|---|---|
 | `config_doctor` | None | `offline` | `ok`, `profile`, `generated_at`, `summary`, `checks`, `next_actions` | Read only; checks config, storage readiness, vector-search mode, and LLM provider readiness without LLM calls, embeddings, or writes. The default path may perform a bounded storage ping; `offline=true` skips it |
-| `update_config` | None | `dry_run`, `confirmed_by_user`, `llm_provider`, `chatgpt_oauth_model`, `openai_api_model`, `reporting_output_dir`, `reporting_timezone`, `tools_surface` | `ok`, `command`, `user_config_path`, `dry_run`, `changed_fields`, `doctor`, `storage_written`, `backup_path` | Dry-run-first local file write. Applies only allowlisted non-secret settings to `~/.deal-intel/config.yaml`; real writes require `confirmed_by_user=true`; rejects MongoDB URIs and API-key shaped values |
+| `update_config` | None | `dry_run`, `confirmed_by_user`, `llm_provider`, `chatgpt_oauth_model`, `openai_api_model`, `reporting_output_dir`, `reporting_timezone`, `reporting_language`, `tools_surface` | `ok`, `command`, `user_config_path`, `dry_run`, `changed_fields`, `doctor`, `storage_written`, `backup_path` | Dry-run-first local file write. Applies only allowlisted non-secret settings to `~/.deal-intel/config.yaml`; real writes require `confirmed_by_user=true`; rejects MongoDB URIs and API-key shaped values |
 | `create_deal` | `company` | `industry`, `industry_tags`, `customer_segment`, `deal_size_amount`, `deal_size_currency`, `deal_size_status`, `deal_size_low_amount`, `deal_size_high_amount`, `deal_size_note`, `expected_close_date` | `ok`, `deal_id`, `company`, `industry`, `industry_tags`, `customer_segment`, deal value fields, `expected_close_date`, `expected_close_date_source`, `taxonomy_warnings`, optional `analytics_snapshot` | Validates the initial deal-value classification, normalizes industry metadata, applies the configured close-date default when omitted, upserts one deal, initializes `discovery` stage history, and attempts a non-blocking analytics snapshot |
 | `add_meeting` | `deal_id`, `date`, `raw_notes` | None | `ok`, `interaction_id`, `meeting_id`, `summary`, `meddpicc`, `meddpicc_latest`, `customer_themes`, `stage_suggestion`, `embedding_stored`, `usage`, `usage_summary`, optional `analytics_snapshot` | Deprecated developer-surface compatibility alias over `add_interaction` with `interaction_type: meeting`. Calls LLM, writes an `interaction_type: meeting` record under `deal.interactions`, stores `llm_usage` metadata, recalculates deal signals, optionally stores an embedding for MongoDB-backed data, upserts the deal, and attempts a non-blocking analytics snapshot. New clients should call `add_interaction` directly |
 | `add_interaction` | `deal_id`, `date`, `interaction_type`, `direction`, `content` | `participants`, `subject`, `source_confidence`, `custom_fields_json` | `ok`, `interaction_id`, `meeting_id`, `interaction_type`, `direction`, `source_confidence`, `source_policy`, `participants`, `subject`, `summary`, `meddpicc`, `unconfirmed_meddpicc`, `meddpicc_latest`, `customer_themes`, `unconfirmed_customer_themes`, `scoring_applied`, `stage_suggestion`, `embedding_stored`, `usage`, `usage_summary`, optional `analytics_snapshot` | Calls LLM, appends a canonical `deal.interactions` record, stores source metadata, `raw_content`, and `llm_usage` metadata, recalculates deal signals only when the source is scoring-eligible, optionally stores an embedding for MongoDB-backed data, upserts the deal, and attempts a non-blocking analytics snapshot. `source_policy` explains whether the input became confirmed scoring evidence or stored-unconfirmed context. `outbound_unconfirmed` and `internal` evidence is stored but does not update MEDDPICC health or customer-theme counts by default. Custom interaction types must be registered in config |
@@ -88,7 +88,8 @@ clients see a config-filtered tool surface:
 | `get_deal_gaps` | None | `as_of`, `stage`, `industry`, `deal_id`, `min_priority`, `limit` | `ok`, `as_of`, `timezone`, `generated_at`, `filters`, `summary`, `deals`, `warnings` | Read only; uses the restricted metric projection, prioritizes sales follow-up gaps, annotates gaps with `actionability`/`cta_policy`, exposes `actionable_gaps` and `gap_observations`, and excludes raw notes, raw interaction content, contacts, and embeddings |
 | `get_deal_review` | `deal_id` | `as_of` | `ok`, `as_of`, `timezone`, `generated_at`, `review` | Read only; uses the restricted metric projection, separates health quality from evidence coverage, returns v2 `assessment`, `actionable_gaps`, and `gap_observations`, suppresses uncalibrated win probability numbers, and excludes raw notes, raw interaction content, contacts, and embeddings |
 | `get_usage` | None | `since`, `until` | `ok`, `generated_at`, `filters`, `summary`, `by_provider`, `by_tool`, `by_operation`, `entries`, `pricing_policy`, `warnings` | Read only; summarizes persisted server-side LLM usage metadata without prompts, raw notes, raw interaction content, contacts, API keys, OAuth tokens, MongoDB URIs, or embeddings. ChatGPT OAuth is reported as zero incremental API estimate; API-provider cost is estimated only when `usage.pricing` is configured |
-| `export_report` | None | `report_type`, `output_dir`, `stage`, `industry`, `as_of`, `lookback_days` | `ok`, `report_type`, `as_of`, `timezone`, `generated_at`, `filters`, `row_count`, `warnings`, `metrics`, `output_dir`, `artifacts`, `csv_path`, `markdown_path` | Reads through the report-specific restricted projection and writes local CSV/Markdown report artifacts |
+| `export_report` | None | `report_type`, `output_dir`, `stage`, `industry`, `as_of`, `lookback_days` | `ok`, `report_type`, `as_of`, `timezone`, `generated_at`, `language`, `filters`, `row_count`, `warnings`, `metrics`, `briefing`, `briefing_sections`, `host_report_prompt`, `output_dir`, `artifacts`, `csv_path`, `markdown_path` | Reads through the report-specific restricted projection and writes local CSV/Markdown report artifacts. Markdown language follows `reporting.language` (`en` or `ko`). Weekly reports also return a compact briefing and safe host-app polish prompt so Claude/Codex/ChatGPT can turn the deterministic pack into a more natural manager/team report without changing numbers |
+| `export_data` | None | `dataset`, `output_dir`, `stage`, `industry`, `as_of` | `ok`, `tool`, `dataset`, `as_of`, `timezone`, `generated_at`, `filters`, `row_count`, `columns`, `warnings`, `output_dir`, `artifacts`, `csv_path`, `preview_rows` | Reads through the restricted metrics projection and writes spreadsheet-ready UTF-8 BOM CSV datasets (`open_deals`, `all_deals`, `closed_deals`). It is deterministic, LLM-free, excludes raw notes, raw interaction content, contacts, and embeddings, and is the preferred CSV/Excel export layer |
 | `get_user_memory` | None | `category`, `custom_doc_slug`, `limit` | `ok`, `memory_dir`, `filters`, `documents`, `summary`, `warnings` | Read only; reads safe Markdown files from `user_docs/` or configured `user_memory.dir` for assistant context loading. Excludes sample templates from broad reads |
 | `record_user_memory` | `content` | `category`, `custom_doc_slug`, `title`, `source`, `importance`, `tags` | `ok`, `entry_id`, `memory_dir`, `path`, `category`, `document`, `is_custom_document`, `bytes_written`, `secret_scan` | Appends durable user feedback to safe Markdown files under `user_docs/` or configured `user_memory.dir`; rejects unsafe paths, non-Markdown custom slugs, and secret-shaped content before writing |
 | `get_insights` | `query_type` | `as_of` | `ok`, `query_type`, `as_of`, `timezone`, `generated_at`, query-specific aggregate fields | Read only over the current collection snapshot |
@@ -208,6 +209,17 @@ Invalid report types, invalid stages, invalid `as_of`, invalid
 access. `weekly_pipeline` reads through `list_deals_for_metrics()`;
 `pipeline_trend` reads through `list_analytics_snapshots()`.
 
+`export_data.dataset` currently supports:
+
+- `open_deals`
+- `all_deals`
+- `closed_deals`
+
+`export_data` accepts exact-match `stage` and primary `industry` filters.
+Invalid datasets, invalid stages, invalid `as_of`, and invalid report/metric
+config fail before storage access. The output CSV is for spreadsheet work and
+should not be treated as the human weekly pipeline report.
+
 `get_insights.query_type` currently supports:
 
 - `pipeline_overview`
@@ -296,8 +308,8 @@ Before Milestone 1 started, all 28 findings were resolved. The current gate is:
 pytest -> 128 passed
 ruff check . -> All checks passed
 wheel build -> passed
-FastMCP runtime surface exposure -> sample 21 tools, standard 25 tools,
-developer 28 tools
+FastMCP runtime surface exposure -> sample 22 tools, standard 26 tools,
+developer 29 tools
 MongoDB Atlas read smoke -> passed
 ```
 

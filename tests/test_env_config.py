@@ -46,6 +46,24 @@ def test_load_config_preserves_legacy_oauth_env_override(monkeypatch, tmp_path) 
     assert config["llm"]["provider"] == "anthropic"
 
 
+def test_load_config_accepts_reporting_language_env(monkeypatch, tmp_path) -> None:
+    root = tmp_path
+    config_dir = root / "config"
+    config_dir.mkdir()
+    (config_dir / "defaults.yaml").write_text(
+        "reporting:\n  language: en\n",
+        encoding="utf-8",
+    )
+    missing_user_config = tmp_path / "missing" / "config.yaml"
+    monkeypatch.setattr(_env, "_ROOT", root)
+    monkeypatch.setattr(_env, "_USER_CONFIG_PATH", missing_user_config)
+    monkeypatch.setenv("DEAL_INTEL_REPORTING_LANGUAGE", "ko")
+
+    config = _env.load_config()
+
+    assert config["reporting"]["language"] == "ko"
+
+
 def test_packaged_defaults_match_repo_defaults() -> None:
     packaged = (
         resources.files("deal_intel.resources")
@@ -66,6 +84,7 @@ def test_load_config_falls_back_to_packaged_defaults(monkeypatch, tmp_path) -> N
     monkeypatch.delenv("DEAL_INTEL_USE_CHATGPT_OAUTH", raising=False)
     monkeypatch.delenv("DEAL_INTEL_STORAGE_BACKEND", raising=False)
     monkeypatch.delenv("DEAL_INTEL_TOOLS_SURFACE", raising=False)
+    monkeypatch.delenv("DEAL_INTEL_REPORTING_LANGUAGE", raising=False)
 
     config = _env.load_config()
 

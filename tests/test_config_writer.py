@@ -216,6 +216,7 @@ def test_update_config_settings_dry_run_does_not_write(tmp_path) -> None:
         llm_provider="openai_api",
         openai_api_model="gpt-5.4-mini",
         reporting_output_dir="~/.deal-intel/reports",
+        reporting_language="ko",
     )
 
     assert result["ok"] is True
@@ -226,6 +227,7 @@ def test_update_config_settings_dry_run_does_not_write(tmp_path) -> None:
         "llm.provider",
         "llm.openai_api_model",
         "reporting.output_dir",
+        "reporting.language",
     ]
 
 
@@ -264,6 +266,7 @@ def test_update_config_settings_writes_and_backs_up_existing_config(tmp_path) ->
         timestamp="20260614-010203",
         llm_provider="openai_api",
         openai_api_model="gpt-5.4-mini",
+        reporting_language="ko",
         tools_surface="standard",
     )
 
@@ -276,6 +279,7 @@ def test_update_config_settings_writes_and_backs_up_existing_config(tmp_path) ->
     assert backup.exists()
     assert data["llm"]["provider"] == "openai_api"
     assert data["llm"]["openai_api_model"] == "gpt-5.4-mini"
+    assert data["reporting"]["language"] == "ko"
     assert data["tools"]["surface"] == "standard"
     assert data["custom"]["keep"] is True
 
@@ -289,6 +293,18 @@ def test_update_config_settings_rejects_secret_shaped_values(tmp_path) -> None:
     assert result["ok"] is False
     assert result["error_code"] == "INVALID_INPUT"
     assert "MongoDB URI" in result["message"]
+
+
+def test_update_config_settings_rejects_invalid_reporting_language(tmp_path) -> None:
+    result = update_config_settings(
+        config_path=tmp_path / "config.yaml",
+        dry_run=True,
+        reporting_language="jp",
+    )
+
+    assert result["ok"] is False
+    assert result["error_code"] == "INVALID_INPUT"
+    assert "reporting_language" in result["message"]
 
 
 def test_config_init_cli_json_uses_user_config_path(monkeypatch, tmp_path) -> None:

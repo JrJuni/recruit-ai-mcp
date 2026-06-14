@@ -99,8 +99,10 @@ Design stance:
 - The server-side LLM provider should be reserved for work that creates or
   updates persistent structured deal intelligence: interaction extraction,
   customer-theme extraction/backfills, and explicit strategy generation.
-- Read-only BI, reports, reviews, gap lists, metrics, and dashboard support
-  should remain LLM-free.
+- Read-only BI calculations, data exports, reviews, gap lists, metrics, and
+  dashboard support should remain deterministic and server-side LLM-free.
+- Human-facing report prose may be host-assisted when the MCP response carries
+  a deterministic data pack and all numbers remain traceable to that pack.
 - Any new tool that calls the server-side LLM must state that cost/latency in
   its tool contract and docs.
 
@@ -154,7 +156,9 @@ Near-term candidates:
 
 Acceptance principles:
 
-- No LLM calls in read-only BI/reporting paths.
+- No LLM calls in metric/data-export calculation paths. Human report wording can
+  use the host app or an explicit, cost-visible server-side report mode as long
+  as deterministic metrics remain the source of truth.
 - No silent downgrade in data quality: any future raw-only/deferred intake must
   clearly show that health/themes are not updated yet.
 - No secret exposure in cost/usage reports.

@@ -53,7 +53,9 @@ without MongoDB today. It is not the full operating surface:
 - `get_metrics`
 - `get_deal_gaps`
 - `get_deal_review`
+- `get_usage`
 - `export_report`
+- `export_data`
 - `get_user_memory`
 - `record_user_memory`
 - `get_customer_theme_breakdown`
@@ -137,9 +139,9 @@ Behavior:
 
 Current exposed counts:
 
-- `sample`: 21 tools
-- `standard`: 25 tools
-- `developer`: 28 tools
+- `sample`: 22 tools
+- `standard`: 26 tools
+- `developer`: 29 tools
 
 Implementation notes:
 

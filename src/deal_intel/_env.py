@@ -12,6 +12,7 @@ load_dotenv(_ROOT / ".env", override=False)
 _USER_CONFIG_PATH = Path.home() / ".deal-intel" / "config.yaml"
 _VALID_STORAGE_BACKENDS = {"mongo", "local_sample"}
 _VALID_TOOL_SURFACES = {"auto", "sample", "standard", "developer"}
+_VALID_REPORT_LANGUAGES = {"en", "ko"}
 
 
 def user_config_path() -> Path:
@@ -59,6 +60,10 @@ def load_config() -> dict:
     tool_surface_env = os.environ.get("DEAL_INTEL_TOOLS_SURFACE", "").strip()
     if tool_surface_env in _VALID_TOOL_SURFACES:
         config.setdefault("tools", {})["surface"] = tool_surface_env
+
+    reporting_language_env = os.environ.get("DEAL_INTEL_REPORTING_LANGUAGE", "").strip()
+    if reporting_language_env in _VALID_REPORT_LANGUAGES:
+        config.setdefault("reporting", {})["language"] = reporting_language_env
 
     return config
 

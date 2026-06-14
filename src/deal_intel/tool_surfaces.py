@@ -247,7 +247,23 @@ MCP_TOOL_SURFACE_CONTRACTS: tuple[MCPToolSurfaceContract, ...] = (
         db_writes=False,
         llm_calls=False,
         local_file_writes=True,
-        notes="Writes local CSV/Markdown artifacts, not database records.",
+        notes=(
+            "Writes local human-facing report artifacts; spreadsheet ledgers "
+            "should use export_data."
+        ),
+    ),
+    MCPToolSurfaceContract(
+        name="export_data",
+        category="local_artifact",
+        surfaces=_SAMPLE,
+        user_facing=True,
+        db_writes=False,
+        llm_calls=False,
+        local_file_writes=True,
+        notes=(
+            "Writes spreadsheet-ready CSV datasets without raw notes, emails, "
+            "contacts, vectors, database writes, or LLM calls."
+        ),
     ),
     MCPToolSurfaceContract(
         name="get_user_memory",

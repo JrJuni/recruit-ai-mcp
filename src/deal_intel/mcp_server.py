@@ -88,6 +88,7 @@ def update_config(
     openai_api_model: str = "",
     reporting_output_dir: str = "",
     reporting_timezone: str = "",
+    reporting_language: str = "",
     tools_surface: str = "",
 ) -> dict:
     """Preview or apply safe non-secret user-config changes.
@@ -104,6 +105,7 @@ def update_config(
     - openai_api_model
     - reporting_output_dir
     - reporting_timezone
+    - reporting_language: en | ko
     - tools_surface: auto | sample | standard | developer
     """
     try:
@@ -117,6 +119,7 @@ def update_config(
             openai_api_model=openai_api_model or None,
             reporting_output_dir=reporting_output_dir or None,
             reporting_timezone=reporting_timezone or None,
+            reporting_language=reporting_language or None,
             tools_surface=tools_surface or None,
         )
     except Exception as exc:
@@ -787,14 +790,16 @@ def export_report(
     as_of: str = "",
     lookback_days: int = 7,
 ) -> dict:
-    """Export BI reports to local files and return absolute artifact paths.
+    """Export human-facing BI reports to local files.
 
-    Use this only when the user asks to create or save a CSV/Markdown report.
-    For chat-only KPI answers, use get_metrics. For one-deal review, use
-    get_deal_review.
+    Use this when the user asks for a manager/team meeting report, weekly
+    pipeline narrative, or a document-style summary. For spreadsheet-ready CSV
+    ledgers, use export_data instead. For chat-only KPI answers, use
+    get_metrics. For one-deal review, use get_deal_review.
 
     Supported report_type values: weekly_pipeline, pipeline_trend.
-    Creates a CSV and Markdown report using the shared BI/reporting contracts.
+    Current implementation writes Markdown plus compatibility CSV artifacts;
+    the CSV is not the primary user-facing report surface.
     Optional filters:
     - stage: exact pipeline stage match
     - industry: exact stored industry match
@@ -816,6 +821,51 @@ def export_report(
             industry=industry or None,
             as_of=as_of or None,
             lookback_days=lookback_days,
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.STORAGE)
+
+
+@app.tool()
+def export_data(
+    dataset: str = "open_deals",
+    output_dir: str = "",
+    stage: str = "",
+    industry: str = "",
+    as_of: str = "",
+) -> dict:
+    """Export spreadsheet-ready CSV data, not a human narrative report.
+
+    Use this when the user asks for Excel/CSV-ready deal records, an open deal
+    table, a closed deal ledger, or raw-but-safe reporting data for their own
+    analysis. For manager/team meeting narrative reports, use export_report
+    instead. For chat-only KPI answers, use get_metrics.
+
+    Supported dataset values:
+    - open_deals: active/stalled pipeline ledger with health, timing, gaps
+    - all_deals: full safe deal ledger without raw notes/emails/contacts/vectors
+    - closed_deals: won/lost postmortem ledger with close metadata
+
+    Optional filters:
+    - stage: exact pipeline stage match
+    - industry: exact stored primary industry match
+    - as_of: YYYY-MM-DD business date for stuck/overdue calculations
+    - output_dir: local output directory; defaults to reporting.data_output_dir,
+      reporting.output_dir, or ~/.deal-intel/reports; relative paths are scoped
+      under ~/.deal-intel/
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.tools import export_data as _t
+
+        return _t.handle(
+            mongo=_context.mongo(),
+            cfg=_context.config(),
+            dataset=dataset,
+            output_dir=output_dir or None,
+            stage=stage or None,
+            industry=industry or None,
+            as_of=as_of or None,
         )
     except Exception as exc:
         return envelope_from_exception(exc, stage=Stage.STORAGE)

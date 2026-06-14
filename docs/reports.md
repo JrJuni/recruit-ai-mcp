@@ -3,6 +3,51 @@
 This document records report-specific contracts. Metric definitions remain in
 [metrics.md](metrics.md).
 
+## Product Contract - Reports vs Data Exports
+
+The export layer has two different jobs:
+
+- `export_report` creates human-facing artifacts for manager updates, team
+  meetings, and narrative pipeline reviews. The output should read like a
+  briefing: KPI summary, key deal movements, risks/opportunities, and next-week
+  focus. The deterministic metric/data pack is the source of truth; host-app
+  LLMs may help turn that pack into polished prose. The MCP response includes a
+  compact `briefing`, structured `briefing_sections`, and a safe
+  `host_report_prompt` for that host-app polishing step.
+- `export_data` creates spreadsheet-ready CSV ledgers for Excel, Sheets, BI
+  cleanup, or downstream analysis. It is deterministic, LLM-free, and should
+  not try to be a narrative report.
+
+This split replaces the early MVP assumption that a weekly pipeline "report"
+should primarily be CSV plus a thin Markdown summary. CSV remains useful, but
+CSV is now treated as data export, not the user-facing weekly report surface.
+
+## Data Export Datasets
+
+`deal_intel.reports.data_export.build_data_export` builds deterministic CSV
+datasets without storage access, file IO, LLM calls, embeddings, or Atlas admin
+APIs.
+
+Supported datasets:
+
+- `open_deals`: active/stalled pipeline ledger with health, timing, attention,
+  gap, and primary pain / decision-criteria fields.
+- `all_deals`: full safe deal ledger for recordkeeping and spreadsheet
+  filtering.
+- `closed_deals`: won/lost postmortem ledger with close metadata.
+
+`export_data` reads through the restricted metrics projection
+(`list_deals_for_metrics()`), writes UTF-8 BOM CSV with formula-injection
+protection, and excludes:
+
+- `meetings.raw_notes`
+- `interactions.raw_content`
+- `contacts`
+- `summary_embedding`
+
+The MCP response includes absolute CSV path, row count, column list, warnings,
+and a small safe preview. It does not write to MongoDB and does not call an LLM.
+
 ## Milestone 2.1 - Weekly Pipeline Rows
 
 `deal_intel.reports.weekly_pipeline.build_weekly_pipeline_rows` builds the
@@ -228,22 +273,29 @@ storage failure.
 
 ## Milestone 2.3 - Markdown Summary
 
-`deal_intel.reports.markdown_summary.build_weekly_pipeline_markdown` builds an
-LLM-free Markdown summary from the `weekly_pipeline` row report.
+`deal_intel.reports.markdown_summary.build_weekly_pipeline_markdown` currently
+builds a deterministic Markdown briefing from the `weekly_pipeline` row report.
+It is the compatibility local report renderer and host-app source pack, not the
+final limit of the human-report product surface.
 
 ### Scope
 
 - Input: `weekly_pipeline` report dict from Milestone 2.1.
-- Output: Markdown body plus machine-readable summary metrics.
+- Output: Markdown body, machine-readable summary metrics, compact briefing
+  text, structured briefing sections, and a safe host-app polish prompt.
 - Side effects: none.
 - File writing: none.
 - Storage access: none.
-- LLM / embedding: none.
+- LLM / embedding: none in this deterministic local renderer.
 - MongoDB access: none.
 
 Markdown file persistence is intentionally out of scope for 2.3. The later
 `export_report` MCP tool will be responsible for saving both CSV and Markdown
 artifacts.
+
+Markdown artifacts are written by `markdown_export` as `utf-8-sig` so Korean
+reports open more reliably in Windows desktop apps. Markdown readers that
+understand normal UTF-8 should also accept the BOM.
 
 ### Output Shape
 
@@ -253,6 +305,13 @@ artifacts.
   "generated_at": "2026-06-09T12:34:56+00:00",
   "metrics": {},
   "warnings": [],
+  "briefing": "...",
+  "briefing_sections": {
+    "executive_summary": [],
+    "meeting_agenda": [],
+    "priority_deals": []
+  },
+  "host_report_prompt": "## Host-App Report Polish Prompt\n...",
   "markdown": "# Weekly Pipeline Report\n..."
 }
 ```
@@ -261,7 +320,8 @@ artifacts.
 
 ### Metric Source
 
-Markdown metrics are computed from the same report rows that CSV export writes.
+Markdown metrics are computed from the same report rows that compatibility CSV
+export writes.
 The Markdown generator does not re-read MongoDB and does not run a separate
 aggregation. This keeps CSV and Markdown numbers aligned.
 
@@ -291,21 +351,32 @@ The fixed metric surface includes:
 
 ### Markdown Sections
 
+The generated body is designed for a weekly pipeline review meeting. It should
+read differently from the CSV table and Atlas dashboard: CSV preserves rows,
+Atlas visualizes current state, and Markdown gives the meeting narrative.
+
 The generated body includes:
 
-1. KPI table
-2. Risk deals table, based on `attention_reasons`
-3. Objective Action Items table, based only on `objective_action_items`
-4. Gap Observations table, based on `gap_observations`
-5. Customer Evidence table, based on primary curated pain / decision criteria
+1. Executive summary explaining how to use the report.
+2. Meeting agenda for a manager/team weekly review.
+3. Core KPI table.
+4. Key deal watchlist, using the weekly row sort order and limited to the first
+   five deals.
+5. Stage breakdown table.
+6. Issues to watch, split into:
+   - Objective Action Items, based only on `objective_action_items`.
+   - Gap Observations, based on `gap_observations`.
+7. Next Week Actions, generated deterministically from action, attention,
+   observation, and data-quality counts.
+8. Customer Evidence table, based on primary curated pain / decision criteria
    snippets and their `source_label`
-6. Data quality table
-7. Warning code list
+9. Data quality table.
+10. Warning code list.
 
-Risk deal tables escape Markdown table separators and newlines in cell values.
-The Objective Action Items section is for objective CTA triggers. The Gap
-Observations section is for judgment-sensitive gaps and includes
-`actionability` so readers can decide the next move without the report
+The key deal watchlist and issue tables escape Markdown table separators and
+newlines in cell values. The Objective Action Items section is for objective CTA
+triggers. The Gap Observations section is for judgment-sensitive gaps and
+includes `actionability` so readers can decide the next move without the report
 over-prescribing qualitative BD judgment.
 
 The Customer Evidence section renders only curated `customer_themes` snippets
@@ -314,9 +385,17 @@ plus safe source labels. It must not render `meetings.raw_notes`,
 
 ### Non-Goals
 
-Milestone 2.3 does not create a new MCP tool, write files, call Atlas Charts,
-call an LLM, or create a polished natural-language executive narrative. It is a
-deterministic report renderer.
+Milestone 2.3 does not create a new MCP tool, write files, call Atlas Charts, or
+call an LLM. It may render deterministic narrative prose, but must not infer new
+facts beyond the row report and Markdown summary metrics. Host-assisted report
+polish can happen above this deterministic data pack; any future server-side LLM
+report mode must keep deterministic metrics as the source of truth.
+
+`host_report_prompt` is designed for Claude/Codex/ChatGPT host apps that can
+write better prose than the MCP server should. It explicitly instructs the host
+not to change deterministic numbers, company names, stages, amounts, health
+scores, or warning codes. It also keeps objective action items separate from
+judgment-sensitive gap observations so reports do not over-prescribe BD actions.
 
 ## Milestone 2.4 - `export_report` MCP Tool
 
@@ -327,11 +406,15 @@ MCP.
 
 - First supported `report_type`: `weekly_pipeline`.
 - Reads deal documents through `MongoDBClient.list_deals_for_metrics()`.
-- Builds M2.1 rows, M2.2 CSV, and M2.3 Markdown from the same row surface.
-- Writes CSV and Markdown files to a local output directory.
-- Returns absolute artifact paths.
+- Builds M2.1 rows and M2.3 Markdown from the same row surface.
+- Writes Markdown plus a compatibility CSV artifact to a local output directory.
+- Returns absolute artifact paths plus a compact briefing and host-app report
+  polish prompt.
 - LLM / embedding: none.
 - MongoDB writes: none.
+
+For spreadsheet-first CSV ledgers, use `export_data` instead of
+`export_report`.
 
 ### Inputs
 
@@ -343,6 +426,18 @@ MCP.
 | `industry` | optional | Exact stored industry match |
 | `as_of` | optional | `YYYY-MM-DD` business date for stuck/overdue calculations |
 
+Markdown report language is controlled by config:
+
+```yaml
+reporting:
+  language: en  # en | ko
+```
+
+Use `update_config(reporting_language="ko")` to switch generated Markdown
+reports to Korean from Claude/Codex App. CSV field names and stored customer
+evidence stay contract/data-oriented; only the human-facing Markdown labels and
+section text are localized.
+
 ### Success Shape
 
 ```json
@@ -352,10 +447,18 @@ MCP.
   "as_of": "2026-06-09",
   "timezone": "Asia/Seoul",
   "generated_at": "2026-06-09T12:34:56+00:00",
+  "language": "en",
   "filters": {"stage": null, "industry": null},
   "row_count": 7,
   "warnings": [],
   "metrics": {},
+  "briefing": "...",
+  "briefing_sections": {
+    "executive_summary": [],
+    "meeting_agenda": [],
+    "priority_deals": []
+  },
+  "host_report_prompt": "## Host-App Report Polish Prompt\n...",
   "output_dir": "<user-home>/.deal-intel/reports",
   "artifacts": {
     "csv": {
@@ -366,7 +469,7 @@ MCP.
     "markdown": {
       "path": "C:/absolute/path/weekly_pipeline_20260609_123456.md",
       "filename": "weekly_pipeline_20260609_123456.md",
-      "encoding": "utf-8"
+      "encoding": "utf-8-sig"
     }
   },
   "csv_path": "C:/absolute/path/weekly_pipeline_20260609_123456.csv",

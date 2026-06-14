@@ -165,6 +165,9 @@ def test_export_report_writes_weekly_pipeline_csv_and_markdown(tmp_path) -> None
     assert result["row_count"] == 1
     assert result["metrics"]["pipeline_value_amount"] == 72_000_000
     assert result["metrics"]["attention_deal_count"] == 1
+    assert result["briefing"]
+    assert result["briefing_sections"]["meeting_agenda"]
+    assert "Do not change any numbers" in result["host_report_prompt"]
     assert result["output_dir"] == str(tmp_path.resolve())
     assert result["csv_path"] == result["artifacts"]["csv"]["path"]
     assert result["markdown_path"] == result["artifacts"]["markdown"]["path"]
@@ -181,7 +184,8 @@ def test_export_report_writes_weekly_pipeline_csv_and_markdown(tmp_path) -> None
     assert csv_path.suffix == ".csv"
     assert markdown_path.suffix == ".md"
     assert csv_path.read_bytes().startswith(b"\xef\xbb\xbf")
-    assert "Weekly Pipeline Report" in markdown_path.read_text(encoding="utf-8")
+    assert markdown_path.read_bytes().startswith(b"\xef\xbb\xbf")
+    assert "Weekly Pipeline Report" in markdown_path.read_text(encoding="utf-8-sig")
 
     with csv_path.open(encoding="utf-8-sig", newline="") as file:
         rows = list(csv.DictReader(file))
@@ -190,6 +194,34 @@ def test_export_report_writes_weekly_pipeline_csv_and_markdown(tmp_path) -> None
     payload = csv_path.read_text(encoding="utf-8-sig")
     assert "secret" not in payload
     assert "summary_embedding" not in payload
+
+
+def test_export_report_uses_configured_markdown_language(tmp_path) -> None:
+    mongo = FakeMongo(
+        [
+            _deal(
+                "overdue",
+                company="페이브릿지",
+                amount=72_000_000,
+                expected_close_date="2026-06-01",
+            )
+        ]
+    )
+
+    result = export_report.handle(
+        mongo=mongo,
+        cfg={"reporting": {"output_dir": str(tmp_path), "language": "ko"}},
+        report_type="weekly_pipeline",
+        as_of="2026-06-10",
+    )
+
+    assert result["ok"] is True
+    assert result["language"] == "ko"
+    assert "숫자, 회사명, stage" in result["host_report_prompt"]
+    markdown = Path(result["markdown_path"]).read_text(encoding="utf-8-sig")
+    assert "# 주간 파이프라인 보고서" in markdown
+    assert "## 회의 진행안" in markdown
+    assert "| 오픈 딜 | 1 |" in markdown
 
 
 def test_export_report_writes_pipeline_trend_csv_and_markdown(tmp_path) -> None:
@@ -268,7 +300,8 @@ def test_export_report_writes_pipeline_trend_csv_and_markdown(tmp_path) -> None:
     assert csv_path.name.startswith("pipeline_trend_")
     assert markdown_path.name.startswith("pipeline_trend_")
     assert csv_path.read_bytes().startswith(b"\xef\xbb\xbf")
-    assert "Pipeline Trend Report" in markdown_path.read_text(encoding="utf-8")
+    assert markdown_path.read_bytes().startswith(b"\xef\xbb\xbf")
+    assert "Pipeline Trend Report" in markdown_path.read_text(encoding="utf-8-sig")
 
     with csv_path.open(encoding="utf-8-sig", newline="") as file:
         rows = list(csv.DictReader(file))
@@ -277,6 +310,24 @@ def test_export_report_writes_pipeline_trend_csv_and_markdown(tmp_path) -> None:
     )
     assert open_value["start_value"] == "100000000"
     assert open_value["end_value"] == "100000000"
+
+
+def test_export_report_uses_configured_pipeline_trend_language(tmp_path) -> None:
+    mongo = FakeTrendMongo([])
+
+    result = export_report.handle(
+        mongo=mongo,
+        cfg={"reporting": {"output_dir": str(tmp_path), "language": "ko"}},
+        report_type="pipeline_trend",
+        as_of="2026-06-10",
+        lookback_days=7,
+    )
+
+    assert result["ok"] is True
+    assert result["language"] == "ko"
+    markdown = Path(result["markdown_path"]).read_text(encoding="utf-8-sig")
+    assert "# 파이프라인 추세 보고서" in markdown
+    assert "## KPI 변화" in markdown
 
 
 def test_export_report_default_output_dir_uses_user_home() -> None:
@@ -391,6 +442,13 @@ def test_export_report_rejects_invalid_inputs_before_storage(tmp_path) -> None:
             as_of="2026-06-10",
             lookback_days=0,
         )
+    with pytest.raises(MCPError) as invalid_language:
+        export_report.handle(
+            mongo=FailingMongo(),
+            cfg={"reporting": {"output_dir": str(tmp_path), "language": "jp"}},
+            report_type="weekly_pipeline",
+            as_of="2026-06-10",
+        )
 
     assert invalid_report_type.value.error_code == ErrorCode.INVALID_INPUT
     assert invalid_report_type.value.hint == {
@@ -399,6 +457,7 @@ def test_export_report_rejects_invalid_inputs_before_storage(tmp_path) -> None:
     assert invalid_stage.value.error_code == ErrorCode.INVALID_INPUT
     assert invalid_as_of.value.error_code == ErrorCode.INVALID_INPUT
     assert invalid_lookback.value.error_code == ErrorCode.INVALID_INPUT
+    assert invalid_language.value.error_code == ErrorCode.INVALID_INPUT
 
 
 def test_export_report_returns_io_error_when_artifact_write_fails(tmp_path) -> None:

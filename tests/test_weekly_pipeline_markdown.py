@@ -160,14 +160,21 @@ def test_weekly_pipeline_markdown_summarizes_kpis_and_matches_csv(tmp_path) -> N
     assert "| Attention deals | 3 |" in markdown
     assert "| Average health | 65.0% |" in markdown
     assert "| Health coverage | 3/4 (75.0%) |" in markdown
+    assert "## Meeting Agenda" in markdown
+    assert "Review core KPIs and data confidence" in markdown
     assert "PayBridge" in markdown
     assert "LuminoAI" in markdown
     assert "`missing_expected_close_date`" in markdown
-    assert "## Objective Action Items" in markdown
-    assert "## Gap Observations" in markdown
-    assert "## Customer Evidence" in markdown
+    assert "## 2. Key Deal Watchlist" in markdown
+    assert "## 4. Issues To Watch" in markdown
+    assert "### Objective Action Items" in markdown
+    assert "### Gap Observations" in markdown
+    assert "## Appendix A. Customer Evidence" in markdown
     assert "Email thread (customer-stated)" in markdown
     assert "User interview (customer-stated)" in markdown
+    assert markdown_result["briefing_sections"]["meeting_agenda"]
+    assert "Do not change any numbers" in markdown_result["host_report_prompt"]
+    assert "Data Pack JSON" in markdown_result["host_report_prompt"]
 
 
 def test_weekly_pipeline_markdown_breaks_down_mixed_currencies() -> None:
@@ -189,6 +196,55 @@ def test_weekly_pipeline_markdown_breaks_down_mixed_currencies() -> None:
     assert "| Pipeline value | 100 KRW, 20 USD |" in result["markdown"]
 
 
+def test_weekly_pipeline_markdown_can_render_korean() -> None:
+    report = build_weekly_pipeline_rows(
+        [
+            _deal(
+                "overdue",
+                company="페이브릿지",
+                amount=72_000_000,
+                health_pct=85,
+                expected_close_date="2026-06-01",
+            ),
+            _deal(
+                "competition",
+                company="그린로지스틱스",
+                stage="negotiation",
+                amount=210_000_000,
+                health_pct=82,
+                expected_close_date="2026-06-20",
+                meddpicc_gaps=["competition"],
+            ),
+        ],
+        as_of=AS_OF,
+    )
+
+    result = build_weekly_pipeline_markdown(
+        report,
+        generated_at=GENERATED_AT,
+        language="ko",
+    )
+
+    assert result["language"] == "ko"
+    markdown = result["markdown"]
+    assert "# 주간 파이프라인 보고서" in markdown
+    assert "## 핵심 요약" in markdown
+    assert "## 회의 진행안" in markdown
+    assert "핵심 KPI와 데이터 신뢰도 확인" in markdown
+    assert "| 오픈 딜 | 2 |" in markdown
+    assert "| 파이프라인 금액 | 282,000,000 KRW |" in markdown
+    assert "## 2. 주요 딜 현황" in markdown
+    assert "## 4. 주목할 이슈" in markdown
+    assert "### 즉시 액션" in markdown
+    assert "클로징 계획과 담당자 확인" in markdown
+    assert "### 관찰 갭" in markdown
+    assert "| 그린로지스틱스 | 경쟁 구도 | 관찰 |" in markdown
+    assert "이메일 (고객 발화)" in markdown
+    assert "경고 코드" in markdown
+    assert "숫자, 회사명, stage" in result["host_report_prompt"]
+    assert "호스트 앱 보고서 다듬기 프롬프트" in result["host_report_prompt"]
+
+
 def test_weekly_pipeline_markdown_handles_empty_report() -> None:
     report = build_weekly_pipeline_rows([], as_of=AS_OF)
 
@@ -199,7 +255,7 @@ def test_weekly_pipeline_markdown_handles_empty_report() -> None:
     assert result["metrics"]["avg_health_pct"] is None
     assert "| Open deals | 0 |" in result["markdown"]
     assert "| Average health | N/A |" in result["markdown"]
-    assert "No risk deals." in result["markdown"]
+    assert "No key deals matched the selected filters." in result["markdown"]
     assert "`no_open_deals`" in result["markdown"]
 
 
@@ -245,8 +301,11 @@ def test_weekly_pipeline_markdown_keeps_judgment_gaps_out_of_ctas() -> None:
         generated_at=GENERATED_AT,
     )["markdown"]
 
-    assert "| GreenLogistics | Overdue close date | review_close_plan |" in markdown
-    assert "| GreenLogistics | Competition | needs_human_judgment |" in markdown
+    assert (
+        "| GreenLogistics | Overdue close date | Confirm close plan and owner |"
+        in markdown
+    )
+    assert "| GreenLogistics | Competition | Observation |" in markdown
     assert "ask_in_next_meeting" not in markdown
 
 
@@ -257,6 +316,11 @@ def test_weekly_pipeline_markdown_validates_input_contract() -> None:
         build_weekly_pipeline_markdown(
             {"report_type": "weekly_pipeline", "rows": []},
             generated_at=datetime(2026, 6, 10, 1, 2, 3),
+        )
+    with pytest.raises(ValueError, match="reporting.language"):
+        build_weekly_pipeline_markdown(
+            {"report_type": "weekly_pipeline", "rows": []},
+            language="jp",
         )
 
 

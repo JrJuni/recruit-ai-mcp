@@ -28,7 +28,7 @@ Claude Desktop / Codex / ChatGPT
   -> storage backend selected by deal_intel._context
 ```
 
-The server exposes 28 MCP tools. The source of truth is
+The server exposes 29 MCP tools. The source of truth is
 `src/deal_intel/mcp_server.py`.
 
 ## Product Profiles
@@ -138,11 +138,13 @@ structured data that becomes part of the deal record. They need schema checks,
 source metadata, and stable storage behavior that should not depend on a
 particular host app prompt.
 
-LLMs are not allowed in BI/reporting metric paths. New read-only tools should
-prefer deterministic calculation and let the host app perform the final
-explanation layer. New write tools should make LLM calls explicit in the tool
-contract and provide a lower-cost path when useful, such as raw capture,
-dry-run extraction, or deferred enrichment.
+LLMs are not allowed in BI metric or data-export calculation paths. New
+read-only tools should prefer deterministic calculation and let the host app
+perform the final explanation layer. Human-facing report prose may be
+host-assisted when the deterministic data pack remains the source of truth. New
+write tools should make LLM calls explicit in the tool contract and provide a
+lower-cost path when useful, such as raw capture, dry-run extraction, or
+deferred enrichment.
 
 ### Embeddings
 
@@ -211,11 +213,129 @@ or embeddings.
 
 - `get_insights`
 - `get_metrics`
+- `export_data`
 - `export_report`
 
 The shared metric engine lives in `deal_intel.schema.metrics` and
-`deal_intel.schema.pipeline_metrics`. CSV/Markdown reports and Atlas Charts
-should be cross-checked against the same metric contracts.
+`deal_intel.schema.pipeline_metrics`. CSV data exports, report data packs, and
+Atlas Charts should be cross-checked against the same metric contracts.
+
+#### Data Export Pipeline
+
+`export_data` is the spreadsheet/ledger layer. It is intentionally deterministic
+and LLM-free. Use it when the user asks for CSV, Excel-ready data, open deal
+records, all-deal records, or won/lost postmortem rows.
+
+`export_data(dataset=...)` flows through these modules:
+
+1. `deal_intel.tools.export_data.handle`
+   - validates `dataset`, filters, `as_of`, and output path;
+   - resolves output paths under `~/.deal-intel/reports` unless the caller
+     passes an explicit absolute path;
+   - reads deals through `MongoDBClient.list_deals_for_metrics()` or the active
+     storage backend's equivalent restricted projection;
+   - writes only local CSV artifacts and returns absolute paths plus a small
+     safe preview.
+2. `deal_intel.reports.data_export.build_data_export`
+   - owns CSV-oriented row shaping for `open_deals`, `all_deals`, and
+     `closed_deals`;
+   - reuses `weekly_pipeline.build_weekly_pipeline_rows` for open-deal timing,
+     health, and attention fields;
+   - excludes raw notes, raw interaction content, contacts, and embeddings.
+3. `deal_intel.reports.csv_export.save_report_csv`
+   - writes UTF-8 BOM CSV with spreadsheet formula-injection protection.
+
+#### Human Report Pipeline
+
+`export_report` is the human-facing report/document layer. Use it when the user
+asks for a manager/team meeting report, executive summary, or narrative weekly
+pipeline review. The deterministic data pack and all numeric metrics remain the
+source of truth. Host-app LLMs may turn that data pack into polished prose when
+the user is working inside Claude/Codex/ChatGPT. Any future server-side LLM
+report mode must be explicit, cost-visible, and must validate narrative numbers
+against the deterministic data pack before returning.
+
+`export_report(report_type="weekly_pipeline")` flows through these modules:
+
+1. `deal_intel.tools.export_report.handle`
+   - validates `report_type`, filters, `as_of`, output path, and
+     `reporting.language`;
+   - resolves output paths under `~/.deal-intel/reports` unless the caller
+     passes an explicit absolute path;
+   - reads deals through `MongoDBClient.list_deals_for_metrics()` or the active
+     storage backend's equivalent restricted projection;
+   - coordinates row generation, Markdown generation, CSV write, Markdown
+     write, and the final MCP response shape.
+2. `deal_intel.reports.weekly_pipeline.build_weekly_pipeline_rows`
+   - owns row-level weekly report shaping;
+   - filters active/open deals by `stage` and `industry`;
+   - computes row fields such as stage timing, overdue/stuck flags, attention
+     reasons, objective action items, gap observations, data-quality status,
+     primary pain, and primary decision criteria;
+   - does not write files and does not format user-facing prose beyond stable
+     row labels/reasons.
+3. `deal_intel.reports.markdown_summary.build_weekly_pipeline_markdown`
+   - owns human-facing Markdown report rendering;
+   - owns the deterministic meeting narrative for Markdown reports, including
+     the executive summary, key deal watchlist, issues-to-watch framing, and
+     next-week action flow;
+   - also computes Markdown-level summary metrics from the report rows, such as
+     open deal count, pipeline value totals, amount/health coverage, average
+     health, attention counts, stage breakdown, action-item counts, and
+     data-quality issue counts;
+   - localizes Markdown labels and deterministic report prose according to
+     `reporting.language` (`en` or `ko`);
+   - must not infer new facts or prescribe judgment-sensitive BD actions beyond
+     the row report's `objective_action_items` and `gap_observations`
+     contracts;
+   - should not become a second source of truth for business metric semantics.
+     If a calculation affects BI, CSV, Atlas Charts, or MCP metrics, move that
+     calculation into `schema.metrics`, `schema.pipeline_metrics`, or the report
+     row builder and test it there.
+4. `deal_intel.reports.csv_export.save_report_csv`
+   - currently writes a compatibility CSV artifact from the row report;
+   - spreadsheet-first deal ledgers should use `export_data` instead.
+5. `deal_intel.reports.markdown_export.save_report_markdown`
+   - writes already-rendered Markdown to disk;
+   - owns file naming, encoding, and IO error reporting only.
+
+`export_report(report_type="pipeline_trend")` flows through these modules:
+
+1. `deal_intel.tools.export_report.handle`
+   - validates `lookback_days`, output path, filters, and language;
+   - reads snapshots through `list_analytics_snapshots(start_date, end_date,
+     stage, industry)`.
+2. `deal_intel.schema.pipeline_trends.build_pipeline_trend_summary`
+   - owns the trend metric calculation from analytics snapshots;
+   - computes start/end/delta KPI values and stage-change structures.
+3. `deal_intel.reports.pipeline_trend.build_pipeline_trend_report`
+   - converts the trend summary into CSV-oriented report rows.
+4. `deal_intel.reports.pipeline_trend.build_pipeline_trend_markdown`
+   - renders the trend report into localized Markdown;
+   - may localize labels, but must not reinterpret trend metric semantics.
+5. `csv_export` and `markdown_export`
+   - perform artifact writes using the same IO responsibilities as weekly
+     pipeline reports.
+
+Atlas Charts uses a parallel but separate path:
+
+- `deal_intel.reports.atlas_charts` renders versioned aggregation specs under
+  `atlas/charts/`.
+- `deal_intel.reports.dashboard_crosscheck` compares Atlas aggregation output,
+  `get_metrics`, and `export_report` results for major KPI alignment.
+- Atlas specs should mirror shared metric semantics. When exact parity is not
+  possible because a chart is a visualization convenience, document the
+  difference in `docs/atlas-charts.md` and keep the MCP/CSV metric contract as
+  the source of truth.
+
+When adding or changing a report module, update this section with:
+
+- the entry point function;
+- input data source and projection expectations;
+- calculation responsibility;
+- output contract;
+- side effects;
+- tests or smoke commands that protect the behavior.
 
 ### Customer Themes
 

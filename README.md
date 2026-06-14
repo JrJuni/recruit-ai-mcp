@@ -95,9 +95,9 @@ You can still override `llm.openai_api_model` or switch `llm.provider` to
 
 MCP tools are profile-filtered by default:
 
-- `sample`: 21 zero-config/local personal tools
-- `standard`: 25 normal real-data tools
-- `developer`: all 28 tools, including demo seed/cleanup helpers
+- `sample`: 22 zero-config/local personal tools
+- `standard`: 26 normal real-data tools
+- `developer`: all 29 tools, including demo seed/cleanup helpers
 
 Use `tools.surface: developer` or `DEAL_INTEL_TOOLS_SURFACE=developer` only
 when you intentionally want the full maintainer/debug surface.
@@ -237,7 +237,7 @@ deal-intel login-chatgpt
 
 Then restart Claude Desktop.
 
-You're done when the MCP tool list loads. The server registers 28 internal
+You're done when the MCP tool list loads. The server registers 29 internal
 tools, then exposes a profile-filtered surface; `src/deal_intel/mcp_server.py`
 and `docs/baseline.md` are the source of truth.
 
@@ -246,7 +246,7 @@ config_doctor / update_config
 create_deal / add_interaction / get_deal / update_stage / update_deal
 archive_deal / restore_deal / delete_deal / migrate_local_data
 list_deals / get_insights / get_metrics / get_deal_gaps / get_deal_review
-get_usage / export_report / get_user_memory / record_user_memory
+get_usage / export_report / export_data / get_user_memory / record_user_memory
 get_customer_themes / get_customer_theme_breakdown / get_customer_theme_evidence
 search_deals / analyze_deal
 ```
@@ -677,9 +677,9 @@ For this deal_id, what should I confirm next'
 
 **When to use**: When you need a file to share or for a meeting, like "make this week's pipeline report."
 
-Use `export_report` only when the user wants files. For chat-only KPI answers,
-use `get_metrics` instead. The report path produces CSV and Markdown with the
-same timestamp.
+Use `export_report` for manager/team meeting reports and narrative pipeline
+briefings. For chat-only KPI answers, use `get_metrics` instead. For
+spreadsheet-ready CSV ledgers, use `export_data` instead.
 
 **Parameters**:
 | Parameter | Required | Description |
@@ -692,10 +692,15 @@ same timestamp.
 
 **What the result includes**:
 - `csv_path`, `markdown_path`: absolute paths of the generated files
-- `artifacts`: CSV/Markdown filename, path, encoding
+- `artifacts`: report artifact filename, path, encoding
 - `metrics`, `warnings`, `row_count`
+- `briefing`, `briefing_sections`: compact meeting-ready summary text
+- `host_report_prompt`: a safe prompt the host app can use to polish the
+  deterministic data pack into a more natural manager/team report
 
-This is a BI/Reporting path, so it uses no LLM and no embedding.
+The deterministic report data pack uses no LLM and no embedding. Host apps may
+use that data pack to produce more polished meeting prose, but should not
+change numbers, company names, stages, amounts, health scores, or warning codes.
 
 **Example**:
 ```
@@ -707,7 +712,44 @@ Export the proposal stage only as a weekly pipeline report
 
 ---
 
-### 11. `get_usage` - inspect server-side LLM usage
+### 11. `export_data` - export Excel/CSV-ready deal ledgers
+
+**When to use**: When the user asks for raw-but-safe CSV data, Excel records,
+open deal tables, all-deal ledgers, or won/lost postmortem rows.
+
+Use `export_data` for spreadsheet work. It is not a narrative report tool.
+
+**Datasets**:
+| Dataset | Purpose |
+|---|---|
+| `open_deals` | Active/stalled pipeline ledger with health, timing, attention, gaps, pain, and decision criteria |
+| `all_deals` | Full safe deal ledger for filtering and recordkeeping |
+| `closed_deals` | Won/lost ledger with close metadata and postmortem fields |
+
+**Parameters**:
+| Parameter | Required | Description |
+|---|---|---|
+| `dataset` | optional | `open_deals`, `all_deals`, or `closed_deals`; defaults to `open_deals` |
+| `output_dir` | optional | Save path. Omitted -> `reporting.data_output_dir`, `reporting.output_dir`, or `~/.deal-intel/reports`; relative paths are scoped under `~/.deal-intel/` |
+| `stage` | optional | Exact match against the stored stage |
+| `industry` | optional | Exact match against the stored primary industry |
+| `as_of` | optional | Base date for stuck/overdue calculation, `YYYY-MM-DD` |
+
+`export_data` excludes raw notes, raw email/interview/call content, contacts,
+and embeddings. It writes UTF-8 BOM CSV and guards spreadsheet formula
+injection.
+
+**Example**:
+```
+Export the open deal ledger as CSV
+```
+```
+Create a won/lost CSV for postmortem review
+```
+
+---
+
+### 12. `get_usage` - inspect server-side LLM usage
 
 **When to use**: When you want to know how much server-side LLM work this MCP
 has performed, such as token counts, call counts, and safe cost estimates.
@@ -753,7 +795,7 @@ Cross-check the dashboard numbers:
 
 ---
 
-### 12. `get_insights` - legacy/special BI analysis
+### 13. `get_insights` - legacy/special BI analysis
 
 **When to use**: To aggregate all deal data and spot patterns. Good for monthly reviews and learning win/loss patterns.
 
@@ -789,7 +831,7 @@ Which dimension is most often missing'
 
 ---
 
-### 13. `search_deals` - semantic similar-deal search
+### 14. `search_deals` - semantic similar-deal search
 
 **When to use**: When you want to reference how past deals in similar situations played out. Search in natural language.
 
@@ -821,7 +863,7 @@ Any deals with a pattern similar to Hyundai Precision'
 
 ---
 
-### 14. `get_customer_themes` - frequency of customer concerns / selection criteria
+### 15. `get_customer_themes` - frequency of customer concerns / selection criteria
 
 **When to use**: To group meeting evidence across deals and see the topics customers worry about most. It counts by unique deal (not by meeting) and returns representative companies and evidence.
 
@@ -884,7 +926,7 @@ Customer Themes dashboard setup, including the optional
 Current source of truth:
 
 - MCP server: `src/deal_intel/mcp_server.py`
-- Current tool count: 28
+- Current tool count: 29
 - Detailed contract: [`docs/baseline.md`](docs/baseline.md)
 - Documentation map: [`docs/README.md`](docs/README.md)
 - User memory samples: [`user_docs/README.md`](user_docs/README.md)
@@ -893,7 +935,7 @@ Current source of truth:
 [Claude Desktop / Codex - natural-language input]
          | stdio JSON-RPC
          v
-[deal-intel-mcp  FastMCP server  28 tools]
+[deal-intel-mcp  FastMCP server  29 tools]
          |
          |-- LLM Provider
          |     |-- ChatGPT OAuth (default, Plus/Pro subscription)
@@ -990,7 +1032,8 @@ src/deal_intel/
     list_deals.py       health_pct / gaps / stuck-flag aggregation
     get_metrics.py      pipeline_health KPIs / stage aggregation / warnings
     get_deal_gaps.py    read-only prioritized sales follow-up gaps
-    export_report.py    weekly_pipeline CSV/Markdown export
+    export_report.py    human-facing pipeline report export
+    export_data.py      spreadsheet-ready CSV data export
     get_user_memory.py  constrained user-memory read context
     record_user_memory.py
                         constrained user-memory append tool

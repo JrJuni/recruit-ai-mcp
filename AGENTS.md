@@ -86,7 +86,12 @@ Preferred maintainer loop:
 5. Verify with targeted tests, relevant regressions, Ruff, and any required
    smoke test.
 6. Record unverified risk in `docs/status.md` or `docs/backlog.md`.
-7. Update docs and commit only the intended scope. Push when requested.
+7. When adding or changing a data pipeline, calculator, report/export flow,
+   storage read path, MCP orchestration path, or module responsibility boundary,
+   use the `architecture-map` skill if available and update
+   `docs/architecture.md` with the entry point, input source, calculation
+   responsibility, output contract, side effects, and verification command.
+8. Update docs and commit only the intended scope. Push when requested.
 
 ## Current MCP Tool Surface
 

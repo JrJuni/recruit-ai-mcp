@@ -3,6 +3,8 @@
 from datetime import datetime
 from typing import Any
 
+from deal_intel.reports.markdown_summary import validate_report_language
+
 REPORT_TYPE = "pipeline_trend"
 
 COLUMNS = [
@@ -33,6 +35,61 @@ KPI_LABELS = {
     "attention_deal_count": "Attention deals",
     "won_deal_count": "Won deals",
     "lost_deal_count": "Lost deals",
+}
+
+KPI_LABELS_KO = {
+    "active_deal_count": "활성 딜",
+    "open_deal_count": "오픈 딜",
+    "open_pipeline_value_amount": "오픈 파이프라인 금액",
+    "avg_health_pct": "평균 헬스",
+    "attention_deal_count": "주의 필요 딜",
+    "won_deal_count": "수주 딜",
+    "lost_deal_count": "실주 딜",
+}
+
+TREND_TEXT = {
+    "en": {
+        "title": "Pipeline Trend Report",
+        "generated_at": "Generated at",
+        "window": "Window",
+        "to": "to",
+        "lookback_days": "Lookback days",
+        "snapshot_count": "Snapshot count",
+        "deal_count": "Deal count",
+        "kpi_delta": "KPI Delta",
+        "metric": "Metric",
+        "start": "Start",
+        "end": "End",
+        "delta": "Delta",
+        "stage_changes": "Stage Changes",
+        "transition_count": "Transition count",
+        "section": "Section",
+        "item": "Item",
+        "count": "Count",
+        "warnings": "Warnings",
+        "none": "none",
+    },
+    "ko": {
+        "title": "파이프라인 추세 보고서",
+        "generated_at": "생성 시각",
+        "window": "기간",
+        "to": "~",
+        "lookback_days": "조회 일수",
+        "snapshot_count": "스냅샷 수",
+        "deal_count": "딜 수",
+        "kpi_delta": "KPI 변화",
+        "metric": "지표",
+        "start": "시작",
+        "end": "종료",
+        "delta": "변화",
+        "stage_changes": "스테이지 변화",
+        "transition_count": "전환 수",
+        "section": "구분",
+        "item": "항목",
+        "count": "건수",
+        "warnings": "경고",
+        "none": "없음",
+    },
 }
 
 
@@ -67,26 +124,38 @@ def build_pipeline_trend_markdown(
     report: dict,
     *,
     generated_at: datetime,
+    language: str = "en",
 ) -> dict:
     if report.get("report_type") != REPORT_TYPE:
         raise ValueError("report_type must be pipeline_trend")
     if generated_at.tzinfo is None or generated_at.utcoffset() is None:
         raise ValueError("generated_at must be timezone-aware")
 
+    report_language = validate_report_language(language)
     metrics = report.get("metrics") or {}
     window = metrics.get("window") or {}
     lines = [
-        "# Pipeline Trend Report",
+        f"# {_trend_text(report_language, 'title')}",
         "",
-        f"- Generated at: {generated_at.isoformat()}",
-        f"- Window: {window.get('start_date', '')} to {window.get('end_date', '')}",
-        f"- Lookback days: {window.get('lookback_days', '')}",
-        f"- Snapshot count: {metrics.get('snapshot_count', 0)}",
-        f"- Deal count: {metrics.get('deal_count', 0)}",
+        f"- {_trend_text(report_language, 'generated_at')}: {generated_at.isoformat()}",
+        f"- {_trend_text(report_language, 'window')}: "
+        f"{window.get('start_date', '')} {_trend_text(report_language, 'to')} "
+        f"{window.get('end_date', '')}",
+        f"- {_trend_text(report_language, 'lookback_days')}: "
+        f"{window.get('lookback_days', '')}",
+        f"- {_trend_text(report_language, 'snapshot_count')}: "
+        f"{metrics.get('snapshot_count', 0)}",
+        f"- {_trend_text(report_language, 'deal_count')}: "
+        f"{metrics.get('deal_count', 0)}",
         "",
-        "## KPI Delta",
+        f"## {_trend_text(report_language, 'kpi_delta')}",
         "",
-        "| Metric | Start | End | Delta |",
+        "| "
+        + " | ".join(
+            _trend_text(report_language, key)
+            for key in ("metric", "start", "end", "delta")
+        )
+        + " |",
         "|---|---:|---:|---:|",
     ]
     start = metrics.get("start") or {}
@@ -97,7 +166,7 @@ def build_pipeline_trend_markdown(
             "| "
             + " | ".join(
                 [
-                    _escape_md(KPI_LABELS[key]),
+                    _escape_md(_kpi_label(key, report_language)),
                     _format_value(start.get(key)),
                     _format_value(end.get(key)),
                     _format_value(delta.get(key)),
@@ -110,11 +179,17 @@ def build_pipeline_trend_markdown(
     lines.extend(
         [
             "",
-            "## Stage Changes",
+            f"## {_trend_text(report_language, 'stage_changes')}",
             "",
-            f"- Transition count: {stage_changes.get('transition_count', 0)}",
+            f"- {_trend_text(report_language, 'transition_count')}: "
+            f"{stage_changes.get('transition_count', 0)}",
             "",
-            "| Section | Item | Count |",
+            "| "
+            + " | ".join(
+                _trend_text(report_language, key)
+                for key in ("section", "item", "count")
+            )
+            + " |",
             "|---|---|---:|",
         ]
     )
@@ -135,21 +210,22 @@ def build_pipeline_trend_markdown(
                 + " |"
             )
     else:
-        lines.append("| none | none | 0 |")
+        none = _trend_text(report_language, "none")
+        lines.append(f"| {none} | {none} | 0 |")
 
     warnings = report.get("warnings") or []
     if warnings:
         lines.extend(
             [
                 "",
-                "## Warnings",
+                f"## {_trend_text(report_language, 'warnings')}",
                 "",
                 *[f"- `{_escape_md(str(warning))}`" for warning in warnings],
             ]
         )
 
     markdown = "\n".join(lines) + "\n"
-    return {"markdown": markdown, "metrics": metrics}
+    return {"markdown": markdown, "language": report_language, "metrics": metrics}
 
 
 def _validate_summary(summary: dict) -> None:
@@ -205,6 +281,16 @@ def _format_value(value: Any) -> str:
     if isinstance(value, bool):
         return "true" if value else "false"
     return str(value)
+
+
+def _trend_text(language: str, key: str) -> str:
+    return TREND_TEXT[language][key]
+
+
+def _kpi_label(key: str, language: str) -> str:
+    if language == "ko":
+        return KPI_LABELS_KO.get(key, KPI_LABELS[key])
+    return KPI_LABELS[key]
 
 
 def _escape_md(value: str) -> str:

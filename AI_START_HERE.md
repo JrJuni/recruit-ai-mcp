@@ -121,9 +121,9 @@ When installing the MCPB, recommend:
 
 Expected visible tool counts:
 
-- `sample`: 21 tools
-- `standard` / `full`: 25 tools
-- `developer`: 28 tools
+- `sample`: 22 tools
+- `standard` / `full`: 26 tools
+- `developer`: 29 tools
 
 After restart, ask Claude/Codex to run `config_doctor` first.
 
@@ -147,7 +147,8 @@ Prefer deterministic read tools for normal questions:
 - One deal's stored history -> `get_deal`
 - One deal's status, risk, uncertainty, and next questions -> `get_deal_review`
 - Missing customer or forecast information -> `get_deal_gaps`
-- CSV/Markdown file output -> `export_report`
+- Manager/team meeting report -> `export_report`
+- Excel/CSV-ready deal ledger -> `export_data`
 - Server-side LLM usage / rough cost check -> `get_usage`
 - Customer concern or decision-criteria ranking -> `get_customer_themes`
 - Stage/industry/tag theme comparison -> `get_customer_theme_breakdown`

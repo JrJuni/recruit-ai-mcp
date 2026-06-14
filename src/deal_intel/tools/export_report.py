@@ -6,7 +6,10 @@ from pathlib import Path
 from deal_intel.errors import ErrorCode, MCPError, Stage
 from deal_intel.reports.csv_export import save_report_csv
 from deal_intel.reports.markdown_export import save_report_markdown
-from deal_intel.reports.markdown_summary import build_weekly_pipeline_markdown
+from deal_intel.reports.markdown_summary import (
+    build_weekly_pipeline_markdown,
+    validate_report_language,
+)
 from deal_intel.reports.pipeline_trend import (
     REPORT_TYPE as REPORT_TYPE_PIPELINE_TREND,
 )
@@ -68,10 +71,13 @@ def handle(
         if report_type == REPORT_TYPE_PIPELINE_TREND:
             validate_lookback_days(lookback_days)
         resolved_output_dir = _resolve_output_dir(cfg, output_dir)
+        report_language = _resolve_report_language(cfg)
     except ValueError as exc:
         error_code = (
             ErrorCode.INVALID_INPUT
-            if str(exc).startswith(("as_of", "output_dir", "lookback_days"))
+            if str(exc).startswith(
+                ("as_of", "output_dir", "lookback_days", "reporting.language")
+            )
             else ErrorCode.CONFIG_ERROR
         )
         raise MCPError(
@@ -90,6 +96,7 @@ def handle(
             stage=stage,
             industry=industry,
             lookback_days=lookback_days,
+            language=report_language,
         )
 
     return _handle_weekly_pipeline(
@@ -101,6 +108,7 @@ def handle(
         timing_settings=timing_settings,
         stage=stage,
         industry=industry,
+        language=report_language,
     )
 
 
@@ -114,6 +122,7 @@ def _handle_weekly_pipeline(
     timing_settings: PipelineTimingSettings,
     stage: str | None,
     industry: str | None,
+    language: str,
 ) -> dict:
     try:
         deals = mongo.list_deals_for_metrics()
@@ -136,6 +145,7 @@ def _handle_weekly_pipeline(
     markdown_summary = build_weekly_pipeline_markdown(
         report,
         generated_at=reporting.generated_at,
+        language=language,
     )
     csv_result = save_report_csv(
         report,
@@ -157,8 +167,12 @@ def _handle_weekly_pipeline(
         **reporting.to_dict(),
         "filters": report["filters"],
         "row_count": report["row_count"],
+        "language": language,
         "warnings": report["warnings"],
         "metrics": markdown_summary["metrics"],
+        "briefing": markdown_summary["briefing"],
+        "briefing_sections": markdown_summary["briefing_sections"],
+        "host_report_prompt": markdown_summary["host_report_prompt"],
         "output_dir": str(output_dir.resolve()),
         "artifacts": {
             "csv": _artifact(csv_result),
@@ -178,6 +192,7 @@ def _handle_pipeline_trend(
     stage: str | None,
     industry: str | None,
     lookback_days: int,
+    language: str,
 ) -> dict:
     start_date = reporting.as_of - timedelta(days=lookback_days)
     try:
@@ -206,6 +221,7 @@ def _handle_pipeline_trend(
     markdown_summary = build_pipeline_trend_markdown(
         report,
         generated_at=reporting.generated_at,
+        language=language,
     )
     csv_result = save_report_csv(
         report,
@@ -230,6 +246,7 @@ def _handle_pipeline_trend(
         "snapshot_count": report["snapshot_count"],
         "deal_count": report["deal_count"],
         "row_count": report["row_count"],
+        "language": language,
         "warnings": report["warnings"],
         "metrics": markdown_summary["metrics"],
         "output_dir": str(output_dir.resolve()),
@@ -269,6 +286,13 @@ def _resolve_user_output_path(value: str) -> Path:
     if normalized_parts == ("outputs", "reports"):
         return DEFAULT_OUTPUT_DIR.expanduser()
     return Path.home() / ".deal-intel" / path
+
+
+def _resolve_report_language(cfg: dict) -> str:
+    reporting = cfg.get("reporting", {})
+    if not isinstance(reporting, dict):
+        raise ValueError("reporting must be a mapping")
+    return validate_report_language(reporting.get("language", "en"))
 
 
 def _raise_io_error(result: dict) -> None:

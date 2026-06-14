@@ -21,7 +21,7 @@ def save_report_markdown(
 
     try:
         directory.mkdir(parents=True, exist_ok=True)
-        path.write_text(markdown, encoding="utf-8")
+        path.write_text(markdown, encoding="utf-8-sig")
     except OSError as exc:
         return {
             "ok": False,
@@ -37,7 +37,7 @@ def save_report_markdown(
         "report_type": report_type,
         "path": str(path.resolve()),
         "filename": filename,
-        "encoding": "utf-8",
+        "encoding": "utf-8-sig",
     }
 
 

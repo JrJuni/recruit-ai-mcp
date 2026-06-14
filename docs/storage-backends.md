@@ -54,7 +54,7 @@ The code contract lives in `src/deal_intel/storage/backend.py`.
 | `ping()` | startup diagnostics, zero-config smoke | Should not require network access |
 | `get_deal(deal_id)` | `get_deal` | Returns one safe sample deal |
 | `list_deals(stage=None, limit=50)` | `list_deals` | Supports stage filter and limit |
-| `list_deals_for_metrics()` | `get_metrics`, `get_deal_gaps`, `get_deal_review`, customer theme tools, weekly report, natural question smoke | Primary LLM-free BI/read path; excludes legacy raw notes, canonical raw content, contacts, and vectors |
+| `list_deals_for_metrics()` | `get_metrics`, `get_deal_gaps`, `get_deal_review`, customer theme tools, weekly report, `export_data`, natural question smoke | Primary deterministic BI/read/export path; excludes legacy raw notes, canonical raw content, contacts, and vectors |
 | `list_analytics_snapshots(start_date, end_date, stage=None, industry=None)` | `pipeline_trend`, trend report | Returns bundled fixture snapshots for sample mode |
 
 This contract supports the first zero-config read stack:
@@ -69,6 +69,9 @@ This contract supports the first zero-config read stack:
 - `get_customer_theme_evidence`
 - `export_report(report_type="weekly_pipeline")`
 - `export_report(report_type="pipeline_trend")`
+- `export_data(dataset="open_deals")`
+- `export_data(dataset="all_deals")`
+- `export_data(dataset="closed_deals")`
 - `smoke-natural-questions`
 
 ## Local Personal Contract

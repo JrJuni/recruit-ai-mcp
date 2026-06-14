@@ -30,7 +30,7 @@ def test_tool_surface_contract_covers_registered_mcp_tools(monkeypatch) -> None:
     contracted = {contract.name for contract in list_tool_surface_contracts()}
 
     assert registered == contracted
-    assert len(contracted) == 28
+    assert len(contracted) == 29
 
 
 def test_tool_surface_matrix_is_stable_and_serializable() -> None:
@@ -70,6 +70,7 @@ def test_sample_surface_is_zero_config_safe_local_personal() -> None:
         "get_deal_review",
         "get_usage",
         "export_report",
+        "export_data",
         "get_user_memory",
         "record_user_memory",
         "get_customer_theme_breakdown",
@@ -245,7 +246,8 @@ def test_high_traffic_tool_descriptions_guide_tool_selection(monkeypatch) -> Non
         "list_deals": ["quick pipeline table", "get_metrics"],
         "get_deal_review": ["default tool", "llm-free", "analyze_deal"],
         "get_deal_gaps": ["what is missing", "get_deal_review"],
-        "export_report": ["csv/markdown", "get_metrics"],
+        "export_report": ["manager/team meeting", "export_data"],
+        "export_data": ["spreadsheet-ready", "export_report"],
         "get_usage": ["token usage", "pricing"],
         "get_customer_themes": ["customers worry", "get_customer_theme_evidence"],
         "get_customer_theme_breakdown": ["industry tag", "get_customer_theme_evidence"],

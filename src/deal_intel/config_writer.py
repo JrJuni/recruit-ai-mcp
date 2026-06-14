@@ -25,10 +25,12 @@ CONFIG_UPDATE_PATHS: tuple[tuple[str, str], ...] = (
     ("llm", "openai_api_model"),
     ("reporting", "output_dir"),
     ("reporting", "timezone"),
+    ("reporting", "language"),
     ("tools", "surface"),
 )
 _VALID_LLM_PROVIDERS = {"chatgpt_oauth", "anthropic", "openai_api"}
 _VALID_TOOL_SURFACES = {"auto", "sample", "standard", "developer"}
+_VALID_REPORT_LANGUAGES = {"en", "ko"}
 
 
 def init_config_profile(
@@ -228,6 +230,7 @@ def update_config_settings(
     openai_api_model: str | None = None,
     reporting_output_dir: str | None = None,
     reporting_timezone: str | None = None,
+    reporting_language: str | None = None,
     tools_surface: str | None = None,
 ) -> dict[str, Any]:
     """Update safe, non-secret user-config fields.
@@ -264,6 +267,7 @@ def update_config_settings(
             openai_api_model=openai_api_model,
             reporting_output_dir=reporting_output_dir,
             reporting_timezone=reporting_timezone,
+            reporting_language=reporting_language,
             tools_surface=tools_surface,
         )
     except ValueError as exc:
@@ -457,6 +461,7 @@ def _validated_update_values(
     openai_api_model: str | None,
     reporting_output_dir: str | None,
     reporting_timezone: str | None,
+    reporting_language: str | None,
     tools_surface: str | None,
 ) -> dict[tuple[str, str], str]:
     values: dict[tuple[str, str], str] = {}
@@ -494,6 +499,13 @@ def _validated_update_values(
         except ZoneInfoNotFoundError as exc:
             raise ValueError("reporting_timezone must be a valid IANA timezone") from exc
         values[("reporting", "timezone")] = timezone
+
+    language = _optional_string(reporting_language)
+    if language is not None:
+        language = language.lower()
+        if language not in _VALID_REPORT_LANGUAGES:
+            raise ValueError("reporting_language must be en or ko")
+        values[("reporting", "language")] = language
 
     surface = _optional_string(tools_surface)
     if surface is not None:
