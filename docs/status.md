@@ -12,6 +12,53 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-15
 
+### v1 final readiness run
+
+Result: pass.
+
+Validation:
+
+- Launch hygiene scan:
+  - Searched for personal paths/names and obvious committed secrets.
+  - Findings were limited to placeholder examples and secret-redaction tests.
+- Full regression:
+  `pytest -q --basetemp=.tmp\pytest-v1-final-readiness`:
+  `544 passed, 1 warning`.
+- Ruff:
+  `ruff check .`: `All checks passed`.
+- Natural question smoke:
+  `DEAL_INTEL_STORAGE_BACKEND=local_sample smoke-natural-questions
+  --as-of 2026-06-10 --output-dir .tmp\v1-final-natural-local`:
+  `OK: True`, `12` questions passed, no sensitive failures, no blocked
+  questions.
+- Deal review audit:
+  `DEAL_INTEL_STORAGE_BACKEND=local_sample smoke-deal-review-audit
+  --as-of 2026-06-10 --limit 50`: quality rules passed, sensitive field check
+  passed, `12` sample deals reviewed.
+- MCP/tool contract:
+  `pytest tests/test_tool_surfaces.py tests/test_mcpb_manifest.py -q
+  --basetemp=.tmp\pytest-v1-final-surface`: `30 passed, 1 warning`.
+- MCPB manifest:
+  `mcpb validate mcpb\manifest.json`: manifest schema validation passed.
+- Config doctor:
+  `config doctor --offline --json`: passed for `full`/`mongo`, standard
+  surface, `26` tools.
+  Live `config doctor --json`: passed after running outside the sandbox because
+  sandbox DNS blocked Atlas resolution.
+- Report/dashboard cross-check:
+  `crosscheck-weekly-dashboard --as-of 2026-06-10 --output-dir
+  .tmp\v1-final-report`: passed; `get_metrics`, report CSV/Markdown, and Atlas
+  chart pipelines matched with no mismatches.
+
+Notes:
+
+- The sandboxed live config check failed on DNS resolution, but the same command
+  passed outside the sandbox. This is an environment/network constraint, not a
+  code/config failure.
+- Relative report output directories are intentionally scoped under
+  `~/.deal-intel`, which avoids the previous repo-local `outputs/reports`
+  permission issue.
+
 ### v1 polish: tool-selection guidance and public demo script
 
 Implemented:
