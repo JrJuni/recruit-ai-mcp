@@ -12,6 +12,31 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-15
 
+### v1 polish wrap-up: install guide and public demo copy
+
+Implemented:
+
+- Rewrote [AI_FULL_INSTALL_GUIDE.ko.md](../AI_FULL_INSTALL_GUIDE.ko.md) as a
+  clean UTF-8 Korean full-mode setup guide for AI-assisted non-developer
+  installation.
+- Added platform/sandbox guidance for Windows, macOS, and AI-host DNS/network
+  limitations.
+- Added a short copy-paste public/community post draft to
+  [public-demo-script.md](public-demo-script.md).
+
+Validation:
+
+- Public-surface scan found no personal path/name exposure. Secret-like matches
+  were limited to `.env.example` placeholders and redaction tests.
+- Tool-surface/MCPB contract tests:
+  `pytest tests/test_tool_surfaces.py tests/test_mcpb_manifest.py -q
+  --basetemp=.tmp\pytest-v1-final-packaging`: `30 passed, 1 warning`.
+- MCPB packaging:
+  - `mcpb validate manifest.json`: passed.
+  - `mcpb pack . deal-intel-mcp-0.1.13.mcpb`: created package.
+  - `mcpb info deal-intel-mcp-0.1.13.mcpb`: package inspected, unsigned
+    warning only.
+
 ### v1 final readiness run
 
 Result: pass.

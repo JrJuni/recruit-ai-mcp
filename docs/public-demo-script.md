@@ -114,3 +114,29 @@ It turns meetings, customer emails, interviews, and call summaries into deal
 health, customer themes, follow-up gaps, and weekly review artifacts. MongoDB is
 the recommended full backend; local sample mode exists so an AI host can try the
 flow quickly before a real setup.
+
+## Short Community Post Draft
+
+Use or adapt this for a short public post:
+
+```text
+I built Deal Intelligence MCP, a lightweight sales-memory MCP server for solo
+founders and small AI/BD teams.
+
+The idea is simple: paste meeting notes, customer email replies, interviews, or
+call summaries, and the MCP turns them into structured deal health, MEDDPICC
+signals, customer themes, follow-up gaps, and weekly pipeline reports.
+
+It is not trying to replace a full CRM. It is for teams that already work inside
+Claude/Codex/ChatGPT and want to ask questions like:
+
+- How healthy is the current pipeline?
+- Which deal needs attention first?
+- What is the status of this specific account?
+- What decision criteria do customers mention most often?
+- Make this week's pipeline report.
+
+The default backend is MongoDB Atlas full mode, and the free/M0 tier is enough
+for the current MVP. There is also a zero-config sample mode with fictional data
+so an AI host can try the workflow before any real setup.
+```
