@@ -12,6 +12,27 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-15
 
+### Architecture developer map kickoff
+
+Implemented:
+
+- Started the post-v1 architecture-map expansion in
+  [architecture.md](architecture.md).
+- Replaced the stale hardcoded MCP tool count with source-of-truth pointers:
+  `src/deal_intel/mcp_server.py` for runtime registration and
+  `src/deal_intel/tool_surfaces.py` for profile/tool-surface contracts.
+- Added a user-intent tool namespace map covering Config/Diagnostics, Intake,
+  Lifecycle/CRUD, Read/Query, Export/Artifacts, Customer Themes,
+  Search/Strategy, User Memory, and Sample/Admin.
+- Recorded the v2 refactor ordering decision: design the future namespace map
+  first, implement qualification-framework abstraction before broad tool
+  renames, then consolidate/rename tools in a compatibility-aware pass.
+
+Notes:
+
+- This is a documentation/developer-map change only. No runtime tool names or
+  contracts changed.
+
 ### Tool catalog for truncated host discovery
 
 Implemented:

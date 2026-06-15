@@ -28,8 +28,14 @@ Claude Desktop / Codex / ChatGPT
   -> storage backend selected by deal_intel._context
 ```
 
-The server exposes 29 MCP tools. The source of truth is
-`src/deal_intel/mcp_server.py`.
+The server exposes a profile-filtered MCP tool surface. The source of truth is:
+
+- runtime registration: `src/deal_intel/mcp_server.py`
+- profile/tool-surface contract: `src/deal_intel/tool_surfaces.py`
+
+Avoid hardcoding tool counts in docs. Use `get_tool_catalog`,
+`config_doctor`, or `deal-intel config show` to inspect the current visible
+surface.
 
 ## Product Profiles
 
@@ -162,6 +168,75 @@ Embedding work is not used in BI/reporting paths.
 Local sample mode does not support semantic search in the first MVP.
 
 ## Tool Groups
+
+This section is the developer map for the current tool surface. It intentionally
+uses user-intent namespaces instead of Python module folders so future v2
+refactors can move implementation code without changing the product mental
+model.
+
+### Tool Namespace Map
+
+| Namespace | User intent | Current tools | Main modules | Side effects | v2 notes |
+|---|---|---|---|---|---|
+| Config / Diagnostics | Setup, profile, tool discovery, safe config changes | `config_doctor`, `get_tool_catalog`, `update_config` | `config_doctor.py`, `config_writer.py`, `tool_surfaces.py`, `mcp_server.py` | `update_config` writes non-secret local config only | Keep these stable and visible in every profile; they are the first-run recovery path. |
+| Intake | Turn new customer evidence into structured deal intelligence | `create_deal`, `add_interaction`, developer-only `add_meeting` alias | `tools/create_deal.py`, `tools/add_interaction.py`, `schema/interactions.py`, `schema/meddpicc.py`, `schema/customer_themes.py` | DB writes; `add_interaction` calls server-side LLM and may update embeddings in Mongo mode | MEDDPICC abstraction touches this first because extraction prompts, scoring dimensions, and source policy meet here. |
+| Lifecycle / CRUD | Correct, move, archive, restore, delete, or migrate deal records | `update_stage`, `update_deal`, `archive_deal`, `restore_deal`, `delete_deal`, `migrate_local_data` | `tools/update_stage.py`, `tools/update_deal.py`, `tools/deal_lifecycle.py`, `tools/migrate_local_data.py` | DB writes; destructive paths require confirmation/dry-run/audit constraints | Keep confirmation policy explicit. Framework abstraction should not weaken lifecycle safety gates. |
+| Read / Query | Answer routine deal, pipeline, gap, and usage questions | `get_deal`, `list_deals`, `get_metrics`, `get_deal_gaps`, `get_deal_review`, `get_usage`, legacy `get_insights` | `tools/get_*.py`, `schema/metrics.py`, `schema/pipeline_metrics.py`, `schema/deal_gaps.py`, `schema/deal_review.py`, `usage.py` | Read-only; no LLM calls | This is the default host-app answer surface. Keep deterministic and projection-safe. |
+| Export / Artifacts | Produce local report or spreadsheet files | `export_report`, `export_data` | `tools/export_report.py`, `tools/export_data.py`, `reports/*` | Local file writes; no DB writes; no LLM calls | `export_report` is human narrative/data-pack; `export_data` is CSV ledger. Do not collapse them back together. |
+| Customer Themes | Rank, compare, and show evidence for customer concerns / criteria | `get_customer_themes`, `get_customer_theme_breakdown`, `get_customer_theme_evidence` | `tools/customer_theme_analysis.py`, `tools/get_customer_theme*.py`, `schema/customer_theme_insights.py`, `schema/customer_themes.py` | Read-only; no raw notes/content in responses | Best post-framework cleanup candidate: likely consolidate behind a progressive-disclosure workflow. |
+| Search / Strategy | Semantic reference search and optional LLM strategy generation | `search_deals`, `analyze_deal` | `tools/search_deals.py`, `tools/analyze_deal.py`, `providers/embedding.py`, `providers/llm.py` | `search_deals` uses embeddings; `analyze_deal` calls LLM and may persist `bd_strategy` | Keep `analyze_deal` optional. Search belongs to full/pro; sample uses deterministic reads. |
+| User Memory | Persist user operating preferences and feedback | `get_user_memory`, `record_user_memory` | `user_memory.py`, `tools/get_user_memory.py`, `tools/record_user_memory.py` | `record_user_memory` writes safe Markdown only | Keep separate from business data. Never allow secrets or arbitrary file editing. |
+| Sample / Admin | Seed or clean fictional demo data | developer-only `create_sample_data`, `delete_sample_data` | `tools/sample_data.py`, `tools/sample_dataset.py`, bundled sample resources | DB writes to separate demo DB; dry-run by default | Keep hidden from ordinary surfaces to avoid confusing real-data operation. |
+
+Profile surfaces are currently defined in `src/deal_intel/tool_surfaces.py`:
+
+- `sample`: zero-config/local personal surface; excludes Mongo-only semantic
+  search, legacy insight ranking, optional strategy generation, and demo DB
+  seed/cleanup helpers.
+- `standard`: normal real-data surface for `full` and `pro`; includes Mongo
+  reads, semantic search, customer theme ranking, and optional strategy
+  generation.
+- `developer`: all registered tools, including compatibility aliases and demo
+  maintenance helpers.
+
+When adding or renaming a tool, update:
+
+1. `src/deal_intel/mcp_server.py`
+2. `src/deal_intel/tool_surfaces.py`
+3. `tests/test_tool_surfaces.py`
+4. `mcpb/manifest.json`
+5. relevant README / `AI_START_HERE.md` selection guidance
+6. this namespace map if the user intent changes
+
+### v2 Refactor Ordering Notes
+
+The next two large refactors are coupled:
+
+- qualification framework abstraction, currently MEDDPICC-specific;
+- tool namespace / customer-theme workflow cleanup.
+
+Do the framework abstraction before a broad namespace rename. Many current tool
+responses expose `meddpicc_latest`, `meddpicc.gaps`, MEDDPICC dimension keys,
+and MEDDPICC-specific chart/report labels. If the tool surface is renamed first,
+the same public contracts will likely need another pass immediately after the
+framework work.
+
+However, keep the namespace map and customer-theme cleanup design ahead of the
+framework implementation. The framework work should know which future user
+intent surfaces it is serving, especially:
+
+- one-deal review and uncertainty;
+- missing-information gaps;
+- customer theme ranking / comparison / evidence;
+- manager reports and spreadsheet exports;
+- Atlas chart specs and smoke fixtures.
+
+In practice:
+
+1. strengthen this developer map;
+2. design the future customer-theme workflow shape without breaking tools yet;
+3. implement qualification framework abstraction;
+4. consolidate/rename tool surfaces in a compatibility-aware pass.
 
 ### Write and Lifecycle
 
