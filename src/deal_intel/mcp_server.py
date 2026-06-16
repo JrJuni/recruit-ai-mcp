@@ -228,6 +228,10 @@ def update_config(
     reporting_language: str = "",
     tools_surface: str = "",
     product_context_source_dirs: str = "",
+    product_context_max_source_file_mb: str = "",
+    product_context_max_note_mb: str = "",
+    product_context_max_chunks_per_file: str = "",
+    product_context_max_chunks_per_run: str = "",
 ) -> dict:
     """Preview or apply safe non-secret user-config changes.
 
@@ -246,6 +250,10 @@ def update_config(
     - reporting_language: en | ko
     - tools_surface: auto | sample | standard | developer
     - product_context_source_dirs: semicolon-separated paths or JSON array string
+    - product_context_max_source_file_mb: 1-500
+    - product_context_max_note_mb: 1-20
+    - product_context_max_chunks_per_file: 10-20000
+    - product_context_max_chunks_per_run: 10-50000
     """
     try:
         from deal_intel.config_writer import update_config_settings
@@ -261,6 +269,16 @@ def update_config(
             reporting_language=reporting_language or None,
             tools_surface=tools_surface or None,
             product_context_source_dirs=product_context_source_dirs or None,
+            product_context_max_source_file_mb=(
+                product_context_max_source_file_mb or None
+            ),
+            product_context_max_note_mb=product_context_max_note_mb or None,
+            product_context_max_chunks_per_file=(
+                product_context_max_chunks_per_file or None
+            ),
+            product_context_max_chunks_per_run=(
+                product_context_max_chunks_per_run or None
+            ),
         )
     except Exception as exc:
         return envelope_from_exception(exc, stage=Stage.PREFLIGHT)

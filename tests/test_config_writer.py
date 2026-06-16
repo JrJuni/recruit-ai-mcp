@@ -218,6 +218,8 @@ def test_update_config_settings_dry_run_does_not_write(tmp_path) -> None:
         reporting_output_dir="~/.deal-intel/reports",
         reporting_language="ko",
         product_context_source_dirs="~/company-docs;~/solution-docs",
+        product_context_max_source_file_mb="250",
+        product_context_max_chunks_per_file="5000",
     )
 
     assert result["ok"] is True
@@ -230,6 +232,8 @@ def test_update_config_settings_dry_run_does_not_write(tmp_path) -> None:
         "reporting.output_dir",
         "reporting.language",
         "product_context.source_dirs",
+        "product_context.max_source_file_mb",
+        "product_context.max_chunks_per_file",
     ]
 
 
@@ -271,6 +275,10 @@ def test_update_config_settings_writes_and_backs_up_existing_config(tmp_path) ->
         reporting_language="ko",
         tools_surface="standard",
         product_context_source_dirs='["~/company-docs", "~/solution-docs"]',
+        product_context_max_source_file_mb="250",
+        product_context_max_note_mb="10",
+        product_context_max_chunks_per_file="5000",
+        product_context_max_chunks_per_run="12000",
     )
 
     backup = tmp_path / "config.yaml.bak.20260614-010203"
@@ -288,6 +296,10 @@ def test_update_config_settings_writes_and_backs_up_existing_config(tmp_path) ->
         "~/company-docs",
         "~/solution-docs",
     ]
+    assert data["product_context"]["max_source_file_mb"] == 250
+    assert data["product_context"]["max_note_mb"] == 10
+    assert data["product_context"]["max_chunks_per_file"] == 5000
+    assert data["product_context"]["max_chunks_per_run"] == 12000
     assert data["custom"]["keep"] is True
 
 
@@ -311,6 +323,17 @@ def test_update_config_settings_rejects_secret_shaped_product_context_dir(tmp_pa
     assert result["ok"] is False
     assert result["error_code"] == "INVALID_INPUT"
     assert "MongoDB URI" in result["message"]
+
+
+def test_update_config_settings_rejects_invalid_product_context_limits(tmp_path) -> None:
+    result = update_config_settings(
+        config_path=tmp_path / "config.yaml",
+        product_context_max_source_file_mb="9999",
+    )
+
+    assert result["ok"] is False
+    assert result["error_code"] == "INVALID_INPUT"
+    assert "product_context_max_source_file_mb" in result["message"]
 
 
 def test_update_config_settings_rejects_invalid_reporting_language(tmp_path) -> None:

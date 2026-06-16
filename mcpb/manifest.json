@@ -94,6 +94,27 @@
       "description": "Optional semicolon-separated folders containing your product, solution, ICP, pricing, or positioning docs for seller-side RAG context. Leave blank to use ~/.deal-intel/product-context/sources.",
       "required": false
     },
+    "product_context_max_source_file_mb": {
+      "type": "string",
+      "title": "Max product document size (MB)",
+      "description": "Optional product-context source file size limit from 1 to 500 MB. Increase for large catalogs. Default: 100.",
+      "default": "100",
+      "required": false
+    },
+    "product_context_max_chunks_per_file": {
+      "type": "string",
+      "title": "Max product chunks per file",
+      "description": "Optional per-file indexing budget from 10 to 20000 chunks. Large files may be partially indexed with warnings. Default: 2000.",
+      "default": "2000",
+      "required": false
+    },
+    "product_context_max_chunks_per_run": {
+      "type": "string",
+      "title": "Max product chunks per indexing run",
+      "description": "Optional per-run indexing budget from 10 to 50000 chunks. Default: 8000.",
+      "default": "8000",
+      "required": false
+    },
     "mongodb_uri": {
       "type": "string",
       "title": "MongoDB Atlas URI",
@@ -142,6 +163,9 @@
         "DEAL_INTEL_TOOLS_SURFACE": "${user_config.tools_surface}",
         "DEAL_INTEL_REPORTING_LANGUAGE": "${user_config.reporting_language}",
         "DEAL_INTEL_PRODUCT_CONTEXT_SOURCE_DIRS": "${user_config.product_context_source_dirs}",
+        "DEAL_INTEL_PRODUCT_CONTEXT_MAX_SOURCE_FILE_MB": "${user_config.product_context_max_source_file_mb}",
+        "DEAL_INTEL_PRODUCT_CONTEXT_MAX_CHUNKS_PER_FILE": "${user_config.product_context_max_chunks_per_file}",
+        "DEAL_INTEL_PRODUCT_CONTEXT_MAX_CHUNKS_PER_RUN": "${user_config.product_context_max_chunks_per_run}",
         "ANTHROPIC_API_KEY": "${user_config.anthropic_api_key}",
         "OPENAI_API_KEY": "${user_config.openai_api_key}",
         "DEAL_INTEL_LLM_PROVIDER": "${user_config.llm_provider}",

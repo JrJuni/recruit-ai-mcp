@@ -70,6 +70,9 @@ def test_mcpb_manifest_user_config_defaults_to_full_and_is_secret_safe() -> None
     assert user_config["tools_surface"]["default"] == "auto"
     assert user_config["reporting_language"]["default"] == "en"
     assert user_config["product_context_source_dirs"]["required"] is False
+    assert user_config["product_context_max_source_file_mb"]["default"] == "100"
+    assert user_config["product_context_max_chunks_per_file"]["default"] == "2000"
+    assert user_config["product_context_max_chunks_per_run"]["default"] == "8000"
     assert user_config["mongodb_uri"]["required"] is False
     assert user_config["mongodb_uri"]["sensitive"] is True
     assert user_config["llm_provider"]["default"] == "chatgpt_oauth"
@@ -106,6 +109,18 @@ def test_mcpb_manifest_env_maps_installer_fields_to_runtime_config() -> None:
     assert (
         env["DEAL_INTEL_PRODUCT_CONTEXT_SOURCE_DIRS"]
         == "${user_config.product_context_source_dirs}"
+    )
+    assert (
+        env["DEAL_INTEL_PRODUCT_CONTEXT_MAX_SOURCE_FILE_MB"]
+        == "${user_config.product_context_max_source_file_mb}"
+    )
+    assert (
+        env["DEAL_INTEL_PRODUCT_CONTEXT_MAX_CHUNKS_PER_FILE"]
+        == "${user_config.product_context_max_chunks_per_file}"
+    )
+    assert (
+        env["DEAL_INTEL_PRODUCT_CONTEXT_MAX_CHUNKS_PER_RUN"]
+        == "${user_config.product_context_max_chunks_per_run}"
     )
     assert env["DEAL_INTEL_LLM_PROVIDER"] == "${user_config.llm_provider}"
     assert env["DEAL_INTEL_USE_CHATGPT_OAUTH"] == "${user_config.use_chatgpt_oauth}"

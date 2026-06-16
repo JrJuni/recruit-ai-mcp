@@ -24,9 +24,14 @@ MANIFEST_FILE = "manifest.json"
 CHUNKS_FILE = "chunks.json"
 SUPPORTED_FILE_TYPES = frozenset({"txt", "md", "json", "csv", "pdf", "docx"})
 UNSUPPORTED_FILE_TYPES = frozenset({"pptx", "xlsx"})
-MAX_SOURCE_FILE_BYTES = 25 * 1024 * 1024
-MAX_NOTE_BYTES = 5 * 1024 * 1024
+DEFAULT_MAX_SOURCE_FILE_MB = 100
+DEFAULT_MAX_NOTE_MB = 5
+BYTES_PER_MB = 1024 * 1024
+MAX_SOURCE_FILE_BYTES = DEFAULT_MAX_SOURCE_FILE_MB * BYTES_PER_MB
+MAX_NOTE_BYTES = DEFAULT_MAX_NOTE_MB * BYTES_PER_MB
 MAX_FILES_PER_RUN = 200
+DEFAULT_MAX_CHUNKS_PER_FILE = 2000
+DEFAULT_MAX_CHUNKS_PER_RUN = 8000
 CHUNK_TARGET_CHARS = 1200
 SNIPPET_CHARS = 900
 MANAGED_NOTES_DIR = "managed-notes"
@@ -41,6 +46,10 @@ class ProductContextSettings:
     file_types: frozenset[str]
     top_k: int
     max_context_chars: int
+    max_source_file_bytes: int
+    max_note_bytes: int
+    max_chunks_per_file: int
+    max_chunks_per_run: int
 
 
 def resolve_product_context_settings(
@@ -91,6 +100,30 @@ def resolve_product_context_settings(
             minimum=1000,
             maximum=20000,
         ),
+        max_source_file_bytes=_bounded_mb(
+            section.get("max_source_file_mb"),
+            default=DEFAULT_MAX_SOURCE_FILE_MB,
+            minimum=1,
+            maximum=500,
+        ),
+        max_note_bytes=_bounded_mb(
+            section.get("max_note_mb"),
+            default=DEFAULT_MAX_NOTE_MB,
+            minimum=1,
+            maximum=20,
+        ),
+        max_chunks_per_file=_bounded_int(
+            section.get("max_chunks_per_file"),
+            default=DEFAULT_MAX_CHUNKS_PER_FILE,
+            minimum=10,
+            maximum=20000,
+        ),
+        max_chunks_per_run=_bounded_int(
+            section.get("max_chunks_per_run"),
+            default=DEFAULT_MAX_CHUNKS_PER_RUN,
+            minimum=10,
+            maximum=50000,
+        ),
     )
 
 
@@ -112,7 +145,10 @@ def index_product_context(
         "unchanged": 0,
         "skipped": 0,
         "errors": 0,
+        "partial_indexed": 0,
+        "indexed_chunks": 0,
     }
+    indexed_chunks_this_run = 0
 
     if not settings.enabled:
         return _index_payload(
@@ -164,7 +200,7 @@ def index_product_context(
             counts["errors"] += 1
             errors.append(_file_error(path, "stat_failed", str(exc)))
             continue
-        if stat.st_size > MAX_SOURCE_FILE_BYTES:
+        if stat.st_size > settings.max_source_file_bytes:
             counts["skipped"] += 1
             warnings.append(
                 _warning(
@@ -172,7 +208,7 @@ def index_product_context(
                     "File exceeded the product-context max file size.",
                     source_path=str(path),
                     bytes=stat.st_size,
-                    max_bytes=MAX_SOURCE_FILE_BYTES,
+                    max_bytes=settings.max_source_file_bytes,
                 )
             )
             continue
@@ -235,6 +271,49 @@ def index_product_context(
             counts["would_index"] += 1
             continue
 
+        partial_reason = ""
+        original_chunk_count = len(chunks)
+        if len(chunks) > settings.max_chunks_per_file:
+            chunks = chunks[: settings.max_chunks_per_file]
+            partial_reason = "max_chunks_per_file"
+            warnings.append(
+                _warning(
+                    "max_chunks_per_file_reached",
+                    "Only the first product-context chunks from this file were indexed.",
+                    source_path=str(path),
+                    indexed_chunks=len(chunks),
+                    discovered_chunks=original_chunk_count,
+                    max_chunks_per_file=settings.max_chunks_per_file,
+                )
+            )
+
+        remaining_run_chunks = settings.max_chunks_per_run - indexed_chunks_this_run
+        if remaining_run_chunks <= 0:
+            counts["skipped"] += 1
+            warnings.append(
+                _warning(
+                    "max_chunks_per_run_reached",
+                    "Product-context run chunk budget was exhausted before this file.",
+                    source_path=str(path),
+                    max_chunks_per_run=settings.max_chunks_per_run,
+                )
+            )
+            continue
+        if len(chunks) > remaining_run_chunks:
+            chunks = chunks[:remaining_run_chunks]
+            partial_reason = partial_reason or "max_chunks_per_run"
+            warnings.append(
+                _warning(
+                    "max_chunks_per_run_reached",
+                    "Only the first product-context chunks from this file were "
+                    "indexed because the run budget was reached.",
+                    source_path=str(path),
+                    indexed_chunks=len(chunks),
+                    discovered_chunks=original_chunk_count,
+                    max_chunks_per_run=settings.max_chunks_per_run,
+                )
+            )
+
         embedded_chunks = []
         for chunk in chunks:
             embedded = dict(chunk)
@@ -252,6 +331,9 @@ def index_product_context(
             "parser_version": PARSER_VERSION,
             "status": "indexed",
             "chunk_count": len(embedded_chunks),
+            "partial_indexed": bool(partial_reason),
+            "partial_reason": partial_reason or None,
+            "discovered_chunk_count": original_chunk_count,
             "embedding_dimensions": (
                 embedding_provider.dimensions
                 if hasattr(embedding_provider, "dimensions")
@@ -261,6 +343,10 @@ def index_product_context(
         }
         next_chunks.extend(embedded_chunks)
         counts["indexed"] += 1
+        counts["indexed_chunks"] += len(embedded_chunks)
+        indexed_chunks_this_run += len(embedded_chunks)
+        if partial_reason:
+            counts["partial_indexed"] += 1
 
     if len(files) > MAX_FILES_PER_RUN:
         warnings.append(
@@ -348,12 +434,12 @@ def add_product_context_note(
         )
 
     content_bytes = len(cleaned_content.encode("utf-8"))
-    if content_bytes > MAX_NOTE_BYTES:
+    if content_bytes > settings.max_note_bytes:
         raise MCPError(
             error_code=ErrorCode.INVALID_INPUT,
             stage=Stage.PREFLIGHT,
             message="product context note exceeds the max file size.",
-            hint={"max_bytes": MAX_NOTE_BYTES, "actual_bytes": content_bytes},
+            hint={"max_bytes": settings.max_note_bytes, "actual_bytes": content_bytes},
             retryable=False,
         )
 
@@ -551,6 +637,12 @@ def _index_payload(
         "chunks_path": str(settings.cache_dir / CHUNKS_FILE),
         "parser_version": PARSER_VERSION,
         "file_types": sorted(settings.file_types),
+        "limits": {
+            "max_source_file_bytes": settings.max_source_file_bytes,
+            "max_note_bytes": settings.max_note_bytes,
+            "max_chunks_per_file": settings.max_chunks_per_file,
+            "max_chunks_per_run": settings.max_chunks_per_run,
+        },
         "counts": counts,
         "warnings": warnings,
         "errors": errors,
@@ -873,6 +965,21 @@ def _bounded_int(
     except (TypeError, ValueError):
         parsed = default
     return max(minimum, min(maximum, parsed))
+
+
+def _bounded_mb(
+    value: Any,
+    *,
+    default: int,
+    minimum: int,
+    maximum: int,
+) -> int:
+    return _bounded_int(
+        value,
+        default=default,
+        minimum=minimum,
+        maximum=maximum,
+    ) * BYTES_PER_MB
 
 
 def _snippet(text: Any) -> str:

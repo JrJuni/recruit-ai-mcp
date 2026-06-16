@@ -16,6 +16,31 @@ than loaded wholesale.
 
 Follow-up on 2026-06-17:
 
+- Raised the default product-context source file limit from 25MB to 100MB and
+  made source size/chunk budgets configurable:
+  - `product_context.max_source_file_mb`
+  - `product_context.max_note_mb`
+  - `product_context.max_chunks_per_file`
+  - `product_context.max_chunks_per_run`
+- Added partial-indexing guardrails for large product catalogs. When a catalog
+  exceeds per-file or per-run chunk budgets, the indexer records
+  `counts.partial_indexed`, warning codes, and cache metadata rather than
+  silently treating the file as fully indexed.
+- Exposed the new product-context limits through `update_config`, runtime env
+  loading, and MCPB installer config fields.
+- Refreshed `release/latest/deal-intel-mcp-0.1.15.mcpb` and checksum after the
+  manifest update.
+- Smoke:
+  - A temporary Notion AI page PDF under `.tmp-product-context/` indexed and
+    retrieved successfully with `indexed_chunks: 5`.
+- Validation:
+  - `pytest tests/test_product_context.py tests/test_config_writer.py tests/test_env_config.py tests/test_mcpb_manifest.py -q -p no:cacheprovider --basetemp=.pytest-product-context-limits`:
+    49 passed, 1 warning.
+  - `ruff check .`:
+    passed.
+  - `mcpb validate mcpb\manifest.json`:
+    passed.
+
 - Added first-pass DOCX parsing for product context indexing. The parser reads
   Word document paragraphs from `word/document.xml` with the Python standard
   library, so no new runtime dependency is required.

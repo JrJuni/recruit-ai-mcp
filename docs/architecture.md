@@ -184,6 +184,10 @@ product_context:
   source_dirs:
     - ~/.deal-intel/product-context/sources
   cache_dir: ~/.deal-intel/product-context/cache
+  max_source_file_mb: 100
+  max_note_mb: 5
+  max_chunks_per_file: 2000
+  max_chunks_per_run: 8000
   retrieval:
     top_k: 5
     max_context_chars: 6000
@@ -199,7 +203,9 @@ Ownership:
   product/solution text. Apply mode writes only a managed Markdown source file;
   it does not index automatically.
 - `index_product_context` is the dry-run-first indexing tool. Apply mode writes
-  only local cache files.
+  only local cache files. Source file size is configurable separately from
+  chunk budgets so large catalogs can be accepted without allowing one file to
+  consume the entire indexing run.
 - `get_product_context` reads bounded snippets and source metadata from the
   local cache.
 - `add_interaction` opportunistically retrieves relevant product context before
@@ -215,6 +221,9 @@ Guardrails:
   context for numeric outputs.
 - Tool responses return snippets, not full raw product documents, and files
   with secret-shaped content are skipped.
+- Large source files may be partially indexed when `max_chunks_per_file` or
+  `max_chunks_per_run` is reached. The tool must expose this through
+  `warnings`, `counts.partial_indexed`, and cache document metadata.
 
 Presentation and spreadsheet formats (`pptx`, `xlsx`) are intentionally
 warning-only in the first implementation. Add parsers later behind the same

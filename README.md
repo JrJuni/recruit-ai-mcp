@@ -157,7 +157,10 @@ and are planned for a later parser pass.
 
 Product context is stored and cached locally under
 `~/.deal-intel/product-context` by default. Tool responses return snippets and
-source metadata, not full raw documents. Files or pasted notes with
+source metadata, not full raw documents. Large catalog PDFs are supported through
+configurable source-file and chunk limits; check `index_product_context`
+warnings for `partial_indexed` when a very large file was only partly indexed.
+Files or pasted notes with
 secret-shaped content are rejected or skipped.
 
 ---

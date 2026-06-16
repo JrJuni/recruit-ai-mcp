@@ -75,6 +75,35 @@ def load_config() -> dict:
         if source_dirs:
             config.setdefault("product_context", {})["source_dirs"] = source_dirs
 
+    _apply_product_context_int_env(
+        config,
+        "DEAL_INTEL_PRODUCT_CONTEXT_MAX_SOURCE_FILE_MB",
+        "max_source_file_mb",
+        minimum=1,
+        maximum=500,
+    )
+    _apply_product_context_int_env(
+        config,
+        "DEAL_INTEL_PRODUCT_CONTEXT_MAX_NOTE_MB",
+        "max_note_mb",
+        minimum=1,
+        maximum=20,
+    )
+    _apply_product_context_int_env(
+        config,
+        "DEAL_INTEL_PRODUCT_CONTEXT_MAX_CHUNKS_PER_FILE",
+        "max_chunks_per_file",
+        minimum=10,
+        maximum=20000,
+    )
+    _apply_product_context_int_env(
+        config,
+        "DEAL_INTEL_PRODUCT_CONTEXT_MAX_CHUNKS_PER_RUN",
+        "max_chunks_per_run",
+        minimum=10,
+        maximum=50000,
+    )
+
     return config
 
 
@@ -93,3 +122,22 @@ def _looks_secret_like(value: str) -> bool:
         or "mongodb+srv://" in lowered
         or value.startswith(("sk-", "sk_", "xoxb-", "ghp_"))
     )
+
+
+def _apply_product_context_int_env(
+    config: dict,
+    env_name: str,
+    field: str,
+    *,
+    minimum: int,
+    maximum: int,
+) -> None:
+    raw = os.environ.get(env_name, "").strip()
+    if not raw:
+        return
+    try:
+        value = int(raw)
+    except ValueError:
+        return
+    if minimum <= value <= maximum:
+        config.setdefault("product_context", {})[field] = value

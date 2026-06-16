@@ -59,6 +59,12 @@ product_context:
   source_dirs:
     - ~/.deal-intel/product-context/sources
   cache_dir: ~/.deal-intel/product-context/cache
+  # Large product catalogs are allowed, but indexing still has chunk budgets so
+  # one oversized file cannot consume an entire MCP session.
+  max_source_file_mb: 100
+  max_note_mb: 5
+  max_chunks_per_file: 2000
+  max_chunks_per_run: 8000
   retrieval:
     top_k: 5
     max_context_chars: 6000

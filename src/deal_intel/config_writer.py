@@ -29,6 +29,10 @@ CONFIG_UPDATE_PATHS: tuple[tuple[str, str], ...] = (
     ("reporting", "language"),
     ("tools", "surface"),
     ("product_context", "source_dirs"),
+    ("product_context", "max_source_file_mb"),
+    ("product_context", "max_note_mb"),
+    ("product_context", "max_chunks_per_file"),
+    ("product_context", "max_chunks_per_run"),
 )
 _VALID_LLM_PROVIDERS = {"chatgpt_oauth", "anthropic", "openai_api"}
 _VALID_TOOL_SURFACES = {"auto", "sample", "standard", "developer"}
@@ -235,6 +239,10 @@ def update_config_settings(
     reporting_language: str | None = None,
     tools_surface: str | None = None,
     product_context_source_dirs: str | None = None,
+    product_context_max_source_file_mb: str | None = None,
+    product_context_max_note_mb: str | None = None,
+    product_context_max_chunks_per_file: str | None = None,
+    product_context_max_chunks_per_run: str | None = None,
 ) -> dict[str, Any]:
     """Update safe, non-secret user-config fields.
 
@@ -273,6 +281,10 @@ def update_config_settings(
             reporting_language=reporting_language,
             tools_surface=tools_surface,
             product_context_source_dirs=product_context_source_dirs,
+            product_context_max_source_file_mb=product_context_max_source_file_mb,
+            product_context_max_note_mb=product_context_max_note_mb,
+            product_context_max_chunks_per_file=product_context_max_chunks_per_file,
+            product_context_max_chunks_per_run=product_context_max_chunks_per_run,
         )
     except ValueError as exc:
         return {
@@ -468,6 +480,10 @@ def _validated_update_values(
     reporting_language: str | None,
     tools_surface: str | None,
     product_context_source_dirs: str | None,
+    product_context_max_source_file_mb: str | None,
+    product_context_max_note_mb: str | None,
+    product_context_max_chunks_per_file: str | None,
+    product_context_max_chunks_per_run: str | None,
 ) -> dict[tuple[str, str], Any]:
     values: dict[tuple[str, str], Any] = {}
     provider = _optional_string(llm_provider)
@@ -525,6 +541,42 @@ def _validated_update_values(
             "product_context_source_dirs",
         )
 
+    max_source_file_mb = _optional_bounded_int(
+        product_context_max_source_file_mb,
+        "product_context_max_source_file_mb",
+        minimum=1,
+        maximum=500,
+    )
+    if max_source_file_mb is not None:
+        values[("product_context", "max_source_file_mb")] = max_source_file_mb
+
+    max_note_mb = _optional_bounded_int(
+        product_context_max_note_mb,
+        "product_context_max_note_mb",
+        minimum=1,
+        maximum=20,
+    )
+    if max_note_mb is not None:
+        values[("product_context", "max_note_mb")] = max_note_mb
+
+    max_chunks_per_file = _optional_bounded_int(
+        product_context_max_chunks_per_file,
+        "product_context_max_chunks_per_file",
+        minimum=10,
+        maximum=20000,
+    )
+    if max_chunks_per_file is not None:
+        values[("product_context", "max_chunks_per_file")] = max_chunks_per_file
+
+    max_chunks_per_run = _optional_bounded_int(
+        product_context_max_chunks_per_run,
+        "product_context_max_chunks_per_run",
+        minimum=10,
+        maximum=50000,
+    )
+    if max_chunks_per_run is not None:
+        values[("product_context", "max_chunks_per_run")] = max_chunks_per_run
+
     return values
 
 
@@ -535,6 +587,26 @@ def _optional_string(value: str | None) -> str | None:
         raise ValueError("config update values must be strings")
     stripped = value.strip()
     return stripped or None
+
+
+def _optional_bounded_int(
+    value: str | None,
+    field: str,
+    *,
+    minimum: int,
+    maximum: int,
+) -> int | None:
+    text = _optional_string(value)
+    if text is None:
+        return None
+    _reject_secret_like(text, field)
+    try:
+        parsed = int(text)
+    except ValueError as exc:
+        raise ValueError(f"{field} must be an integer") from exc
+    if parsed < minimum or parsed > maximum:
+        raise ValueError(f"{field} must be between {minimum} and {maximum}")
+    return parsed
 
 
 def _validate_model_name(value: str, field: str) -> str:

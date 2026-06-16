@@ -116,6 +116,53 @@ def test_load_config_ignores_secret_like_product_context_source_dirs_env(
     assert config["product_context"]["source_dirs"] == ["~/company-docs"]
 
 
+def test_load_config_accepts_product_context_limit_env(monkeypatch, tmp_path) -> None:
+    root = tmp_path
+    config_dir = root / "config"
+    config_dir.mkdir()
+    (config_dir / "defaults.yaml").write_text(
+        "product_context:\n"
+        "  max_source_file_mb: 100\n"
+        "  max_chunks_per_file: 2000\n"
+        "  max_chunks_per_run: 8000\n",
+        encoding="utf-8",
+    )
+    missing_user_config = tmp_path / "missing" / "config.yaml"
+    monkeypatch.setattr(_env, "_ROOT", root)
+    monkeypatch.setattr(_env, "_USER_CONFIG_PATH", missing_user_config)
+    monkeypatch.setenv("DEAL_INTEL_PRODUCT_CONTEXT_MAX_SOURCE_FILE_MB", "250")
+    monkeypatch.setenv("DEAL_INTEL_PRODUCT_CONTEXT_MAX_CHUNKS_PER_FILE", "5000")
+    monkeypatch.setenv("DEAL_INTEL_PRODUCT_CONTEXT_MAX_CHUNKS_PER_RUN", "12000")
+
+    config = _env.load_config()
+
+    assert config["product_context"]["max_source_file_mb"] == 250
+    assert config["product_context"]["max_chunks_per_file"] == 5000
+    assert config["product_context"]["max_chunks_per_run"] == 12000
+
+
+def test_load_config_ignores_invalid_product_context_limit_env(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    root = tmp_path
+    config_dir = root / "config"
+    config_dir.mkdir()
+    (config_dir / "defaults.yaml").write_text(
+        "product_context:\n"
+        "  max_source_file_mb: 100\n",
+        encoding="utf-8",
+    )
+    missing_user_config = tmp_path / "missing" / "config.yaml"
+    monkeypatch.setattr(_env, "_ROOT", root)
+    monkeypatch.setattr(_env, "_USER_CONFIG_PATH", missing_user_config)
+    monkeypatch.setenv("DEAL_INTEL_PRODUCT_CONTEXT_MAX_SOURCE_FILE_MB", "9999")
+
+    config = _env.load_config()
+
+    assert config["product_context"]["max_source_file_mb"] == 100
+
+
 def test_packaged_defaults_match_repo_defaults() -> None:
     packaged = (
         resources.files("deal_intel.resources")

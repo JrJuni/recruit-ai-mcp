@@ -215,6 +215,44 @@ def test_index_product_context_allows_source_larger_than_note_limit(
     assert result["counts"]["skipped"] == 0
 
 
+def test_index_product_context_partial_indexes_when_chunk_budget_is_reached(
+    tmp_path,
+) -> None:
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    paragraphs = [
+        f"Security workflow paragraph {index}. " + ("controls " * 260)
+        for index in range(20)
+    ]
+    (sources / "large-catalog.md").write_text(
+        "\n\n".join(paragraphs),
+        encoding="utf-8",
+    )
+    cfg = _cfg(tmp_path)
+    cfg["product_context"]["max_chunks_per_file"] = 10
+
+    result = product_context.index_product_context(
+        cfg,
+        embedding_provider=KeywordEmbedding(),
+        dry_run=False,
+    )
+
+    assert result["ok"] is True
+    assert result["counts"]["indexed"] == 1
+    assert result["counts"]["partial_indexed"] == 1
+    assert result["counts"]["indexed_chunks"] == 10
+    assert result["limits"]["max_chunks_per_file"] == 10
+    assert "max_chunks_per_file_reached" in {
+        warning["code"] for warning in result["warnings"]
+    }
+    manifest = json.loads((tmp_path / "cache" / MANIFEST_FILE).read_text())
+    doc = next(iter(manifest["documents"].values()))
+    assert doc["partial_indexed"] is True
+    assert doc["partial_reason"] == "max_chunks_per_file"
+    assert doc["chunk_count"] == 10
+    assert doc["discovered_chunk_count"] > 10
+
+
 def test_add_product_context_note_path_traversal_title_stays_in_managed_notes(
     tmp_path,
 ) -> None:
