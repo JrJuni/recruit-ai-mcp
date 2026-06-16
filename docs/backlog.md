@@ -70,19 +70,24 @@ Recommended implementation order:
    - Detailed execution units and verification gates live in
      [qualification-framework-v2.md](qualification-framework-v2.md).
 4. Product / solution context layer.
-   - Add seller-side product/solution knowledge as a RAG layer separate from
-     customer evidence.
-   - Default local cache:
-     `~/.deal-intel/product-context`.
-   - First integration point: `add_interaction`, so extraction can understand
-     product names, value propositions, ICP, integrations, competitors, and
-     disqualifiers without treating product docs as customer statements.
-   - First supported file types: `txt`, `md`, `json`, `csv`, `pdf`, `docx`.
+   - Current state: local seller-side RAG cache is implemented with
+     `txt`, `md`, `json`, `csv`, `pdf`, and `docx` support; configured source
+     folders; managed pasted notes; cache reuse; secret-shaped source skipping;
+     large-catalog size/chunk budgets; and integration with `add_interaction`
+     and `analyze_deal`.
    - Keep product context out of qualification scoring, customer-theme counts,
      deal summary embeddings, BI/report metrics, and raw report outputs.
-   - Follow-up after smoke: Office parser support, optional Mongo/shared
-     product context storage, and connections to `analyze_deal`,
-     `get_deal_review`, and `export_report` if real usage needs it.
+   - Defer remaining context work until the v2 closure validation pass:
+     - run a real host-app smoke with MCPB, configured source folder, PDF
+       indexing, `get_product_context`, `add_interaction`, and `analyze_deal`;
+     - add PPTX/XLSX parser support or a clearer "export to PDF first" UX if
+       real user material commonly arrives as decks/spreadsheets;
+     - add managed-note/file CRUD convenience only if users need to inspect,
+       update, or delete product context from the host app;
+     - add `config_doctor`/status visibility for indexed document count,
+       partial-indexing warnings, and cache health;
+     - consider optional Mongo/shared product context storage only after the
+       local cache proves useful.
 5. Tool namespace and customer-theme workflow cleanup.
    - Revisit the tool surface through user intent rather than internal module
      boundaries.
@@ -144,6 +149,30 @@ Recommended implementation order:
      mix deal records, charts, reports, embeddings, or tuning preferences.
    - Treat this as post-v2 because the qualification framework and tool surface
      need to stabilize first.
+
+V2 closure validation gate:
+
+- Full automated gate:
+  - `pytest -q -p no:cacheprovider --basetemp=<repo-local-temp>`
+  - `ruff check .`
+  - `mcpb validate mcpb\manifest.json`
+  - `mcpb pack mcpb mcpb\deal-intel-mcp-<version>.mcpb`
+  - `mcpb info <artifact>`
+- Smoke suites:
+  - natural-question smoke
+  - deal-review audit
+  - report/export smoke
+  - tool catalog/profile surface smoke
+  - config doctor in the intended `full` profile
+  - product-context host-app smoke with a real configured source folder and
+    at least one PDF source
+- Manual notes:
+  - record any Windows temp/sandbox limitations separately from product
+    failures;
+  - confirm large product-context files either fully index or return clear
+    `partial_indexed` warnings;
+  - confirm no raw product docs, raw interaction content, secrets, contacts, or
+    embeddings leak through read/report paths.
 
 MongoDB feature placement rule:
 
