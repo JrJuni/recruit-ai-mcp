@@ -459,6 +459,22 @@ When editing this path, protect these tests first:
 - `tests/test_tool_surfaces.py`
 - `tests/test_mcpb_manifest.py`
 
+Live smoke expectations:
+
+- Product context should improve seller-side interpretation: product names,
+  ICP, value propositions, disqualifiers, competitor positioning, and product
+  fit.
+- Product context must stay out of customer evidence, confirmed
+  qualification scoring, customer-theme aggregation, BI/report metrics, deal
+  summary embeddings, and raw report/list outputs.
+- A successful host-app smoke should cover configured source directories, PDF
+  indexing, managed notes, cache reuse, modified-file reindexing, bounded
+  snippet retrieval, `add_interaction` refs-only storage, and `analyze_deal`
+  strategy use without raw product text exposure.
+- Expected warnings should be explicit for unsupported Office files,
+  partial-indexed large catalogs, scanned/low-text PDFs, missing embeddings,
+  and secret-shaped source content.
+
 ### Write and Lifecycle
 
 - `create_deal`

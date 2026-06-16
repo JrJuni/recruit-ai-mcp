@@ -33,6 +33,45 @@ Follow-up on 2026-06-17:
 - Smoke:
   - A temporary Notion AI page PDF under `.tmp-product-context/` indexed and
     retrieved successfully with `indexed_chunks: 5`.
+- Live host-app smoke handoff:
+  - Run this from the product-context branch before closing the context layer.
+  - Expected effect: product/solution context should help `add_interaction`
+    and `analyze_deal` interpret seller-side terminology, ICP, value
+    propositions, disqualifiers, competitor positioning, and product fit more
+    accurately.
+  - Non-goal: product context must not become customer-stated evidence. It
+    must not directly raise qualification scores, customer-theme counts,
+    BI/report metrics, or deal summary embeddings.
+  - Success criteria:
+    - MCPB/full install loads the product-context tools and `config_doctor`
+      remains ready.
+    - `config show` or `config_doctor` makes the effective product-context
+      source directories understandable enough for a host app to guide users.
+    - A configured source folder containing at least one PDF and one text-like
+      note indexes successfully; a second unchanged run reuses cache.
+    - `get_product_context` returns relevant bounded snippets and metadata,
+      not full raw documents.
+    - `add_interaction` reports product-context refs when relevant, stores refs
+      only, and does not raise scoring from product context alone.
+    - `analyze_deal` can use product-context refs for strategy interpretation
+      without returning or storing raw product text.
+    - Natural-question smoke still passes after indexing.
+  - Watch points:
+    - Host apps may pass Windows paths, escaped backslashes, or spaces
+      differently from CLI tests.
+    - MCPB installer config must forward source dirs and size/chunk limits as
+      expected.
+    - Large PDFs may be partial-indexed; this is acceptable only when warning
+      codes and counts are clear.
+    - Scanned PDFs may extract little text and should produce understandable
+      warnings rather than misleading empty success.
+    - Embedding/OAuth readiness can fail independently from storage readiness.
+    - Secret-shaped files or notes must be skipped/rejected without leaking
+      source content.
+    - Generic product wording can over-match; retrieved context must remain
+      seller-side guidance, not evidence.
+    - Cache invalidation should reprocess modified files while leaving
+      unchanged files untouched.
 - Validation:
   - `pytest tests/test_product_context.py tests/test_config_writer.py tests/test_env_config.py tests/test_mcpb_manifest.py -q -p no:cacheprovider --basetemp=.pytest-product-context-limits`:
     49 passed, 1 warning.

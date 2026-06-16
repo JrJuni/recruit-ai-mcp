@@ -80,6 +80,13 @@ Recommended implementation order:
    - Defer remaining context work until the v2 closure validation pass:
      - run a real host-app smoke with MCPB, configured source folder, PDF
        indexing, `get_product_context`, `add_interaction`, and `analyze_deal`;
+     - treat the live smoke as successful only if product context improves
+       seller-side interpretation while staying out of customer evidence,
+       qualification scoring, customer themes, BI/report metrics, and raw
+       report/list outputs;
+     - verify cache reuse, modified-file reindexing, clear partial-indexing
+       warnings, secret-shaped source skipping, path handling from host apps,
+       and bounded snippet-only responses;
      - add PPTX/XLSX parser support or a clearer "export to PDF first" UX if
        real user material commonly arrives as decks/spreadsheets;
      - add managed-note/file CRUD convenience only if users need to inspect,
