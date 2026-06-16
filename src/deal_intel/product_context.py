@@ -5,11 +5,13 @@ import hashlib
 import json
 import os
 import re
+import zipfile
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from xml.etree import ElementTree as ET
 
 from deal_intel.errors import ErrorCode, MCPError, Stage
 from deal_intel.user_memory import detect_secret_patterns
@@ -20,8 +22,8 @@ DEFAULT_SOURCE_DIR = "~/.deal-intel/product-context/sources"
 DEFAULT_CACHE_DIR = "~/.deal-intel/product-context/cache"
 MANIFEST_FILE = "manifest.json"
 CHUNKS_FILE = "chunks.json"
-SUPPORTED_FILE_TYPES = frozenset({"txt", "md", "json", "csv", "pdf"})
-UNSUPPORTED_FILE_TYPES = frozenset({"docx", "pptx", "xlsx"})
+SUPPORTED_FILE_TYPES = frozenset({"txt", "md", "json", "csv", "pdf", "docx"})
+UNSUPPORTED_FILE_TYPES = frozenset({"pptx", "xlsx"})
 MAX_FILE_BYTES = 5 * 1024 * 1024
 MAX_FILES_PER_RUN = 200
 CHUNK_TARGET_CHARS = 1200
@@ -626,6 +628,8 @@ def _parse_file(path: Path, ext: str) -> dict[str, Any]:
             return _parse_result(text="\n".join(row for row in rows if row), warnings=warnings)
         if ext == "pdf":
             return _parse_pdf(path)
+        if ext == "docx":
+            return _parse_docx(path)
     except OSError as exc:
         return _parse_result(error="read_failed", message=str(exc), warnings=warnings)
     return _parse_result(
@@ -660,6 +664,36 @@ def _parse_pdf(path: Path) -> dict[str, Any]:
     except Exception as exc:
         return _parse_result(
             error="pdf_parse_failed",
+            message=f"{type(exc).__name__}: {exc}",
+            warnings=warnings,
+        )
+
+
+def _parse_docx(path: Path) -> dict[str, Any]:
+    warnings: list[dict[str, Any]] = []
+    namespace = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+    try:
+        with zipfile.ZipFile(path) as archive:
+            document_xml = archive.read("word/document.xml")
+        root = ET.fromstring(document_xml)
+        paragraphs = []
+        for paragraph in root.findall(".//w:p", namespace):
+            texts = [
+                node.text or ""
+                for node in paragraph.findall(".//w:t", namespace)
+                if node.text
+            ]
+            text = "".join(texts).strip()
+            if text:
+                paragraphs.append(text)
+        return _parse_result(
+            text="\n\n".join(paragraphs),
+            warnings=warnings,
+            metadata={"paragraph_count": len(paragraphs)},
+        )
+    except (zipfile.BadZipFile, KeyError, ET.ParseError, OSError) as exc:
+        return _parse_result(
+            error="docx_parse_failed",
             message=f"{type(exc).__name__}: {exc}",
             warnings=warnings,
         )

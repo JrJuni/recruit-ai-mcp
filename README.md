@@ -151,9 +151,9 @@ confirmed_by_user=true.
 Then run index_product_context and verify with get_product_context.
 ```
 
-The first parser set supports `txt`, `md`, `json`, `csv`, and `pdf`. Office
-files (`docx`, `pptx`, `xlsx`) currently return warnings and are planned for a
-later parser pass.
+The first parser set supports `txt`, `md`, `json`, `csv`, `pdf`, and `docx`.
+Presentation and spreadsheet files (`pptx`, `xlsx`) currently return warnings
+and are planned for a later parser pass.
 
 Product context is stored and cached locally under
 `~/.deal-intel/product-context` by default. Tool responses return snippets and

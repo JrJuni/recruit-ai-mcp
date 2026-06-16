@@ -77,7 +77,7 @@ Recommended implementation order:
    - First integration point: `add_interaction`, so extraction can understand
      product names, value propositions, ICP, integrations, competitors, and
      disqualifiers without treating product docs as customer statements.
-   - First supported file types: `txt`, `md`, `json`, `csv`, `pdf`.
+   - First supported file types: `txt`, `md`, `json`, `csv`, `pdf`, `docx`.
    - Keep product context out of qualification scoring, customer-theme counts,
      deal summary embeddings, BI/report metrics, and raw report outputs.
    - Follow-up after smoke: Office parser support, optional Mongo/shared

@@ -187,7 +187,7 @@ product_context:
   retrieval:
     top_k: 5
     max_context_chars: 6000
-  file_types: [txt, md, json, csv, pdf]
+  file_types: [txt, md, json, csv, pdf, docx]
 ```
 
 Ownership:
@@ -216,9 +216,10 @@ Guardrails:
 - Tool responses return snippets, not full raw product documents, and files
   with secret-shaped content are skipped.
 
-Office formats (`docx`, `pptx`, `xlsx`) are intentionally warning-only in the
-first implementation. Add parsers later behind the same `product_context.py`
-boundary rather than leaking parser details into tool handlers.
+Presentation and spreadsheet formats (`pptx`, `xlsx`) are intentionally
+warning-only in the first implementation. Add parsers later behind the same
+`product_context.py` boundary rather than leaking parser details into tool
+handlers.
 
 ## Developer Navigation Map
 

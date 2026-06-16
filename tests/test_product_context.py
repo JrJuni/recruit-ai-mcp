@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import zipfile
+from xml.sax.saxutils import escape
 
 import pytest
 
@@ -44,6 +46,23 @@ def _cfg(tmp_path) -> dict:
             "retrieval": {"top_k": 2, "max_context_chars": 2000},
         }
     }
+
+
+def _write_docx(path, paragraphs: list[str]) -> None:
+    body = "".join(
+        "<w:p><w:r><w:t>"
+        + escape(paragraph)
+        + "</w:t></w:r></w:p>"
+        for paragraph in paragraphs
+    )
+    document = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+        f"<w:body>{body}</w:body>"
+        "</w:document>"
+    )
+    with zipfile.ZipFile(path, "w") as archive:
+        archive.writestr("word/document.xml", document)
 
 
 def test_index_product_context_writes_cache_and_reuses_unchanged_file(tmp_path) -> None:
@@ -239,6 +258,40 @@ def test_index_product_context_dry_run_does_not_embed_or_write(tmp_path) -> None
     assert result["storage_written"] is False
     assert embedding.calls == []
     assert not (tmp_path / "cache" / MANIFEST_FILE).exists()
+
+
+def test_index_product_context_parses_docx_and_retrieves_content(tmp_path) -> None:
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    _write_docx(
+        sources / "healthcare-security.docx",
+        [
+            "Healthcare security positioning supports HIPAA audit readiness.",
+            "Budget owners care about workflow automation and evidence exports.",
+        ],
+    )
+    cfg = _cfg(tmp_path)
+
+    index_result = index_product_context(
+        cfg,
+        embedding_provider=KeywordEmbedding(),
+        dry_run=False,
+    )
+    result = retrieve_product_context(
+        cfg,
+        embedding_provider=KeywordEmbedding(),
+        query="HIPAA security",
+        limit=1,
+    )
+
+    assert index_result["ok"] is True
+    assert index_result["counts"]["indexed"] == 1
+    assert index_result["file_types"] == ["csv", "docx", "json", "md", "pdf", "txt"]
+    assert result["ok"] is True
+    assert result["result_count"] == 1
+    assert result["results"][0]["source_name"] == "healthcare-security.docx"
+    assert result["results"][0]["file_type"] == "docx"
+    assert "HIPAA audit readiness" in result["results"][0]["snippet"]
 
 
 def test_index_product_context_skips_secret_and_unsupported_office(tmp_path) -> None:

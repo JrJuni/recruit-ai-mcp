@@ -313,7 +313,7 @@ def index_product_context(
 
     Use this after placing product docs in the configured product_context
     source directory, or pass source_dir for a one-off folder/file. This scans
-    txt/md/json/csv/pdf files, skips unsupported Office files for now, rejects
+    txt/md/json/csv/pdf/docx files, skips unsupported pptx/xlsx files for now, rejects
     secret-shaped content, chunks safe text, and stores local embeddings for
     later retrieval. Intent alias: context.index.
 

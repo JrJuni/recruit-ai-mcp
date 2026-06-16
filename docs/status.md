@@ -14,12 +14,31 @@ than loaded wholesale.
 
 ### Product / solution context layer
 
+Follow-up on 2026-06-17:
+
+- Added first-pass DOCX parsing for product context indexing. The parser reads
+  Word document paragraphs from `word/document.xml` with the Python standard
+  library, so no new runtime dependency is required.
+- `pptx` and `xlsx` remain warning-only and are still tracked as future parser
+  work.
+- Validation:
+  - `pytest tests/test_product_context.py -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-docx`:
+    13 passed, 1 warning.
+  - `pytest tests/test_product_context.py tests/test_add_interaction.py tests/test_tool_surfaces.py tests/test_mcpb_manifest.py tests/test_config_writer.py -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-docx-targeted`:
+    88 passed, 1 warning.
+  - `pytest -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-docx-full-rerun`:
+    689 passed, 1 warning.
+  - `ruff check .`:
+    passed.
+  - `mcpb validate mcpb\manifest.json`:
+    passed.
+
 Implemented:
 
 - Added a local seller-side product context cache under
   `~/.deal-intel/product-context`.
 - Added config defaults for source dirs, cache dir, retrieval limits, and first
-  supported file types: `txt`, `md`, `json`, `csv`, and `pdf`.
+  supported file types: `txt`, `md`, `json`, `csv`, `pdf`, and `docx`.
 - Added safe source-folder configuration for product context:
   - `update_config(product_context_source_dirs=...)`
   - `DEAL_INTEL_PRODUCT_CONTEXT_SOURCE_DIRS` for MCPB/runtime env injection
@@ -61,7 +80,8 @@ Guardrails:
 - Product context is not used in BI/report metric calculation paths.
 - Secret-shaped source files are skipped.
 - Secret-shaped pasted notes are rejected before writing.
-- Office files (`docx`, `pptx`, `xlsx`) are warning-only for the first pass.
+- Presentation and spreadsheet files (`pptx`, `xlsx`) are warning-only for the
+  first pass.
 
 Validation so far:
 

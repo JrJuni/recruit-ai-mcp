@@ -68,6 +68,7 @@ product_context:
     - json
     - csv
     - pdf
+    - docx
 
 # Pipeline stuck and expected-close defaults, in days.
 # Stage-specific stuck thresholds override the default when present.
