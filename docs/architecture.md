@@ -304,7 +304,7 @@ notes, raw interaction content, contacts, or vectors.
 | `get_customer_theme_breakdown` | `theme.compare` | `tools/get_customer_theme_breakdown.py`, `schema/customer_theme_insights.py` | dimension plus group-by filter | stage/industry/tag comparison | `tests/test_customer_theme_insights.py` | Do not duplicate ranking semantics; this is the comparison step. |
 | `get_customer_theme_evidence` | `theme.evidence` | `tools/get_customer_theme_evidence.py`, `schema/customer_theme_insights.py` | theme key, filters, limit | safe evidence snippets | `tests/test_customer_theme_insights.py` | Evidence snippets are curated structured evidence, not raw notes. |
 | `search_deals` | `search.deals` | `tools/search_deals.py`, `providers/embedding.py` | query, filters, limit | semantic/similarity result with generic qualification metadata or unsupported-mode response | `tests/test_search_deals_startup.py` | BI paths must not depend on embeddings; never return vectors. |
-| `analyze_deal` | `strategy.analyze` | `tools/analyze_deal.py`, `providers/llm.py` | deal id | optional LLM strategy and possible `bd_strategy` persistence | `tests/test_llm_providers.py` plus strategy-path smoke when changed | Keep optional; default deal review is deterministic `get_deal_review`. |
+| `analyze_deal` | `strategy.analyze` | `tools/analyze_deal.py`, `providers/llm.py`, `product_context.py` | deal id | optional LLM strategy, possible `bd_strategy` persistence, product-context refs metadata | `tests/test_analyze_deal.py`, `tests/test_llm_providers.py` plus strategy-path smoke when changed | Keep optional; default deal review is deterministic `get_deal_review`. Use seller-side product context only as strategy context, not customer evidence. |
 | `create_sample_data` | `sample.create` | `tools/create_sample_data.py`, `tools/sample_data.py` | demo DB, dry-run/apply flags | Atlas demo seed writes | `tests/test_sample_data.py` | Developer surface only; never write to primary DB. |
 | `delete_sample_data` | `sample.delete` | `tools/delete_sample_data.py`, `tools/sample_data.py` | demo DB, dry-run/apply flags | Atlas demo seed deletion | `tests/test_sample_data.py` | Delete only known sample batch documents. |
 
@@ -362,7 +362,7 @@ model.
 | Read / Query | Answer routine deal, pipeline, gap, and usage questions | `get_deal`, `list_deals`, `get_metrics`, `get_deal_gaps`, `get_deal_review`, `get_usage`, legacy `get_insights` | `tools/get_*.py`, `schema/metrics.py`, `schema/pipeline_metrics.py`, `schema/deal_gaps.py`, `schema/deal_review.py`, `usage.py` | Read-only; no LLM calls | This is the default host-app answer surface. Keep deterministic and projection-safe. |
 | Export / Artifacts | Produce local report or spreadsheet files | `export_report`, `export_data` | `tools/export_report.py`, `tools/export_data.py`, `reports/*` | Local file writes; no DB writes; no LLM calls | `export_report` is human narrative/data-pack; `export_data` is CSV ledger. Do not collapse them back together. |
 | Customer Themes | Rank, compare, and show evidence for customer concerns / criteria | `get_customer_themes`, `get_customer_theme_breakdown`, `get_customer_theme_evidence` | `tools/customer_theme_analysis.py`, `tools/get_customer_theme*.py`, `schema/customer_theme_insights.py`, `schema/customer_themes.py` | Read-only; no raw notes/content in responses | Best post-framework cleanup candidate: likely consolidate behind a progressive-disclosure workflow. |
-| Search / Strategy | Semantic reference search and optional LLM strategy generation | `search_deals`, `analyze_deal` | `tools/search_deals.py`, `tools/analyze_deal.py`, `providers/embedding.py`, `providers/llm.py` | `search_deals` uses embeddings; `analyze_deal` calls LLM and may persist `bd_strategy` | Keep `analyze_deal` optional. Search belongs to full/pro; sample uses deterministic reads. |
+| Search / Strategy | Semantic reference search and optional LLM strategy generation | `search_deals`, `analyze_deal` | `tools/search_deals.py`, `tools/analyze_deal.py`, `providers/embedding.py`, `providers/llm.py`, `product_context.py` | `search_deals` uses embeddings; `analyze_deal` calls LLM and may persist `bd_strategy` plus product-context refs metadata | Keep `analyze_deal` optional. Search belongs to full/pro; sample uses deterministic reads. |
 | User Memory | Persist user operating preferences and feedback | `get_user_memory`, `record_user_memory` | `user_memory.py`, `tools/get_user_memory.py`, `tools/record_user_memory.py` | `record_user_memory` writes safe Markdown only | Keep separate from business data. Never allow secrets or arbitrary file editing. |
 | Sample / Admin | Seed or clean fictional demo data | developer-only `create_sample_data`, `delete_sample_data` | `tools/sample_data.py`, `tools/sample_dataset.py`, bundled sample resources | DB writes to separate demo DB; dry-run by default | Keep hidden from ordinary surfaces to avoid confusing real-data operation. |
 
@@ -432,17 +432,21 @@ Product context flows separately from deal evidence:
 4. `get_product_context` embeds the query and returns only bounded snippets
    plus `doc_id`, `chunk_id`, source name, file type, and score metadata.
 5. `add_interaction` uses the interaction content as a retrieval query before
-   calling the extraction LLM. The prompt marks the snippets as seller-side
-   product knowledge and explicitly says not to treat them as customer-stated
-   evidence.
-6. The saved interaction stores `product_context_refs` only. Raw product text
-   is not copied into the deal, report rows, list views, customer themes, or
-   deal embeddings.
+   calling the extraction LLM. `analyze_deal` uses safe deal metadata,
+   structured theme/evidence snippets, and recent scoring interaction summaries
+   as a strategy-generation retrieval query. Both prompts mark snippets as
+   seller-side product knowledge and explicitly say not to treat them as
+   customer-stated evidence.
+6. The saved interaction stores `product_context_refs` only. `analyze_deal`
+   stores `bd_strategy_product_context_refs` only. Raw product text is not
+   copied into the deal, report rows, list views, customer themes, or deal
+   embeddings.
 
 When editing this path, protect these tests first:
 
 - `tests/test_product_context.py`
 - `tests/test_add_interaction.py`
+- `tests/test_analyze_deal.py`
 - `tests/test_tool_surfaces.py`
 - `tests/test_mcpb_manifest.py`
 

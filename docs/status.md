@@ -21,13 +21,25 @@ Follow-up on 2026-06-17:
   library, so no new runtime dependency is required.
 - `pptx` and `xlsx` remain warning-only and are still tracked as future parser
   work.
+- Connected indexed product context to `analyze_deal`.
+  - The strategy prompt may use bounded seller-side snippets for product fit,
+    positioning, ICP, competitor, or disqualifier context.
+  - The saved deal stores only `bd_strategy_product_context_refs`, not raw
+    product text.
+  - Deterministic review/report paths remain product-context-free.
 - Validation:
   - `pytest tests/test_product_context.py -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-docx`:
     13 passed, 1 warning.
+  - `pytest tests/test_analyze_deal.py tests/test_product_context.py tests/test_add_interaction.py -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-analyze-targeted`:
+    30 passed, 1 warning.
+  - `pytest tests/test_analyze_deal.py tests/test_product_context.py tests/test_add_interaction.py tests/test_tool_surfaces.py tests/test_mcpb_manifest.py -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-strategy-targeted`:
+    74 passed, 1 warning.
   - `pytest tests/test_product_context.py tests/test_add_interaction.py tests/test_tool_surfaces.py tests/test_mcpb_manifest.py tests/test_config_writer.py -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-docx-targeted`:
     88 passed, 1 warning.
   - `pytest -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-docx-full-rerun`:
     689 passed, 1 warning.
+  - `pytest -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-strategy-full`:
+    691 passed, 1 warning.
   - `ruff check .`:
     passed.
   - `mcpb validate mcpb\manifest.json`:

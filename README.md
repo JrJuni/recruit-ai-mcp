@@ -692,6 +692,11 @@ The result includes:
 - a summary of current qualification health
 - concrete responses per weak dimension
 - a recommended agenda for the next meeting
+
+When product context has been indexed, `analyze_deal` may use bounded
+seller-side snippets to improve product-fit and positioning advice. It stores
+only product-context reference metadata with the generated strategy, not raw
+product documents.
 - persisted `bd_strategy` when the tool succeeds
 
 ---

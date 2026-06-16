@@ -1661,9 +1661,11 @@ def analyze_deal(deal_id: str) -> dict:
     Use this only when the user explicitly asks for generated strategy prose,
     next-meeting strategy, or wants bd_strategy persisted. It calls the
     configured server-side LLM and may write the generated strategy back to the
-    deal. For routine status/risk/uncertainty review, use get_deal_review. For
-    missing-info prioritization, use get_deal_gaps. Do not call this just
-    because the user asks "how is this deal going?"; start with get_deal_review.
+    deal. If product context is indexed, it may use bounded seller-side snippets
+    for positioning context and stores only refs metadata. For routine
+    status/risk/uncertainty review, use get_deal_review. For missing-info
+    prioritization, use get_deal_gaps. Do not call this just because the user
+    asks "how is this deal going?"; start with get_deal_review.
     Intent alias: strategy.analyze.
     """
     try:
@@ -1674,6 +1676,7 @@ def analyze_deal(deal_id: str) -> dict:
             mongo=_context.mongo(),
             llm=_context.llm_provider(),
             cfg=_context.config(),
+            embedding_provider=_context.embedding_provider(),
             deal_id=deal_id,
         )
     except Exception as exc:
