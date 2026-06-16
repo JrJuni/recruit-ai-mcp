@@ -57,13 +57,13 @@ available.
 
 ### MCP Tool Contracts
 
-The Python server keeps all 38 handler functions available internally, but MCP
+The Python server keeps all 41 handler functions available internally, but MCP
 clients see a config-filtered tool surface:
 
 - `tools.surface: auto` resolves from the effective profile.
 - `sample` exposes 24 tools for bundled/local personal sample mode.
-- `standard` exposes 35 tools for normal MongoDB-backed operation.
-- `developer` exposes all 38 tools, including demo database seed/cleanup.
+- `standard` exposes 38 tools for normal MongoDB-backed operation.
+- `developer` exposes all 41 tools, including demo database seed/cleanup.
 - Invalid `tools.surface` config exposes only `config_doctor` and
   `update_config` so setup can be diagnosed and repaired.
 
@@ -71,7 +71,10 @@ clients see a config-filtered tool surface:
 |---|---|---|---|---|
 | `config_doctor` | None | `offline` | `ok`, `profile`, `generated_at`, `summary`, `checks`, `next_actions` | Read only; checks config, storage readiness, vector-search mode, and LLM provider readiness without LLM calls, embeddings, or writes. The default path may perform a bounded storage ping; `offline=true` skips it |
 | `get_tool_catalog` | None | `include_hidden` | `ok`, `resolved_tool_surface`, `visible_tool_count`, `registered_tool_count`, `tools`, `categories`, `tool_aliases`, `intent_groups`, `tool_selection_guide`, `surfaces`, `usage_hint` | Read only; lists the current profile-filtered tool surface and optional hidden/developer-only tools. Each tool row includes `canonical_tool`, `namespace`, and `intent_alias`; aliases are discovery metadata, not alternate callable tool names. Also groups tools by user intent so host apps can recover when tool search returns only a truncated subset |
-| `update_config` | None | `dry_run`, `confirmed_by_user`, `llm_provider`, `chatgpt_oauth_model`, `openai_api_model`, `reporting_output_dir`, `reporting_timezone`, `reporting_language`, `tools_surface` | `ok`, `command`, `user_config_path`, `dry_run`, `changed_fields`, `doctor`, `storage_written`, `backup_path` | Dry-run-first local file write. Applies only allowlisted non-secret settings to `~/.deal-intel/config.yaml`; real writes require `confirmed_by_user=true`; rejects MongoDB URIs and API-key shaped values |
+| `update_config` | None | `dry_run`, `confirmed_by_user`, `llm_provider`, `chatgpt_oauth_model`, `openai_api_model`, `reporting_output_dir`, `reporting_timezone`, `reporting_language`, `tools_surface`, `product_context_source_dirs` | `ok`, `command`, `user_config_path`, `dry_run`, `changed_fields`, `doctor`, `storage_written`, `backup_path` | Dry-run-first local file write. Applies only allowlisted non-secret settings to `~/.deal-intel/config.yaml`; real writes require `confirmed_by_user=true`; rejects MongoDB URIs and API-key shaped values. `product_context_source_dirs` accepts semicolon-separated paths or a JSON array string and stores them as `product_context.source_dirs`; cache paths remain engine-managed |
+| `add_product_context_note` | `title`, `content` | `source_name`, `dry_run`, `confirmed_by_user` | `ok`, `dry_run`, `enabled`, `source_dir`, `managed_notes_dir`, `source_path`, `source_name`, `title`, `bytes`, `secret_scan`, `storage_written`, `warnings`, `next_actions` | Dry-run-first local file write for pasted seller-side product/solution notes. Apply mode writes a managed Markdown note under the configured product-context source directory and requires `confirmed_by_user=true`. It rejects secret-shaped content, does not call LLMs or embeddings, does not write MongoDB, does not index automatically, and does not return the full raw note content |
+| `index_product_context` | None | `source_dir`, `force_rebuild`, `dry_run` | `ok`, `dry_run`, `enabled`, `source_dirs`, `cache_dir`, `manifest_path`, `chunks_path`, `parser_version`, `file_types`, `counts`, `warnings`, `errors`, `storage_written` | Dry-run-first local file/cache tool for seller-side product and solution knowledge. It scans configured or explicit source directories, supports `txt`, `md`, `json`, `csv`, and `pdf`, warns for Office files, skips secret-shaped content, embeds chunks only in apply mode, and writes only local product-context cache files. It does not write MongoDB, call an LLM, or store raw docs in deals |
+| `get_product_context` | `query` | `limit` | `ok`, `query`, `cache_dir`, `result_count`, `results`, `warnings` | Read only; retrieves bounded seller-side product-context snippets from the local cache using embeddings. Results include `doc_id`, `chunk_id`, source metadata, score, and snippet only. It does not return full raw product documents, secrets, deal evidence, contacts, or embeddings |
 | `get_qualification_templates` | None | `template_key`, `include_dimensions` | `ok`, `templates`, `count`, `usage_hint` | Read only; returns bundled qualification framework templates and validation guidance. No DB access, LLM calls, config writes, or embedding work |
 | `validate_qualification_framework` | None | `template_key`, `framework_json` | `ok`, `source`, `framework`, `errors`, `warnings`, `usage_hint` | Read only; validates a built-in or user-provided qualification framework payload using the static validator. No file writes, DB access, LLM calls, or embedding work. Secret-shaped strings are rejected without echoing the raw input |
 | `update_qualification_framework` | None | `template_key`, `framework_json`, `copy_as_key`, `copy_display_name`, `dry_run`, `confirmed_by_user`, `set_active` | `ok`, `dry_run`, `user_config_path`, `framework_key`, `changed_fields`, `storage_written`, `backup_path`, `restart_required`, `validation`, `warnings`, `preset_immutable`, `stores_framework` | Dry-run-first local file write. Built-in presets are immutable: selecting a preset only changes `qualification.active_framework`; custom edits must use `copy_as_key` or a non-preset `framework_json` key. Stores validated non-secret custom framework config under `~/.deal-intel/config.yaml`; real writes require `confirmed_by_user=true`; does not recompute historical deals, call LLMs, access MongoDB, or update embeddings |
@@ -82,7 +85,7 @@ clients see a config-filtered tool surface:
 | `backfill_qualification_reextract` | None | `limit`, `max_llm_calls`, `include_unconfirmed`, `include_unhashed`, `dry_run`, `confirmed_by_user` | `ok`, `dry_run`, `mode`, `llm_calls`, `storage_written`, `framework`, `summary`, `candidates`, `selected_candidates`, `skipped`, `results`, `errors`, `warnings` | Dry-run-first maintenance tool. Re-extracts active-framework evidence from historical interaction content only in apply mode; responses never include raw content; default apply cap is 30 LLM calls. Real writes require `dry_run=false` and `confirmed_by_user=true` |
 | `create_deal` | `company` | `industry`, `industry_tags`, `customer_segment`, `deal_size_amount`, `deal_size_currency`, `deal_size_status`, `deal_size_low_amount`, `deal_size_high_amount`, `deal_size_note`, `expected_close_date` | `ok`, `deal_id`, `company`, `industry`, `industry_tags`, `customer_segment`, deal value fields, `expected_close_date`, `expected_close_date_source`, `taxonomy_warnings`, optional `analytics_snapshot` | Validates the initial deal-value classification, normalizes industry metadata, applies the configured close-date default when omitted, upserts one deal, initializes `discovery` stage history, and attempts a non-blocking analytics snapshot |
 | `add_meeting` | `deal_id`, `date`, `raw_notes` | None | `ok`, `interaction_id`, `meeting_id`, `summary`, `meddpicc`, `meddpicc_latest`, `customer_themes`, `stage_suggestion`, `embedding_stored`, `usage`, `usage_summary`, optional `analytics_snapshot` | Deprecated developer-surface compatibility alias over `add_interaction` with `interaction_type: meeting`. Calls LLM, writes an `interaction_type: meeting` record under `deal.interactions`, stores `llm_usage` metadata, recalculates deal signals, optionally stores an embedding for MongoDB-backed data, upserts the deal, and attempts a non-blocking analytics snapshot. New clients should call `add_interaction` directly |
-| `add_interaction` | `deal_id`, `date`, `interaction_type`, `direction`, `content` | `participants`, `subject`, `source_confidence`, `custom_fields_json` | `ok`, `interaction_id`, `meeting_id`, `interaction_type`, `direction`, `source_confidence`, `source_policy`, `participants`, `subject`, `summary`, `qualification`, `unconfirmed_qualification`, `qualification_latest`, `meddpicc`, `unconfirmed_meddpicc`, `meddpicc_latest`, `customer_themes`, `unconfirmed_customer_themes`, `scoring_applied`, `stage_suggestion`, `embedding_stored`, `usage`, `usage_summary`, optional `analytics_snapshot` | Calls LLM, appends a canonical `deal.interactions` record, stores source metadata, `raw_content`, and `llm_usage` metadata, recalculates deal signals only when the source is scoring-eligible, optionally stores an embedding for MongoDB-backed data, upserts the deal, and attempts a non-blocking analytics snapshot. `source_policy` explains whether the input became confirmed scoring evidence or stored-unconfirmed context. `outbound_unconfirmed` and `internal` evidence is stored but does not update qualification health or customer-theme counts by default. `meddpicc*` fields are compatibility aliases for the default MEDDPICC framework and legacy records. Custom interaction types must be registered in config |
+| `add_interaction` | `deal_id`, `date`, `interaction_type`, `direction`, `content` | `participants`, `subject`, `source_confidence`, `custom_fields_json` | `ok`, `interaction_id`, `meeting_id`, `interaction_type`, `direction`, `source_confidence`, `source_policy`, `participants`, `subject`, `summary`, `qualification`, `unconfirmed_qualification`, `qualification_latest`, `meddpicc`, `unconfirmed_meddpicc`, `meddpicc_latest`, `customer_themes`, `unconfirmed_customer_themes`, `scoring_applied`, `stage_suggestion`, `embedding_stored`, `product_context_used`, `product_context_ref_count`, `product_context_refs`, `warnings`, `usage`, `usage_summary`, optional `analytics_snapshot` | Calls LLM, appends a canonical `deal.interactions` record, stores source metadata, `raw_content`, and `llm_usage` metadata, recalculates deal signals only when the source is scoring-eligible, optionally stores an embedding for MongoDB-backed data, upserts the deal, and attempts a non-blocking analytics snapshot. When product context is indexed and enabled, it may retrieve bounded seller-side snippets before the extraction prompt; only `product_context_refs` metadata is stored on the interaction, never raw product text. Product context can help interpret product fit, terminology, value props, competitors, and disqualifiers, but must not be treated as customer-stated evidence, customer-theme evidence, BI metric input, or deal summary embedding input. `source_policy` explains whether the input became confirmed scoring evidence or stored-unconfirmed context. `outbound_unconfirmed` and `internal` evidence is stored but does not update qualification health or customer-theme counts by default. `meddpicc*` fields are compatibility aliases for the default MEDDPICC framework and legacy records. Custom interaction types must be registered in config |
 | `update_stage` | `deal_id`, `new_stage` | `actual_close_date` | `ok`, `deal_id`, `old_stage`, `new_stage`, `actual_close_date`, `days_in_previous_stage`, `stuck_threshold_days`, optional `analytics_snapshot` | Appends stage history, records the actual terminal date, recalculates stage-aware qualification gaps, upserts the deal, and attempts a non-blocking analytics snapshot |
 | `update_deal` | `deal_id` | `confirmed_by_user`, value fields, `company`, `industry`, `industry_tags`, `customer_segment`, `expected_close_date`, `actual_close_date`, `close_reason`, `update_note` | `ok`, `deal_id`, `company`, old/new value snapshots, old/new metadata snapshots, `changed_fields`, `changed_value_fields`, `changed_metadata_fields`, `storage_written`, `taxonomy_warnings` | Requires explicit user confirmation, updates confirmed value/metadata fields only, normalizes industry metadata, appends value/metadata history entries, and upserts the deal |
 | `archive_deal` | `deal_id`, `expected_company`, `archive_reason` | `confirmed_by_user` | `ok`, `deal_id`, `company`, `already_archived`, `old_deal`, `new_deal`, `storage_written` | Requires explicit confirmation and exact company match, marks the deal archived, appends archive history, and hides it from default BI/read paths |
@@ -272,6 +275,33 @@ interaction content, contacts, or embeddings.
 - `warming_up: true`, `retryable: true` while the local model is loading
 - `warming_up: false` with `CONFIG_ERROR` when the embedding dependency is absent
 - `warming_up: false` with `UPSTREAM_ERROR` when warmup fails or stalls
+
+`product_context` is a local seller-side RAG cache, separate from deal evidence.
+Default config:
+
+```yaml
+product_context:
+  enabled: true
+  source_dirs:
+    - ~/.deal-intel/product-context/sources
+  cache_dir: ~/.deal-intel/product-context/cache
+  retrieval:
+    top_k: 5
+    max_context_chars: 6000
+  file_types:
+    - txt
+    - md
+    - json
+    - csv
+    - pdf
+```
+
+The first implementation supports `txt`, `md`, `json`, `csv`, and `pdf`.
+`docx`, `pptx`, and `xlsx` return unsupported-file warnings rather than being
+parsed. Cache documents track source hash, file size, modified time, parser
+version, chunk count, and embedding status. Unchanged files are reused.
+Secret-shaped product files are skipped. `add_interaction` stores only
+`product_context_refs` metadata, not raw product snippets.
 
 ### Test Baseline
 

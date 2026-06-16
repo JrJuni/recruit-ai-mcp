@@ -38,7 +38,7 @@ def test_mcpb_manifest_tools_match_registered_surface_contracts() -> None:
     contract_tool_names = [contract.name for contract in list_tool_surface_contracts()]
 
     assert manifest_tool_names == contract_tool_names
-    assert len(manifest_tool_names) == 38
+    assert len(manifest_tool_names) == 41
 
 
 def test_mcpb_manifest_describes_meddpicc_as_default_framework() -> None:
@@ -69,6 +69,7 @@ def test_mcpb_manifest_user_config_defaults_to_full_and_is_secret_safe() -> None
     assert user_config["storage_backend"]["required"] is False
     assert user_config["tools_surface"]["default"] == "auto"
     assert user_config["reporting_language"]["default"] == "en"
+    assert user_config["product_context_source_dirs"]["required"] is False
     assert user_config["mongodb_uri"]["required"] is False
     assert user_config["mongodb_uri"]["sensitive"] is True
     assert user_config["llm_provider"]["default"] == "chatgpt_oauth"
@@ -102,6 +103,10 @@ def test_mcpb_manifest_env_maps_installer_fields_to_runtime_config() -> None:
     assert env["DEAL_INTEL_STORAGE_BACKEND"] == "${user_config.storage_backend}"
     assert env["DEAL_INTEL_TOOLS_SURFACE"] == "${user_config.tools_surface}"
     assert env["DEAL_INTEL_REPORTING_LANGUAGE"] == "${user_config.reporting_language}"
+    assert (
+        env["DEAL_INTEL_PRODUCT_CONTEXT_SOURCE_DIRS"]
+        == "${user_config.product_context_source_dirs}"
+    )
     assert env["DEAL_INTEL_LLM_PROVIDER"] == "${user_config.llm_provider}"
     assert env["DEAL_INTEL_USE_CHATGPT_OAUTH"] == "${user_config.use_chatgpt_oauth}"
     assert env["ANTHROPIC_API_KEY"] == "${user_config.anthropic_api_key}"

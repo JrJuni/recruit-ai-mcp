@@ -863,8 +863,8 @@ Implemented:
 - Updated tool-surface contracts and MCPB manifest tool declarations.
 - Current runtime tool counts:
   - `sample=24`
-  - `standard=35`
-  - `developer=38`
+  - `standard=38`
+  - `developer=41`
 
 Recommended host flow:
 

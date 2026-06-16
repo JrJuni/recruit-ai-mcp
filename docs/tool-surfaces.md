@@ -153,8 +153,8 @@ Behavior:
 Current exposed counts:
 
 - `sample`: 24 tools
-- `standard`: 35 tools
-- `developer`: 38 tools
+- `standard`: 38 tools
+- `developer`: 41 tools
 
 Implementation notes:
 

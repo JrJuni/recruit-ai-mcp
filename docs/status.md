@@ -12,6 +12,90 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-16
 
+### Product / solution context layer
+
+Implemented:
+
+- Added a local seller-side product context cache under
+  `~/.deal-intel/product-context`.
+- Added config defaults for source dirs, cache dir, retrieval limits, and first
+  supported file types: `txt`, `md`, `json`, `csv`, and `pdf`.
+- Added safe source-folder configuration for product context:
+  - `update_config(product_context_source_dirs=...)`
+  - `DEAL_INTEL_PRODUCT_CONTEXT_SOURCE_DIRS` for MCPB/runtime env injection
+  - `config show` now surfaces the effective product-context source dirs.
+  - Cache location remains engine-managed by default.
+- Added `src/deal_intel/product_context.py` for scanning, parsing, chunking,
+  secret scanning, embedding, cache reuse, and retrieval.
+- Added MCP tools:
+  - `add_product_context_note`
+  - `index_product_context`
+  - `get_product_context`
+- Added tool catalog grouping and intent aliases:
+  - `context.note.add`
+  - `context.index`
+  - `context.get`
+- Added managed note intake for pasted product/solution text.
+  - `add_product_context_note` is dry-run-first and writes only managed
+    Markdown source files under the configured product-context source
+    directory.
+  - Apply mode requires `confirmed_by_user=true`.
+  - The tool rejects secret-shaped content and does not call LLMs, embeddings,
+    MongoDB, or indexing automatically.
+- Added user/agent-facing UX guidance in `README.md` and `AI_START_HERE.md`
+  for the two normal product-context flows:
+  folder-based docs and pasted managed notes.
+- Connected product context to `add_interaction`.
+  - The LLM extraction prompt can receive a bounded seller/product context
+    block when relevant chunks are indexed.
+  - The prompt explicitly states that product context is seller-side knowledge,
+    not customer-stated evidence.
+  - Stored interactions keep only `product_context_refs` metadata, not raw
+    product snippets.
+
+Guardrails:
+
+- Product context does not directly increase qualification scores.
+- Product context is not counted as customer-theme evidence.
+- Product context is not mixed into deal `summary_embedding`.
+- Product context is not used in BI/report metric calculation paths.
+- Secret-shaped source files are skipped.
+- Secret-shaped pasted notes are rejected before writing.
+- Office files (`docx`, `pptx`, `xlsx`) are warning-only for the first pass.
+
+Validation so far:
+
+- `pytest tests/test_product_context.py tests/test_add_interaction.py tests/test_tool_surfaces.py tests/test_mcpb_manifest.py -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-targeted`:
+  64 passed, 1 warning.
+- `pytest tests/test_product_context.py tests/test_add_interaction.py tests/test_tool_surfaces.py tests/test_mcpb_manifest.py -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-targeted-rerun`:
+  64 passed, 1 warning.
+- `pytest -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-full-rerun`:
+  678 passed, 1 warning.
+- `ruff check .`:
+  passed.
+- `mcpb validate mcpb\manifest.json`:
+  passed.
+- `deal-intel smoke-natural-questions --as-of 2026-06-10`:
+  OK true, 12/12 questions passed.
+- `pytest tests/test_config_writer.py tests/test_config_doctor.py tests/test_env_config.py tests/test_product_context.py tests/test_mcpb_manifest.py -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-config`:
+  49 passed, 1 warning.
+- Targeted Ruff for config/product-context setting files:
+  passed.
+- `pytest tests/test_product_context.py tests/test_tool_surfaces.py tests/test_mcpb_manifest.py -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-note`:
+  56 passed, 1 warning.
+- `pytest tests/test_config_doctor.py tests/test_sample_data.py tests/test_tool_surfaces.py tests/test_mcpb_manifest.py -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-note-counts`:
+  65 passed, 1 warning.
+- `pytest -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-note-full-rerun`:
+  688 passed, 1 warning.
+- Targeted Ruff for product-context note files:
+  passed.
+- `ruff check .`:
+  passed.
+- `mcpb validate mcpb\manifest.json`:
+  passed.
+- `deal-intel smoke-natural-questions --as-of 2026-06-10`:
+  OK true, 12/12 questions passed.
+
 ### QF-11 custom framework end-to-end smoke
 
 Implemented:
@@ -127,8 +211,8 @@ Implemented:
 - Moved `get_customer_themes` from the legacy Mongo aggregation path onto the
   restricted `list_deals_for_metrics()` read path.
 - Exposed `get_customer_themes` in sample mode so customer-theme ranking starts
-  from the same tool in sample/full profiles. Current counts are `sample=24`,
-  `standard=35`, `developer=38`.
+  from the same tool in sample/full profiles. Counts at that QF-9 checkpoint
+  were `sample=24`, `standard=35`, `developer=38`.
 
 Validation:
 
@@ -192,7 +276,8 @@ Implemented:
     uses the dedicated raw-content maintenance read path.
   - Responses never include raw interaction content.
 - Updated MCP tool-surface contracts and MCPB manifest tool declarations.
-- Current surface counts are `sample=24`, `standard=35`, `developer=38`.
+- Surface counts at that QF-7c checkpoint were `sample=24`, `standard=35`,
+  `developer=38`.
 
 Validation:
 
@@ -207,8 +292,8 @@ Validation:
 - `ruff check .`:
   passed.
 - Runtime registration smoke:
-  developer surface exposes 38 tools and includes `backfill_qualification` plus
-  `backfill_qualification_reextract`.
+  developer surface exposed 38 tools at that checkpoint and included
+  `backfill_qualification` plus `backfill_qualification_reextract`.
 
 ### QF-7b qualification LLM re-extraction backfill
 

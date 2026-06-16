@@ -162,10 +162,63 @@ Embedding work is used for:
 - storing deal-level summary embeddings after meetings/interactions in
   MongoDB-backed mode
 - semantic `search_deals`
+- indexing and retrieving the local seller-side product context cache
 
 Embedding work is not used in BI/reporting paths.
 
 Local sample mode does not support semantic search in the first MVP.
+
+### Product / Solution Context
+
+Product context is a seller-side RAG layer, not customer evidence.
+
+It exists so interaction extraction can understand the seller's product names,
+value propositions, ICP, integrations, competitors, disqualifiers, and
+positioning without treating product collateral as something the customer said.
+
+Default config:
+
+```yaml
+product_context:
+  enabled: true
+  source_dirs:
+    - ~/.deal-intel/product-context/sources
+  cache_dir: ~/.deal-intel/product-context/cache
+  retrieval:
+    top_k: 5
+    max_context_chars: 6000
+  file_types: [txt, md, json, csv, pdf]
+```
+
+Ownership:
+
+- `src/deal_intel/product_context.py` scans, parses, chunks, secret-scans,
+  embeds, caches, retrieves local product context, and writes managed
+  product-context notes from pasted host-app text.
+- `add_product_context_note` is the dry-run-first note writer for pasted
+  product/solution text. Apply mode writes only a managed Markdown source file;
+  it does not index automatically.
+- `index_product_context` is the dry-run-first indexing tool. Apply mode writes
+  only local cache files.
+- `get_product_context` reads bounded snippets and source metadata from the
+  local cache.
+- `add_interaction` opportunistically retrieves relevant product context before
+  the LLM extraction prompt and stores only `product_context_refs` metadata on
+  the interaction.
+
+Guardrails:
+
+- Product context must not directly increase qualification scores.
+- Product context must not be counted as customer-theme evidence.
+- Product context must not be mixed into deal `summary_embedding`.
+- BI, report, metric, and dashboard calculation paths must not use product
+  context for numeric outputs.
+- Tool responses return snippets, not full raw product documents, and files
+  with secret-shaped content are skipped.
+
+Office formats (`docx`, `pptx`, `xlsx`) are intentionally warning-only in the
+first implementation. Add parsers later behind the same `product_context.py`
+boundary rather than leaking parser details into tool handlers.
 
 ## Developer Navigation Map
 
@@ -215,6 +268,9 @@ notes, raw interaction content, contacts, or vectors.
 | `config_doctor` | `config.doctor` | `config_doctor.py` | effective config, `offline` | secret-safe readiness report; optional bounded storage ping | `tests/test_config_doctor.py`, `tests/test_cli_config_profiles.py` | No LLM calls, no secrets, no writes. |
 | `get_tool_catalog` | `catalog.tools` | `mcp_server.py`, `tool_surfaces.py` | effective tool surface | visible tools, intent groups, selection guide, alias metadata | `tests/test_tool_surfaces.py`, `tests/test_mcpb_manifest.py` | Keep counts derived from contracts, not hardcoded docs. |
 | `update_config` | `config.update` | `config_writer.py` | safe non-secret fields | local user-config write only when confirmed/apply path allows | `tests/test_config_writer.py`, `tests/test_config_doctor.py` | Reject secret-shaped values and raw API keys/URIs. |
+| `add_product_context_note` | `context.note.add` | `product_context.py`, `tools/add_product_context_note.py` | pasted product/solution text, dry-run/apply flags | writes a managed Markdown note under the configured source dir only when confirmed | `tests/test_product_context.py`, `tests/test_tool_surfaces.py`, `tests/test_mcpb_manifest.py` | Dry-run by default; reject secret-shaped content; do not index automatically or return raw content. |
+| `index_product_context` | `context.index` | `product_context.py`, `tools/index_product_context.py` | configured or explicit source directory, dry-run/apply flags | scans seller-side product docs, reports unchanged/skipped/indexed counts, writes local cache only in apply mode | `tests/test_product_context.py`, `tests/test_tool_surfaces.py`, `tests/test_mcpb_manifest.py` | Dry-run by default; skip secret-shaped files; do not write DB data. |
+| `get_product_context` | `context.get` | `product_context.py`, `tools/get_product_context.py` | natural-language query, optional limit | bounded product-context snippets and source metadata | `tests/test_product_context.py`, `tests/test_add_interaction.py` | Return snippets and refs only, never full raw docs or secrets. |
 | `get_qualification_templates` | `framework.templates` | `qualification_config.py`, `schema/qualification_framework.py` | optional template filters | built-in/custom framework templates | `tests/test_qualification_config.py`, `tests/test_qualification_framework.py` | Built-in presets are immutable recovery anchors. |
 | `validate_qualification_framework` | `framework.validate` | `schema/qualification_framework.py` | framework JSON/YAML or template key | validation report, guardrail warnings | `tests/test_qualification_framework.py` | Validate before config writes; reject secret-like strings. |
 | `update_qualification_framework` | `framework.update` | `qualification_config.py`, `config_writer.py` | custom framework payload | dry-run-first user config write | `tests/test_qualification_config.py`, `tests/test_config_writer.py` | Never overwrite built-in framework keys. |
@@ -300,6 +356,7 @@ model.
 |---|---|---|---|---|---|
 | Config / Diagnostics | Setup, profile, tool discovery, safe config changes | `config_doctor`, `get_tool_catalog`, `update_config` | `config_doctor.py`, `config_writer.py`, `tool_surfaces.py`, `mcp_server.py` | `update_config` writes non-secret local config only | Keep these stable and visible in every profile; they are the first-run recovery path. |
 | Intake | Turn new customer evidence into structured deal intelligence | `create_deal`, `add_interaction`, developer-only `add_meeting` alias | `tools/create_deal.py`, `tools/add_interaction.py`, `schema/interactions.py`, `schema/qualification_extraction.py`, `schema/meddpicc.py`, `schema/customer_themes.py` | DB writes; `add_interaction` calls server-side LLM and may update embeddings in Mongo mode | Active framework extraction now happens here. Deal review, deal gaps, list views, `get_metrics(pipeline_health)`, `get_insights(pipeline_overview)`, reports, data exports, analytics snapshots, search result metadata, and weekly Atlas specs now read `qualification_latest`; MEDDPICC-specific insight aggregations remain labeled legacy compatibility paths. |
+| Product Context | Save, index, and retrieve seller-side product/solution knowledge for extraction context | `add_product_context_note`, `index_product_context`, `get_product_context`; opportunistic `add_interaction` retrieval | `product_context.py`, `tools/add_product_context_note.py`, `tools/index_product_context.py`, `tools/get_product_context.py`, `tools/add_interaction.py` | Local source-note writes in confirmed note apply mode; local cache writes in indexing apply mode; embedding calls for indexing/search; no DB writes | Keep separate from customer evidence, user memory, BI metrics, and deal summary embeddings. |
 | Lifecycle / CRUD | Correct, move, archive, restore, delete, or migrate deal records | `update_stage`, `update_deal`, `archive_deal`, `restore_deal`, `delete_deal`, `migrate_local_data` | `tools/update_stage.py`, `tools/update_deal.py`, `tools/deal_lifecycle.py`, `tools/migrate_local_data.py` | DB writes; destructive paths require confirmation/dry-run/audit constraints | Keep confirmation policy explicit. Framework abstraction should not weaken lifecycle safety gates. |
 | Read / Query | Answer routine deal, pipeline, gap, and usage questions | `get_deal`, `list_deals`, `get_metrics`, `get_deal_gaps`, `get_deal_review`, `get_usage`, legacy `get_insights` | `tools/get_*.py`, `schema/metrics.py`, `schema/pipeline_metrics.py`, `schema/deal_gaps.py`, `schema/deal_review.py`, `usage.py` | Read-only; no LLM calls | This is the default host-app answer surface. Keep deterministic and projection-safe. |
 | Export / Artifacts | Produce local report or spreadsheet files | `export_report`, `export_data` | `tools/export_report.py`, `tools/export_data.py`, `reports/*` | Local file writes; no DB writes; no LLM calls | `export_report` is human narrative/data-pack; `export_data` is CSV ledger. Do not collapse them back together. |
@@ -358,6 +415,35 @@ In practice:
 2. design the future customer-theme workflow shape without breaking tools yet;
 3. implement qualification framework abstraction;
 4. consolidate/rename tool surfaces in a compatibility-aware pass.
+
+### Product Context Data Flow
+
+Product context flows separately from deal evidence:
+
+1. User places seller-side docs under
+   `~/.deal-intel/product-context/sources`, passes a source directory to
+   `index_product_context`, or saves pasted host-app text through
+   `add_product_context_note`.
+2. User runs `index_product_context`.
+3. `product_context.index_product_context(...)` scans supported files, skips
+   secret-shaped content, chunks text, embeds chunks, and writes a local
+   manifest/chunk cache under `~/.deal-intel/product-context/cache`.
+4. `get_product_context` embeds the query and returns only bounded snippets
+   plus `doc_id`, `chunk_id`, source name, file type, and score metadata.
+5. `add_interaction` uses the interaction content as a retrieval query before
+   calling the extraction LLM. The prompt marks the snippets as seller-side
+   product knowledge and explicitly says not to treat them as customer-stated
+   evidence.
+6. The saved interaction stores `product_context_refs` only. Raw product text
+   is not copied into the deal, report rows, list views, customer themes, or
+   deal embeddings.
+
+When editing this path, protect these tests first:
+
+- `tests/test_product_context.py`
+- `tests/test_add_interaction.py`
+- `tests/test_tool_surfaces.py`
+- `tests/test_mcpb_manifest.py`
 
 ### Write and Lifecycle
 

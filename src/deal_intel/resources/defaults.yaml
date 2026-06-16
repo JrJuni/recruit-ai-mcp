@@ -50,6 +50,25 @@ meddpicc:
 embedding:
   model: all-MiniLM-L6-v2   # 384 dims, ~90MB first download, CPU friendly.
 
+# Seller-side product/solution knowledge used as RAG context for LLM tools.
+# This is intentionally separate from customer evidence: it may guide
+# interpretation, but must not directly raise qualification scores or customer
+# theme counts.
+product_context:
+  enabled: true
+  source_dirs:
+    - ~/.deal-intel/product-context/sources
+  cache_dir: ~/.deal-intel/product-context/cache
+  retrieval:
+    top_k: 5
+    max_context_chars: 6000
+  file_types:
+    - txt
+    - md
+    - json
+    - csv
+    - pdf
+
 # Pipeline stuck and expected-close defaults, in days.
 # Stage-specific stuck thresholds override the default when present.
 pipeline:

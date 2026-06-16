@@ -21,6 +21,9 @@
     {"name": "config_doctor", "description": "Diagnose profile, storage, vector search, and LLM readiness without writes or LLM calls."},
     {"name": "get_tool_catalog", "description": "List the current Deal Intelligence tool surface when host tool search shows only a truncated subset."},
     {"name": "update_config", "description": "Preview or apply safe non-secret user-config changes such as LLM provider/model, report output directory, timezone, and tool surface."},
+    {"name": "add_product_context_note", "description": "Dry-run-first local writer for pasted seller-side product and solution notes before product-context indexing."},
+    {"name": "index_product_context", "description": "Dry-run-first local RAG cache builder for seller-side product and solution documents."},
+    {"name": "get_product_context", "description": "Retrieve bounded seller-side product context snippets from the local RAG cache."},
     {"name": "get_qualification_templates", "description": "List built-in qualification framework templates such as MEDDPICC, simple B2B, pilot/PoC, enterprise procurement, and product-led sales."},
     {"name": "validate_qualification_framework", "description": "Validate a candidate qualification framework template or JSON/YAML payload without writing config."},
     {"name": "update_qualification_framework", "description": "Dry-run-first config update for custom qualification frameworks; built-in presets are immutable and can be copied with copy_as_key."},
@@ -85,6 +88,12 @@
       "default": "en",
       "required": false
     },
+    "product_context_source_dirs": {
+      "type": "string",
+      "title": "Product/solution document folders",
+      "description": "Optional semicolon-separated folders containing your product, solution, ICP, pricing, or positioning docs for seller-side RAG context. Leave blank to use ~/.deal-intel/product-context/sources.",
+      "required": false
+    },
     "mongodb_uri": {
       "type": "string",
       "title": "MongoDB Atlas URI",
@@ -132,6 +141,7 @@
         "DEAL_INTEL_STORAGE_BACKEND": "${user_config.storage_backend}",
         "DEAL_INTEL_TOOLS_SURFACE": "${user_config.tools_surface}",
         "DEAL_INTEL_REPORTING_LANGUAGE": "${user_config.reporting_language}",
+        "DEAL_INTEL_PRODUCT_CONTEXT_SOURCE_DIRS": "${user_config.product_context_source_dirs}",
         "ANTHROPIC_API_KEY": "${user_config.anthropic_api_key}",
         "OPENAI_API_KEY": "${user_config.openai_api_key}",
         "DEAL_INTEL_LLM_PROVIDER": "${user_config.llm_provider}",

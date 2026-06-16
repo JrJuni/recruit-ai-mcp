@@ -217,6 +217,7 @@ def test_update_config_settings_dry_run_does_not_write(tmp_path) -> None:
         openai_api_model="gpt-5.4-mini",
         reporting_output_dir="~/.deal-intel/reports",
         reporting_language="ko",
+        product_context_source_dirs="~/company-docs;~/solution-docs",
     )
 
     assert result["ok"] is True
@@ -228,6 +229,7 @@ def test_update_config_settings_dry_run_does_not_write(tmp_path) -> None:
         "llm.openai_api_model",
         "reporting.output_dir",
         "reporting.language",
+        "product_context.source_dirs",
     ]
 
 
@@ -268,6 +270,7 @@ def test_update_config_settings_writes_and_backs_up_existing_config(tmp_path) ->
         openai_api_model="gpt-5.4-mini",
         reporting_language="ko",
         tools_surface="standard",
+        product_context_source_dirs='["~/company-docs", "~/solution-docs"]',
     )
 
     backup = tmp_path / "config.yaml.bak.20260614-010203"
@@ -281,6 +284,10 @@ def test_update_config_settings_writes_and_backs_up_existing_config(tmp_path) ->
     assert data["llm"]["openai_api_model"] == "gpt-5.4-mini"
     assert data["reporting"]["language"] == "ko"
     assert data["tools"]["surface"] == "standard"
+    assert data["product_context"]["source_dirs"] == [
+        "~/company-docs",
+        "~/solution-docs",
+    ]
     assert data["custom"]["keep"] is True
 
 
@@ -288,6 +295,17 @@ def test_update_config_settings_rejects_secret_shaped_values(tmp_path) -> None:
     result = update_config_settings(
         config_path=tmp_path / "config.yaml",
         reporting_output_dir="mongodb+srv://secret.example",
+    )
+
+    assert result["ok"] is False
+    assert result["error_code"] == "INVALID_INPUT"
+    assert "MongoDB URI" in result["message"]
+
+
+def test_update_config_settings_rejects_secret_shaped_product_context_dir(tmp_path) -> None:
+    result = update_config_settings(
+        config_path=tmp_path / "config.yaml",
+        product_context_source_dirs="~/docs;mongodb+srv://secret.example",
     )
 
     assert result["ok"] is False

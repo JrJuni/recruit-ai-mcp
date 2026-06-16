@@ -8,6 +8,7 @@ import pytest
 
 from deal_intel import _context, mcp_server
 from deal_intel.errors import ErrorCode, MCPError
+from deal_intel.product_context import index_product_context
 from deal_intel.storage.local_personal import LOCAL_PERSONAL_DEALS_FILE
 from deal_intel.storage.local_sample import LocalSampleClient
 from deal_intel.tools import add_interaction, create_deal
@@ -39,6 +40,24 @@ class FakeMongo:
     def upsert_deal(self, deal: dict) -> None:
         self.saved = deepcopy(deal)
         self.deal = deepcopy(deal)
+
+
+class ProductContextEmbedding:
+    dimensions = 3
+    is_ready = True
+    load_error = None
+    warmup_status = {"phase": "ready", "elapsed_seconds": 0.0}
+
+    def __init__(self) -> None:
+        self.calls: list[str] = []
+
+    def embed(self, text: str) -> list[float]:
+        self.calls.append(text)
+        lowered = text.lower()
+        security_signal = any(
+            token in lowered for token in ("hipaa", "soc2", "security")
+        )
+        return [1.0 if security_signal else 0.0, 0.0, 0.0]
 
 
 def _deal() -> dict:
@@ -125,6 +144,17 @@ def _local_cfg(tmp_path) -> dict:
         },
         "reporting": {"timezone": "Asia/Seoul"},
         "meddpicc": {"weights": {}},
+    }
+
+
+def _product_context_cfg(tmp_path) -> dict:
+    return {
+        "meddpicc": {"weights": {}},
+        "product_context": {
+            "source_dirs": [str(tmp_path / "sources")],
+            "cache_dir": str(tmp_path / "cache"),
+            "retrieval": {"top_k": 1, "max_context_chars": 2000},
+        },
     }
 
 
@@ -323,6 +353,76 @@ def test_add_interaction_extracts_active_custom_qualification_framework() -> Non
         "user"
     ]
     assert "top-level `qualification` object" in llm.calls[0]["user"]
+
+
+def test_add_interaction_uses_product_context_without_storing_raw_context(
+    tmp_path,
+) -> None:
+    cfg = _product_context_cfg(tmp_path)
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    product_sentence = "Our product supports HIPAA workflows and security audit evidence."
+    (sources / "security.md").write_text(product_sentence, encoding="utf-8")
+    embedding = ProductContextEmbedding()
+    index_result = index_product_context(
+        cfg,
+        embedding_provider=embedding,
+        dry_run=False,
+    )
+    assert index_result["ok"] is True
+
+    mongo = FakeMongo(_deal())
+    llm = FakeLLM([_analysis(), "Customer asked about compliance review."])
+    result = add_interaction.handle(
+        mongo=mongo,
+        llm=llm,
+        cfg=cfg,
+        embedding_provider=embedding,
+        deal_id="deal-1",
+        date="2026-06-11",
+        interaction_type="email_thread",
+        direction="inbound",
+        content="Customer asked whether HIPAA security review is supported.",
+    )
+
+    first_prompt = llm.calls[0]["user"]
+    assert "Seller/product context:" in first_prompt
+    assert "Do not treat it as customer-stated evidence." in first_prompt
+    assert "HIPAA workflows" in first_prompt
+    assert result["product_context_used"] is True
+    assert result["product_context_ref_count"] == 1
+    assert result["warnings"] == []
+
+    assert mongo.saved is not None
+    interaction = mongo.saved["interactions"][0]
+    assert interaction["product_context_refs"] == result["product_context_refs"]
+    persisted = json.dumps(mongo.saved, ensure_ascii=False)
+    assert product_sentence not in persisted
+
+
+def test_add_interaction_without_product_context_index_keeps_existing_prompt(
+    tmp_path,
+) -> None:
+    cfg = _product_context_cfg(tmp_path)
+    mongo = FakeMongo(_deal())
+    llm = FakeLLM([_analysis(), "Customer asked about compliance review."])
+
+    result = add_interaction.handle(
+        mongo=mongo,
+        llm=llm,
+        cfg=cfg,
+        embedding_provider=ProductContextEmbedding(),
+        deal_id="deal-1",
+        date="2026-06-11",
+        interaction_type="email_thread",
+        direction="inbound",
+        content="Customer asked whether HIPAA security review is supported.",
+    )
+
+    assert "Seller/product context:" not in llm.calls[0]["user"]
+    assert result["product_context_used"] is False
+    assert result["product_context_ref_count"] == 0
+    assert result["warnings"] == []
 
 
 def test_custom_qualification_from_unconfirmed_source_is_not_scored() -> None:

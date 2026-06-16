@@ -267,7 +267,7 @@ def test_config_doctor_mcp_runtime_registers_tool(monkeypatch) -> None:
     tools = asyncio.run(mcp_server.app.list_tools())
     names = sorted(tool.name for tool in tools)
 
-    assert len(names) == 38
+    assert len(names) == 41
     assert "config_doctor" in names
     assert "update_config" in names
 
@@ -281,6 +281,7 @@ def test_update_config_mcp_wrapper_writes_safe_user_config(monkeypatch, tmp_path
         llm_provider="openai_api",
         openai_api_model="gpt-5.4-mini",
         reporting_language="ko",
+        product_context_source_dirs="~/company-docs;~/solution-docs",
     )
 
     assert dry_run["ok"] is True
@@ -293,6 +294,7 @@ def test_update_config_mcp_wrapper_writes_safe_user_config(monkeypatch, tmp_path
         llm_provider="openai_api",
         openai_api_model="gpt-5.4-mini",
         reporting_language="ko",
+        product_context_source_dirs="~/company-docs;~/solution-docs",
     )
 
     assert applied["ok"] is True
@@ -300,3 +302,6 @@ def test_update_config_mcp_wrapper_writes_safe_user_config(monkeypatch, tmp_path
     saved_config = user_config.read_text(encoding="utf-8")
     assert "openai_api" in saved_config
     assert "language: ko" in saved_config
+    assert "product_context:" in saved_config
+    assert "- ~/company-docs" in saved_config
+    assert "- ~/solution-docs" in saved_config

@@ -65,6 +65,16 @@ def load_config() -> dict:
     if reporting_language_env in _VALID_REPORT_LANGUAGES:
         config.setdefault("reporting", {})["language"] = reporting_language_env
 
+    source_dirs_env = os.environ.get("DEAL_INTEL_PRODUCT_CONTEXT_SOURCE_DIRS", "").strip()
+    if source_dirs_env:
+        source_dirs = [
+            item.strip()
+            for item in source_dirs_env.split(";")
+            if item.strip() and not _looks_secret_like(item.strip())
+        ]
+        if source_dirs:
+            config.setdefault("product_context", {})["source_dirs"] = source_dirs
+
     return config
 
 
@@ -74,3 +84,12 @@ def _deep_merge(base: dict, override: dict) -> None:
             _deep_merge(base[k], v)
         else:
             base[k] = v
+
+
+def _looks_secret_like(value: str) -> bool:
+    lowered = value.lower()
+    return (
+        "mongodb://" in lowered
+        or "mongodb+srv://" in lowered
+        or value.startswith(("sk-", "sk_", "xoxb-", "ghp_"))
+    )

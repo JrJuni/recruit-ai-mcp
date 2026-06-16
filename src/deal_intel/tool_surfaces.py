@@ -13,6 +13,7 @@ ToolCategory = Literal[
     "admin",
     "local_artifact",
     "user_memory",
+    "product_context",
     "llm_agent",
     "semantic_search",
     "demo_seed",
@@ -22,6 +23,7 @@ TOOL_INTENT_GROUP_ORDER: tuple[str, ...] = (
     "setup_and_diagnostics",
     "intake_and_deal_updates",
     "deal_review_and_pipeline",
+    "product_context",
     "customer_theme_analysis",
     "reports_and_data_exports",
     "qualification_framework_admin",
@@ -70,6 +72,18 @@ TOOL_INTENT_GROUPS: dict[str, dict] = {
             "get_deal_gaps",
             "get_deal_review",
             "get_insights",
+        ),
+    },
+    "product_context": {
+        "label": "Product context",
+        "purpose": (
+            "Index and retrieve seller-side product/solution knowledge for "
+            "RAG-assisted interpretation without treating it as customer evidence."
+        ),
+        "tools": (
+            "add_product_context_note",
+            "index_product_context",
+            "get_product_context",
         ),
     },
     "customer_theme_analysis": {
@@ -163,6 +177,26 @@ TOOL_SELECTION_GUIDE: tuple[dict, ...] = (
         "then": ["list_deals for a quick table", "export_report for a meeting-ready report"],
     },
     {
+        "intent": "product_context_setup",
+        "when_user_asks": (
+            "Use our product docs, solution deck, ICP notes, or positioning "
+            "materials as context."
+        ),
+        "primary_tool": "index_product_context",
+        "then": [
+            "add_product_context_note if the user pasted text instead of pointing to a folder",
+            "get_product_context to verify retrieval before interaction intake",
+        ],
+    },
+    {
+        "intent": "product_context_lookup",
+        "when_user_asks": (
+            "What product context is relevant to this customer, problem, or deal?"
+        ),
+        "primary_tool": "get_product_context",
+        "then": ["add_interaction will use indexed product context opportunistically"],
+    },
+    {
         "intent": "customer_theme_ranking",
         "when_user_asks": (
             "What do customers worry about most? Which decision criteria "
@@ -201,6 +235,9 @@ TOOL_INTENT_ALIASES: dict[str, tuple[str, str]] = {
     "config_doctor": ("config", "config.doctor"),
     "get_tool_catalog": ("catalog", "catalog.tools"),
     "update_config": ("config", "config.update"),
+    "add_product_context_note": ("context", "context.note.add"),
+    "index_product_context": ("context", "context.index"),
+    "get_product_context": ("context", "context.get"),
     "get_qualification_templates": ("framework", "framework.templates"),
     "validate_qualification_framework": ("framework", "framework.validate"),
     "update_qualification_framework": ("framework", "framework.update"),
@@ -301,6 +338,44 @@ MCP_TOOL_SURFACE_CONTRACTS: tuple[MCPToolSurfaceContract, ...] = (
         notes=(
             "Dry-run-first updates for safe non-secret user-config fields; "
             "does not accept MongoDB URIs or API keys."
+        ),
+    ),
+    MCPToolSurfaceContract(
+        name="add_product_context_note",
+        category="product_context",
+        surfaces=_STANDARD,
+        user_facing=True,
+        db_writes=False,
+        llm_calls=False,
+        local_file_writes=True,
+        notes=(
+            "Dry-run-first local writer for pasted seller-side product and "
+            "solution notes. Does not index automatically or return raw content."
+        ),
+    ),
+    MCPToolSurfaceContract(
+        name="index_product_context",
+        category="product_context",
+        surfaces=_STANDARD,
+        user_facing=True,
+        db_writes=False,
+        llm_calls=False,
+        local_file_writes=True,
+        notes=(
+            "Dry-run-first local RAG cache builder for seller-side product and "
+            "solution documents. Uses embeddings only when dry_run=false."
+        ),
+    ),
+    MCPToolSurfaceContract(
+        name="get_product_context",
+        category="product_context",
+        surfaces=_STANDARD,
+        user_facing=True,
+        db_writes=False,
+        llm_calls=False,
+        notes=(
+            "Read-only retrieval from local product-context cache. Returns "
+            "bounded snippets and source metadata, not raw full documents."
         ),
     ),
     MCPToolSurfaceContract(

@@ -39,6 +39,9 @@ For a Korean full-mode walkthrough aimed at non-developer users, use
   in local sample/personal storage for zero-config trials.
 - Converts messy customer evidence into structured deal fields, health signals,
   follow-up gaps, customer themes, and weekly review artifacts.
+- Lets you add seller-side product/solution context, such as ICP notes,
+  positioning, pricing notes, security claims, integrations, and competitor
+  notes, so interaction extraction can understand your product better.
 - Lets an AI host answer normal questions such as "which deal needs attention
   first?", "what are customers worried about?", or "make this week's pipeline
   report".
@@ -116,6 +119,49 @@ evaluate the tool without setup.
 
 ---
 
+## Product / solution context
+
+Customer evidence and product knowledge are intentionally separate.
+
+- Customer evidence is what prospects said in meetings, emails, interviews, or
+  calls. It can affect qualification, customer themes, and deal health.
+- Product context is seller-side knowledge: your ICP notes, product facts,
+  pricing/packaging notes, security posture, integrations, differentiators,
+  competitive notes, or disqualifiers. It helps the extraction prompt interpret
+  customer evidence, but it is not counted as customer-stated evidence.
+
+There are two normal ways to add product context.
+
+1. Put files in a folder and tell the server where that folder is:
+
+```text
+Use update_config(product_context_source_dirs="C:\path\to\product-docs")
+Then run index_product_context(dry_run=true)
+If the preview looks right, run index_product_context(dry_run=false)
+Finally, run get_product_context(query="security posture for healthcare")
+```
+
+2. Paste product/solution text into the host app and save it as a managed note:
+
+```text
+Use add_product_context_note(title="Healthcare security positioning",
+content="...", dry_run=true)
+If the preview looks right, call it again with dry_run=false and
+confirmed_by_user=true.
+Then run index_product_context and verify with get_product_context.
+```
+
+The first parser set supports `txt`, `md`, `json`, `csv`, and `pdf`. Office
+files (`docx`, `pptx`, `xlsx`) currently return warnings and are planned for a
+later parser pass.
+
+Product context is stored and cached locally under
+`~/.deal-intel/product-context` by default. Tool responses return snippets and
+source metadata, not full raw documents. Files or pasted notes with
+secret-shaped content are rejected or skipped.
+
+---
+
 ## Product profiles
 
 One repo, one package, three operating profiles:
@@ -140,12 +186,14 @@ You can still override `llm.openai_api_model` or switch `llm.provider` to
 
 MCP tools are profile-filtered by default:
 
-- `sample`: 22 zero-config/local personal tools
-- `standard`: 26 normal real-data tools
+- `sample`: zero-config/local personal tools
+- `standard`: normal real-data tools
 - `developer`: all registered tools, including demo seed/cleanup helpers
 
-Use `tools.surface: developer` or `DEAL_INTEL_TOOLS_SURFACE=developer` only
-when you intentionally want the full maintainer/debug surface.
+Use `get_tool_catalog` or `config_doctor` to inspect the current visible count
+for your profile. Use `tools.surface: developer` or
+`DEAL_INTEL_TOOLS_SURFACE=developer` only when you intentionally want the full
+maintainer/debug surface.
 
 ---
 

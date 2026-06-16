@@ -31,6 +31,7 @@ CONFIG_ENV_KEYS = (
     "DEAL_INTEL_STORAGE_BACKEND",
     "DEAL_INTEL_TOOLS_SURFACE",
     "DEAL_INTEL_REPORTING_LANGUAGE",
+    "DEAL_INTEL_PRODUCT_CONTEXT_SOURCE_DIRS",
 )
 
 
@@ -2355,6 +2356,7 @@ def _summarize_config_for_display(cfg: dict[str, Any]) -> dict[str, Any]:
     storage = _mapping(cfg.get("storage"))
     tools = _mapping(cfg.get("tools"))
     reporting = _mapping(cfg.get("reporting"))
+    product_context = _mapping(cfg.get("product_context"))
     pipeline = _mapping(cfg.get("pipeline"))
     expected_close = _mapping(pipeline.get("expected_close"))
     metrics = _mapping(cfg.get("metrics"))
@@ -2390,6 +2392,11 @@ def _summarize_config_for_display(cfg: dict[str, Any]) -> dict[str, Any]:
         "reporting": {
             "timezone": reporting.get("timezone"),
             "output_dir": reporting.get("output_dir"),
+        },
+        "product_context": {
+            "enabled": product_context.get("enabled", True),
+            "source_dirs": product_context.get("source_dirs"),
+            "cache_dir": product_context.get("cache_dir"),
         },
         "pipeline": {
             "expected_close_default_days": expected_close.get("default_days"),

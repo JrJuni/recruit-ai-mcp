@@ -69,7 +69,21 @@ Recommended implementation order:
      chart specs, smoke fixtures, and docs together.
    - Detailed execution units and verification gates live in
      [qualification-framework-v2.md](qualification-framework-v2.md).
-4. Tool namespace and customer-theme workflow cleanup.
+4. Product / solution context layer.
+   - Add seller-side product/solution knowledge as a RAG layer separate from
+     customer evidence.
+   - Default local cache:
+     `~/.deal-intel/product-context`.
+   - First integration point: `add_interaction`, so extraction can understand
+     product names, value propositions, ICP, integrations, competitors, and
+     disqualifiers without treating product docs as customer statements.
+   - First supported file types: `txt`, `md`, `json`, `csv`, `pdf`.
+   - Keep product context out of qualification scoring, customer-theme counts,
+     deal summary embeddings, BI/report metrics, and raw report outputs.
+   - Follow-up after smoke: Office parser support, optional Mongo/shared
+     product context storage, and connections to `analyze_deal`,
+     `get_deal_review`, and `export_report` if real usage needs it.
+5. Tool namespace and customer-theme workflow cleanup.
    - Revisit the tool surface through user intent rather than internal module
      boundaries.
    - Keep the major mental groups clear: Config, Intake, Lifecycle/CRUD,
@@ -79,7 +93,7 @@ Recommended implementation order:
      a clearer progressive-disclosure workflow.
    - Strengthen tool descriptions with "use this when..." and "for X, use Y
      instead" guidance to reduce host-agent confusion.
-5. MongoDB Pro Track.
+6. MongoDB Pro Track.
    - Keep Free/M0-compatible schema validation, ordinary indexes, and bounded
      doctor checks in `full`.
    - Build the paid-infra upgrade path around MongoDB M10+, Atlas Vector Search,
@@ -88,7 +102,7 @@ Recommended implementation order:
      `pro`; report the mismatch and provide the required setup action.
    - Consider change streams and time-series collections only when they
      simplify real product workflows, not because the platform supports them.
-6. Report Quality v2.
+7. Report Quality v2.
    - Treat `export_report` as meeting/manager-report generation, not a ledger
      dump.
    - Keep deterministic metrics as the source of truth, but allow host-assisted
@@ -96,7 +110,7 @@ Recommended implementation order:
      mode.
    - Prefer polished Markdown/DOCX/PDF-style output for weekly review; reserve
      CSV for ledger-style `export_data`.
-7. Deal Review Quality v2.
+8. Deal Review Quality v2.
    - Revisit review scoring after framework abstraction.
    - Separate evidence-rich but risky deals from evidence-poor deals with high
      uncertainty.
@@ -106,13 +120,13 @@ Recommended implementation order:
      evidence supports action.
    - Add corner-case synthetic datasets from realistic meetings, emails, and
      user interviews to stress the review engine.
-8. Usage and cost tracking v2.
+9. Usage and cost tracking v2.
    - Extend the v1 usage tool beyond LLM calls when useful: report generation,
      embedding/search work, MongoDB/Atlas assumptions, and maintenance
      backfills.
    - Keep cost numbers explicitly labeled as estimates unless pulled from a
      provider billing API.
-9. Full npx bootstrapper.
+10. Full npx bootstrapper.
    - Defer until the product shape is stable enough that packaging does not
      hide architecture churn.
    - Target a true no-git-clone flow: install/check/run commands that can guide
@@ -120,7 +134,7 @@ Recommended implementation order:
      startup.
    - Do not ship a thin `npx` wrapper as the main post-v1 answer if it still
      requires users to manually understand the Python install path.
-10. Post-v2 workspace/project profiles.
+11. Post-v2 workspace/project profiles.
    - Support multiple sales workspaces without editing global config by hand.
    - A workspace should bundle at least MongoDB database name, optional URI
      reference, default currency, qualification framework, reporting output
