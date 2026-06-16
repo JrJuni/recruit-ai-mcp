@@ -13,6 +13,8 @@ from deal_intel.schema.metrics import (
     assess_deal_data_quality,
     summarize_data_quality,
 )
+from deal_intel.schema.qualification import compute_qualification_latest
+from deal_intel.schema.qualification_framework import get_qualification_template
 from deal_intel.storage.mongodb import MongoDBClient
 from deal_intel.tools import get_insights, list_deals
 
@@ -165,6 +167,43 @@ def test_list_deals_returns_reporting_context_and_quality() -> None:
     ]
 
 
+def test_list_deals_uses_active_qualification_snapshot_for_health() -> None:
+    framework = get_qualification_template("simple_b2b")
+    deal = _deal(stage="proposal")
+    deal["meddpicc_latest"] = {}
+    deal["meetings"] = [{"date": "2026-06-01"}]
+    deal["qualification_latest"] = compute_qualification_latest(
+        [
+            {
+                "qualification": {
+                    "business_need": {"score": 5},
+                    "buyer_owner": {"score": 2},
+                }
+            }
+        ],
+        framework=framework,
+        evidence_fields=("qualification",),
+        deal_stage="proposal",
+    )
+
+    result = list_deals.handle(
+        mongo=FakeMongo([deal]),
+        cfg={},
+        stage=None,
+        limit=20,
+        as_of="2026-06-08",
+    )
+
+    row = result["deals"][0]
+    assert row["qualification"]["framework_key"] == "simple_b2b"
+    assert row["qualification_source_field"] == "qualification_latest"
+    assert row["health_pct"] == deal["qualification_latest"]["health_pct"]
+    assert row["filled_count"] == 2
+    assert row["gaps"] == ["next_step"]
+    assert row["qualification_gaps"] == ["next_step"]
+    assert row["data_quality"]["field_statuses"]["health_assessment"] == "valid"
+
+
 def test_list_deals_rejects_invalid_as_of_as_input_error() -> None:
     class FailingMongo:
         def list_deals(self, *, stage: str | None = None, limit: int = 50) -> list[dict]:
@@ -217,6 +256,91 @@ def test_get_insights_and_mcp_forward_reporting_context(monkeypatch) -> None:
     assert "pipeline_values" in direct
     assert via_mcp["ok"] is True
     assert via_mcp["as_of"] == "2026-06-08"
+
+
+def test_get_insights_pipeline_overview_uses_active_qualification_snapshot() -> None:
+    framework = get_qualification_template("simple_b2b")
+    deal = _deal(stage="proposal")
+    deal["meddpicc_latest"] = {"filled_count": 1, "health_pct": 95}
+    deal["qualification_latest"] = compute_qualification_latest(
+        [{"qualification": {"business_need": {"score": 1}}}],
+        framework=framework,
+        evidence_fields=("qualification",),
+        deal_stage="proposal",
+    )
+
+    class FakeInsightMongo:
+        def list_deals_for_metrics(self) -> list[dict]:
+            return [deepcopy(deal)]
+
+        def _get_db(self) -> None:
+            raise AssertionError("pipeline_overview should use metrics read path")
+
+    result = get_insights.handle(
+        mongo=FakeInsightMongo(),
+        cfg={},
+        query_type="pipeline_overview",
+        as_of="2026-06-08",
+    )
+
+    expected_health = deal["qualification_latest"]["health_pct"]
+    assert result["kpis"]["avg_health_pct"] == expected_health
+    assert result["health_bands"]["at_risk"] == 1
+    proposal = next(
+        row for row in result["stage_breakdown"] if row["stage"] == "proposal"
+    )
+    assert proposal["avg_health_pct"] == expected_health
+
+
+def test_get_insights_legacy_modes_self_label_meddpicc_scope() -> None:
+    class FakeCollection:
+        def aggregate(self, _pipeline):
+            return [
+                {
+                    "_id": None,
+                    "count": 1,
+                    "avg_health_pct": 80.0,
+                    "metrics": 4.0,
+                }
+            ]
+
+    class FakeDB:
+        deals = FakeCollection()
+
+    class FakeInsightMongo:
+        def _get_db(self):
+            return FakeDB()
+
+    result = get_insights.handle(
+        mongo=FakeInsightMongo(),
+        cfg={},
+        query_type="win_patterns",
+        as_of="2026-06-08",
+    )
+
+    assert result["ok"] is True
+    assert result["framework_scope"] == "meddpicc_legacy"
+    assert "MEDDPICC compatibility fields" in result["compatibility_note"]
+    assert "meddpicc_legacy_insight" in result["warnings"]
+
+
+def test_get_insights_pipeline_overview_does_not_mark_legacy_scope() -> None:
+    class FakeInsightMongo:
+        def list_deals_for_metrics(self) -> list[dict]:
+            return [_deal()]
+
+        def _get_db(self) -> None:
+            raise AssertionError("pipeline_overview should use metrics read path")
+
+    result = get_insights.handle(
+        mongo=FakeInsightMongo(),
+        cfg={},
+        query_type="pipeline_overview",
+        as_of="2026-06-08",
+    )
+
+    assert "framework_scope" not in result
+    assert "compatibility_note" not in result
 
 
 def test_get_insights_preflight_errors_happen_before_storage() -> None:

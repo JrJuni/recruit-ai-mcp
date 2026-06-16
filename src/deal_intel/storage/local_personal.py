@@ -79,6 +79,41 @@ class LocalPersonalStore:
         deals.append(safe_deal)
         self.save_deals(deals)
 
+    def update_deal_fields(self, deal_id: str, fields: dict[str, Any]) -> bool:
+        cleaned_deal_id = str(deal_id or "").strip()
+        if not cleaned_deal_id:
+            raise ValueError("deal_id is required for local personal update")
+        deals = self.load_deals()
+        for index, deal in enumerate(deals):
+            if str(deal.get("deal_id") or "").strip() != cleaned_deal_id:
+                continue
+            updated = deepcopy(deal)
+            for key, value in fields.items():
+                updated[key] = deepcopy(value)
+            deals[index] = updated
+            self.save_deals(deals)
+            return True
+        return False
+
+    def update_deal_interactions_and_snapshots(
+        self,
+        deal_id: str,
+        *,
+        interactions: list[dict],
+        meddpicc_latest: dict,
+        qualification_latest: dict,
+        updated_at: str,
+    ) -> bool:
+        return self.update_deal_fields(
+            deal_id,
+            {
+                "interactions": deepcopy(interactions),
+                "meddpicc_latest": deepcopy(meddpicc_latest),
+                "qualification_latest": deepcopy(qualification_latest),
+                "updated_at": updated_at,
+            },
+        )
+
     def load_delete_audit_logs(self) -> list[dict]:
         if not self.delete_audit_logs_path.exists():
             return []

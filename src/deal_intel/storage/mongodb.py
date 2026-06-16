@@ -180,6 +180,50 @@ class MongoDBClient:
         db = self._get_db()
         db.deals.replace_one({"deal_id": deal["deal_id"]}, deal, upsert=True)
 
+    def update_deal_qualification_snapshots(
+        self,
+        deal_id: str,
+        *,
+        meddpicc_latest: dict,
+        qualification_latest: dict,
+        updated_at: str,
+    ) -> bool:
+        db = self._get_db()
+        result = db.deals.update_one(
+            with_unarchived_deal_filter({"deal_id": deal_id}),
+            {
+                "$set": {
+                    "meddpicc_latest": meddpicc_latest,
+                    "qualification_latest": qualification_latest,
+                    "updated_at": updated_at,
+                }
+            },
+        )
+        return bool(result.matched_count)
+
+    def update_deal_qualification_reextraction(
+        self,
+        deal_id: str,
+        *,
+        interactions: list[dict],
+        meddpicc_latest: dict,
+        qualification_latest: dict,
+        updated_at: str,
+    ) -> bool:
+        db = self._get_db()
+        result = db.deals.update_one(
+            with_unarchived_deal_filter({"deal_id": deal_id}),
+            {
+                "$set": {
+                    "interactions": interactions,
+                    "meddpicc_latest": meddpicc_latest,
+                    "qualification_latest": qualification_latest,
+                    "updated_at": updated_at,
+                }
+            },
+        )
+        return bool(result.matched_count)
+
     def get_deal(self, deal_id: str) -> dict | None:
         db = self._get_db()
         return db.deals.find_one({"deal_id": deal_id}, {"_id": 0})
@@ -209,6 +253,19 @@ class MongoDBClient:
             "summary_embedding": 0,
         }
         cursor = db.deals.find(with_unarchived_deal_filter(), projection)
+        return list(cursor)
+
+    def list_deals_for_qualification_reextract(self, *, limit: int = 0) -> list[dict]:
+        db = self._get_db()
+        projection = {
+            "_id": 0,
+            "meetings.raw_notes": 0,
+            "contacts": 0,
+            "summary_embedding": 0,
+        }
+        cursor = db.deals.find(with_unarchived_deal_filter(), projection)
+        if limit > 0:
+            cursor = cursor.limit(limit)
         return list(cursor)
 
     def count_deals(self, query: dict) -> int:
@@ -252,6 +309,16 @@ class MongoDBClient:
                 "customer_segment": 1,
                 "deal_size_amount": 1,
                 "deal_size_currency": 1,
+                "qualification_latest.framework_key": 1,
+                "qualification_latest.framework_display_name": 1,
+                "qualification_latest.health_pct": 1,
+                "qualification_latest.coverage_pct": 1,
+                "qualification_latest.quality_pct": 1,
+                "qualification_latest.filled_count": 1,
+                "qualification_latest.total_count": 1,
+                "qualification_latest.gaps": 1,
+                "qualification_latest.dimensions": 1,
+                "qualification_latest.dimension_metadata": 1,
                 "meddpicc_latest.health_pct": 1,
                 "meddpicc_latest.gaps": 1,
                 "summary_embedding": 1,
@@ -307,8 +374,59 @@ class MongoDBClient:
                     "customer_segment": 1,
                     "deal_size_amount": 1,
                     "deal_size_currency": 1,
-                    "health_pct": "$meddpicc_latest.health_pct",
-                    "gaps": "$meddpicc_latest.gaps",
+                    "qualification_framework": {
+                        "$ifNull": [
+                            "$qualification_latest.framework_key",
+                            "meddpicc",
+                        ]
+                    },
+                    "qualification_framework_display_name": {
+                        "$ifNull": [
+                            "$qualification_latest.framework_display_name",
+                            "MEDDPICC",
+                        ]
+                    },
+                    "qualification_source_field": {
+                        "$cond": [
+                            {
+                                "$ne": [
+                                    {
+                                        "$ifNull": [
+                                            "$qualification_latest.framework_key",
+                                            None,
+                                        ]
+                                    },
+                                    None,
+                                ]
+                            },
+                            "qualification_latest",
+                            "meddpicc_latest",
+                        ]
+                    },
+                    "qualification_health_pct": {
+                        "$ifNull": [
+                            "$qualification_latest.health_pct",
+                            "$meddpicc_latest.health_pct",
+                        ]
+                    },
+                    "qualification_gaps": {
+                        "$ifNull": [
+                            "$qualification_latest.gaps",
+                            "$meddpicc_latest.gaps",
+                        ]
+                    },
+                    "health_pct": {
+                        "$ifNull": [
+                            "$qualification_latest.health_pct",
+                            "$meddpicc_latest.health_pct",
+                        ]
+                    },
+                    "gaps": {
+                        "$ifNull": [
+                            "$qualification_latest.gaps",
+                            "$meddpicc_latest.gaps",
+                        ]
+                    },
                     "score": {"$meta": "vectorSearchScore"},
                 }
             },
@@ -397,6 +515,14 @@ class MongoDBClient:
             "expected_close_date_source": 1,
             "actual_close_date": 1,
             "close_reason_present": 1,
+            "qualification_framework": 1,
+            "qualification_framework_display_name": 1,
+            "qualification_source_field": 1,
+            "qualification_health_pct": 1,
+            "qualification_coverage_pct": 1,
+            "qualification_quality_pct": 1,
+            "qualification_gap_count": 1,
+            "qualification_gaps": 1,
             "health_pct": 1,
             "health_band": 1,
             "meddpicc_filled_count": 1,

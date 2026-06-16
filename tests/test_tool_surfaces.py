@@ -8,6 +8,7 @@ import pytest
 
 from deal_intel import _context, mcp_server
 from deal_intel.tool_surfaces import (
+    build_tool_alias_map,
     build_tool_surface_matrix,
     default_surface_for_profile,
     get_tool_surface_contract,
@@ -30,7 +31,20 @@ def test_tool_surface_contract_covers_registered_mcp_tools(monkeypatch) -> None:
     contracted = {contract.name for contract in list_tool_surface_contracts()}
 
     assert registered == contracted
-    assert len(contracted) == 30
+    assert len(contracted) == 38
+
+
+def test_tool_intent_aliases_cover_every_registered_tool() -> None:
+    tool_names = {contract.name for contract in list_tool_surface_contracts()}
+    aliases = build_tool_alias_map(tool_names)
+
+    assert len(aliases) == len(tool_names)
+    assert aliases["deal.review"] == "get_deal_review"
+    assert aliases["theme.rank"] == "get_customer_themes"
+    assert aliases["theme.compare"] == "get_customer_theme_breakdown"
+    assert aliases["theme.evidence"] == "get_customer_theme_evidence"
+    assert aliases["report.export"] == "export_report"
+    assert aliases["data.export"] == "export_data"
 
 
 def test_tool_surface_matrix_is_stable_and_serializable() -> None:
@@ -74,6 +88,7 @@ def test_sample_surface_is_zero_config_safe_local_personal() -> None:
         "export_data",
         "get_user_memory",
         "record_user_memory",
+        "get_customer_themes",
         "get_customer_theme_breakdown",
         "get_customer_theme_evidence",
     }
@@ -107,7 +122,14 @@ def test_sample_surface_is_zero_config_safe_local_personal() -> None:
         "analyze_deal",
         "add_meeting",
         "get_insights",
-        "get_customer_themes",
+        "get_qualification_templates",
+        "validate_qualification_framework",
+        "update_qualification_framework",
+        "list_qualification_frameworks",
+        "set_active_qualification_framework",
+        "delete_qualification_framework",
+        "backfill_qualification",
+        "backfill_qualification_reextract",
     ],
 )
 def test_sample_surface_hides_tools_that_break_first_run_expectations(
@@ -136,6 +158,14 @@ def test_sample_local_personal_target_promotes_safe_non_llm_writes() -> None:
         "add_meeting",
         "create_sample_data",
         "delete_sample_data",
+        "get_qualification_templates",
+        "validate_qualification_framework",
+        "update_qualification_framework",
+        "list_qualification_frameworks",
+        "set_active_qualification_framework",
+        "delete_qualification_framework",
+        "backfill_qualification",
+        "backfill_qualification_reextract",
     }.isdisjoint(target_tools)
 
 
@@ -153,6 +183,14 @@ def test_standard_surface_keeps_real_operator_admin_tools() -> None:
         "migrate_local_data",
         "analyze_deal",
         "search_deals",
+        "get_qualification_templates",
+        "validate_qualification_framework",
+        "update_qualification_framework",
+        "list_qualification_frameworks",
+        "set_active_qualification_framework",
+        "delete_qualification_framework",
+        "backfill_qualification",
+        "backfill_qualification_reextract",
     }.issubset(standard_tools)
     assert "add_meeting" not in standard_tools
     assert "create_sample_data" not in standard_tools
@@ -243,22 +281,63 @@ def test_high_traffic_tool_descriptions_guide_tool_selection(monkeypatch) -> Non
     }
 
     expected_snippets = {
-        "get_tool_catalog": ["truncated subset", "current profile"],
-        "get_metrics": ["kpi", "get_deal_review"],
-        "list_deals": ["quick pipeline table", "get_metrics"],
-        "get_deal_review": ["default tool", "llm-free", "analyze_deal"],
-        "get_deal_gaps": ["what is missing", "get_deal_review"],
-        "export_report": ["manager/team meeting", "export_data"],
-        "export_data": ["spreadsheet-ready", "export_report"],
-        "get_usage": ["token usage", "pricing"],
-        "get_customer_themes": ["customers worry", "get_customer_theme_evidence"],
-        "get_customer_theme_breakdown": ["industry tag", "get_customer_theme_evidence"],
-        "get_customer_theme_evidence": ["show examples/evidence", "get_customer_themes"],
-        "search_deals": ["similar past deals", "get_customer_themes"],
-        "analyze_deal": ["optional", "server-side llm", "get_deal_review"],
-        "add_interaction": ["new evidence", "get_deal_review"],
+        "get_tool_catalog": ["truncated subset", "current profile", "catalog.tools"],
+        "get_metrics": ["kpi", "get_deal_review", "pipeline.metrics"],
+        "list_deals": ["quick pipeline table", "get_metrics", "deal.list"],
+        "get_deal_review": ["default tool", "llm-free", "analyze_deal", "deal.review"],
+        "get_deal_gaps": ["what is missing", "get_deal_review", "deal.gaps"],
+        "export_report": ["manager/team meeting", "export_data", "report.export"],
+        "export_data": ["spreadsheet-ready", "export_report", "data.export"],
+        "get_usage": ["token usage", "pricing", "usage.cost"],
+        "get_customer_themes": [
+            "customers worry",
+            "get_customer_theme_evidence",
+            "theme.rank",
+        ],
+        "get_customer_theme_breakdown": [
+            "customer-theme workflow",
+            "industry tag",
+            "get_customer_theme_evidence",
+            "theme.compare",
+        ],
+        "get_customer_theme_evidence": [
+            "evidence-drilldown",
+            "show examples/evidence",
+            "get_customer_themes",
+            "theme.evidence",
+        ],
+        "search_deals": ["similar past deals", "get_customer_themes", "search.deals"],
+        "analyze_deal": [
+            "optional",
+            "server-side llm",
+            "get_deal_review",
+            "strategy.analyze",
+        ],
+        "add_interaction": [
+            "new evidence",
+            "qualification scoring",
+            "meddpicc is the default",
+            "get_deal_review",
+        ],
+        "get_deal": ["qualification scores", "get_deal_review"],
         "update_stage": ["user confirms", "add_interaction"],
         "update_deal": ["confirmed corrections", "update_stage"],
+        "get_qualification_templates": [
+            "qualification framework",
+            "validate_qualification_framework",
+        ],
+        "validate_qualification_framework": ["candidate qualification framework", "no file writes"],
+        "update_qualification_framework": [
+            "dry_run=true",
+            "confirmed_by_user=true",
+            "copy_as_key",
+            "backfill_qualification",
+        ],
+        "list_qualification_frameworks": ["currently active", "read-only"],
+        "set_active_qualification_framework": ["dry_run=true", "confirmed_by_user=true"],
+        "delete_qualification_framework": ["built-in templates cannot be deleted", "dry_run=true"],
+        "backfill_qualification": ["safe maintenance path", "does not read raw"],
+        "backfill_qualification_reextract": ["maintenance/admin", "max_llm_calls=30"],
     }
 
     for tool_name, snippets in expected_snippets.items():
@@ -284,7 +363,31 @@ def test_get_tool_catalog_reports_visible_surface(monkeypatch) -> None:
         tool_names_for_surface("sample")
     )
     assert all(tool["visible"] is True for tool in result["tools"])
+    tools_by_name = {tool["name"]: tool for tool in result["tools"]}
+    assert tools_by_name["get_deal_review"]["canonical_tool"] == "get_deal_review"
+    assert tools_by_name["get_deal_review"]["namespace"] == "deal"
+    assert tools_by_name["get_deal_review"]["intent_alias"] == "deal.review"
+    assert tools_by_name["get_customer_themes"]["namespace"] == "theme"
+    assert tools_by_name["get_customer_themes"]["intent_alias"] == "theme.rank"
+    assert result["tool_aliases"]["deal.review"] == "get_deal_review"
+    assert result["tool_aliases"]["theme.rank"] == "get_customer_themes"
     assert "tool search returns only" in result["usage_hint"]
+    assert "customer_theme_analysis" in result["intent_groups"]
+    assert result["intent_groups"]["customer_theme_analysis"]["tools"] == [
+        "get_customer_themes",
+        "get_customer_theme_breakdown",
+        "get_customer_theme_evidence",
+    ]
+    guide_by_intent = {
+        item["intent"]: item for item in result["tool_selection_guide"]
+    }
+    assert guide_by_intent["customer_theme_ranking"]["primary_tool"] == (
+        "get_customer_themes"
+    )
+    assert guide_by_intent["customer_theme_ranking"]["intent_alias"] == "theme.rank"
+    assert guide_by_intent["customer_theme_comparison"]["primary_tool"] == (
+        "get_customer_theme_breakdown"
+    )
 
 
 def test_get_tool_catalog_can_include_hidden_tools(monkeypatch) -> None:
@@ -303,6 +406,22 @@ def test_get_tool_catalog_can_include_hidden_tools(monkeypatch) -> None:
     assert any(
         tool["name"] == "search_deals" and tool["visible"] is False
         for tool in result["tools"]
+    )
+    hidden_search = next(
+        tool for tool in result["tools"] if tool["name"] == "search_deals"
+    )
+    assert hidden_search["intent_alias"] == "search.deals"
+    assert result["tool_aliases"]["search.deals"] == "search_deals"
+    assert result["intent_groups"]["customer_theme_analysis"]["tools"] == [
+        "get_customer_themes",
+        "get_customer_theme_breakdown",
+        "get_customer_theme_evidence",
+    ]
+    guide_by_intent = {
+        item["intent"]: item for item in result["tool_selection_guide"]
+    }
+    assert guide_by_intent["customer_theme_ranking"]["primary_tool"] == (
+        "get_customer_themes"
     )
 
 

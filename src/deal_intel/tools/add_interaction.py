@@ -5,9 +5,11 @@ from datetime import UTC, datetime
 
 from deal_intel.errors import ErrorCode, MCPError, Stage
 from deal_intel.providers.llm import LLMProvider
+from deal_intel.qualification_config import resolve_active_qualification_framework
 from deal_intel.schema.customer_themes import (
     THEME_CATALOG_PROMPT,
-    parse_meeting_analysis,
+    load_json_response,
+    parse_meeting_analysis_payload,
     rebuild_deal_customer_themes,
 )
 from deal_intel.schema.interactions import (
@@ -18,21 +20,27 @@ from deal_intel.schema.interactions import (
     parse_participants,
     resolve_source_confidence,
     scoring_applies,
-    scoring_interactions,
     source_policy_summary,
 )
-from deal_intel.schema.meddpicc import compute_meddpicc_latest
+from deal_intel.schema.qualification_extraction import (
+    normalize_qualification_extraction,
+    render_qualification_extraction_prompt_block,
+)
+from deal_intel.schema.qualification_framework import (
+    qualification_framework_fingerprint,
+)
 from deal_intel.storage.mongodb import MongoDBClient
 from deal_intel.tools.analytics_snapshot import (
     record_analytics_snapshot,
     snapshot_event_id,
 )
+from deal_intel.tools.qualification_snapshot import rebuild_latest_snapshots
 from deal_intel.usage import build_llm_usage_metadata, summarize_usage
 
-_SYSTEM = "You are a B2B sales expert specializing in MEDDPICC deal qualification."
+_SYSTEM = "You are a B2B sales expert specializing in deal qualification."
 
 _PROMPT = """\
-Extract MEDDPICC qualification signals from this customer interaction.
+Extract deal qualification signals from this customer interaction.
 
 Source metadata:
 - interaction_type: {interaction_type}
@@ -63,6 +71,8 @@ MEDDPICC dimensions:
 - identify_pain: Core business problem, severity, and urgency
 - champion: Internal advocate — name, position, commitment level
 - competition: Competing vendors, alternatives, or status quo
+
+{qualification_framework_prompt}
 
 Also extract 0-5 customer concern themes grounded only in identify_pain,
 decision_criteria, or metrics evidence. Choose theme_key only from:
@@ -142,6 +152,21 @@ def _stage_suggestion_from_signal(
     }
 
 
+def _qualification_framework_prompt(framework) -> str:
+    if framework.key == "meddpicc":
+        return (
+            "Active qualification framework: MEDDPICC. The top-level `meddpicc` "
+            "object is the framework evidence. Omit the top-level `qualification` "
+            "object unless a custom framework is active."
+        )
+    return (
+        "Also extract the active custom qualification framework below. Return its "
+        "signals in a separate top-level `qualification` object while keeping "
+        "legacy MEDDPICC, customer_themes, and stage_signal separate.\n\n"
+        + render_qualification_extraction_prompt_block(framework)
+    )
+
+
 def handle(
     mongo: MongoDBClient,
     llm: LLMProvider,
@@ -188,12 +213,26 @@ def handle(
         )
 
     try:
+        active_framework = resolve_active_qualification_framework(cfg)
+    except ValueError as exc:
+        raise MCPError(
+            error_code=ErrorCode.CONFIG_ERROR,
+            stage=Stage.PREFLIGHT,
+            message=str(exc),
+            retryable=False,
+        ) from exc
+    active_framework_hash = qualification_framework_fingerprint(active_framework)
+
+    try:
         resp = llm.chat_once(
             system=_SYSTEM,
             user=_PROMPT.format(
                 interaction_type=normalized_type,
                 direction=normalized_direction,
                 source_confidence=resolved_confidence,
+                qualification_framework_prompt=_qualification_framework_prompt(
+                    active_framework
+                ),
                 theme_catalog=THEME_CATALOG_PROMPT,
                 content=normalized_content,
             ),
@@ -208,11 +247,25 @@ def handle(
         ) from exc
 
     try:
-        meddpicc_raw, customer_themes, stage_signal = parse_meeting_analysis(resp.text)
+        analysis_payload = load_json_response(resp.text)
+        meddpicc_raw, customer_themes, stage_signal = parse_meeting_analysis_payload(
+            analysis_payload
+        )
     except (TypeError, ValueError):
+        analysis_payload = {}
         meddpicc_raw = {}
         customer_themes = []
         stage_signal = None
+
+    qualification_raw: dict = {}
+    qualification_warnings: list[dict] = []
+    if active_framework.key != "meddpicc":
+        qualification_result = normalize_qualification_extraction(
+            analysis_payload,
+            framework=active_framework,
+        )
+        qualification_raw = qualification_result["qualification"]
+        qualification_warnings = qualification_result["warnings"]
 
     scoring_applied = scoring_applies(resolved_confidence)
     source_policy = source_policy_summary(
@@ -221,6 +274,7 @@ def handle(
         source_confidence=resolved_confidence,
     )
     scored_meddpicc = meddpicc_raw if scoring_applied else {}
+    scored_qualification = qualification_raw if scoring_applied else {}
     scored_customer_themes = customer_themes if scoring_applied else []
 
     summary, summary_usage = _generate_summary(llm, normalized_content)
@@ -248,6 +302,9 @@ def handle(
         "raw_content": normalized_content,
         "summary": summary,
         "meddpicc": scored_meddpicc,
+        "qualification": scored_qualification,
+        "qualification_framework": active_framework.key,
+        "qualification_framework_hash": active_framework_hash,
         "customer_themes": scored_customer_themes,
         "scoring_applied": scoring_applied,
         "llm_usage": llm_usage,
@@ -256,19 +313,27 @@ def handle(
     }
     if not scoring_applied and meddpicc_raw:
         interaction_record["unconfirmed_meddpicc"] = meddpicc_raw
+    if not scoring_applied and qualification_raw:
+        interaction_record["unconfirmed_qualification"] = qualification_raw
     if not scoring_applied and customer_themes:
         interaction_record["unconfirmed_customer_themes"] = customer_themes
+    if qualification_warnings:
+        interaction_record["qualification_extraction_warnings"] = qualification_warnings
 
     deal.setdefault("interactions", []).append(interaction_record)
     deal["customer_themes"] = rebuild_deal_customer_themes(deal)
 
-    meddpicc_cfg = cfg.get("meddpicc", {})
-    deal["meddpicc_latest"] = compute_meddpicc_latest(
-        scoring_interactions(deal),
-        weights=meddpicc_cfg.get("weights", {}),
-        gap_threshold=int(meddpicc_cfg.get("gap_threshold", 2)),
-        deal_stage=deal.get("deal_stage", "discovery"),
-    )
+    try:
+        snapshots = rebuild_latest_snapshots(deal, cfg)
+    except ValueError as exc:
+        raise MCPError(
+            error_code=ErrorCode.CONFIG_ERROR,
+            stage=Stage.PREFLIGHT,
+            message=str(exc),
+            retryable=False,
+        ) from exc
+    deal["meddpicc_latest"] = snapshots["meddpicc_latest"]
+    deal["qualification_latest"] = snapshots["qualification_latest"]
 
     if embedding_provider is not None:
         deal_text = build_deal_text(deal)
@@ -319,7 +384,13 @@ def handle(
         "summary": summary,
         "meddpicc": scored_meddpicc,
         "unconfirmed_meddpicc": meddpicc_raw if not scoring_applied else {},
+        "active_qualification_framework": active_framework.key,
+        "active_qualification_framework_hash": active_framework_hash,
+        "qualification": scored_qualification,
+        "unconfirmed_qualification": qualification_raw if not scoring_applied else {},
+        "qualification_extraction_warnings": qualification_warnings,
         "meddpicc_latest": deal["meddpicc_latest"],
+        "qualification_latest": deal["qualification_latest"],
         "customer_themes": scored_customer_themes,
         "unconfirmed_customer_themes": customer_themes if not scoring_applied else [],
         "scoring_applied": scoring_applied,

@@ -10,7 +10,773 @@ Read the newest section first. Older sections are retained as an archive for
 traceability and should be searched by topic, milestone, or file path rather
 than loaded wholesale.
 
-## Latest Update - 2026-06-15
+## Latest Update - 2026-06-16
+
+### QF-11 custom framework end-to-end smoke
+
+Implemented:
+
+- Added `tests/test_qualification_framework_e2e.py` as a thin integration
+  smoke for custom qualification framework behavior.
+- Added config lifecycle coverage:
+  copy a built-in template to a custom key, store it in user config, activate
+  it, use it in `add_interaction`, revise the framework, detect stale
+  interaction framework hashes through `backfill_qualification_reextract`, and
+  delete the inactive custom framework safely.
+- The smoke runs the same custom-framework deal through:
+  `get_deal_review`, `get_deal_gaps`, `get_metrics`, `export_report`,
+  `search_deals`, and `build_analytics_snapshot`.
+- The test intentionally includes a high-scoring `meddpicc_latest`
+  compatibility snapshot to verify active-framework paths do not accidentally
+  fall back to MEDDPICC values.
+- The test also asserts public payloads do not expose raw notes, raw
+  interaction content, contacts, or embeddings.
+
+Validation so far:
+
+- `pytest tests/test_qualification_framework_e2e.py -q -p no:cacheprovider --basetemp .tmp\pytest-qf11-e2e`:
+  2 passed.
+- `pytest tests/test_qualification_framework.py tests/test_qualification_config.py tests/test_qualification_extraction.py tests/test_qualification_snapshot.py tests/test_qualification_framework_e2e.py tests/test_add_interaction.py tests/test_backfill_qualification.py tests/test_backfill_qualification_reextract.py tests/test_deal_review.py tests/test_deal_gaps.py tests/test_get_metrics.py tests/test_weekly_pipeline_report.py tests/test_weekly_pipeline_markdown.py tests/test_export_report.py tests/test_search_deals_startup.py tests/test_analytics_snapshots.py tests/test_data_quality_reporting.py -q -p no:cacheprovider --basetemp .tmp\pytest-qf11-targeted`:
+  209 passed, 1 warning.
+- `pytest -q -p no:cacheprovider --basetemp .tmp\pytest-qf11-full`:
+  668 passed, 1 warning.
+- `ruff check .`:
+  passed.
+- `deal-intel smoke-natural-questions --as-of 2026-06-10`:
+  OK true, 12/12 questions passed.
+
+### QF-10 generic qualification compatibility sweep
+
+Implemented:
+
+- Added a tracked QF-10 audit/classification section to
+  [qualification-framework-v2.md](qualification-framework-v2.md).
+- Moved analytics snapshot creation to `select_qualification_snapshot(...)`.
+  New snapshots now include generic `qualification_*` fields while preserving
+  `health_pct`/`health_band` aliases.
+- Kept MEDDPICC snapshot aliases, but for non-MEDDPICC active frameworks
+  `meddpicc_*` snapshot fields are empty/null rather than fabricated from
+  unrelated dimensions.
+- Added generic qualification metadata to semantic search results and MongoDB
+  search projections while keeping `health_pct`/`gaps` aliases.
+- Marked MEDDPICC-specific `get_insights` modes as legacy compatibility paths
+  with `framework_scope: meddpicc_legacy`; `pipeline_overview` remains generic.
+- Updated architecture and baseline docs for the new generic snapshot/search
+  behavior.
+
+Validation:
+
+- `pytest tests/test_analytics_snapshots.py -q -p no:cacheprovider`:
+  10 passed.
+- `pytest tests/test_search_deals_startup.py -q -p no:cacheprovider`:
+  14 passed, 1 warning.
+- `pytest tests/test_data_quality_reporting.py -q -p no:cacheprovider`:
+  16 passed, 1 warning.
+- `pytest tests/test_analytics_snapshots.py tests/test_search_deals_startup.py tests/test_data_quality_reporting.py tests/test_mongo_contracts.py tests/test_archived_read_paths.py tests/test_pipeline_timing.py tests/test_get_metrics.py tests/test_pipeline_metrics_summary.py tests/test_pipeline_trends.py -q -p no:cacheprovider --basetemp .tmp\pytest-qf10-targeted`:
+  128 passed, 1 warning.
+- `pytest -q -p no:cacheprovider --basetemp .tmp\pytest-qf10-full`:
+  666 passed, 1 warning.
+- `ruff check .`:
+  passed.
+- `deal-intel smoke-natural-questions --as-of 2026-06-10`:
+  OK true, 12/12 questions passed.
+
+Notes:
+
+- `tests/test_mongo_contracts.py -q -p no:cacheprovider` initially hit the
+  known Windows temp permission issue under `%LOCALAPPDATA%\Temp`; rerunning
+  with repo-local `--basetemp .tmp\pytest-qf10-mongo-contracts` passed.
+
+### Architecture developer map expansion
+
+Implemented:
+
+- Expanded [architecture.md](architecture.md) with a developer navigation map.
+- Added runtime entry point ownership for MCP server, CLI, context, config
+  loading, MCPB launcher, and packaged resources.
+- Added CLI command family mapping for config, smoke, Mongo operations, local
+  data, taxonomy cleanup, qualification maintenance, Atlas dashboards, and QA
+  smoke commands.
+- Added an MCP tool ownership index covering canonical tools, intent aliases,
+  owner modules, inputs, outputs/side effects, adjacent tests, and "do not
+  break" notes.
+- Added a major internal engine index for config/profile, tool surface,
+  storage, qualification, interaction extraction, metrics, review/gaps,
+  reports, Atlas dashboards, customer themes, search/vector, usage, user
+  memory, and Mongo operations.
+- Added change playbooks that map common edits to the files and tests that
+  should be checked before closing the work.
+
+Validation:
+
+- Documentation-only change.
+- Verified new architecture headings with `rg`.
+- Spot-checked the rendered Markdown source around the new tables.
+
+### QF-9 tool namespace / customer theme cleanup
+
+Implemented:
+
+- Kept existing customer-theme tool names for compatibility.
+- Added user-intent grouping and tool-selection guidance to `get_tool_catalog`.
+- Added short intent alias metadata to `get_tool_catalog` tool rows:
+  `canonical_tool`, `namespace`, and `intent_alias`. These aliases are
+  discovery hints only, not alternate callable MCP tool names.
+- Added customer-theme workflow hints to ranking, comparison, and evidence
+  responses.
+- Moved `get_customer_themes` from the legacy Mongo aggregation path onto the
+  restricted `list_deals_for_metrics()` read path.
+- Exposed `get_customer_themes` in sample mode so customer-theme ranking starts
+  from the same tool in sample/full profiles. Current counts are `sample=24`,
+  `standard=35`, `developer=38`.
+
+Validation:
+
+- `pytest tests/test_tool_surfaces.py tests/test_customer_themes.py tests/test_customer_theme_insights.py tests/test_mcpb_manifest.py tests/test_storage_backend_contract.py -q --basetemp .tmp\pytest-qf9-targeted`:
+  70 passed, 1 warning.
+- `mcpb validate mcpb\manifest.json`:
+  passed.
+- `pytest tests/test_cli_config_profiles.py tests/test_tool_surfaces.py -q --basetemp .tmp\pytest-qf9-counts`:
+  37 passed, 1 warning.
+- `pytest -q --basetemp .tmp\pytest-qf9-full-rerun`:
+  660 passed, 1 warning.
+- `ruff check .`:
+  passed.
+- `deal-intel smoke-natural-questions --as-of 2026-06-10`:
+  OK true, 12/12 questions passed.
+
+### QF-8 compatibility cleanup
+
+Implemented:
+
+- Updated public MCP tool docstrings so active-framework qualification is the
+  generic concept and MEDDPICC is described as the bundled default framework.
+- Updated MCPB manifest descriptions for `add_interaction`, `get_deal`, and
+  package metadata to avoid MEDDPICC-only product positioning.
+- Updated README, AI_START_HERE, and baseline contracts to separate canonical
+  qualification language from legacy/default-framework `meddpicc*`
+  compatibility fields.
+- Kept storage fields and old compatibility contracts intact. Broad namespace
+  cleanup remains deferred to QF-9.
+
+Validation:
+
+- `pytest tests/test_tool_surfaces.py tests/test_mcpb_manifest.py -q --basetemp .tmp\pytest-qf8-targeted`:
+  41 passed, 1 warning.
+- `mcpb validate mcpb\manifest.json`:
+  passed.
+- Stale public wording scan for MEDDPICC-only current-language phrases:
+  no active public-surface hits; remaining hits are QF plan examples or older
+  status archive entries.
+- `pytest -q --basetemp .tmp\pytest-qf8-full`:
+  661 passed, 1 warning.
+- `ruff check .`:
+  passed.
+- `deal-intel smoke-natural-questions --as-of 2026-06-10`:
+  OK true, 12/12 questions passed.
+
+### QF-7c qualification backfill MCP surface
+
+Implemented:
+
+- Added MCP tool `backfill_qualification`.
+  - Standard/developer surface only.
+  - Dry-run by default.
+  - No LLM calls and no raw interaction content reads.
+  - Apply mode requires `dry_run=false` and `confirmed_by_user=true`.
+- Added MCP tool `backfill_qualification_reextract`.
+  - Standard/developer surface only.
+  - Dry-run by default and does not initialize the LLM provider in dry-run.
+  - Defaults to `max_llm_calls=30`.
+  - Apply mode may call the configured LLM once per selected interaction and
+    uses the dedicated raw-content maintenance read path.
+  - Responses never include raw interaction content.
+- Updated MCP tool-surface contracts and MCPB manifest tool declarations.
+- Current surface counts are `sample=24`, `standard=35`, `developer=38`.
+
+Validation:
+
+- `pytest tests/test_backfill_qualification.py tests/test_backfill_qualification_reextract.py tests/test_tool_surfaces.py tests/test_mcpb_manifest.py tests/test_config_doctor.py tests/test_sample_data.py -q --basetemp .tmp\pytest-qf7c-targeted`:
+  82 passed, 1 warning.
+- `pytest tests/test_backfill_qualification.py tests/test_backfill_qualification_reextract.py tests/test_tool_surfaces.py tests/test_mcpb_manifest.py tests/test_config_doctor.py tests/test_sample_data.py -q --basetemp .tmp\pytest-qf7c-targeted-rerun`:
+  82 passed, 1 warning.
+- `mcpb validate mcpb\manifest.json`:
+  passed.
+- `pytest -q --basetemp .tmp\pytest-qf7c-full`:
+  660 passed, 1 warning.
+- `ruff check .`:
+  passed.
+- Runtime registration smoke:
+  developer surface exposes 38 tools and includes `backfill_qualification` plus
+  `backfill_qualification_reextract`.
+
+### QF-7b qualification LLM re-extraction backfill
+
+Implemented:
+
+- User decisions:
+  - default scope is scoring-eligible interactions only;
+  - one apply run defaults to at most 30 LLM calls;
+  - expose core + CLI first, defer MCP surface to QF-7c.
+- Added framework fingerprints so newly extracted evidence can be checked for
+  stale framework definitions later.
+- `add_interaction` now stores `qualification_framework_hash` beside newly
+  extracted evidence.
+- Added dedicated raw-content maintenance read/write storage methods:
+  `list_deals_for_qualification_reextract(...)` and
+  `update_deal_qualification_reextraction(...)`.
+- Added core module `tools/backfill_qualification_reextract.py`.
+- Added CLI command: `deal-intel backfill-qualification-reextract`.
+- The command defaults to dry-run. Actual LLM calls and writes require
+  `--apply --confirmed-by-user`.
+- Default `--max-llm-calls` is 30.
+- The dry-run response reports selected interaction count and estimated input
+  characters without exposing raw content.
+- Apply mode stores usage under `interaction.qualification_backfill_usage`, and
+  `get_usage` now includes that cost/usage metadata.
+- MCP exposure is intentionally deferred to QF-7c.
+
+Validation:
+
+- `pytest tests/test_backfill_qualification_reextract.py tests/test_usage.py -q --basetemp .tmp\pytest-qf7b-targeted-rerun`:
+  15 passed.
+- `pytest tests/test_backfill_qualification_reextract.py tests/test_backfill_qualification.py tests/test_add_interaction.py tests/test_usage.py tests/test_storage_backend_contract.py tests/test_local_sample_backend.py tests/test_qualification_snapshot.py -q --basetemp .tmp\pytest-qf7b-wide`:
+  70 passed, 1 warning.
+- `pytest -q --basetemp .tmp\pytest-qf7b-full-rerun`:
+  655 passed, 1 warning.
+- `ruff check .`:
+  passed.
+
+### QF-7a qualification snapshot recompute backfill
+
+Implemented:
+
+- Added a recompute-only qualification backfill path:
+  `tools/backfill_qualification.py`.
+- Added CLI command: `deal-intel backfill-qualification`.
+- The command defaults to dry-run. Actual writes require `--apply` plus
+  `--confirmed-by-user`.
+- This path performs no LLM calls and does not read raw interaction content.
+  It recomputes `meddpicc_latest` and `qualification_latest` from already
+  stored scoring evidence.
+- Deals with no scoring evidence are skipped instead of writing a false
+  zero-health/all-gap snapshot.
+- Custom-framework deals that only have legacy MEDDPICC evidence are flagged as
+  `needs_reextraction` for the later QF-7b LLM re-extraction path.
+- Added patch-only storage method
+  `update_deal_qualification_snapshots(...)` for MongoDB and local personal
+  storage so restricted BI projections are never written back as whole deal
+  replacements.
+
+Design notes:
+
+- QF-7a is intentionally recompute-only. It covers weight, threshold, stage
+  context, and active-framework metadata changes when the required evidence is
+  already stored.
+- QF-7b remains separate because it must read `interaction.raw_content`, call
+  the configured server-side LLM, track usage/cost, and handle partial
+  extraction failures.
+
+Validation:
+
+- `pytest tests/test_backfill_qualification.py tests/test_storage_backend_contract.py -q --basetemp .tmp\pytest-qf7a-targeted`:
+  15 passed.
+- `pytest tests/test_backfill_qualification.py tests/test_qualification_snapshot.py tests/test_add_interaction.py tests/test_update_stage.py tests/test_storage_backend_contract.py tests/test_local_sample_backend.py -q --basetemp .tmp\pytest-qf7a-wide`:
+  65 passed, 1 warning.
+- `pytest -q --basetemp .tmp\pytest-qf7a-full`:
+  645 passed, 1 warning.
+- Targeted Ruff over touched QF-7a files:
+  passed.
+- `ruff check .`:
+  passed.
+- `git diff --check`:
+  no whitespace errors; Windows LF/CRLF warnings only.
+
+### QF-6 report/export/Atlas qualification read path
+
+Implemented:
+
+- `weekly_pipeline` report rows now select the active qualification snapshot
+  through `schema/qualification_read.py`, preferring `qualification_latest` and
+  falling back to legacy `meddpicc_latest`.
+- Weekly report rows expose canonical qualification fields:
+  `qualification_framework`, `qualification_framework_display_name`,
+  `qualification_source_field`, `qualification_health_pct`,
+  `qualification_quality_pct`, `qualification_coverage_pct`, and
+  `qualification_gaps`.
+- Existing `health_pct`, `health_band`, and `meddpicc_gaps` aliases are
+  preserved. `meddpicc_gaps` is only populated for MEDDPICC-backed rows.
+- `export_data` open/all/closed datasets now include qualification columns so
+  Excel/CSV ledgers can follow custom frameworks without losing legacy health
+  aliases.
+- Weekly Markdown report wording now says qualification gap/health where the
+  active framework may not be MEDDPICC.
+- Weekly Atlas chart specs now read `qualification_latest.health_pct`,
+  `qualification_latest.filled_count`, and `qualification_latest.gaps` first,
+  with `meddpicc_latest` fallback for old/sample data.
+- Added `qualification_gap_distribution` while keeping
+  `meddpicc_gap_distribution` as a legacy-compatible chart id.
+
+Design notes:
+
+- This migrates the human report, CSV ledger, and weekly Atlas dashboard
+  surfaces. Analytics snapshots and MEDDPICC-specific `get_insights` aggregation
+  modes remain separate follow-up work.
+- `export_report` still returns deterministic data packs and host-app polish
+  prompts; it does not call an LLM.
+
+Validation:
+
+- `pytest tests/test_weekly_pipeline_report.py tests/test_weekly_pipeline_markdown.py tests/test_export_data.py -q --basetemp .tmp\pytest-qf6-report-targeted`:
+  25 passed.
+- `pytest tests/test_weekly_pipeline_report.py tests/test_weekly_pipeline_markdown.py tests/test_export_data.py tests/test_export_report.py tests/test_atlas_charts.py tests/test_cli_atlas_charts.py -q --basetemp .tmp\pytest-qf6-targeted`:
+  59 passed, 1 warning.
+- `pytest tests/test_weekly_pipeline_report.py tests/test_weekly_pipeline_markdown.py tests/test_export_data.py tests/test_export_report.py tests/test_atlas_charts.py tests/test_cli_atlas_charts.py tests/test_dashboard_crosscheck.py tests/test_pipeline_metrics_summary.py tests/test_get_metrics.py tests/test_data_quality_reporting.py -q --basetemp .tmp\pytest-qf6-wide`:
+  92 passed, 1 warning.
+- `pytest -q --basetemp .tmp\pytest-qf6-full`:
+  636 passed, 1 warning.
+- `ruff check .`:
+  passed.
+- `git diff --check`:
+  no whitespace errors; Windows LF/CRLF warnings only.
+
+### QF-5c pipeline metrics qualification read path
+
+### QF-5c pipeline metrics qualification read path
+
+Implemented:
+
+- `build_pipeline_health_summary()` now selects the active qualification
+  snapshot through `schema/qualification_read.py` instead of reading
+  `meddpicc_latest` directly.
+- `get_metrics(metric_type="pipeline_health")` now reflects
+  `qualification_latest` when present, with `meddpicc_latest` preserved as the
+  legacy/sample fallback.
+- `get_insights(query_type="pipeline_overview")` also reflects the active
+  qualification snapshot because it uses the shared pipeline metric engine.
+- Existing metric field names such as `avg_health_pct`, `health_bands`, and
+  `health_coverage_pct` are intentionally preserved as compatibility aliases.
+
+Design notes:
+
+- This is intentionally scoped to the official pipeline-health metric surface.
+- Direct Mongo aggregation insight paths such as `win_patterns`,
+  `loss_patterns`, `compare_won_lost`, `gap_frequency`, and
+  `industry_benchmark` still use MEDDPICC compatibility fields and should be
+  migrated separately if they remain part of the v2 public surface.
+- Reports, exports, Atlas chart specs, and analytics snapshots remain QF-6
+  work.
+
+Validation:
+
+- `pytest tests/test_pipeline_metrics_summary.py tests/test_get_metrics.py tests/test_data_quality_reporting.py -q --basetemp .tmp\pytest-qf5c-targeted-rerun`:
+  31 passed, 1 warning.
+- `pytest tests/test_pipeline_metrics_summary.py tests/test_get_metrics.py tests/test_data_quality_reporting.py tests/test_dashboard_crosscheck.py tests/test_metric_contract.py tests/test_pipeline_timing.py tests/test_export_report.py -q --basetemp .tmp\pytest-qf5c-wide`:
+  119 passed, 1 warning.
+- `pytest -q --basetemp .tmp\pytest-qf5c-full`:
+  633 passed, 1 warning.
+- `ruff check .`:
+  passed.
+
+### QF-5b deal gaps and list views qualification read path
+
+Implemented:
+
+- Added `src/deal_intel/schema/qualification_read.py` as the shared
+  deterministic read helper for selecting the active qualification snapshot.
+- `build_deal_review()`, `build_deal_gaps_summary()`, and `list_deals` now use
+  the same helper:
+  - prefer `qualification_latest` when valid;
+  - fall back to legacy `meddpicc_latest` for old/sample data.
+- `get_deal_gaps` now returns active-framework qualification metadata:
+  `qualification`, `qualification_framework`,
+  `qualification_framework_display_name`, `qualification_source_field`,
+  `qualification_health_pct`, `qualification_quality_pct`,
+  `qualification_coverage_pct`, `qualification_filled_count`,
+  `qualification_total_count`, and `qualification_gaps`.
+- `list_deals` now surfaces the same generic qualification fields while
+  preserving legacy-friendly aliases: `health_pct`, `filled_count`, and
+  `gaps`.
+- Custom-framework qualitative gaps are emitted as
+  `qualification.<dimension>` / `qualification:<dimension>` instead of
+  fabricating MEDDPICC fields.
+- `attention:at_risk` messaging now names the active framework instead of
+  hardcoding MEDDPICC.
+- Gap actionability treats `qualification.*` qualitative gaps the same way as
+  `meddpicc.*`: observation-only by default unless the gap is objective timing
+  or data-quality evidence.
+
+Design notes:
+
+- MEDDPICC payload compatibility is intentionally preserved. Existing
+  `meddpicc:*` gap IDs still appear for MEDDPICC data.
+- This subtask does not migrate pipeline metrics, insights, reports, exports,
+  Atlas chart specs, or analytics snapshots.
+- The shared helper is the future read-path anchor for the remaining QF
+  migration units.
+
+Validation:
+
+- `pytest tests/test_deal_gaps.py tests/test_data_quality_reporting.py tests/test_deal_review.py -q --basetemp .tmp\pytest-qf5b-targeted`:
+  38 passed, 1 warning.
+- `pytest tests/test_deal_gaps.py tests/test_get_deal_gaps.py tests/test_deal_review.py tests/test_data_quality_reporting.py tests/test_pipeline_timing.py tests/test_zero_config_sample_fixture.py tests/test_local_sample_backend.py -q --basetemp .tmp\pytest-qf5b-wide`:
+  107 passed, 1 warning.
+- `ruff check src/deal_intel/schema/deal_review.py src/deal_intel/schema/deal_gaps.py src/deal_intel/schema/qualification_read.py src/deal_intel/schema/gap_actionability.py src/deal_intel/tools/list_deals.py tests/test_deal_gaps.py tests/test_data_quality_reporting.py`:
+  passed.
+
+### QF-5a deal review qualification read path
+
+Implemented:
+
+- Updated deterministic `build_deal_review()` so it prefers canonical
+  `qualification_latest` when present and falls back to legacy
+  `meddpicc_latest` for old data.
+- Added a top-level `qualification` summary to deal-review responses with the
+  active framework key, display name, source field, health, quality, coverage,
+  filled count, total count, and open gaps.
+- Kept legacy compatibility aliases such as `legacy_health_pct`,
+  `filled_meddpicc_count`, and `total_meddpicc_count` while adding generic
+  `qualification_*` interpretation fields.
+- Generalized scorecard, known signals, confirmed risks, and recommended
+  questions to use custom framework dimension labels and metadata.
+- For non-MEDDPICC frameworks, deal-review gap observations now use
+  `qualification.<dimension>` fields instead of fabricating `meddpicc.*`
+  fields.
+- Extended qualification snapshots with safe dimension metadata so review
+  output can preserve labels, suggested questions, CTA policy, and weighting.
+- Updated data-quality health assessment so a valid `qualification_latest`
+  counts as structured qualification evidence even when `meddpicc_latest` is
+  empty.
+
+Design notes:
+
+- This is intentionally scoped to `get_deal_review` / `build_deal_review`.
+  `get_deal_gaps`, `list_deals`, metrics, reports, and charts still need their
+  own QF migration passes.
+- Existing MEDDPICC review payloads remain compatible. The new generic fields
+  are additive.
+- Custom framework qualitative gaps remain observation-oriented unless an
+  objective timing/data-quality gap is present. This preserves the current
+  CTA-safety policy.
+
+Validation:
+
+- `pytest tests/test_deal_review.py tests/test_qualification_snapshot.py -q --basetemp .tmp\pytest-qf5a-targeted`:
+  23 passed, 1 warning.
+- `pytest tests/test_deal_review.py tests/test_cli_deal_review_smoke.py tests/test_zero_config_sample_fixture.py tests/test_deal_gaps.py tests/test_metric_contract.py tests/test_pipeline_metrics_summary.py tests/test_add_interaction.py tests/test_update_stage.py -q --basetemp .tmp\pytest-qf5a-wide`:
+  107 passed, 1 warning.
+- `pytest -q --basetemp .tmp\pytest-qf5a-full`:
+  628 passed, 1 warning.
+- `ruff check src/deal_intel/schema/deal_review.py src/deal_intel/schema/qualification.py src/deal_intel/schema/metrics.py tests/test_deal_review.py`:
+  passed.
+- `ruff check .`:
+  passed.
+
+### QF-4b interaction extraction generalization
+
+Implemented:
+
+- Connected `add_interaction` to the active qualification framework resolved
+  from effective config.
+- Embedded the active framework extraction contract into the interaction LLM
+  prompt for non-MEDDPICC frameworks.
+- Normalized LLM-produced `qualification` output through
+  `normalize_qualification_extraction()` before storage.
+- Stored confirmed custom-framework evidence in `interaction.qualification`.
+- Stored outbound/internal/unconfirmed custom-framework evidence in
+  `interaction.unconfirmed_qualification` without changing
+  `qualification_latest`.
+- Preserved legacy `interaction.meddpicc` extraction and
+  `meddpicc_latest` compatibility while allowing non-MEDDPICC
+  `qualification_latest` to use only `interaction.qualification`.
+- Added preflight validation for invalid active framework config before any
+  LLM call is made.
+- Updated the interaction-analysis parser so a response containing
+  `qualification` but no `meddpicc` is not mistaken for legacy MEDDPICC-only
+  output.
+
+Design notes:
+
+- MEDDPICC remains the compatibility read path. When `active_framework` is
+  `meddpicc`, `qualification_latest` still reads `interaction.meddpicc`.
+- Non-MEDDPICC frameworks write and read `interaction.qualification`; MEDDPICC
+  evidence is not force-mapped into unrelated frameworks.
+- Unknown or invalid custom dimension output is dropped with structured
+  warnings rather than contaminating the score engine.
+
+Validation:
+
+- `pytest tests/test_add_interaction.py tests/test_qualification_extraction.py tests/test_qualification_snapshot.py -q --basetemp .tmp\pytest-qf4b-targeted`:
+  31 passed, 1 warning.
+- `pytest tests/test_add_interaction.py tests/test_qualification_extraction.py tests/test_qualification_snapshot.py tests/test_qualification_framework.py tests/test_qualification_config.py tests/test_update_stage.py tests/test_tool_surfaces.py -q --basetemp .tmp\pytest-qf4b-wide`:
+  123 passed, 1 warning.
+- `pytest -q --basetemp .tmp\pytest-qf4b-full`:
+  627 passed, 1 warning.
+- `ruff check .`:
+  passed.
+
+### QF-4a generic qualification extraction contract
+
+Implemented:
+
+- Added `src/deal_intel/schema/qualification_extraction.py` as the pure
+  framework-aware extraction contract layer.
+- Added `build_qualification_extraction_contract()` and
+  `render_qualification_extraction_prompt_block()` so future LLM prompts can be
+  generated from the active qualification framework.
+- Added `normalize_qualification_extraction()` to normalize LLM-like output
+  into stored `interaction.qualification` evidence while dropping unsafe or
+  invalid dimension data with structured warnings.
+- Preserved `interaction.qualification` and `interaction.unconfirmed_qualification`
+  through `normalize_interaction_record()`. This closes the storage/read-path
+  gap between QF-3 snapshots and future QF-4 extraction.
+
+Design notes:
+
+- QF-4a does not yet change the `add_interaction` LLM prompt or write
+  `interaction.qualification` at runtime.
+- Missing dimensions stay missing rather than receiving a neutral score.
+- Secret-like text is not echoed in normalized evidence or warnings.
+- Invalid LLM output is handled at the boundary so
+  `compute_qualification_latest()` receives only clean score evidence.
+
+Validation:
+
+- `pytest tests/test_qualification_extraction.py tests/test_qualification_snapshot.py tests/test_add_interaction.py -q --basetemp .tmp\pytest-qf4a-targeted`:
+  29 passed, 1 warning.
+- `pytest tests/test_qualification_extraction.py tests/test_qualification_snapshot.py tests/test_qualification_framework.py tests/test_qualification_config.py tests/test_add_interaction.py -q --basetemp .tmp\pytest-qf4a-wide`:
+  80 passed, 1 warning.
+- `pytest -q --basetemp .tmp\pytest-qf4a-full`:
+  625 passed, 1 warning.
+- `ruff check .`:
+  passed.
+- MCP registration smoke was not required because QF-4a adds no MCP tools.
+
+### QF-2c immutable qualification presets
+
+Implemented:
+
+- Protected built-in qualification framework keys from user-config overwrite.
+- `update_qualification_framework(template_key=<preset>)` now activates the
+  preset without storing a mutable copy under `qualification.frameworks`.
+- Added `copy_as_key` and `copy_display_name` to
+  `update_qualification_framework` so users can clone a preset before editing.
+- `framework_json` payloads that reuse built-in keys now fail with
+  `PRESET_FRAMEWORK_IMMUTABLE`.
+- `list_qualification_frameworks` marks stored preset-key overrides as ignored.
+- `delete_qualification_framework` can remove an ignored stored preset override
+  while preserving the active built-in preset.
+- Updated defaults comments to describe `meddpicc.weights` as legacy
+  compatibility config rather than the v2 framework customization path.
+
+Design notes:
+
+- Built-in templates are recoverable presets. Customization should create a new
+  framework key from a preset copy.
+- `qualification_latest` resolves active built-in keys from bundled templates
+  first. User-configured frameworks that reuse preset keys are ignored.
+- Legacy `meddpicc_latest` still honors the legacy `meddpicc.weights` and
+  `meddpicc.gap_threshold` path until that compatibility surface is retired.
+
+Validation:
+
+- `pytest tests/test_qualification_config.py tests/test_tool_surfaces.py tests/test_mcpb_manifest.py --basetemp .tmp\pytest-qf2c-targeted -q`:
+  65 passed, 1 warning.
+- `pytest -q --basetemp .tmp\pytest-qf2c-full`:
+  615 passed, 1 warning.
+- `ruff check .`:
+  passed.
+
+### QF-2b qualification framework manager tools
+
+Implemented:
+
+- Added safe framework lifecycle helpers in `src/deal_intel/qualification_config.py`:
+  - list built-in and user-configured frameworks;
+  - switch `qualification.active_framework`;
+  - delete stored custom frameworks.
+- Added MCP tools:
+  - `list_qualification_frameworks`
+  - `set_active_qualification_framework`
+  - `delete_qualification_framework`
+- Added the tools to the standard/developer surfaces and MCPB manifest while
+  keeping the sample surface unchanged.
+- Updated current tool counts to `sample=23`, `standard=33`,
+  `developer=36`.
+
+Design notes:
+
+- Framework manager writes are dry-run-first and require
+  `confirmed_by_user=true`.
+- Built-in templates cannot be deleted.
+- Active frameworks cannot be deleted until another framework is selected.
+- These tools only update non-secret user config. They do not call LLMs, touch
+  MongoDB, update embeddings, or recompute historical deals.
+
+Validation:
+
+- `pytest tests/test_qualification_config.py tests/test_tool_surfaces.py tests/test_mcpb_manifest.py tests/test_config_doctor.py tests/test_sample_data.py --basetemp .tmp\pytest-qf2b-targeted -q`:
+  82 passed, 1 warning.
+- `pytest -q --basetemp .tmp\pytest-qf2b-full`:
+  611 passed, 1 warning.
+- `ruff check .`:
+  passed.
+- Tool surface smoke:
+  `sample=23`, `standard=33`, `developer=36`, registered contracts `36`.
+
+### QF-3b persist canonical qualification snapshot
+
+Implemented:
+
+- Added `resolve_active_qualification_framework(cfg)` so write paths can resolve
+  the active framework from effective config without reading files directly.
+- Added `src/deal_intel/tools/qualification_snapshot.py` as the shared write-path
+  helper for rebuilding legacy `meddpicc_latest` and canonical
+  `qualification_latest` together.
+- `create_deal` now initializes `qualification_latest: {}`.
+- `add_interaction` now persists and returns `qualification_latest`.
+- `update_stage` now recomputes `qualification_latest` when stage changes
+  affect gap context.
+- MongoDB deals schema now documents optional `qualification_latest`.
+
+Design notes:
+
+- Existing BI/report/review read paths continue to use `meddpicc_latest`.
+- Non-MEDDPICC frameworks consume `interaction.qualification` evidence only.
+  MEDDPICC evidence is not force-mapped into unrelated custom frameworks.
+
+Validation:
+
+- `pytest tests/test_qualification_config.py tests/test_qualification_snapshot.py tests/test_add_interaction.py tests/test_update_stage.py tests/test_pipeline_timing.py tests/test_mongo_contracts.py --basetemp .tmp\pytest-qf4-targeted -q`:
+  102 passed, 1 warning.
+- `pytest -q --basetemp .tmp\pytest-qf3b-full`:
+  602 passed, 1 warning.
+- `ruff check .`:
+  passed.
+
+### QF-3 generic qualification snapshot engine
+
+Implemented:
+
+- Added `src/deal_intel/schema/qualification.py` with the pure
+  `compute_qualification_latest(...)` engine.
+- Added `src/deal_intel/schema/stages.py` so qualification framework validation
+  and MEDDPICC compatibility can share stage constants without circular imports.
+- Reworked `compute_meddpicc_latest(...)` into a compatibility wrapper over the
+  generic engine while preserving the existing `meddpicc_latest` output shape.
+- Added `compute_meddpicc_qualification_latest(...)` for future canonical
+  `qualification_latest` consumers.
+- Added `tests/test_qualification_snapshot.py` covering:
+  - legacy MEDDPICC shape/math compatibility;
+  - quality vs coverage vs uncertainty separation;
+  - generic `qualification` evidence fields;
+  - stage-aware gap rules and won-stage gap suppression;
+  - disabled dimensions;
+  - no mutation of framework templates.
+
+Validation:
+
+- `pytest tests/test_qualification_snapshot.py tests/test_qualification_framework.py tests/test_add_interaction.py tests/test_analytics_snapshots.py --basetemp .tmp\pytest-qf3-targeted -q`:
+  49 passed, 1 warning.
+- `pytest tests/test_metric_contract.py tests/test_pipeline_metrics_summary.py tests/test_deal_review.py tests/test_deal_gaps.py tests/test_get_metrics.py tests/test_export_report.py tests/test_export_data.py tests/test_weekly_pipeline_report.py tests/test_weekly_pipeline_markdown.py --basetemp .tmp\pytest-qf3-regression -q`:
+  106 passed, 1 warning.
+- `pytest -q --basetemp .tmp\pytest-qf3-full`:
+  591 passed, 1 warning.
+- `ruff check src/deal_intel/schema/qualification.py src/deal_intel/schema/meddpicc.py src/deal_intel/schema/qualification_framework.py src/deal_intel/schema/stages.py tests/test_qualification_snapshot.py`:
+  passed.
+- `ruff check .`:
+  passed.
+
+Notes:
+
+- This unit intentionally does not write `qualification_latest` into deals yet.
+  Existing read/report/metric paths still consume `meddpicc_latest`.
+- The next QF step should decide whether to persist `qualification_latest` in
+  write paths first or adapt deterministic read paths first.
+
+### QF-2 qualification framework config tools
+
+Implemented:
+
+- Added `src/deal_intel/qualification_config.py` as the shared helper for
+  framework template listing, static validation, and dry-run-first config
+  writes.
+- Added three MCP tools:
+  - `get_qualification_templates`
+  - `validate_qualification_framework`
+  - `update_qualification_framework`
+- Added the tools to the standard/developer surfaces and MCPB manifest while
+  keeping the sample surface unchanged.
+- Added targeted tests for template listing, validation, dry-run/apply config
+  writes, confirmation gating, backup creation, secret rejection, invalid
+  existing config handling, MCP wrapper behavior, tool surfaces, and MCPB
+  manifest alignment.
+- Updated documented tool counts to `sample=23`, `standard=30`,
+  `developer=33`.
+
+Validation:
+
+- `pytest tests/test_qualification_framework.py tests/test_qualification_config.py tests/test_tool_surfaces.py tests/test_mcpb_manifest.py --basetemp .pytest-qf2 -q`:
+  70 passed.
+- `ruff check src/deal_intel/qualification_config.py src/deal_intel/schema/qualification_framework.py src/deal_intel/mcp_server.py src/deal_intel/tool_surfaces.py tests/test_qualification_config.py tests/test_qualification_framework.py tests/test_tool_surfaces.py tests/test_mcpb_manifest.py`:
+  passed.
+
+Notes:
+
+- This is the non-LLM safe path. `suggest_qualification_framework` is deferred
+  to QF-2b so LLM cost, prompt quality, and safety can be tested separately.
+- The new update tool writes only validated non-secret config and does not
+  recompute historical deal scores.
+- A plain pytest run hit the known Windows temp permission issue under
+  `%LOCALAPPDATA%\Temp\pytest-of-JuniBecky`; rerunning with a workspace
+  basetemp validated the tests themselves.
+
+### QF-1 framework contract and validator
+
+Implemented:
+
+- Added `src/deal_intel/schema/qualification_framework.py` with the v2
+  qualification framework contract.
+- Added validated built-in templates: `meddpicc`, `simple_b2b`, `pilot_poc`,
+  `enterprise_procurement`, and `product_led_sales`.
+- Added static validation for framework keys, dimension keys, required labels
+  and extraction hints, positive weights, fixed v2 score scale `0-5`, minimum
+  enabled dimension count, CTA policy, secret-shaped strings, invalid stage
+  rules, and unscorable extraction hints.
+- Added `tests/test_qualification_framework.py` covering the validator failure
+  modes and confirming the MEDDPICC template matches the v1 default weights.
+
+Validation:
+
+- `pytest tests/test_qualification_framework.py -q`: 24 passed.
+- `ruff check src/deal_intel/schema/qualification_framework.py tests/test_qualification_framework.py`:
+  passed.
+
+Notes:
+
+- This is still runtime-neutral. No MCP tool, storage schema, extraction prompt,
+  metric, report, or existing `meddpicc_latest` behavior changed.
+- The next recommended unit is QF-2: template/validator MCP tools and safe
+  config update workflow.
+
+### Qualification framework v2 execution plan
+
+Implemented:
+
+- Added [qualification-framework-v2.md](qualification-framework-v2.md) as the
+  execution plan for MEDDPICC abstraction / qualification framework v2.
+- Split the work into QF-0 through QF-9 units with design, implementation,
+  verification gates, and corner-case checks.
+- Included the revised UX direction that framework customization needs
+  templates and wizard-style assistance, not only schema constraints.
+- Linked the plan from [backlog.md](backlog.md).
+
+Notes:
+
+- This is a planning/documentation change only. No runtime framework behavior,
+  MCP tool contract, or storage schema changed.
+- The next recommended implementation unit is QF-1: framework contract,
+  built-in templates, and static validator.
 
 ### Architecture developer map kickoff
 
@@ -44,7 +810,8 @@ Implemented:
 - This addresses host-app behavior where a tool search may show only the top
   few matching tools even though the MCP server loaded the full surface.
 - Bumped package and MCPB manifest version to `0.1.14`.
-- Updated visible tool counts to `sample=23`, `standard=27`, `developer=30`.
+- Tool-surface counts were updated for that release; current counts are
+  tracked in [baseline.md](baseline.md).
 
 Notes:
 

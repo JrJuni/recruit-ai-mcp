@@ -125,9 +125,9 @@ When installing the MCPB, recommend:
 
 Expected visible tool counts:
 
-- `sample`: 23 tools
-- `standard` / `full`: 27 tools
-- `developer`: 30 tools
+- `sample`: 24 tools
+- `standard` / `full`: 35 tools
+- `developer`: 38 tools
 
 If the host app's tool search shows only a handful of tools, that is usually a
 host-side search limit rather than a server loading failure. Ask it to call
@@ -158,9 +158,9 @@ Prefer deterministic read tools for normal questions:
 - Manager/team meeting report -> `export_report`
 - Excel/CSV-ready deal ledger -> `export_data`
 - Server-side LLM usage / rough cost check -> `get_usage`
-- Customer concern or decision-criteria ranking -> `get_customer_themes`
-- Stage/industry/tag theme comparison -> `get_customer_theme_breakdown`
-- Evidence snippets for one theme -> `get_customer_theme_evidence`
+- Customer concern or decision-criteria ranking -> start with `get_customer_themes`
+- Stage/industry/tag theme comparison -> then use `get_customer_theme_breakdown`
+- Evidence snippets for one known theme -> then use `get_customer_theme_evidence`
 
 Use LLM/write tools only when the user intent requires them:
 
@@ -181,8 +181,9 @@ For new evidence, use `add_interaction` as the single public intake:
 - internal notes: `interaction_type=internal_note`
 
 Check the returned `source_policy`. Customer-stated inbound evidence can update
-MEDDPICC/customer themes. Outbound-only or internal-only content is retained as
-context but should not be described as confirmed deal health.
+qualification/customer themes. MEDDPICC is the default framework, but custom
+qualification frameworks may be active. Outbound-only or internal-only content
+is retained as context but should not be described as confirmed deal health.
 
 ## User Memory
 

@@ -67,6 +67,8 @@ Recommended implementation order:
      treating missing evidence as neutral confidence.
    - Update extraction, health scoring, gap logic, reviews, reports, Atlas
      chart specs, smoke fixtures, and docs together.
+   - Detailed execution units and verification gates live in
+     [qualification-framework-v2.md](qualification-framework-v2.md).
 4. Tool namespace and customer-theme workflow cleanup.
    - Revisit the tool surface through user intent rather than internal module
      boundaries.
@@ -118,6 +120,16 @@ Recommended implementation order:
      startup.
    - Do not ship a thin `npx` wrapper as the main post-v1 answer if it still
      requires users to manually understand the Python install path.
+10. Post-v2 workspace/project profiles.
+   - Support multiple sales workspaces without editing global config by hand.
+   - A workspace should bundle at least MongoDB database name, optional URI
+     reference, default currency, qualification framework, reporting output
+     path, and product/solution context pointers.
+   - Keep project switching explicit, e.g. `workspace list/add/switch`, so a
+     user managing multiple products or client projects does not accidentally
+     mix deal records, charts, reports, embeddings, or tuning preferences.
+   - Treat this as post-v2 because the qualification framework and tool surface
+     need to stabilize first.
 
 MongoDB feature placement rule:
 
@@ -309,11 +321,15 @@ v1 polish:
 Post-v1:
 
 1. Consolidate customer theme tools after observing real host usage:
-   - Keep `get_customer_themes` as the workflow-oriented entry point.
+   - Keep `get_customer_themes` as the ranking-oriented entry point.
+   - Current QF-9 direction keeps existing names and adds workflow hints instead
+     of a hard rename.
    - Add optional depth controls such as `include_breakdown` /
-     `include_evidence` or a small `detail_level` enum.
-   - Preserve current lower-level tools temporarily as compatibility aliases
-     only if needed.
+     `include_evidence` or a small `detail_level` enum only if host tool choice
+     remains noisy after description, response workflow metadata, and catalog
+     improvements.
+   - Preserve current lower-level tools temporarily as compatibility aliases if
+     a future unified theme tool is added.
 2. Audit `update_deal` field groups:
    - Keep it if all fields remain "confirmed deal metadata correction."
    - Split only if future fields introduce distinct workflows such as
@@ -461,6 +477,12 @@ Deferred work:
 
 Goal: eventually allow teams to replace or extend the default MEDDPICC
 qualification model without forking the whole product.
+
+Detailed plan:
+
+- See [qualification-framework-v2.md](qualification-framework-v2.md) for the
+  active QF-0 through QF-9 execution plan, templates/wizard direction,
+  verification gates, and corner-case checklist.
 
 Timing:
 

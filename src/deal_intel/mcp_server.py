@@ -85,17 +85,23 @@ def get_tool_catalog(include_hidden: bool = False) -> dict:
 
     Use this when a host app's tool search shows only a truncated subset of
     tools. Read-only: no storage access, no LLM calls, no file writes.
+    Intent alias: catalog.tools.
 
     By default, returns only tools visible in the current resolved surface.
     Set include_hidden=true to also show developer-only or profile-hidden tools
-    with visibility metadata.
+    with visibility metadata. Intent aliases are discovery metadata, not
+    alternate callable tool names.
     """
     try:
         from deal_intel import _context
         from deal_intel.tool_surfaces import (
+            build_tool_alias_map,
+            build_tool_intent_groups,
+            build_tool_selection_guide,
             list_tool_surface_contracts,
             resolve_tool_surface,
             surface_names,
+            tool_intent_metadata,
             tool_names_for_surface,
         )
 
@@ -110,6 +116,7 @@ def get_tool_catalog(include_hidden: bool = False) -> dict:
         tools = [
             {
                 **contract.to_dict(),
+                **tool_intent_metadata(contract.name),
                 "visible": contract.name in visible_names,
             }
             for contract in contracts
@@ -124,6 +131,11 @@ def get_tool_catalog(include_hidden: bool = False) -> dict:
             if include_hidden
             else {resolved_surface: sorted(visible_names)}
         )
+        catalog_names = (
+            {contract.name for contract in contracts}
+            if include_hidden
+            else visible_names
+        )
 
         return {
             "ok": True,
@@ -133,12 +145,17 @@ def get_tool_catalog(include_hidden: bool = False) -> dict:
             "include_hidden": include_hidden,
             "tools": tools,
             "categories": categories,
+            "tool_aliases": build_tool_alias_map(catalog_names),
+            "intent_groups": build_tool_intent_groups(catalog_names),
+            "tool_selection_guide": build_tool_selection_guide(catalog_names),
             "surfaces": surfaces_payload,
             "usage_hint": (
                 "Use this catalog when the host app's tool search returns only "
                 "a few matching tools. For setup, start with config_doctor. "
                 "For one-deal status, use get_deal_review. For reports, use "
-                "export_report; for spreadsheet ledgers, use export_data."
+                "export_report; for spreadsheet ledgers, use export_data. "
+                "For customer themes, start with get_customer_themes, then "
+                "use breakdown or evidence only when the user asks for that depth."
             ),
         }
     except Exception as exc:
@@ -193,6 +210,245 @@ def update_config(
 
 
 @app.tool()
+def get_qualification_templates(
+    template_key: str = "",
+    include_dimensions: bool = True,
+) -> dict:
+    """List built-in deal qualification framework templates.
+
+    Use this when the user wants to customize deal scoring beyond the default
+    MEDDPICC model but needs a safe starting point. Read-only: no DB access, no
+    LLM calls, and no config writes. For validating an edited template, use
+    validate_qualification_framework. For applying one, use
+    update_qualification_framework.
+
+    template_key can be empty for all templates or one of the returned template
+    keys such as meddpicc, simple_b2b, pilot_poc, enterprise_procurement, or
+    product_led_sales.
+    """
+    try:
+        from deal_intel.qualification_config import build_qualification_templates_payload
+
+        return build_qualification_templates_payload(
+            template_key=template_key or "",
+            include_dimensions=include_dimensions,
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.PREFLIGHT)
+
+
+@app.tool()
+def validate_qualification_framework(
+    template_key: str = "",
+    framework_json: str = "",
+) -> dict:
+    """Validate a candidate qualification framework without writing config.
+
+    Use this before applying framework edits. Provide either template_key or a
+    JSON/YAML string in framework_json, not both. The validator checks required
+    labels, descriptions, extraction hints, weights, CTA policy, stage rules,
+    minimum enabled dimensions, and secret-shaped strings.
+
+    Read-only: no DB access, no LLM calls, and no file writes.
+    """
+    try:
+        from deal_intel.qualification_config import validate_framework_input
+
+        return validate_framework_input(
+            template_key=template_key or "",
+            framework_json=framework_json or "",
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.PREFLIGHT)
+
+
+@app.tool()
+def update_qualification_framework(
+    template_key: str = "",
+    framework_json: str = "",
+    copy_as_key: str = "",
+    copy_display_name: str = "",
+    dry_run: bool = True,
+    confirmed_by_user: bool = False,
+    set_active: bool = True,
+) -> dict:
+    """Preview or apply a qualification framework to user config.
+
+    Use this after the user approves a framework copy or edited framework.
+    Built-in presets such as meddpicc are immutable: calling this with only
+    template_key activates the preset, while calling it with template_key plus
+    copy_as_key creates a user-configured copy under the new key. Defaults to
+    dry_run=true. Actual config writes require confirmed_by_user=true.
+
+    It does not recompute existing deals, call LLMs, or write MongoDB. Runtime
+    paths load the active framework from config on the next tool call or
+    process restart, but historical deals keep their old extracted evidence
+    until backfill_qualification or backfill_qualification_reextract is run.
+    """
+    try:
+        from deal_intel.qualification_config import update_qualification_framework_config
+
+        return update_qualification_framework_config(
+            template_key=template_key or "",
+            framework_json=framework_json or "",
+            copy_as_key=copy_as_key or "",
+            copy_display_name=copy_display_name or "",
+            dry_run=dry_run,
+            confirmed_by_user=confirmed_by_user,
+            set_active=set_active,
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.PREFLIGHT)
+
+
+@app.tool()
+def list_qualification_frameworks(include_dimensions: bool = False) -> dict:
+    """List built-in and saved qualification frameworks.
+
+    Use this when the user asks which deal scoring frameworks are available or
+    which one is currently active. Read-only: no DB access, no LLM calls, and no
+    file writes. For built-in starting templates, use get_qualification_templates.
+    For switching the active framework, use set_active_qualification_framework.
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.qualification_config import list_qualification_frameworks_config
+
+        return list_qualification_frameworks_config(
+            cfg=_context.config(),
+            include_dimensions=include_dimensions,
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.PREFLIGHT)
+
+
+@app.tool()
+def set_active_qualification_framework(
+    framework_key: str,
+    dry_run: bool = True,
+    confirmed_by_user: bool = False,
+) -> dict:
+    """Preview or apply the active qualification framework selection.
+
+    Use this after the user chooses a saved or built-in framework. Defaults to
+    dry_run=true. Actual config writes require confirmed_by_user=true. This only
+    changes ~/.deal-intel/config.yaml and does not recompute existing deals,
+    call LLMs, write MongoDB, or change historical evidence.
+    """
+    try:
+        from deal_intel.qualification_config import set_active_qualification_framework_config
+
+        return set_active_qualification_framework_config(
+            framework_key=framework_key or "",
+            dry_run=dry_run,
+            confirmed_by_user=confirmed_by_user,
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.PREFLIGHT)
+
+
+@app.tool()
+def delete_qualification_framework(
+    framework_key: str,
+    dry_run: bool = True,
+    confirmed_by_user: bool = False,
+) -> dict:
+    """Preview or delete a stored custom qualification framework.
+
+    Use this only for user-configured frameworks that are no longer needed.
+    Built-in templates cannot be deleted, and the active framework must be
+    switched first. Defaults to dry_run=true; actual config writes require
+    confirmed_by_user=true. No DB writes, LLM calls, or historical recompute.
+    """
+    try:
+        from deal_intel.qualification_config import delete_qualification_framework_config
+
+        return delete_qualification_framework_config(
+            framework_key=framework_key or "",
+            dry_run=dry_run,
+            confirmed_by_user=confirmed_by_user,
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.PREFLIGHT)
+
+
+@app.tool()
+def backfill_qualification(
+    limit: int = 0,
+    dry_run: bool = True,
+    confirmed_by_user: bool = False,
+) -> dict:
+    """Recompute current deal qualification snapshots from stored evidence.
+
+    Use this after changing framework weights, thresholds, or the active
+    framework when historical interactions already contain evidence for that
+    framework. This is the safe maintenance path: dry-run is the default, it
+    does not read raw interaction content, does not call LLMs, and only patches
+    meddpicc_latest / qualification_latest in apply mode.
+
+    If the result reports needs_reextraction, use
+    backfill_qualification_reextract only after reviewing its dry-run LLM call
+    estimate and cost warning. Actual writes require dry_run=false and
+    confirmed_by_user=true.
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.tools import backfill_qualification as _t
+
+        return _t.handle(
+            mongo=_context.mongo(),
+            cfg=_context.config(),
+            limit=limit,
+            dry_run=dry_run,
+            confirmed_by_user=confirmed_by_user,
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.STORAGE)
+
+
+@app.tool()
+def backfill_qualification_reextract(
+    limit: int = 0,
+    max_llm_calls: int = 30,
+    include_unconfirmed: bool = False,
+    include_unhashed: bool = False,
+    dry_run: bool = True,
+    confirmed_by_user: bool = False,
+) -> dict:
+    """Re-extract active-framework evidence from historical interaction content.
+
+    Use this only when backfill_qualification reports needs_reextraction after
+    the user changes the active qualification framework or extraction hints.
+    This is a maintenance/admin tool: dry-run is the default, responses never
+    return raw interaction content, and apply mode may call the configured LLM
+    once per selected interaction.
+
+    Defaults to max_llm_calls=30 per run. Actual LLM calls and DB writes require
+    dry_run=false and confirmed_by_user=true. Keep include_unconfirmed=false
+    unless the user intentionally wants internal or outbound-unconfirmed context
+    re-extracted into unconfirmed qualification fields.
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.tools import backfill_qualification_reextract as _t
+
+        llm = None if dry_run else _context.llm_provider()
+        return _t.handle(
+            mongo=_context.mongo(),
+            llm=llm,
+            cfg=_context.config(),
+            limit=limit,
+            max_llm_calls=max_llm_calls,
+            include_unconfirmed=include_unconfirmed,
+            include_unhashed=include_unhashed,
+            dry_run=dry_run,
+            confirmed_by_user=confirmed_by_user,
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.LLM)
+
+
+@app.tool()
 def create_deal(
     company: str,
     industry: str = "",
@@ -210,6 +466,7 @@ def create_deal(
 
     Use this only for a new customer opportunity. For correcting an existing
     deal's amount, industry, dates, or close metadata, use update_deal instead.
+    Intent alias: deal.create.
 
     deal_size_status can be: unknown, rough_estimate, customer_budget,
     quoted, or strategic_zero. A zero amount is valid only with
@@ -293,12 +550,14 @@ def add_interaction(
     source_confidence: str = "",
     custom_fields_json: str = "",
 ) -> dict:
-    """Add a customer interaction and extract MEDDPICC signals.
+    """Add a customer interaction and extract qualification signals.
 
     Use this when the user provides new evidence such as a meeting note,
     customer email reply, user interview, call summary, or internal note. This
-    is one of the few write tools that calls the configured server-side LLM
-    because the extracted scoring/themes are persisted as deal data.
+    is the interaction.add intent and one of the few write tools that calls the
+    configured server-side LLM because active-framework qualification scoring
+    and customer themes are
+    persisted as deal data. MEDDPICC is the default built-in framework.
 
     interaction_type: meeting, email_thread, user_interview, call_summary,
     internal_note, or a configured custom interaction type. direction:
@@ -349,6 +608,7 @@ def update_stage(
     Use this only after the user confirms a real stage transition. Do not infer
     and apply stage changes from add_interaction content automatically; surface
     the stage_suggestion first, then call this tool after confirmation.
+    Intent alias: deal.stage.update.
 
     Valid stages: discovery, qualification, proposal, negotiation, won, lost, stalled.
     For won/lost, actual_close_date is an optional ISO date (YYYY-MM-DD). It
@@ -395,7 +655,7 @@ def update_deal(
     Use this for confirmed corrections to amount, currency, industry,
     industry_tags, customer_segment, close dates, or close reason. Do not use
     it for stage transitions; use update_stage. Do not use it to add new
-    evidence; use add_interaction.
+    evidence; use add_interaction. Intent alias: deal.update.
 
     Requires confirmed_by_user=true. Value updates require deal_size_status and
     deal_size_note. Metadata updates require update_note or deal_size_note.
@@ -630,11 +890,12 @@ def migrate_local_data(
 
 @app.tool()
 def get_deal(deal_id: str) -> dict:
-    """Retrieve one deal's stored details, interactions, and MEDDPICC scores.
+    """Retrieve one deal's stored details, interactions, and qualification scores.
 
     Use this when the user asks to inspect the raw stored deal record or history.
     For synthesized risk/action review, prefer get_deal_review. For missing
-    information across one or many deals, use get_deal_gaps.
+    information across one or many deals, use get_deal_gaps. Intent alias:
+    deal.get.
     """
     try:
         from deal_intel import _context
@@ -651,7 +912,7 @@ def list_deals(stage: str = "", limit: int = 20, as_of: str = "") -> dict:
 
     Use this for a quick pipeline table or to find which deals need attention at
     a glance. Do not use it for KPI totals; use get_metrics. Do not use it for a
-    single-deal review; use get_deal_review.
+    single-deal review; use get_deal_review. Intent alias: deal.list.
 
     Optionally filter by stage (discovery/qualification/proposal/negotiation/won/lost/stalled).
     as_of accepts YYYY-MM-DD for reproducible date-based calculations.
@@ -686,10 +947,10 @@ def get_insights(query_type: str, as_of: str = "") -> dict:
 
     query_type options:
     - pipeline_overview   : deal count, average health, and value by stage
-    - win_patterns        : average MEDDPICC scores across won deals
-    - loss_patterns       : average MEDDPICC scores across lost deals
-    - compare_won_lost    : compare win and loss MEDDPICC score patterns
-    - gap_frequency       : most frequent MEDDPICC gap dimensions in active deals
+    - win_patterns        : legacy/default-framework scores across won deals
+    - loss_patterns       : legacy/default-framework scores across lost deals
+    - compare_won_lost    : compare win/loss qualification score patterns
+    - gap_frequency       : most frequent qualification gap dimensions in active deals
     - industry_benchmark  : average health, win rate, and deal value by industry
     - stage_velocity      : average days in stage from stage_history
     """
@@ -720,7 +981,8 @@ def get_metrics(
     Use this for numeric KPI questions such as current pipeline health, stage
     value, win rate, attention counts, or pipeline trend. This is LLM-free and
     should be preferred over get_insights for pipeline health. For per-deal
-    risk/action review, use get_deal_review or get_deal_gaps.
+    risk/action review, use get_deal_review or get_deal_gaps. Intent alias:
+    pipeline.metrics.
 
     Supported metric_type values: pipeline_health, pipeline_trend.
     Optional filters:
@@ -760,7 +1022,7 @@ def get_deal_gaps(
     Use this when the user asks what is missing, what to confirm next, or which
     deals have sales/forecast information gaps. It returns prioritized hints,
     not generated strategy prose. For a full one-deal review, use
-    get_deal_review.
+    get_deal_review. Intent alias: deal.gaps.
 
     Read-only. Uses the shared metric projection and does not call LLM,
     embeddings, or write to MongoDB.
@@ -797,6 +1059,7 @@ def get_deal_review(deal_id: str, as_of: str = "") -> dict:
 
     This is the default tool for one-deal status, risk, uncertainty, and next
     questions/actions. It is LLM-free and safer for routine deal review.
+    Intent alias: deal.review.
     Prefer this over analyze_deal for ordinary questions such as "how is this
     deal going?", "what should I check next?", or "why is this deal risky?".
     Use analyze_deal only when the user explicitly asks for generated BD
@@ -832,6 +1095,7 @@ def get_usage(since: str = "", until: str = "") -> dict:
     keys, OAuth tokens, or MongoDB URIs. Cost is estimated only when safe:
     ChatGPT OAuth is reported as zero incremental API cost, and API-provider
     pricing is calculated only if usage.pricing is configured.
+    Intent alias: usage.cost.
 
     since/until accept YYYY-MM-DD and filter persisted usage metadata.
     """
@@ -863,7 +1127,8 @@ def export_report(
     Use this when the user asks for a manager/team meeting report, weekly
     pipeline narrative, or a document-style summary. For spreadsheet-ready CSV
     ledgers, use export_data instead. For chat-only KPI answers, use
-    get_metrics. For one-deal review, use get_deal_review.
+    get_metrics. For one-deal review, use get_deal_review. Intent alias:
+    report.export.
 
     Supported report_type values: weekly_pipeline, pipeline_trend.
     Current implementation writes Markdown plus compatibility CSV artifacts;
@@ -911,7 +1176,7 @@ def export_data(
     table, a closed deal ledger, monthly/quarterly records, or raw-but-safe
     reporting data for their own analysis. For manager/team meeting narrative
     reports, use export_report instead. For chat-only KPI answers, use
-    get_metrics.
+    get_metrics. Intent alias: data.export.
 
     Supported dataset values:
     - open_deals: active/stalled pipeline ledger with health, timing, gaps
@@ -1012,10 +1277,11 @@ def get_customer_themes(
     """Rank recurring customer concerns by unique deal count with evidence.
 
     Use this for questions like "what do customers worry about most?" or "what
-    decision criteria appear most often?" This is the main entry point for
-    theme ranking. Do not use it for stage/industry comparison tables; use
-    get_customer_theme_breakdown. Do not use it when the user asks for concrete
-    quotes/snippets for one known theme; use get_customer_theme_evidence.
+    decision criteria appear most often?" This is the main customer theme entry
+    point and the ranking step in the customer-theme workflow. Do not use it
+    for stage/industry comparison tables; use get_customer_theme_breakdown. Do
+    not use it when the user asks for concrete quotes/snippets for one known
+    theme; use get_customer_theme_evidence. Intent alias: theme.rank.
 
     dimension: all | identify_pain | decision_criteria | metrics
     stage: active | all | discovery | qualification | proposal | negotiation | won | lost | stalled
@@ -1048,9 +1314,10 @@ def get_customer_theme_breakdown(
 
     Use this after or alongside get_customer_themes when the user wants to
     compare theme patterns by stage, primary industry, industry tag, or theme
-    dimension. Do not use it as the default "top customer concerns" tool; use
+    dimension. This is the comparison step in the customer-theme workflow. Do
+    not use it as the default "top customer concerns" tool; use
     get_customer_themes for ranking. For representative snippets, use
-    get_customer_theme_evidence.
+    get_customer_theme_evidence. Intent alias: theme.compare.
 
     Read-only. Uses curated customer_themes only; does not return raw meeting
     notes, contacts, or embeddings.
@@ -1090,9 +1357,10 @@ def get_customer_theme_evidence(
     """Return curated evidence examples for one customer theme.
 
     Use this when the user asks "show examples/evidence" for one known theme
-    key. Do not use it to rank themes from scratch; use get_customer_themes
-    first. Do not use it for stage/industry comparison tables; use
-    get_customer_theme_breakdown.
+    key. This is the evidence-drilldown step in the customer-theme workflow. Do
+    not use it to rank themes from scratch; use get_customer_themes first. Do
+    not use it for stage/industry comparison tables; use
+    get_customer_theme_breakdown. Intent alias: theme.evidence.
 
     Read-only. Evidence is the structured snippet already extracted into
     customer_themes; raw meeting notes, raw interaction content, contacts, and
@@ -1135,7 +1403,7 @@ def search_deals(query: str, limit: int = 5) -> dict:
     Use this for natural-language reference search in Mongo-backed mode, such
     as finding similar past deals or similar customer situations. Do not use it
     for frequency/ranking questions; use get_customer_themes or get_metrics.
-    This tool is hidden in sample mode.
+    This tool is hidden in sample mode. Intent alias: search.deals.
 
     Examples:
     - "deals where the customer struggles with cost reduction"
@@ -1233,6 +1501,7 @@ def analyze_deal(deal_id: str) -> dict:
     deal. For routine status/risk/uncertainty review, use get_deal_review. For
     missing-info prioritization, use get_deal_gaps. Do not call this just
     because the user asks "how is this deal going?"; start with get_deal_review.
+    Intent alias: strategy.analyze.
     """
     try:
         from deal_intel import _context
