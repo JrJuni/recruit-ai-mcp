@@ -28,6 +28,7 @@ config/*.local.yaml
 outputs/*
 !outputs/.gitkeep
 reports_preview/
+.tmp-product-context/
 
 # Throwaway / experimental rendered JSON (e.g. ad-hoc Atlas Charts renders)
 scripts/tmp/

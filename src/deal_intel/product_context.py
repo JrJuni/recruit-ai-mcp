@@ -24,7 +24,8 @@ MANIFEST_FILE = "manifest.json"
 CHUNKS_FILE = "chunks.json"
 SUPPORTED_FILE_TYPES = frozenset({"txt", "md", "json", "csv", "pdf", "docx"})
 UNSUPPORTED_FILE_TYPES = frozenset({"pptx", "xlsx"})
-MAX_FILE_BYTES = 5 * 1024 * 1024
+MAX_SOURCE_FILE_BYTES = 25 * 1024 * 1024
+MAX_NOTE_BYTES = 5 * 1024 * 1024
 MAX_FILES_PER_RUN = 200
 CHUNK_TARGET_CHARS = 1200
 SNIPPET_CHARS = 900
@@ -163,7 +164,7 @@ def index_product_context(
             counts["errors"] += 1
             errors.append(_file_error(path, "stat_failed", str(exc)))
             continue
-        if stat.st_size > MAX_FILE_BYTES:
+        if stat.st_size > MAX_SOURCE_FILE_BYTES:
             counts["skipped"] += 1
             warnings.append(
                 _warning(
@@ -171,7 +172,7 @@ def index_product_context(
                     "File exceeded the product-context max file size.",
                     source_path=str(path),
                     bytes=stat.st_size,
-                    max_bytes=MAX_FILE_BYTES,
+                    max_bytes=MAX_SOURCE_FILE_BYTES,
                 )
             )
             continue
@@ -347,12 +348,12 @@ def add_product_context_note(
         )
 
     content_bytes = len(cleaned_content.encode("utf-8"))
-    if content_bytes > MAX_FILE_BYTES:
+    if content_bytes > MAX_NOTE_BYTES:
         raise MCPError(
             error_code=ErrorCode.INVALID_INPUT,
             stage=Stage.PREFLIGHT,
             message="product context note exceeds the max file size.",
-            hint={"max_bytes": MAX_FILE_BYTES, "actual_bytes": content_bytes},
+            hint={"max_bytes": MAX_NOTE_BYTES, "actual_bytes": content_bytes},
             retryable=False,
         )
 

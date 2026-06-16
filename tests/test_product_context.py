@@ -6,6 +6,7 @@ from xml.sax.saxutils import escape
 
 import pytest
 
+import deal_intel.product_context as product_context
 from deal_intel import _context, mcp_server
 from deal_intel.errors import ErrorCode, MCPError
 from deal_intel.product_context import (
@@ -185,9 +186,33 @@ def test_add_product_context_note_rejects_secret_empty_and_oversized_content(
         add_product_context_note(
             _cfg(tmp_path),
             title="Huge",
-            content="x" * (5 * 1024 * 1024 + 1),
+            content="x" * (product_context.MAX_NOTE_BYTES + 1),
         )
     assert too_large_exc.value.error_code == ErrorCode.INVALID_INPUT
+
+
+def test_index_product_context_allows_source_larger_than_note_limit(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(product_context, "MAX_NOTE_BYTES", 32)
+    monkeypatch.setattr(product_context, "MAX_SOURCE_FILE_BYTES", 4096)
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    (sources / "large-source.md").write_text(
+        "Workflow automation and security positioning. " * 20,
+        encoding="utf-8",
+    )
+
+    result = product_context.index_product_context(
+        _cfg(tmp_path),
+        embedding_provider=KeywordEmbedding(),
+        dry_run=False,
+    )
+
+    assert result["ok"] is True
+    assert result["counts"]["indexed"] == 1
+    assert result["counts"]["skipped"] == 0
 
 
 def test_add_product_context_note_path_traversal_title_stays_in_managed_notes(
