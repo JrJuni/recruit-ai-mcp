@@ -49,6 +49,37 @@ than loaded wholesale.
     -> passed.
   - `git diff --check` -> passed.
 
+### MongoDB Atlas/Pro MDB-2 chart-ready refresh engine
+
+Implemented:
+
+- Added deterministic chart-ready refresh engine:
+  - weekly pipeline rows from shared metric/report engines
+  - customer theme rows from theme ranking, breakdown, and curated evidence
+    paths
+  - pipeline trend rows from analytics snapshot trend calculations
+- Added `MongoDBClient.replace_chart_ready_rows()` to replace one dashboard
+  refresh scope at a time. This prevents stale chart rows from lingering after
+  source data changes.
+- Added CLI command:
+  - `deal-intel mongo refresh-chart-ready --target all --as-of YYYY-MM-DD`
+  - dry-run by default
+  - `--apply` required for MongoDB writes
+- Kept MDB-2 CLI-only. No MCP admin write tool was added yet.
+- Guardrails:
+  - no LLM calls
+  - no embedding calls
+  - chart rows exclude raw notes, raw interaction content, contacts, and
+    embeddings
+
+Validation:
+
+- `pytest tests/test_chart_ready_refresh.py tests/test_chart_ready_contracts.py tests/test_mongo_contracts.py tests/test_atlas_charts.py -q -p no:cacheprovider --basetemp .tmp\pytest-mdb2-targeted`
+  -> 42 passed.
+- `ruff check src/deal_intel/chart_ready_refresh.py src/deal_intel/chart_ready_contracts.py src/deal_intel/storage/mongodb.py src/deal_intel/cli.py tests/test_chart_ready_refresh.py tests/test_chart_ready_contracts.py`
+  -> passed.
+- `git diff --check` -> passed.
+
 
 ### QF-11 custom framework end-to-end smoke
 

@@ -167,10 +167,16 @@ cases in `docs/pro-fallback-errors.md`.
    - contracts live in `src/deal_intel/resources/mongo/dashboard_*.v1.json`
      and load through `deal_intel.chart_ready_contracts`.
 2. MDB-2 refresh engine:
+   - status: implemented as CLI refresh path;
    - dry-run-first;
    - explicit apply;
-   - idempotent upsert by dashboard/chart/as_of/schema/version/key;
-   - no LLM or embedding calls.
+   - replaces rows by dashboard/as_of/schema scope to prevent stale chart rows;
+   - source rows are computed from existing deterministic metric, report,
+     customer-theme, and trend engines;
+   - no LLM or embedding calls;
+   - command:
+     `deal-intel mongo refresh-chart-ready --target all --as-of YYYY-MM-DD`
+     and add `--apply` only after reviewing dry-run output.
 3. MDB-3 simplified Atlas specs:
    - target chart-ready collections;
    - keep old raw aggregation specs as reference.

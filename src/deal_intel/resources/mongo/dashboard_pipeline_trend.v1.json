@@ -18,6 +18,7 @@
     "window_start",
     "window_end",
     "lookback_days",
+    "source_collections",
     "schema_version",
     "generated_at"
   ],

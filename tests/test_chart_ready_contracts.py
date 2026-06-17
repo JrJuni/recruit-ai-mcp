@@ -102,6 +102,7 @@ def test_chart_ready_summary_is_compact() -> None:
             "row_type",
             "row_key",
             "as_of",
+            "source_collections",
             "schema_version",
             "generated_at",
         ],

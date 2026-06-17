@@ -277,6 +277,28 @@ class MongoDBClient:
     def aggregate_analytics_snapshots(self, pipeline: list[dict]) -> list[dict]:
         return list(self._get_db().analytics_snapshots.aggregate(pipeline))
 
+    def replace_chart_ready_rows(
+        self,
+        *,
+        collection: str,
+        scope_filter: dict,
+        rows: list[dict],
+    ) -> dict:
+        """Replace materialized chart-ready rows for one refresh scope."""
+
+        target = _get_collection(self._get_db(), collection)
+        delete_result = target.delete_many(scope_filter)
+        inserted_count = 0
+        if rows:
+            insert_result = target.insert_many(rows, ordered=True)
+            inserted_count = len(getattr(insert_result, "inserted_ids", []))
+        return {
+            "collection": collection,
+            "matched_scope": dict(scope_filter),
+            "deleted_count": int(getattr(delete_result, "deleted_count", 0)),
+            "inserted_count": inserted_count,
+        }
+
     def list_deals_for_theme_backfill(self, *, limit: int = 0) -> list[dict]:
         cursor = self._get_db().deals.find(with_unarchived_deal_filter(), {"_id": 0})
         if limit > 0:

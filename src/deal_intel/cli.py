@@ -1025,6 +1025,70 @@ def mongo_apply_vector_index(
         raise typer.Exit(code=1)
 
 
+@mongo_app.command("refresh-chart-ready")
+def mongo_refresh_chart_ready(
+    target: str = typer.Option(
+        "all",
+        "--target",
+        help="Refresh target: all, weekly_pipeline, customer_themes, or pipeline_trend.",
+    ),
+    as_of: str | None = typer.Option(
+        None,
+        "--as-of",
+        help="Dashboard date in YYYY-MM-DD format. Defaults to reporting timezone today.",
+    ),
+    lookback_days: int = typer.Option(
+        7,
+        "--lookback-days",
+        help="Trend lookback window, used only by pipeline_trend.",
+    ),
+    apply: bool = typer.Option(
+        False,
+        "--apply",
+        help="Write materialized chart-ready rows. Without this flag, dry-run only.",
+    ),
+    json_output: bool = typer.Option(
+        False,
+        "--json",
+        help="Print structured JSON instead of concise text.",
+    ),
+) -> None:
+    """Build or refresh chart-ready MongoDB collections for Atlas Charts."""
+
+    from deal_intel import _context
+    from deal_intel.chart_ready_refresh import refresh_chart_ready_collections
+
+    try:
+        payload = refresh_chart_ready_collections(
+            _context.mongo(),
+            _context.config(),
+            target=target,
+            as_of=as_of,
+            lookback_days=lookback_days,
+            apply=apply,
+        )
+    except Exception as exc:
+        payload = {
+            "ok": False,
+            "dry_run": not apply,
+            "target": target,
+            "error": _redact_cli_error(exc),
+        }
+        if json_output:
+            typer.echo(json.dumps(payload, ensure_ascii=False, indent=2, default=str))
+        else:
+            typer.echo(_format_mongo_refresh_chart_ready(payload))
+        raise typer.Exit(code=1) from exc
+
+    if json_output:
+        typer.echo(json.dumps(payload, ensure_ascii=False, indent=2, default=str))
+    else:
+        typer.echo(_format_mongo_refresh_chart_ready(payload))
+
+    if not payload["ok"]:
+        raise typer.Exit(code=1)
+
+
 @local_data_app.command("status")
 def local_data_status(
     json_output: bool = typer.Option(
@@ -2251,6 +2315,47 @@ def _format_mongo_apply_vector_index(payload: dict) -> str:
         lines.append(f"Error: {payload['error']}")
     if payload.get("hint"):
         lines.append(f"Hint: {payload['hint']}")
+    return "\n".join(lines)
+
+
+def _format_mongo_refresh_chart_ready(payload: dict) -> str:
+    if not payload.get("ok"):
+        lines = [
+            "Mongo chart-ready refresh: failed",
+            f"Target: {payload.get('target')}",
+        ]
+        if payload.get("error"):
+            lines.append(f"Error: {payload['error']}")
+        return "\n".join(lines)
+
+    status = "dry-run" if payload.get("dry_run") else "applied"
+    lines = [
+        f"Mongo chart-ready refresh: {status}",
+        f"Target: {payload.get('target')}",
+        f"As of: {payload.get('as_of')}",
+        f"Generated at: {payload.get('generated_at')}",
+        f"Total rows: {payload.get('total_row_count')}",
+    ]
+    for target in payload.get("targets") or []:
+        lines.append(
+            "- "
+            f"{target.get('target')} -> {target.get('collection')}: "
+            f"{target.get('row_count')} row(s)"
+        )
+        write_result = target.get("write_result")
+        if write_result:
+            lines.append(
+                "  write: "
+                f"deleted={write_result.get('deleted_count')}, "
+                f"inserted={write_result.get('inserted_count')}"
+            )
+    warnings = payload.get("warnings") or []
+    if warnings:
+        lines.append("Warnings:")
+        for warning in warnings:
+            lines.append(f"- {warning}")
+    if payload.get("dry_run"):
+        lines.append("Run again with --apply to replace rows in MongoDB.")
     return "\n".join(lines)
 
 

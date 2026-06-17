@@ -16,6 +16,7 @@
     "row_type",
     "row_key",
     "as_of",
+    "source_collections",
     "schema_version",
     "generated_at"
   ],
