@@ -170,6 +170,28 @@ Remaining:
 - PyPI/TestPyPI install-source smoke is still pending.
 - macOS fresh-machine smoke is still pending.
 
+### D3 package-surface smoke
+
+Validated:
+
+- `npm pack --dry-run` passes when npm cache is redirected to a workspace-local
+  `.tmp` cache on Windows.
+- The npm tarball currently contains only:
+  - `README.md`
+  - `bin/deal-intel-mcp.js`
+  - `package.json`
+- This confirms the bootstrapper does not bundle or reimplement the Python MCP
+  server.
+- `mcpb validate mcpb\manifest.json` passes.
+- `mcpb info mcpb\deal-intel-mcp-0.2.1.mcpb` passes with the expected unsigned
+  package warning.
+
+Remaining:
+
+- The npm package is still private and versioned `0.0.0-dev`; public
+  `npx deal-intel-mcp ...` smoke remains pending until publish metadata is
+  finalized.
+
 ### D2.2 clean wheel install smoke
 
 Completed:
