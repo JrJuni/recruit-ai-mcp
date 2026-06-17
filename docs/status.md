@@ -188,9 +188,50 @@ Validated:
 
 Remaining:
 
-- The npm package is still private and versioned `0.0.0-dev`; public
-  `npx deal-intel-mcp ...` smoke remains pending until publish metadata is
+- At this point the npm package surface smoke passed, but public
+  `npx deal-intel-mcp ...` smoke was still pending until publish metadata was
   finalized.
+
+### D3 publish metadata preparation
+
+Implemented:
+
+- Added PyPI-facing project metadata to `pyproject.toml`:
+  description, README, MIT license, author, keywords, classifiers, and project
+  URLs.
+- Updated the npm bootstrapper package metadata to match `0.2.1`.
+- Marked the npm package publish-shaped with public access metadata, while
+  leaving actual npm publication as a maintainer credential step.
+- Added [AI_NPX_INSTALL_GUIDE.md](../AI_NPX_INSTALL_GUIDE.md) for the future
+  no-git-clone install path after npm/PyPI publication.
+- Linked the npx guide from README, AI_START_HERE, and the docs map.
+- Updated the bootstrapper runtime version to read from `npm/package.json`,
+  preventing package metadata/runtime output drift.
+
+Validated:
+
+- Python build metadata smoke:
+  `python -m build --no-isolation --outdir .tmp\publish-metadata-dist`.
+- npm package surface smoke:
+  `npm pack --dry-run --cache ..\.tmp\npm-cache`.
+- Node syntax smoke:
+  `node --check npm\bin\deal-intel-mcp.js`.
+- npm runtime smoke:
+  `npm run smoke --cache ..\.tmp\npm-cache`, confirming
+  `bootstrapper_version: 0.2.1`.
+- Targeted regression:
+  `pytest tests\test_bootstrapper_skeleton.py tests\test_mcpb_manifest.py -q -p no:cacheprovider --basetemp .tmp\pytest-publish-metadata`.
+- Ruff:
+  `ruff check .`.
+- Public docs path hygiene scan found no maintainer-specific conda environment
+  name or local user path references in the checked docs/npm surfaces.
+
+Remaining:
+
+- Public npm publication has not been run.
+- PyPI/TestPyPI publication has not been run.
+- Public `npx deal-intel-mcp setup` smoke remains pending until both package
+  sources are reachable.
 
 ### D2.2 clean wheel install smoke
 

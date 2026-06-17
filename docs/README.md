@@ -15,9 +15,11 @@ Read these first for normal work:
 3. `../AI_START_HERE.md`
    - AI setup guide: full-by-default for humans, optional sample path for
      zero-config evaluation.
-4. `status.md`
+4. `../AI_NPX_INSTALL_GUIDE.md`
+   - Future no-git-clone bootstrapper install path after npm/PyPI publication.
+5. `status.md`
    - Latest completed work and current verification notes.
-5. `baseline.md`
+6. `baseline.md`
    - MCP tool contracts, input/output shape, persistence behavior, and current
      registration expectations.
 

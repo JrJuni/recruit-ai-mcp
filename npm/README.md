@@ -2,9 +2,9 @@
 
 This is the future `npx` front door for Deal Intelligence MCP.
 
-Current status: D3.5 local-wheel fresh-runtime smoke passed. The npm package is
-still private and not published yet, so public `npx deal-intel-mcp ...` smoke is
-pending.
+Current status: D3.5 local-wheel fresh-runtime smoke passed. The npm package
+metadata is publish-shaped but not published yet, so public
+`npx deal-intel-mcp ...` smoke is pending.
 
 The Node package must not reimplement the MCP server. It installs, finds, and
 runs the Python package described by `docs/bootstrapper-contract.md`.

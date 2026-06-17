@@ -21,13 +21,15 @@ def test_npm_package_exposes_expected_bin() -> None:
     package = json.loads((ROOT / "npm" / "package.json").read_text(encoding="utf-8"))
 
     assert package["name"] == "deal-intel-mcp"
-    assert package["private"] is True
+    assert package["private"] is False
+    assert package["publishConfig"] == {"access": "public"}
     assert package["bin"] == {"deal-intel-mcp": "bin/deal-intel-mcp.js"}
     assert package["engines"]["node"] == ">=18"
     assert "dependencies" not in package
 
 
 def test_bootstrapper_where_uses_deal_intel_home(tmp_path: Path) -> None:
+    package = json.loads((ROOT / "npm" / "package.json").read_text(encoding="utf-8"))
     result = subprocess.run(
         ["node", str(BOOTSTRAPPER), "where", "--json"],
         check=True,
@@ -41,6 +43,7 @@ def test_bootstrapper_where_uses_deal_intel_home(tmp_path: Path) -> None:
     runtime_root = tmp_path / ".deal-intel" / "runtime"
 
     assert payload["ok"] is True
+    assert payload["bootstrapper_version"] == package["version"]
     assert payload["paths"]["runtime_root"] == str(runtime_root)
     assert payload["paths"]["config_path"] == str(tmp_path / ".deal-intel" / "config.yaml")
     assert payload["paths"]["install_state_path"] == str(runtime_root / "install-state.json")

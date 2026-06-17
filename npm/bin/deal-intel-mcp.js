@@ -6,7 +6,18 @@ const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
 
-const VERSION = "0.0.0-dev";
+function readPackageVersion() {
+  try {
+    const packageJson = JSON.parse(
+      fs.readFileSync(path.join(__dirname, "..", "package.json"), "utf8"),
+    );
+    return packageJson.version || "0.0.0-dev";
+  } catch {
+    return "0.0.0-dev";
+  }
+}
+
+const VERSION = readPackageVersion();
 
 function usage() {
   return [

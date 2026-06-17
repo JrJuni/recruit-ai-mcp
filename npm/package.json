@@ -1,9 +1,26 @@
 {
   "name": "deal-intel-mcp",
-  "version": "0.0.0-dev",
-  "private": true,
-  "description": "Bootstrapper skeleton for the deal-intel-mcp Python MCP server.",
+  "version": "0.2.1",
+  "private": false,
+  "description": "Dependency-inclusive bootstrapper for the deal-intel-mcp Python MCP server.",
   "license": "MIT",
+  "homepage": "https://github.com/JrJuni/deal-intel-mcp#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JrJuni/deal-intel-mcp.git",
+    "directory": "npm"
+  },
+  "bugs": {
+    "url": "https://github.com/JrJuni/deal-intel-mcp/issues"
+  },
+  "keywords": [
+    "mcp",
+    "sales",
+    "crm",
+    "deal-intelligence",
+    "mongodb",
+    "bootstrapper"
+  ],
   "bin": {
     "deal-intel-mcp": "bin/deal-intel-mcp.js"
   },
@@ -12,6 +29,9 @@
   },
   "scripts": {
     "smoke": "node bin/deal-intel-mcp.js where --json"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "files": [
     "bin/",

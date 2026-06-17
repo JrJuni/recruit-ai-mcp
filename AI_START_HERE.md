@@ -7,6 +7,9 @@ For a step-by-step walkthrough for non-developer full-mode setup, read
 [`AI_FULL_INSTALL_GUIDE.md`](AI_FULL_INSTALL_GUIDE.md). For Korean users, use
 [`AI_FULL_INSTALL_GUIDE.ko.md`](AI_FULL_INSTALL_GUIDE.ko.md).
 
+For the future no-git-clone bootstrapper path after npm/PyPI publication, read
+[`AI_NPX_INSTALL_GUIDE.md`](AI_NPX_INSTALL_GUIDE.md).
+
 For a short public/community demo script, read
 [`docs/public-demo-script.md`](docs/public-demo-script.md).
 

@@ -344,6 +344,8 @@ Current status:
 
 - Windows local-wheel fresh-runtime smoke passed with an isolated
   `DEAL_INTEL_HOME`.
+- Python and npm package metadata are now publish-shaped and version-aligned at
+  `0.2.1`, but registry publication has not been performed.
 - `setup` now runs `smoke-profile --profile sample` as the post-install check
   so missing MongoDB/API values do not make the first install look broken.
 - `smoke --profile-only` and `mcp-config --json` passed from the managed
