@@ -311,10 +311,13 @@ Recommended implementation split:
 
 #### D3.3 Runtime environment installer
 
-- Detect Python and/or `uv`.
-- Create the venv.
-- Install `deal-intel-mcp[embedding]`.
+- Detect Python 3.11+. Initial implementation done.
+- Create the venv. Initial implementation done.
+- Install `deal-intel-mcp[embedding]`. Initial implementation done.
 - Cache installation state in `~/.deal-intel/runtime/install-state.json`.
+  Initial implementation done.
+- `uv` preference is still deferred; current implementation uses Python venv
+  plus pip as the portable baseline.
 
 #### D3.4 MCP/Claude handoff
 

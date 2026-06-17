@@ -93,6 +93,34 @@ Validation:
 - Added targeted tests for package metadata, runtime path resolution, and
   missing-runtime diagnostics.
 
+### D3.3 runtime environment installer
+
+Implemented:
+
+- Upgraded `npm/bin/deal-intel-mcp.js setup` from placeholder to a real runtime
+  installer flow.
+- `setup --dry-run --json` now returns the exact plan for:
+  - Python 3.11+ detection;
+  - venv creation under `~/.deal-intel/runtime/venv`;
+  - pip upgrade;
+  - package install;
+  - offline config doctor.
+- `setup` without `--dry-run` can create the managed venv, install the selected
+  package source, run offline doctor, and write
+  `~/.deal-intel/runtime/install-state.json`.
+- Added installer options:
+  - `--python PATH`
+  - `--source pypi|testpypi`
+  - `--wheel-url URL`
+  - `--lightweight`
+- Default install spec is `deal-intel-mcp[embedding]`; lightweight mode is
+  explicit.
+
+Validation:
+
+- Added targeted dry-run installer tests for default, lightweight, and invalid
+  source behavior.
+
 ### D2.2 clean wheel install smoke
 
 Completed:

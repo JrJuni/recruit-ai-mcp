@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -60,3 +61,84 @@ def test_bootstrapper_missing_runtime_is_actionable(tmp_path: Path) -> None:
     assert payload["ok"] is False
     assert payload["error"] == "runtime_python_missing"
     assert "DEAL_INTEL_PYTHON" in payload["next_action"]
+
+
+def test_bootstrapper_setup_dry_run_plans_runtime_install(tmp_path: Path) -> None:
+    result = subprocess.run(
+        [
+            "node",
+            str(BOOTSTRAPPER),
+            "setup",
+            "--dry-run",
+            "--json",
+            "--python",
+            sys.executable,
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        env=_env_with_home(tmp_path),
+    )
+
+    payload = json.loads(result.stdout)
+    runtime_root = tmp_path / ".deal-intel" / "runtime"
+
+    assert payload["ok"] is True
+    assert payload["status"] == "planned"
+    assert payload["runtime_root"] == str(runtime_root)
+    assert payload["install_spec"] == "deal-intel-mcp[embedding]"
+    assert payload["extras"] == ["embedding"]
+    assert payload["commands"]["create_venv"]["args"][-1] == str(runtime_root / "venv")
+    assert payload["commands"]["install_package"]["args"][-1] == "deal-intel-mcp[embedding]"
+    assert not (runtime_root / "install-state.json").exists()
+
+
+def test_bootstrapper_setup_lightweight_uses_base_package(tmp_path: Path) -> None:
+    result = subprocess.run(
+        [
+            "node",
+            str(BOOTSTRAPPER),
+            "setup",
+            "--dry-run",
+            "--json",
+            "--lightweight",
+            "--python",
+            sys.executable,
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        env=_env_with_home(tmp_path),
+    )
+
+    payload = json.loads(result.stdout)
+    assert payload["install_spec"] == "deal-intel-mcp"
+    assert payload["extras"] == []
+
+
+def test_bootstrapper_setup_rejects_unknown_source(tmp_path: Path) -> None:
+    result = subprocess.run(
+        [
+            "node",
+            str(BOOTSTRAPPER),
+            "setup",
+            "--dry-run",
+            "--json",
+            "--source",
+            "branch",
+            "--python",
+            sys.executable,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        env=_env_with_home(tmp_path),
+    )
+
+    payload = json.loads(result.stdout)
+    assert result.returncode == 2
+    assert payload["ok"] is False
+    assert payload["error"] == "invalid_setup_option"
