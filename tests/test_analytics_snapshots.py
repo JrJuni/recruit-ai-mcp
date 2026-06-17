@@ -5,9 +5,14 @@ from copy import deepcopy
 from datetime import UTC, datetime
 from types import SimpleNamespace
 
+from typer.testing import CliRunner
+
+from deal_intel import _context
+from deal_intel.cli import app
 from deal_intel.storage.mongodb import MongoDBClient
 from deal_intel.tools import add_interaction, add_meeting, create_deal, update_stage
 from deal_intel.tools.analytics_snapshot import (
+    backfill_baseline_analytics_snapshots,
     build_analytics_snapshot,
     record_analytics_snapshot,
 )
@@ -48,6 +53,11 @@ class FakeSnapshotMongo:
             return False
         self.snapshots[event_id] = deepcopy(snapshot)
         return True
+
+    def list_deals_for_metrics(self) -> list[dict]:
+        if self.deal is None:
+            return []
+        return [deepcopy(self.deal)]
 
 
 class FakeUpdateResult:
@@ -203,6 +213,100 @@ def test_build_analytics_snapshot_custom_qualification_keeps_meddpicc_alias_empt
     assert snapshot["meddpicc_filled_count"] is None
     assert snapshot["meddpicc_gap_count"] is None
     assert snapshot["meddpicc_gaps"] == []
+
+
+def test_build_analytics_snapshot_can_pin_reporting_as_of() -> None:
+    snapshot = build_analytics_snapshot(
+        cfg={"reporting": {"timezone": "Asia/Seoul"}},
+        event_type="baseline_snapshot",
+        event_id="event-baseline",
+        deal=_deal(),
+        occurred_at=datetime(2026, 6, 17, 12, 0, tzinfo=UTC),
+        as_of="2026-06-03",
+    )
+
+    assert snapshot["as_of"] == "2026-06-03"
+    assert snapshot["timezone"] == "Asia/Seoul"
+    assert snapshot["days_in_stage"] == 2
+
+
+def test_baseline_snapshot_backfill_dry_run_does_not_write() -> None:
+    mongo = FakeSnapshotMongo(_deal())
+
+    result = backfill_baseline_analytics_snapshots(
+        mongo=mongo,
+        cfg={"reporting": {"timezone": "Asia/Seoul"}},
+        as_of="2026-06-03",
+        baseline_id="trend seed",
+    )
+
+    assert result["ok"] is True
+    assert result["dry_run"] is True
+    assert result["baseline_id"] == "trend-seed"
+    assert result["snapshot_count"] == 1
+    assert result["inserted_count"] == 0
+    assert result["sample_snapshots"][0]["event_id"] == (
+        "baseline_snapshot:deal-1:trend-seed:2026-06-03"
+    )
+    assert mongo.snapshots == {}
+
+
+def test_baseline_snapshot_backfill_apply_is_idempotent() -> None:
+    mongo = FakeSnapshotMongo(_deal())
+
+    first = backfill_baseline_analytics_snapshots(
+        mongo=mongo,
+        cfg={"reporting": {"timezone": "Asia/Seoul"}},
+        as_of="2026-06-03",
+        baseline_id="trend-seed",
+        apply=True,
+    )
+    second = backfill_baseline_analytics_snapshots(
+        mongo=mongo,
+        cfg={"reporting": {"timezone": "Asia/Seoul"}},
+        as_of="2026-06-03",
+        baseline_id="trend-seed",
+        apply=True,
+    )
+
+    assert first["inserted_count"] == 1
+    assert first["duplicate_count"] == 0
+    assert second["inserted_count"] == 0
+    assert second["duplicate_count"] == 1
+    assert len(mongo.snapshots) == 1
+    snapshot = next(iter(mongo.snapshots.values()))
+    assert snapshot["event_type"] == "baseline_snapshot"
+    assert snapshot["baseline_id"] == "trend-seed"
+    assert snapshot["baseline_kind"] == "current_state_as_of"
+    assert snapshot["as_of"] == "2026-06-03"
+
+
+def test_cli_baseline_snapshot_backfill_dry_run(monkeypatch) -> None:
+    monkeypatch.setattr(
+        _context,
+        "config",
+        lambda: {"reporting": {"timezone": "Asia/Seoul"}},
+    )
+    monkeypatch.setattr(_context, "mongo", lambda: FakeSnapshotMongo(_deal()))
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "mongo",
+            "backfill-analytics-snapshots",
+            "--as-of",
+            "2026-06-03",
+            "--baseline-id",
+            "trend-seed",
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert payload["ok"] is True
+    assert payload["dry_run"] is True
+    assert payload["snapshot_count"] == 1
 
 
 def test_mongodb_snapshot_upsert_is_idempotent_by_event_id() -> None:

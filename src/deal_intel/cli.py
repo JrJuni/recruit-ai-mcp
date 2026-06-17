@@ -1108,6 +1108,68 @@ def mongo_refresh_chart_ready(
         raise typer.Exit(code=1)
 
 
+@mongo_app.command("backfill-analytics-snapshots")
+def mongo_backfill_analytics_snapshots(
+    as_of: str = typer.Option(
+        ...,
+        "--as-of",
+        help="Baseline reporting date in YYYY-MM-DD format.",
+    ),
+    baseline_id: str = typer.Option(
+        "manual",
+        "--baseline-id",
+        help="Deterministic baseline id used in snapshot event ids.",
+    ),
+    apply: bool = typer.Option(
+        False,
+        "--apply",
+        help="Write baseline snapshots. Without this flag, dry-run only.",
+    ),
+    json_output: bool = typer.Option(
+        False,
+        "--json",
+        help="Print structured JSON instead of concise text.",
+    ),
+) -> None:
+    """Backfill idempotent current-state baseline snapshots for trend charts."""
+
+    from deal_intel import _context
+    from deal_intel.tools.analytics_snapshot import (
+        backfill_baseline_analytics_snapshots,
+    )
+
+    try:
+        payload = backfill_baseline_analytics_snapshots(
+            mongo=_context.mongo(),
+            cfg=_context.config(),
+            as_of=as_of,
+            baseline_id=baseline_id,
+            apply=apply,
+        )
+    except Exception as exc:
+        payload = {
+            "ok": False,
+            "dry_run": not apply,
+            "operation": "backfill_analytics_baseline",
+            "as_of": as_of,
+            "baseline_id": baseline_id,
+            "error": _redact_cli_error(exc),
+        }
+        if json_output:
+            typer.echo(json.dumps(payload, ensure_ascii=False, indent=2, default=str))
+        else:
+            typer.echo(_format_mongo_backfill_analytics_snapshots(payload))
+        raise typer.Exit(code=1) from exc
+
+    if json_output:
+        typer.echo(json.dumps(payload, ensure_ascii=False, indent=2, default=str))
+    else:
+        typer.echo(_format_mongo_backfill_analytics_snapshots(payload))
+
+    if not payload["ok"]:
+        raise typer.Exit(code=1)
+
+
 @local_data_app.command("status")
 def local_data_status(
     json_output: bool = typer.Option(
@@ -2385,6 +2447,41 @@ def _format_mongo_refresh_chart_ready(payload: dict) -> str:
             lines.append(f"- {warning}")
     if payload.get("dry_run"):
         lines.append("Run again with --apply to replace rows in MongoDB.")
+    return "\n".join(lines)
+
+
+def _format_mongo_backfill_analytics_snapshots(payload: dict) -> str:
+    if not payload.get("ok"):
+        lines = [
+            "Mongo analytics snapshot baseline backfill: failed",
+            f"As of: {payload.get('as_of')}",
+            f"Baseline id: {payload.get('baseline_id')}",
+        ]
+        if payload.get("error"):
+            lines.append(f"Error: {payload['error']}")
+        errors = payload.get("errors") or []
+        for error in errors[:5]:
+            lines.append(f"- {error}")
+        return "\n".join(lines)
+
+    status = "dry-run" if payload.get("dry_run") else "applied"
+    lines = [
+        f"Mongo analytics snapshot baseline backfill: {status}",
+        f"As of: {payload.get('as_of')}",
+        f"Baseline id: {payload.get('baseline_id')}",
+        f"Deals read: {payload.get('deal_count')}",
+        f"Snapshots prepared: {payload.get('snapshot_count')}",
+        f"Inserted: {payload.get('inserted_count')}",
+        f"Duplicates: {payload.get('duplicate_count')}",
+        f"Skipped: {payload.get('skipped_count')}",
+    ]
+    warnings = payload.get("warnings") or []
+    if warnings:
+        lines.append("Warnings:")
+        for warning in warnings:
+            lines.append(f"- {warning}")
+    if payload.get("dry_run"):
+        lines.append("Run again with --apply to insert missing baseline snapshots.")
     return "\n".join(lines)
 
 

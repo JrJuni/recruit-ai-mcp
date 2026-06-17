@@ -83,6 +83,7 @@ STORAGE_METHOD_CONTRACTS: tuple[StorageMethodContract, ...] = (
             "export_report:weekly_pipeline",
             "get_insights:pipeline_overview",
             "smoke-natural-questions",
+            "mongo:backfill-analytics-snapshots",
         ),
         notes="Primary LLM-free BI/reporting read path; excludes raw notes, contacts, vectors.",
     ),
@@ -189,7 +190,12 @@ STORAGE_METHOD_CONTRACTS: tuple[StorageMethodContract, ...] = (
         name="upsert_analytics_snapshot",
         mode="write",
         local_sample_mvp=False,
-        consumers=("create_deal", "add_interaction", "update_stage"),
+        consumers=(
+            "create_deal",
+            "add_interaction",
+            "update_stage",
+            "mongo:backfill-analytics-snapshots",
+        ),
         notes="Trend snapshot write path is deferred for local sample mode.",
     ),
     StorageMethodContract(

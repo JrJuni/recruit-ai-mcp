@@ -70,6 +70,20 @@ Follow-up completed later on 2026-06-17:
 - Existing Atlas Charts dashboards that were tied to the terminated M10 data
   source do not automatically recover. Rebuild or reconnect charts against the
   new M0 cluster and the `dashboard_*` collections.
+- Added `deal-intel mongo backfill-analytics-snapshots` as a dry-run-first,
+  idempotent baseline snapshot command for trend dashboards.
+- Backfilled current-state baseline analytics snapshots for `2026-06-03` and
+  `2026-06-10` with `baseline_id=trend-seed`:
+  - 22 snapshots inserted for each date;
+  - 44 baseline snapshots total;
+  - the command records `event_type=baseline_snapshot`,
+    `baseline_kind=current_state_as_of`, and deterministic event ids.
+- Refreshed `dashboard_pipeline_trend` after baseline seeding:
+  - 8 rows inserted for window `2026-06-03` to `2026-06-10`;
+  - `snapshot_count` is now 44 instead of 0;
+  - no chart-ready warnings.
+- Re-ran `deal-intel mongo doctor --json`; result is still `ok: true` with
+  `warning_checks: 0`.
 
 ### MongoDB Atlas/Pro MDB-0 audit
 
