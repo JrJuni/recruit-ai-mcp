@@ -8,6 +8,14 @@ Use this after the maintainer has provided one usable install path:
 - a Claude Desktop MCPB artifact; or
 - the future `npx deal-intel-mcp` bootstrapper after npm/PyPI publication.
 
+Current pre-registry handoff path:
+
+- use `release/latest/deal-intel-mcp-0.2.1.mcpb`;
+- install the Python package locally first;
+- paste the local Python interpreter path into the MCPB form;
+- treat `npx deal-intel-mcp` as unavailable until npm/PyPI publication is
+  complete.
+
 Do not ask the tester to paste MongoDB URIs, API keys, OAuth tokens, or raw
 private files into chat. Ask them to enter secrets only in the local MCPB form,
 local `.env`, local shell environment, or local config file.
@@ -43,6 +51,12 @@ say that it is a trial profile.
 ## Install Path A: MCPB Artifact
 
 Use this when the maintainer has provided a `.mcpb` file.
+
+For the current pre-registry user test, the repository includes:
+
+```text
+release/latest/deal-intel-mcp-0.2.1.mcpb
+```
 
 Ask the tester to install the MCPB bundle in the host app, then fill the MCPB
 form:

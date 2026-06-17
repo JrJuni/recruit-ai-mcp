@@ -20,6 +20,8 @@ Completed:
   tester handoff.
 - Added [release-publish-checklist.md](release-publish-checklist.md) for the
   maintainer-only npm/PyPI/MCPB publication sequence.
+- Aligned the pre-registry user-test handoff docs with the current included
+  MCPB artifact: `release/latest/deal-intel-mcp-0.2.1.mcpb`.
 - Confirmed the local repository is ready for the next maintainer decision:
   actual npm/PyPI publication.
 
@@ -45,6 +47,10 @@ Validated:
 - Package surface smoke:
   `npm pack .\npm --dry-run --cache .tmp\npm-cache` -> package
   `deal-intel-mcp-0.2.1.tgz` dry-run succeeded.
+- Handoff-doc consistency:
+  targeted checks on `release/README.md` and `AI_USER_TEST_GUIDE.md` confirm
+  current release/user-test handoff docs point at `0.2.1`. Older `0.1.15`
+  references remain only in archived status history.
 - Whitespace:
   `git diff --check` -> pass.
 
