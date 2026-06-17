@@ -40,13 +40,16 @@ MongoDB Atlas links:
 ```bash
 cd mcpb
 mcpb validate manifest.json
-mcpb pack . deal-intel-mcp-0.1.15.mcpb   # output goes into mcpb/ folder
-mcpb info deal-intel-mcp-0.1.15.mcpb
+mcpb pack . deal-intel-mcp-0.2.1.mcpb   # output goes into mcpb/ folder
+mcpb info deal-intel-mcp-0.2.1.mcpb
 ```
 
 `mcpb` CLI: `npm install -g @anthropic-ai/mcpb` (Node.js 18+).
 
-The `.mcpb` output is gitignored (build artifact, version-stamped in filename).
+The `.mcpb` output is gitignored by default because it is a version-stamped
+build artifact. Rebuild it in this folder for local/package smoke tests.
+Update `release/latest/` only when intentionally publishing a new latest
+release artifact.
 
 ## Install
 

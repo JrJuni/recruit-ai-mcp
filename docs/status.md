@@ -84,6 +84,16 @@ Follow-up completed later on 2026-06-17:
   - no chart-ready warnings.
 - Re-ran `deal-intel mongo doctor --json`; result is still `ok: true` with
   `warning_checks: 0`.
+- Updated [atlas-charts.md](atlas-charts.md) with the validated chart-ready
+  Atlas UI setup for `Weekly Pipeline Review`, `Customer Themes Review`, and
+  `Pipeline Trend Review`.
+- Refreshed the local MCPB package artifact in `mcpb/` only:
+  - `mcpb validate mcpb\manifest.json` -> passed;
+  - `mcpb pack mcpb mcpb\deal-intel-mcp-0.2.1.mcpb` -> passed after
+    rerunning outside the sandbox because Windows denied the sandboxed pack;
+  - `mcpb info mcpb\deal-intel-mcp-0.2.1.mcpb` -> passed with the expected
+    unsigned-package warning.
+- `release/latest/` was intentionally left unchanged.
 
 ### MongoDB Atlas/Pro MDB-0 audit
 

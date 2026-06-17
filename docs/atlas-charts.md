@@ -15,12 +15,12 @@ remain in [reports.md](reports.md).
   - `Customer Themes Review`
 - Data sources:
   - recommended chart-ready collections:
-    - `TestCluster` / `deal_intel` / `dashboard_weekly_pipeline`
-    - `TestCluster` / `deal_intel` / `dashboard_customer_themes`
-    - `TestCluster` / `deal_intel` / `dashboard_pipeline_trend`
+    - `<your cluster>` / `deal_intel` / `dashboard_weekly_pipeline`
+    - `<your cluster>` / `deal_intel` / `dashboard_customer_themes`
+    - `<your cluster>` / `deal_intel` / `dashboard_pipeline_trend`
   - raw reference sources:
-    - `TestCluster` / `deal_intel` / `deals`
-    - `TestCluster` / `deal_intel` / `analytics_snapshots`
+    - `<your cluster>` / `deal_intel` / `deals`
+    - `<your cluster>` / `deal_intel` / `analytics_snapshots`
 - Versioned specs:
   - chart-ready:
     - [weekly_pipeline_review.v1.json](../atlas/chart_ready/weekly_pipeline_review.v1.json)
@@ -58,19 +58,19 @@ selection and encoding.
 1. Refresh the dashboard collections in dry-run mode:
 
 ```bash
-~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli mongo refresh-chart-ready --target all --as-of 2026-06-09
+~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli mongo refresh-chart-ready --target all --as-of 2026-06-10 --lookback-days 7
 ```
 
 2. If the dry-run row counts look right, apply the refresh:
 
 ```bash
-~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli mongo refresh-chart-ready --target all --as-of 2026-06-09 --apply
+~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli mongo refresh-chart-ready --target all --as-of 2026-06-10 --lookback-days 7 --apply
 ```
 
 3. Render the chart-ready specs:
 
 ```bash
-~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --source chart-ready --as-of 2026-06-09 --output outputs/atlas_charts/weekly_pipeline_review_chart_ready_20260609.json
+~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --source chart-ready --as-of 2026-06-10 --output outputs/atlas_charts/weekly_pipeline_review_chart_ready_20260610.json
 ~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --source chart-ready --dashboard pipeline_trend --as-of 2026-06-10 --lookback-days 7 --output outputs/atlas_charts/pipeline_trend_chart_ready_20260610.json
 ~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --source chart-ready --dashboard customer_themes --as-of 2026-06-10 --output outputs/atlas_charts/customer_themes_chart_ready_20260610.json
 ```
@@ -90,8 +90,73 @@ selection and encoding.
 Single chart-ready pipeline example:
 
 ```bash
-~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --source chart-ready --as-of 2026-06-09 --chart-id pipeline_kpis
+~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --source chart-ready --as-of 2026-06-10 --chart-id pipeline_kpis
 ```
+
+The rendered JSON files are operator helpers only. They do not create or update
+Atlas dashboard objects by themselves.
+
+## Validated Chart-Ready UI Setup
+
+This section records the manual Atlas Charts setup that was validated on
+2026-06-17 after rebuilding the dashboard against a fresh M0/free cluster.
+
+Use these chart-ready filters unless you intentionally render/paste a pipeline:
+
+| Dashboard | Collection | Common Filters |
+|---|---|---|
+| `Weekly Pipeline Review` | `dashboard_weekly_pipeline` | `dashboard_id = weekly_pipeline_review`, `as_of = 2026-06-10`, `schema_version = 1` |
+| `Customer Themes Review` | `dashboard_customer_themes` | `dashboard_id = customer_themes`, `as_of = 2026-06-10`, `schema_version = 1` |
+| `Pipeline Trend Review` | `dashboard_pipeline_trend` | `dashboard_id = pipeline_trend`, `window_start = 2026-06-03`, `window_end = 2026-06-10`, `lookback_days = 7`, `schema_version = 1` |
+
+### Weekly Pipeline Review
+
+Create charts from `deal_intel.dashboard_weekly_pipeline`.
+
+| Card | Chart ID Filter | Chart Type | Encoding |
+|---|---|---|---|
+| Active Deal Count | `pipeline_kpis` | Number | Number: `active_deal_count`; use `MAX` or `SUM` |
+| Attention Deal Count | `pipeline_kpis` | Number | Number: `attention_deal_count`; use `MAX` or `SUM` |
+| Average Health | `pipeline_kpis` | Number | Number: `avg_health_pct`; use `MAX` or `AVG`; format as percent-like value |
+| Open Deal Count | `pipeline_kpis` | Number | Number: `open_deal_count`; use `MAX` or `SUM` |
+| Stage Breakdown | `stage_breakdown` | Grouped Bar | X: `count` as `SUM`; Y: `stage`; filter to open stages (`discovery`, `qualification`, `proposal`, `negotiation`, `stalled`) |
+| Health Bands | `health_bands` | Donut | Label: `health_band`; Arc: `count` as `SUM` |
+| Attention Deals | `attention_deals` | Table | Groups: `company`, `deal_stage`, `expected_close_date`, `days_in_stage`, `is_overdue`, `is_stuck`, `health_pct`, `health_band`; avoid array fields such as `attention_reasons` |
+
+Notes:
+
+- Prefer stage count for the first M0/full dashboard. Pipeline value charts are
+  useful only when deal value coverage is healthy.
+- Atlas may show array fields such as `attention_reasons` as counts in tables.
+  Leave those out unless you build a dedicated unwind/pipeline chart.
+
+### Customer Themes Review
+
+Create charts from `deal_intel.dashboard_customer_themes`.
+
+| Card | Chart ID Filter | Chart Type | Encoding |
+|---|---|---|---|
+| Top Customer Themes | `theme_overview` | Grouped Bar | X: `deal_count` as `SUM`; Y: `label`; sort by value descending |
+| Decision Criteria Mix by Stage | `decision_criteria_by_stage` | Stacked Bar | X: `count` as `SUM`; Y: `stage`; Series/Color: `label` |
+| Theme Evidence Drill-down | `theme_evidence_drilldown` | Table | Columns: `label`, `company`, `deal_stage`, `dimension`, `source_label`, `evidence`; disable binning for `importance` or omit it |
+
+`pain_by_industry` and `pain_by_industry_tag` are useful optional charts, but
+industry taxonomy is still evolving. Keep them secondary until the taxonomy is
+stable enough for decision-making.
+
+### Pipeline Trend Review
+
+Create charts from `deal_intel.dashboard_pipeline_trend`.
+
+| Card | Chart ID Filter | Chart Type | Encoding |
+|---|---|---|---|
+| Pipeline Trend KPIs | `trend_kpis` | Table | Include `snapshot_count`, `deal_count`, start/end/delta fields, and currency fields |
+| Pipeline Trend Delta | `trend_delta_bars` | Bar or Table | X: `delta` as `SUM`; Y: `metric` |
+
+When baseline snapshots were seeded from the same current-state dataset,
+`trend_delta_bars` may show all-zero deltas. That is expected and still verifies
+that trend source data is connected. Real movement appears after live deal
+events create snapshots over time.
 
 ## Raw Pipeline Reference
 
@@ -158,14 +223,17 @@ Rendered defaults on 2026-06-09:
 
 ## Create The Dashboard
 
-1. In MongoDB Atlas, open the project that contains `TestCluster`.
+1. In MongoDB Atlas, open the project that contains your `deal_intel`
+   database.
 2. Open Atlas Charts:
-   - From Data Explorer, select `deal_intel.deals` and click `Visualize Your Data`; or
+   - From Data Explorer, select `deal_intel.dashboard_weekly_pipeline` and
+     click `Visualize Your Data`; or
    - From the Atlas sidebar, open `Visualization`, then `Project Dashboards`.
 3. Create a dashboard named `Weekly Pipeline Review`.
-4. Add each chart below using data source `deal_intel.deals`.
-5. In the Chart Builder Query bar, paste the rendered pipeline for that chart
-   and click `Apply`.
+4. Add each chart below using data source
+   `deal_intel.dashboard_weekly_pipeline`.
+5. Prefer direct field encoding from the chart-ready rows. Use the rendered
+   query only when you need to pre-filter to one `chart_id`.
 6. Save each chart back to the `Weekly Pipeline Review` dashboard.
 
 If Atlas shows the free-tier Charts banner, that is expected on M0 and is not a
@@ -173,12 +241,14 @@ blocker for this MVP dashboard.
 
 ## Create The Trend Dashboard
 
-1. In MongoDB Atlas, open the project that contains `TestCluster`.
+1. In MongoDB Atlas, open the project that contains your `deal_intel`
+   database.
 2. Open Atlas Charts.
 3. Create a dashboard named `Pipeline Trend Review`.
-4. Add each chart below using data source `deal_intel.analytics_snapshots`.
-5. In the Chart Builder Query bar, paste the rendered pipeline for that chart
-   and click `Apply`.
+4. Add each chart below using data source
+   `deal_intel.dashboard_pipeline_trend`.
+5. Prefer direct field encoding from the chart-ready rows. Use the rendered
+   query only when you need to pre-filter to one `chart_id`.
 6. Save each chart back to the `Pipeline Trend Review` dashboard.
 
 If the snapshot history is still sparse, `trend_kpis` will still render a
@@ -187,12 +257,14 @@ delta rows. That is expected until enough deal events create snapshots.
 
 ## Create The Customer Themes Dashboard
 
-1. In MongoDB Atlas, open the project that contains `TestCluster`.
+1. In MongoDB Atlas, open the project that contains your `deal_intel`
+   database.
 2. Open Atlas Charts.
 3. Create a dashboard named `Customer Themes Review`.
-4. Add each chart below using data source `deal_intel.deals`.
-5. In the Chart Builder Query bar, paste the rendered pipeline for that chart
-   and click `Apply`.
+4. Add each chart below using data source
+   `deal_intel.dashboard_customer_themes`.
+5. Prefer direct field encoding from the chart-ready rows. Use the rendered
+   query only when you need to pre-filter to one `chart_id`.
 6. Save each chart back to the `Customer Themes Review` dashboard.
 
 This dashboard is intentionally exploratory. It should help answer:
@@ -290,11 +362,12 @@ After creating the dashboard:
   `lost`.
 - `attention_deals` contains no `meetings.raw_notes`,
   `interactions.raw_content`, `contacts`, or `summary_embedding`.
-- `Pipeline Trend Review` uses `analytics_snapshots`, not `deals`.
+- `Pipeline Trend Review` uses `dashboard_pipeline_trend` for normal manual
+  setup. `analytics_snapshots` is the raw source and fallback reference.
 - `trend_kpis` and `trend_delta_bars` contain no raw notes, contacts, or
   embeddings.
-- `Customer Themes Review` uses `deal_intel.deals` and only selected
-  `customer_themes.evidence`, not raw meeting notes or raw interaction
+- `Customer Themes Review` uses `dashboard_customer_themes`, which contains
+  selected evidence snippets only, not raw meeting notes or raw interaction
   content.
 - `pain_by_industry` uses primary `industry`; `pain_by_industry_tag` uses
   `industry_tags` and may count one deal in multiple tag groups.
