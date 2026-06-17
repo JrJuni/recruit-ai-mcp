@@ -109,6 +109,34 @@ Validation:
   -> 39 passed.
 
 
+### MongoDB Atlas/Pro MDB-4 doctor chart-ready checks
+
+Implemented:
+
+- Added read-only chart-ready collection checks to `MongoDBClient`:
+  - collection presence
+  - current schema row count
+  - latest refresh scope
+  - latest generated timestamp
+  - chart-level row counts for the latest scope
+- Extended `deal-intel mongo doctor` to report one check per chart-ready
+  collection:
+  - `dashboard_weekly_pipeline_chart_ready`
+  - `dashboard_customer_themes_chart_ready`
+  - `dashboard_pipeline_trend_chart_ready`
+- Missing or empty chart-ready collections are warnings, not failures. This
+  keeps Mongo readiness separate from dashboard refresh state while still
+  surfacing the next action:
+  `deal-intel mongo refresh-chart-ready --target ... --as-of YYYY-MM-DD`.
+
+Validation:
+
+- `pytest tests/test_mongo_contracts.py tests/test_chart_ready_contracts.py tests/test_chart_ready_refresh.py -q -p no:cacheprovider --basetemp .tmp\pytest-mdb4-targeted`
+  -> 29 passed.
+- `ruff check src/deal_intel/mongo_doctor.py src/deal_intel/storage/mongodb.py tests/test_mongo_contracts.py`
+  -> passed.
+
+
 ### QF-11 custom framework end-to-end smoke
 
 Implemented:

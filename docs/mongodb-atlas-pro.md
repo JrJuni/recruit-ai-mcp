@@ -186,8 +186,14 @@ cases in `docs/pro-fallback-errors.md`.
    - specs live in `atlas/chart_ready/*.v1.json` and packaged copies under
      `src/deal_intel/resources/atlas/chart_ready/*.v1.json`.
 4. MDB-4 doctor/cross-check:
+   - status: implemented for Mongo doctor chart-ready presence/freshness
+     checks;
    - report collection presence, freshness, schema version, row counts, and
-     KPI mismatch hints.
+     row counts;
+   - chart-ready checks warn, not fail, when rows have not been refreshed yet;
+   - KPI mismatch cross-check remains available through
+     `crosscheck-weekly-dashboard` and can be extended to chart-ready rows after
+     live Atlas smoke.
 5. MDB-5 pro vector-search validation:
    - harden M10+ path after chart-ready full work is stable.
 

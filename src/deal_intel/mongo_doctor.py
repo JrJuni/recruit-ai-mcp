@@ -5,6 +5,10 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
+from deal_intel.chart_ready_contracts import (
+    chart_ready_collection_contract_summary,
+    chart_ready_collections,
+)
 from deal_intel.config_profiles import infer_config_profile
 from deal_intel.mongo_contracts import (
     collection_schema_contract_summary,
@@ -145,6 +149,7 @@ def _add_mongo_checks(
 
     _add_index_check(checks, client)
     _add_schema_check(checks, client)
+    _add_chart_ready_check(checks, client)
 
 
 def _add_index_check(checks: list[dict[str, Any]], client: Any) -> None:
@@ -236,6 +241,48 @@ def _add_schema_check(checks: list[dict[str, Any]], client: Any) -> None:
         )
 
 
+def _add_chart_ready_check(checks: list[dict[str, Any]], client: Any) -> None:
+    try:
+        report = client.check_chart_ready_collections()
+    except Exception as exc:
+        _add_check(
+            checks,
+            check_id="chart_ready_collections",
+            label="Chart-ready collections",
+            status="fail",
+            message=f"Could not read chart-ready collections: {type(exc).__name__}",
+            details={"error": _redact_text(str(exc))},
+            hint=(
+                "Run `deal-intel mongo refresh-chart-ready --target all` as a "
+                "dry-run after confirming Atlas access."
+            ),
+        )
+        return
+
+    for collection in chart_ready_collections():
+        item = report.get(collection) or {
+            "ok": False,
+            "status": "missing_report",
+            "collection": collection,
+            "expected": chart_ready_collection_contract_summary(collection),
+        }
+        ok = bool(item.get("ok"))
+        status = "pass" if ok else "warn"
+        _add_check(
+            checks,
+            check_id=f"{collection}_chart_ready",
+            label=f"{collection} chart-ready rows",
+            status=status,
+            message=(
+                f"{collection} has chart-ready rows for the current schema."
+                if ok
+                else f"{collection} has no current chart-ready rows yet."
+            ),
+            details=item,
+            hint=_chart_ready_hint(collection) if not ok else None,
+        )
+
+
 def _add_vector_search_check(
     checks: list[dict[str, Any]],
     *,
@@ -324,6 +371,15 @@ def _add_skipped_mongo_checks(
             message=f"{collection} schema check skipped because {reason}",
             details={"expected": collection_schema_contract_summary(collection)},
         )
+    for collection in chart_ready_collections():
+        _add_check(
+            checks,
+            check_id=f"{collection}_chart_ready",
+            label=f"{collection} chart-ready rows",
+            status="skipped",
+            message=f"{collection} chart-ready check skipped because {reason}",
+            details={"expected": chart_ready_collection_contract_summary(collection)},
+        )
 
 
 def _make_client(*, database: Any, factory: MongoClientFactory | None) -> Any:
@@ -355,6 +411,19 @@ def _add_check(
     if hint:
         check["hint"] = hint
     checks.append(check)
+
+
+def _chart_ready_hint(collection: str) -> str:
+    target = {
+        "dashboard_weekly_pipeline": "weekly_pipeline",
+        "dashboard_customer_themes": "customer_themes",
+        "dashboard_pipeline_trend": "pipeline_trend",
+    }.get(collection, "all")
+    return (
+        "Run `deal-intel mongo refresh-chart-ready "
+        f"--target {target} --as-of YYYY-MM-DD` first, then add `--apply` "
+        "after reviewing row counts."
+    )
 
 
 def _status_counts(checks: list[dict[str, Any]]) -> dict[str, int]:
