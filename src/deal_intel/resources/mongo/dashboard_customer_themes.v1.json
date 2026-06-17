@@ -1,0 +1,137 @@
+{
+  "id": "dashboard_customer_themes",
+  "version": 1,
+  "database": "deal_intel",
+  "collection": "dashboard_customer_themes",
+  "dashboard_id": "customer_themes",
+  "dashboard_title": "Customer Themes Review",
+  "refresh_mode": "materialized_collection",
+  "description": "Chart-ready rows for customer theme dashboards. Rows are derived from curated customer_themes evidence only and exclude raw notes.",
+  "source_collections": [
+    "deals"
+  ],
+  "common_required_fields": [
+    "dashboard_id",
+    "chart_id",
+    "row_type",
+    "row_key",
+    "as_of",
+    "schema_version",
+    "generated_at"
+  ],
+  "identity_fields": [
+    "dashboard_id",
+    "as_of",
+    "chart_id",
+    "row_key"
+  ],
+  "sensitive_field_policy": {
+    "exclude": [
+      "raw_notes",
+      "raw_content",
+      "meetings.raw_notes",
+      "interactions.raw_content",
+      "contacts",
+      "summary_embedding",
+      "product_context_raw",
+      "embedding"
+    ]
+  },
+  "indexes": [
+    {
+      "name": "dashboard_themes_identity",
+      "keys": [
+        [
+          "dashboard_id",
+          1
+        ],
+        [
+          "as_of",
+          -1
+        ],
+        [
+          "chart_id",
+          1
+        ],
+        [
+          "row_key",
+          1
+        ]
+      ],
+      "unique": true
+    },
+    {
+      "name": "dashboard_themes_chart_asof",
+      "keys": [
+        [
+          "chart_id",
+          1
+        ],
+        [
+          "as_of",
+          -1
+        ]
+      ],
+      "unique": false
+    }
+  ],
+  "row_types": {
+    "theme_overview": {
+      "chart_id": "theme_overview",
+      "description": "Active-deal customer themes ranked by unique deal count.",
+      "required_fields": [
+        "theme_key",
+        "label",
+        "deal_count",
+        "avg_importance"
+      ]
+    },
+    "decision_criteria_by_stage": {
+      "chart_id": "decision_criteria_by_stage",
+      "description": "Decision criteria theme rows grouped by stage.",
+      "required_fields": [
+        "stage",
+        "theme_key",
+        "label",
+        "count",
+        "avg_importance"
+      ]
+    },
+    "pain_by_industry": {
+      "chart_id": "pain_by_industry",
+      "description": "Pain rows grouped by primary industry.",
+      "required_fields": [
+        "industry",
+        "theme_key",
+        "label",
+        "count",
+        "avg_importance"
+      ]
+    },
+    "pain_by_industry_tag": {
+      "chart_id": "pain_by_industry_tag",
+      "description": "Pain rows grouped by multi-select industry tag.",
+      "required_fields": [
+        "industry_tag",
+        "theme_key",
+        "label",
+        "count",
+        "avg_importance"
+      ]
+    },
+    "theme_evidence": {
+      "chart_id": "theme_evidence_drilldown",
+      "description": "Bounded curated evidence rows for drill-down charts.",
+      "required_fields": [
+        "theme_key",
+        "label",
+        "deal_id",
+        "company",
+        "deal_stage",
+        "dimension",
+        "evidence",
+        "source_label"
+      ]
+    }
+  }
+}

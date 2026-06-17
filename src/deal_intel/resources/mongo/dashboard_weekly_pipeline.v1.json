@@ -1,0 +1,140 @@
+{
+  "id": "dashboard_weekly_pipeline",
+  "version": 1,
+  "database": "deal_intel",
+  "collection": "dashboard_weekly_pipeline",
+  "dashboard_id": "weekly_pipeline_review",
+  "dashboard_title": "Weekly Pipeline Review",
+  "refresh_mode": "materialized_collection",
+  "description": "Chart-ready rows for Weekly Pipeline Review. Rows are derived from existing deterministic metric/report engines so Atlas Charts setup can use field selection instead of large query-bar pipelines.",
+  "source_collections": [
+    "deals"
+  ],
+  "common_required_fields": [
+    "dashboard_id",
+    "chart_id",
+    "row_type",
+    "row_key",
+    "as_of",
+    "schema_version",
+    "generated_at"
+  ],
+  "identity_fields": [
+    "dashboard_id",
+    "as_of",
+    "chart_id",
+    "row_key"
+  ],
+  "sensitive_field_policy": {
+    "exclude": [
+      "raw_notes",
+      "raw_content",
+      "meetings.raw_notes",
+      "interactions.raw_content",
+      "contacts",
+      "summary_embedding",
+      "product_context_raw",
+      "embedding"
+    ]
+  },
+  "indexes": [
+    {
+      "name": "dashboard_weekly_identity",
+      "keys": [
+        [
+          "dashboard_id",
+          1
+        ],
+        [
+          "as_of",
+          -1
+        ],
+        [
+          "chart_id",
+          1
+        ],
+        [
+          "row_key",
+          1
+        ]
+      ],
+      "unique": true
+    },
+    {
+      "name": "dashboard_weekly_chart_asof",
+      "keys": [
+        [
+          "chart_id",
+          1
+        ],
+        [
+          "as_of",
+          -1
+        ]
+      ],
+      "unique": false
+    }
+  ],
+  "row_types": {
+    "kpi": {
+      "chart_id": "pipeline_kpis",
+      "description": "Single-row KPI card/table source.",
+      "required_fields": [
+        "deal_count",
+        "active_deal_count",
+        "open_deal_count",
+        "open_pipeline_value_amount",
+        "open_pipeline_value_currency",
+        "avg_health_pct",
+        "attention_deal_count"
+      ]
+    },
+    "stage": {
+      "chart_id": "stage_breakdown",
+      "description": "One row per pipeline stage.",
+      "required_fields": [
+        "stage",
+        "stage_order",
+        "count",
+        "pipeline_value_amount",
+        "pipeline_value_currency",
+        "avg_health_pct",
+        "health_coverage_pct",
+        "stuck_count",
+        "overdue_count"
+      ]
+    },
+    "health_band": {
+      "chart_id": "health_bands",
+      "description": "One row per health band.",
+      "required_fields": [
+        "health_band",
+        "count"
+      ]
+    },
+    "attention_deal": {
+      "chart_id": "attention_deals",
+      "description": "One row per stuck, overdue, or at-risk deal.",
+      "required_fields": [
+        "deal_id",
+        "company",
+        "deal_stage",
+        "expected_close_date",
+        "days_in_stage",
+        "is_overdue",
+        "is_stuck",
+        "health_pct",
+        "health_band",
+        "attention_reasons"
+      ]
+    },
+    "qualification_gap": {
+      "chart_id": "qualification_gap_distribution",
+      "description": "One row per open-deal qualification gap bucket.",
+      "required_fields": [
+        "gap",
+        "count"
+      ]
+    }
+  }
+}

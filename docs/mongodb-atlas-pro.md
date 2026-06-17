@@ -148,15 +148,24 @@ cases in `docs/pro-fallback-errors.md`.
 ### Recommended MDB Implementation Order
 
 1. MDB-1 chart-ready data contract:
+   - status: implemented as versioned contracts, not refresh/write behavior;
    - start with materialized collections, not views, because manual Atlas UI
      setup is simpler and freshness can be inspected directly;
-   - proposed collections:
+   - collections:
      - `dashboard_weekly_pipeline`
      - `dashboard_customer_themes`
      - `dashboard_pipeline_trend`
-   - include `dashboard_id`, `chart_id`, `as_of`, `schema_version`,
-     `generated_at`, and row type fields so one collection can hold multiple
-     chart-ready row kinds when useful.
+   - common fields:
+     - `dashboard_id`
+     - `chart_id`
+     - `row_type`
+     - `row_key`
+     - `schema_version`
+     - `generated_at`
+     - plus `as_of` for point-in-time dashboards or `window_start`,
+       `window_end`, and `lookback_days` for trend dashboards;
+   - contracts live in `src/deal_intel/resources/mongo/dashboard_*.v1.json`
+     and load through `deal_intel.chart_ready_contracts`.
 2. MDB-2 refresh engine:
    - dry-run-first;
    - explicit apply;

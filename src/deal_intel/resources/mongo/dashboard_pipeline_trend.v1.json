@@ -1,0 +1,112 @@
+{
+  "id": "dashboard_pipeline_trend",
+  "version": 1,
+  "database": "deal_intel",
+  "collection": "dashboard_pipeline_trend",
+  "dashboard_id": "pipeline_trend",
+  "dashboard_title": "Pipeline Trend Review",
+  "refresh_mode": "materialized_collection",
+  "description": "Chart-ready rows for pipeline trend dashboards. Rows are derived from analytics_snapshots and trend metric calculations.",
+  "source_collections": [
+    "analytics_snapshots"
+  ],
+  "common_required_fields": [
+    "dashboard_id",
+    "chart_id",
+    "row_type",
+    "row_key",
+    "window_start",
+    "window_end",
+    "lookback_days",
+    "schema_version",
+    "generated_at"
+  ],
+  "identity_fields": [
+    "dashboard_id",
+    "window_start",
+    "window_end",
+    "lookback_days",
+    "chart_id",
+    "row_key"
+  ],
+  "sensitive_field_policy": {
+    "exclude": [
+      "raw_notes",
+      "raw_content",
+      "meetings.raw_notes",
+      "interactions.raw_content",
+      "contacts",
+      "summary_embedding",
+      "product_context_raw",
+      "embedding"
+    ]
+  },
+  "indexes": [
+    {
+      "name": "dashboard_trend_identity",
+      "keys": [
+        [
+          "dashboard_id",
+          1
+        ],
+        [
+          "window_end",
+          -1
+        ],
+        [
+          "lookback_days",
+          1
+        ],
+        [
+          "chart_id",
+          1
+        ],
+        [
+          "row_key",
+          1
+        ]
+      ],
+      "unique": true
+    },
+    {
+      "name": "dashboard_trend_chart_window",
+      "keys": [
+        [
+          "chart_id",
+          1
+        ],
+        [
+          "window_end",
+          -1
+        ]
+      ],
+      "unique": false
+    }
+  ],
+  "row_types": {
+    "trend_kpi": {
+      "chart_id": "trend_kpis",
+      "description": "Single-row start/end/delta KPI surface.",
+      "required_fields": [
+        "snapshot_count",
+        "start_active_deal_count",
+        "end_active_deal_count",
+        "delta_active_deal_count",
+        "start_open_pipeline_value_amount",
+        "end_open_pipeline_value_amount",
+        "delta_open_pipeline_value_amount",
+        "pipeline_value_currency"
+      ]
+    },
+    "trend_delta": {
+      "chart_id": "trend_delta_bars",
+      "description": "One row per tracked trend metric delta.",
+      "required_fields": [
+        "metric",
+        "start_value",
+        "end_value",
+        "delta"
+      ]
+    }
+  }
+}

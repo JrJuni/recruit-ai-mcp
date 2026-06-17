@@ -28,6 +28,28 @@ than loaded wholesale.
   `dashboard_customer_themes`, and `dashboard_pipeline_trend`.
 - No runtime behavior changed.
 
+### MongoDB Atlas/Pro MDB-1 chart-ready data contract
+
+- Added versioned chart-ready collection contracts:
+  - `dashboard_weekly_pipeline`
+  - `dashboard_customer_themes`
+  - `dashboard_pipeline_trend`
+- Added `deal_intel.chart_ready_contracts` as the loader/summary API for these
+  contracts.
+- Kept the contracts separate from `mongo_schema_collections()` so MDB-1 does
+  not make `mongo doctor` warn about collections that the refresh engine does
+  not create yet.
+- Chose materialized collections over views for the first implementation path.
+  Rationale: easier Atlas UI setup, explicit freshness, simpler row-count
+  checks, and fewer surprises on M0.
+- Validation:
+  - `pytest tests/test_chart_ready_contracts.py tests/test_mongo_contracts.py tests/test_atlas_charts.py -q -p no:cacheprovider --basetemp .tmp\pytest-mdb1-targeted`
+    -> 37 passed.
+  - `ruff check src/deal_intel/chart_ready_contracts.py tests/test_chart_ready_contracts.py`
+    -> passed.
+  - `git diff --check` -> passed.
+
+
 ### QF-11 custom framework end-to-end smoke
 
 Implemented:
