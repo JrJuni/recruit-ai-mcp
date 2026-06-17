@@ -4,6 +4,11 @@ import uuid
 from datetime import UTC, datetime
 
 from deal_intel.errors import ErrorCode, MCPError, Stage
+from deal_intel.product_context import (
+    product_context_refs,
+    render_product_context_prompt_block,
+    retrieve_product_context,
+)
 from deal_intel.providers.llm import LLMProvider
 from deal_intel.qualification_config import resolve_active_qualification_framework
 from deal_intel.schema.customer_themes import (
@@ -58,6 +63,8 @@ Evidence rules:
   or committed to, not just what the seller pitched.
 - User interviews can be treated like direct customer evidence when they contain
   clear statements from the user or prospect.
+
+{product_context_prompt}
 
 For each MEDDPICC dimension present in the interaction, return:
 - score: 0-5 (0=absent, 1=weak mention, 3=moderate signal, 5=confirmed/strong)
@@ -167,6 +174,44 @@ def _qualification_framework_prompt(framework) -> str:
     )
 
 
+def _retrieve_product_context_for_interaction(
+    *,
+    cfg: dict,
+    embedding_provider,
+    content: str,
+) -> dict:
+    if embedding_provider is None:
+        return {"ok": True, "result_count": 0, "results": [], "warnings": []}
+    product_cfg = cfg.get("product_context") if isinstance(cfg, dict) else None
+    if isinstance(product_cfg, dict) and product_cfg.get("enabled") is False:
+        return {"ok": True, "result_count": 0, "results": [], "warnings": []}
+    try:
+        payload = retrieve_product_context(
+            cfg,
+            embedding_provider=embedding_provider,
+            query=content,
+        )
+    except Exception as exc:
+        return {
+            "ok": False,
+            "result_count": 0,
+            "results": [],
+            "warnings": [
+                {
+                    "code": "product_context_retrieval_failed",
+                    "message": str(exc),
+                }
+            ],
+        }
+    suppress_codes = {"product_context_index_empty_or_unembedded"}
+    payload["warnings"] = [
+        warning
+        for warning in payload.get("warnings", [])
+        if warning.get("code") not in suppress_codes
+    ]
+    return payload
+
+
 def handle(
     mongo: MongoDBClient,
     llm: LLMProvider,
@@ -222,6 +267,16 @@ def handle(
             retryable=False,
         ) from exc
     active_framework_hash = qualification_framework_fingerprint(active_framework)
+    product_context_payload = _retrieve_product_context_for_interaction(
+        cfg=cfg,
+        embedding_provider=embedding_provider,
+        content=normalized_content,
+    )
+    product_context_prompt = render_product_context_prompt_block(
+        product_context_payload
+    )
+    product_context_references = product_context_refs(product_context_payload)
+    product_context_warnings = product_context_payload.get("warnings", [])
 
     try:
         resp = llm.chat_once(
@@ -230,6 +285,7 @@ def handle(
                 interaction_type=normalized_type,
                 direction=normalized_direction,
                 source_confidence=resolved_confidence,
+                product_context_prompt=product_context_prompt,
                 qualification_framework_prompt=_qualification_framework_prompt(
                     active_framework
                 ),
@@ -309,6 +365,7 @@ def handle(
         "scoring_applied": scoring_applied,
         "llm_usage": llm_usage,
         "custom_fields": custom_fields,
+        "product_context_refs": product_context_references,
         **source_metadata,
     }
     if not scoring_applied and meddpicc_raw:
@@ -396,6 +453,10 @@ def handle(
         "scoring_applied": scoring_applied,
         "stage_suggestion": stage_suggestion,
         "embedding_stored": embedding_provider is not None,
+        "product_context_used": bool(product_context_references),
+        "product_context_ref_count": len(product_context_references),
+        "product_context_refs": product_context_references,
+        "warnings": product_context_warnings,
         "usage": resp.usage,
         "usage_summary": {
             "calls": llm_usage["calls"],

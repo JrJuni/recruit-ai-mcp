@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "deal-intel-mcp"
-version = "0.1.15"
+version = "0.2.1"
 requires-python = ">=3.11"
 dependencies = [
     "fastmcp>=2.0",
@@ -13,6 +13,7 @@ dependencies = [
     "httpx>=0.27",
     "python-dotenv>=1.0",
     "pydantic>=2.7",
+    "pypdf>=4.2",
     "pyyaml>=6.0",
     "tzdata>=2024.1",
     "typer>=0.12",

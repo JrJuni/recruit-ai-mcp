@@ -2,7 +2,7 @@
   "manifest_version": "0.2",
   "name": "deal-intel-mcp",
   "display_name": "Deal Intelligence MCP",
-  "version": "0.1.15",
+  "version": "0.2.1",
   "description": "Turn meeting notes and customer interactions into qualification-framework deal intelligence, with MEDDPICC as the default. Profile-aware MCP tool surfaces, zero-config sample mode, local-to-Mongo migration, MongoDB Atlas storage, semantic deal search, ChatGPT OAuth, Anthropic, or OpenAI API LLM backend.",
   "long_description": "deal-intel-mcp captures consultation records, meeting notes, email replies, user interviews, call summaries, and internal notes, extracts active qualification-framework signals and customer concern themes via LLM, and can run on bundled/local sample data or MongoDB Atlas-backed real team data. MEDDPICC is the bundled default framework, but saved custom frameworks can drive future scoring after backfill. Runtime tool surfaces expose sample, standard, or developer tool lists from the same package, and a dry-run-first migration path moves local personal deals into MongoDB when users graduate to full mode. Supports ChatGPT Plus OAuth, Anthropic Claude API, or the official OpenAI API as LLM backends.",
   "author": {
@@ -21,6 +21,9 @@
     {"name": "config_doctor", "description": "Diagnose profile, storage, vector search, and LLM readiness without writes or LLM calls."},
     {"name": "get_tool_catalog", "description": "List the current Deal Intelligence tool surface when host tool search shows only a truncated subset."},
     {"name": "update_config", "description": "Preview or apply safe non-secret user-config changes such as LLM provider/model, report output directory, timezone, and tool surface."},
+    {"name": "add_product_context_note", "description": "Dry-run-first local writer for pasted seller-side product and solution notes before product-context indexing."},
+    {"name": "index_product_context", "description": "Dry-run-first local RAG cache builder for seller-side product and solution documents."},
+    {"name": "get_product_context", "description": "Retrieve bounded seller-side product context snippets from the local RAG cache."},
     {"name": "get_qualification_templates", "description": "List built-in qualification framework templates such as MEDDPICC, simple B2B, pilot/PoC, enterprise procurement, and product-led sales."},
     {"name": "validate_qualification_framework", "description": "Validate a candidate qualification framework template or JSON/YAML payload without writing config."},
     {"name": "update_qualification_framework", "description": "Dry-run-first config update for custom qualification frameworks; built-in presets are immutable and can be copied with copy_as_key."},

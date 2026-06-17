@@ -69,7 +69,32 @@ Recommended implementation order:
      chart specs, smoke fixtures, and docs together.
    - Detailed execution units and verification gates live in
      [qualification-framework-v2.md](qualification-framework-v2.md).
-4. Tool namespace and customer-theme workflow cleanup.
+4. Product / solution context layer.
+   - Current state: local seller-side RAG cache is implemented with
+     `txt`, `md`, `json`, `csv`, `pdf`, and `docx` support; configured source
+     folders; managed pasted notes; cache reuse; secret-shaped source skipping;
+     large-catalog size/chunk budgets; and integration with `add_interaction`
+     and `analyze_deal`.
+   - Keep product context out of qualification scoring, customer-theme counts,
+     deal summary embeddings, BI/report metrics, and raw report outputs.
+   - Host-app live smoke DONE (2026-06-17, smoked on MCPB `0.2.0`, shipped as
+     `0.2.1`): real configured source folder with pdf/md/json/docx indexed,
+     cache reuse confirmed, `get_product_context` returned bounded snippets,
+     `add_interaction` stored refs without raising scores, and `analyze_deal`
+     used refs for strategy without raw text. Three fixes shipped: stale-config
+     cache invalidation on `update_config`, product context removed from the
+     MCPB installer form (runtime-only), and friendlier first-run
+     `product_context_not_configured` guidance. See `docs/status.md`.
+   - Defer remaining context work until later, driven by real usage:
+     - add PPTX/XLSX parser support or a clearer "export to PDF first" UX if
+       real user material commonly arrives as decks/spreadsheets;
+     - add managed-note/file CRUD convenience only if users need to inspect,
+       update, or delete product context from the host app;
+     - add `config_doctor`/status visibility for indexed document count,
+       partial-indexing warnings, and cache health;
+     - consider optional Mongo/shared product context storage only after the
+       local cache proves useful.
+5. Tool namespace and customer-theme workflow cleanup.
    - Revisit the tool surface through user intent rather than internal module
      boundaries.
    - Keep the major mental groups clear: Config, Intake, Lifecycle/CRUD,
@@ -79,7 +104,7 @@ Recommended implementation order:
      a clearer progressive-disclosure workflow.
    - Strengthen tool descriptions with "use this when..." and "for X, use Y
      instead" guidance to reduce host-agent confusion.
-5. MongoDB Pro Track.
+6. MongoDB Pro Track.
    - Keep Free/M0-compatible schema validation, ordinary indexes, and bounded
      doctor checks in `full`.
    - Build the paid-infra upgrade path around MongoDB M10+, Atlas Vector Search,
@@ -147,7 +172,7 @@ Recommended implementation order:
           resolve shared files, repack MCPB, refresh `release/latest`, and run
           full pytest, Ruff, MCPB validate/info, natural smoke, and relevant
           Mongo smoke.
-6. Report Quality v2.
+7. Report Quality v2.
    - Treat `export_report` as meeting/manager-report generation, not a ledger
      dump.
    - Keep deterministic metrics as the source of truth, but allow host-assisted
@@ -155,7 +180,7 @@ Recommended implementation order:
      mode.
    - Prefer polished Markdown/DOCX/PDF-style output for weekly review; reserve
      CSV for ledger-style `export_data`.
-7. Deal Review Quality v2.
+8. Deal Review Quality v2.
    - Revisit review scoring after framework abstraction.
    - Separate evidence-rich but risky deals from evidence-poor deals with high
      uncertainty.
@@ -165,13 +190,13 @@ Recommended implementation order:
      evidence supports action.
    - Add corner-case synthetic datasets from realistic meetings, emails, and
      user interviews to stress the review engine.
-8. Usage and cost tracking v2.
+9. Usage and cost tracking v2.
    - Extend the v1 usage tool beyond LLM calls when useful: report generation,
      embedding/search work, MongoDB/Atlas assumptions, and maintenance
      backfills.
    - Keep cost numbers explicitly labeled as estimates unless pulled from a
      provider billing API.
-9. Full npx bootstrapper.
+10. Full npx bootstrapper.
    - Defer until the product shape is stable enough that packaging does not
      hide architecture churn.
    - Target a true no-git-clone flow: install/check/run commands that can guide
@@ -179,7 +204,7 @@ Recommended implementation order:
      startup.
    - Do not ship a thin `npx` wrapper as the main post-v1 answer if it still
      requires users to manually understand the Python install path.
-10. Post-v2 workspace/project profiles.
+11. Post-v2 workspace/project profiles.
    - Support multiple sales workspaces without editing global config by hand.
    - A workspace should bundle at least MongoDB database name, optional URI
      reference, default currency, qualification framework, reporting output
@@ -189,6 +214,30 @@ Recommended implementation order:
      mix deal records, charts, reports, embeddings, or tuning preferences.
    - Treat this as post-v2 because the qualification framework and tool surface
      need to stabilize first.
+
+V2 closure validation gate:
+
+- Full automated gate:
+  - `pytest -q -p no:cacheprovider --basetemp=<repo-local-temp>`
+  - `ruff check .`
+  - `mcpb validate mcpb\manifest.json`
+  - `mcpb pack mcpb mcpb\deal-intel-mcp-<version>.mcpb`
+  - `mcpb info <artifact>`
+- Smoke suites:
+  - natural-question smoke
+  - deal-review audit
+  - report/export smoke
+  - tool catalog/profile surface smoke
+  - config doctor in the intended `full` profile
+  - product-context host-app smoke with a real configured source folder and
+    at least one PDF source
+- Manual notes:
+  - record any Windows temp/sandbox limitations separately from product
+    failures;
+  - confirm large product-context files either fully index or return clear
+    `partial_indexed` warnings;
+  - confirm no raw product docs, raw interaction content, secrets, contacts, or
+    embeddings leak through read/report paths.
 
 MongoDB feature placement rule:
 

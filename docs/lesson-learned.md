@@ -210,3 +210,30 @@ Lesson:
 - Treat this provider as local convenience, not a stable public API contract.
 
 Related: `src/deal_intel/providers/llm.py`.
+
+## Blind Review judgment log
+
+### Product context follow-up plan, round 1 (2026-06-17)
+
+External AI reviewed the parallel-work plan (product-context live smoke running
+alongside `codex/mongodb-atlas-pro`). All five items were accepted as operational
+safety nets; none required a plan rewrite.
+
+| # | category | verdict | note |
+|---|---|---|---|
+| 1/7 | architecture | accepted | run the context live smoke in a separate host window; isolate via git worktree |
+| 2/4 | architecture | accepted | defer `mcpb pack` + `release/latest` publish to final integration to avoid release-artifact churn vs the mongodb branch |
+| 3 | corner-case | accepted | added an explicit rebase conflict-watch file list (`mcpb/manifest.json`, `config/defaults.yaml`, `tool_surfaces.py`, `mcp_server.py`) |
+| 5 | corner-case | accepted | smoke writes (`add_interaction`/`analyze_deal`) only on disposable/sample deals |
+| 6 | corner-case | accepted | env-var-first source config; restore `~/.deal-intel/config.yaml` if `update_config` was used |
+
+Meta: strong on operational/release-state corner cases; no nit/style noise.
+Single round, so no echo-chamber risk; the fresh-context skeptic pass was skipped.
+
+Outcome: the rebase turned out to be a no-op (`origin/main` was still at the
+branch fork point `fbe1964`), so the conflict-watch list applies only to the
+future integration after `codex/mongodb-atlas-pro` merges. The live smoke also
+surfaced three real fixes beyond the plan: a stale-config cache bug
+(`update_config` now calls `_context.reset_config()`), product context moved out
+of the MCPB installer form to runtime-only, and a friendlier first-run
+"not configured" guidance message in place of an error-flavored warning.

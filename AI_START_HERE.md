@@ -126,8 +126,8 @@ When installing the MCPB, recommend:
 Expected visible tool counts:
 
 - `sample`: 24 tools
-- `standard` / `full`: 35 tools
-- `developer`: 38 tools
+- `standard` / `full`: 38 tools
+- `developer`: 41 tools
 
 If the host app's tool search shows only a handful of tools, that is usually a
 host-side search limit rather than a server loading failure. Ask it to call
@@ -158,6 +158,10 @@ Prefer deterministic read tools for normal questions:
 - Manager/team meeting report -> `export_report`
 - Excel/CSV-ready deal ledger -> `export_data`
 - Server-side LLM usage / rough cost check -> `get_usage`
+- Product/solution docs folder setup -> `update_config(product_context_source_dirs=...)`
+- Pasted product/solution note -> `add_product_context_note`
+- Product context indexing -> `index_product_context`
+- Product context lookup/verification -> `get_product_context`
 - Customer concern or decision-criteria ranking -> start with `get_customer_themes`
 - Stage/industry/tag theme comparison -> then use `get_customer_theme_breakdown`
 - Evidence snippets for one known theme -> then use `get_customer_theme_evidence`
@@ -172,6 +176,8 @@ Use LLM/write tools only when the user intent requires them:
 Do not use `analyze_deal` as the default deal-review tool. It calls the
 configured server-side LLM and may persist `bd_strategy`. For routine review,
 use `get_deal_review` first.
+If product context has been indexed, `analyze_deal` may use bounded seller-side
+snippets for strategy/positioning context, while storing only refs metadata.
 
 For new evidence, use `add_interaction` as the single public intake:
 
@@ -184,6 +190,32 @@ Check the returned `source_policy`. Customer-stated inbound evidence can update
 qualification/customer themes. MEDDPICC is the default framework, but custom
 qualification frameworks may be active. Outbound-only or internal-only content
 is retained as context but should not be described as confirmed deal health.
+
+## Product / Solution Context
+
+Product context is seller-side knowledge, not customer evidence. Use it for
+product facts, ICP notes, positioning, pricing/packaging notes, integrations,
+security posture, competitor notes, and disqualifiers.
+
+Two normal flows:
+
+1. The user has a folder of product docs:
+   - Call `update_config(product_context_source_dirs="path1;path2")` if the
+     configured folder needs to change.
+   - Call `index_product_context(dry_run=true)` to preview.
+   - If the preview is acceptable, call `index_product_context(dry_run=false)`.
+   - Verify with `get_product_context(query="...")`.
+
+2. The user pastes product/solution text into the chat:
+   - Call `add_product_context_note(title="...", content="...", dry_run=true)`.
+   - If the user confirms, call it again with `dry_run=false` and
+     `confirmed_by_user=true`.
+   - Then run `index_product_context` and verify with `get_product_context`.
+
+Do not treat product context as customer-stated evidence. It can help
+`add_interaction` interpret terminology, fit, value props, competitors, and
+disqualifiers, but it must not directly raise qualification scores or customer
+theme counts.
 
 ## User Memory
 
