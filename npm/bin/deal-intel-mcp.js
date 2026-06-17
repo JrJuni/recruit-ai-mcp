@@ -331,9 +331,9 @@ function cmdSetup(args) {
         command: p.managed_python_path,
         args: ["-m", "pip", "install", ...spec.index_url_args, spec.spec],
       },
-      doctor: {
+      post_install_check: {
         command: p.managed_python_path,
-        args: ["-m", "deal_intel.cli", "config", "doctor", "--offline"],
+        args: ["-m", "deal_intel.cli", "smoke-profile", "--profile", "sample"],
       },
     },
   };
@@ -417,11 +417,21 @@ function cmdSetup(args) {
     return 1;
   }
 
-  const doctorResult = spawnSync(p.managed_python_path, ["-m", "deal_intel.cli", "config", "doctor", "--offline"], {
+  const checkResult = spawnSync(p.managed_python_path, [
+    "-m",
+    "deal_intel.cli",
+    "smoke-profile",
+    "--profile",
+    "sample",
+  ], {
     stdio: "inherit",
     env: baseEnv(),
   });
-  steps.push({ step: "doctor", status: doctorResult.status, error: doctorResult.error?.message || null });
+  steps.push({
+    step: "post_install_check",
+    status: checkResult.status,
+    error: checkResult.error?.message || null,
+  });
   const state = {
     schema_version: 1,
     installed_at: new Date().toISOString(),
@@ -432,14 +442,16 @@ function cmdSetup(args) {
     package_version: null,
     package_spec: spec.spec,
     extras: spec.extras,
-    last_doctor_status: doctorResult.status === 0 ? "pass" : "fail",
+    last_post_install_check_status: checkResult.status === 0 ? "pass" : "fail",
   };
   writeInstallState(state);
-  payload.ok = doctorResult.status === 0;
-  payload.status = payload.ok ? "installed" : "installed_with_doctor_failure";
+  payload.ok = checkResult.status === 0;
+  payload.status = payload.ok ? "installed" : "installed_with_post_install_check_failure";
   payload.steps = steps;
   payload.install_state_path = p.install_state_path;
-  payload.next_action = payload.ok ? "Run `deal-intel-mcp smoke` or configure MCPB with the managed Python path." : "Inspect doctor output, then rerun `deal-intel-mcp doctor`.";
+  payload.next_action = payload.ok
+    ? "Run `deal-intel-mcp doctor --live` after configuring Mongo/API values, or configure MCPB with the managed Python path."
+    : "Inspect the post-install smoke output, then rerun `deal-intel-mcp smoke --profile-only`.";
   if (json) {
     printJson(payload);
   } else {

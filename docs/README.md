@@ -38,6 +38,7 @@ These are active source-adjacent contracts.
 | `mvp-readiness.md` | Checking whether the package is ready for full-by-default external MVP trials |
 | `distribution-plan.md` | Planning git clone, uvx, npx, and MCPB distribution paths |
 | `bootstrapper-contract.md` | Designing or changing the future dependency-inclusive npx/bootstrapper runtime |
+| `bootstrapper-fresh-smoke.md` | Running pre-publish and post-publish fresh-install bootstrapper smoke checks |
 | `atlas-charts.md` | Changing Atlas dashboard aggregation specs or UI runbooks |
 | `mongodb-atlas-pro.md` | Planning chart-ready Mongo collections, Mongo doctor, and Pro Atlas Vector Search |
 | `query-audit.md` | Auditing MongoDB read paths, projections, and index implications |

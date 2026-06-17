@@ -104,9 +104,9 @@ Implemented:
   - venv creation under `~/.deal-intel/runtime/venv`;
   - pip upgrade;
   - package install;
-  - offline config doctor.
+  - post-install sample profile smoke.
 - `setup` without `--dry-run` can create the managed venv, install the selected
-  package source, run offline doctor, and write
+  package source, run the sample profile smoke, and write
   `~/.deal-intel/runtime/install-state.json`.
 - Added installer options:
   - `--python PATH`
@@ -138,6 +138,37 @@ Validation:
 
 - Added targeted bootstrapper tests for the default handoff path, custom server
   names, and `DEAL_INTEL_PYTHON` overrides.
+
+### D3.5 fresh-runtime smoke hardening
+
+Implemented:
+
+- Added [bootstrapper-fresh-smoke.md](bootstrapper-fresh-smoke.md) as the
+  pre-publish and post-publish fresh-install smoke checklist.
+- Changed the bootstrapper `setup` post-install check from
+  `config doctor --offline` to `smoke-profile --profile sample`.
+- This keeps first install from failing only because MongoDB/API values have
+  not been configured yet. Full/pro readiness remains a `doctor` concern after
+  the user enters real configuration.
+- Updated the install state field from `last_doctor_status` to
+  `last_post_install_check_status`.
+
+Validation:
+
+- Windows local-wheel fresh-runtime setup passed using an isolated
+  `DEAL_INTEL_HOME` and a local wheel artifact.
+- Managed runtime setup created the venv, installed the wheel, ran
+  `smoke-profile --profile sample`, and wrote install state with
+  `last_post_install_check_status: pass`.
+- `deal-intel-mcp smoke --profile-only` passed from the managed runtime.
+- `deal-intel-mcp mcp-config --json` returned the managed Python path and
+  Claude Desktop snippet.
+
+Remaining:
+
+- Public `npx` install from npm is not verified until the package is published.
+- PyPI/TestPyPI install-source smoke is still pending.
+- macOS fresh-machine smoke is still pending.
 
 ### D2.2 clean wheel install smoke
 

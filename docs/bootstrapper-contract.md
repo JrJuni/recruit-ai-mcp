@@ -126,7 +126,12 @@ Required behavior:
 - install the selected Python package source;
 - write `~/.deal-intel/runtime/install-state.json`;
 - print the resolved Python interpreter path;
-- run `deal-intel config doctor --offline` after install.
+- run `deal-intel smoke-profile --profile sample` after install to prove the
+  runtime works without MongoDB or API keys.
+
+`setup` should not fail merely because the user has not configured MongoDB yet.
+Full/pro readiness is diagnosed by `doctor` after the user provides Mongo/API
+configuration.
 
 Failure messages must name the failed layer:
 
@@ -246,7 +251,7 @@ Suggested fields:
   "package_source": "pypi",
   "package_version": "0.2.1",
   "extras": ["embedding"],
-  "last_doctor_status": "pass"
+  "last_post_install_check_status": "pass"
 }
 ```
 

@@ -135,6 +135,13 @@ def test_bootstrapper_setup_dry_run_plans_runtime_install(tmp_path: Path) -> Non
     assert payload["extras"] == ["embedding"]
     assert payload["commands"]["create_venv"]["args"][-1] == str(runtime_root / "venv")
     assert payload["commands"]["install_package"]["args"][-1] == "deal-intel-mcp[embedding]"
+    assert payload["commands"]["post_install_check"]["args"] == [
+        "-m",
+        "deal_intel.cli",
+        "smoke-profile",
+        "--profile",
+        "sample",
+    ]
     assert not (runtime_root / "install-state.json").exists()
 
 

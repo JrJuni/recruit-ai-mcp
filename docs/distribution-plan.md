@@ -250,9 +250,11 @@ Bootstrapper behavior:
   - default: `deal-intel-mcp[embedding]`
   - lightweight option: `deal-intel-mcp`
 - Run first checks:
-  - `deal-intel config doctor --offline`
   - `deal-intel smoke-profile --profile sample`
   - optional `deal-intel config doctor` after Mongo/API values are configured.
+- Do not fail `setup` only because MongoDB or API values are not configured yet.
+  Those are readiness/configuration issues for `doctor`, not installation
+  failures.
 - Print the exact Python path for MCPB/Claude Desktop:
   - Windows: `~/.deal-intel/runtime/venv/Scripts/python.exe`
   - macOS/Linux: `~/.deal-intel/runtime/venv/bin/python`
@@ -337,6 +339,18 @@ Recommended implementation split:
   - full profile doctor gives useful missing Mongo/API guidance;
   - MCP server starts from the generated Python path;
   - uninstall instructions are clear.
+
+Current status:
+
+- Windows local-wheel fresh-runtime smoke passed with an isolated
+  `DEAL_INTEL_HOME`.
+- `setup` now runs `smoke-profile --profile sample` as the post-install check
+  so missing MongoDB/API values do not make the first install look broken.
+- `smoke --profile-only` and `mcp-config --json` passed from the managed
+  runtime.
+- Public npm/PyPI `npx` smoke and macOS fresh-machine smoke remain pending.
+- Keep the detailed checklist in
+  [bootstrapper-fresh-smoke.md](bootstrapper-fresh-smoke.md).
 
 ### D4. MCPB installer polish
 
