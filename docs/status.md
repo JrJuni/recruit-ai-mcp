@@ -57,6 +57,20 @@ Operational follow-up:
   - then smoke the simplified Atlas Charts path from the `dashboard_*`
     collections.
 
+Follow-up completed later on 2026-06-17:
+
+- Applied current validators for `deals` and `analytics_snapshots` on the
+  M0/free cluster.
+- Refreshed chart-ready rows for `as_of=2026-06-10`:
+  - `dashboard_weekly_pipeline`: 17 rows;
+  - `dashboard_customer_themes`: 175 rows;
+  - `dashboard_pipeline_trend`: 8 rows.
+- Re-ran `deal-intel mongo doctor --json`; result is `ok: true` with
+  `warning_checks: 0`.
+- Existing Atlas Charts dashboards that were tied to the terminated M10 data
+  source do not automatically recover. Rebuild or reconnect charts against the
+  new M0 cluster and the `dashboard_*` collections.
+
 ### MongoDB Atlas/Pro MDB-0 audit
 
 - Added [mongodb-atlas-pro.md](mongodb-atlas-pro.md) as the current-state audit
