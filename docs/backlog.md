@@ -88,6 +88,65 @@ Recommended implementation order:
      `pro`; report the mismatch and provide the required setup action.
    - Consider change streams and time-series collections only when they
      simplify real product workflows, not because the platform supports them.
+   - Parallel branch note: `codex/product-context-layer` can run its live smoke
+     separately. During final integration, resolve shared config/tool-surface
+     docs and refresh MCPB/release artifacts once after both branches are
+     merged. Do not let each branch independently become the final release
+     artifact source.
+   - Detailed split for the next MongoDB branch. Current-state audit lives in
+     [mongodb-atlas-pro.md](mongodb-atlas-pro.md).
+   - Work units:
+     1. MDB-0 current-state audit:
+        - inspect existing Atlas chart specs, `render-atlas-dashboard`,
+          `crosscheck-weekly-dashboard`, Mongo doctor, vector-index commands,
+          and generic qualification fields;
+        - record which parts are Free/M0-compatible `full` features and which
+          are paid-infra `pro` features;
+        - no runtime behavior changes.
+     2. MDB-1 chart-ready data contract:
+        - define slim chart-ready Mongo collections or views such as
+          `dashboard_weekly_pipeline`, `dashboard_customer_themes`, and
+          `dashboard_pipeline_trend`;
+        - keep fields deterministic, human-readable, and Charts-friendly so
+          Atlas UI setup mostly becomes selecting fields instead of pasting
+          large aggregation pipelines;
+        - exclude raw notes, contacts, embeddings, and secret-like content;
+        - prefer materialized collections first if they make M0/manual Charts
+          setup simpler; revisit views only after live UI behavior is verified.
+     3. MDB-2 refresh engine:
+        - add a dry-run-first refresh path that computes the chart-ready rows
+          from existing metric/theme/trend engines and writes/upserts them only
+          on explicit apply;
+        - keep refresh idempotent and auditable with `as_of`, schema version,
+          source collection, generated timestamp, and row counts;
+        - decide whether the first surface is CLI-only or also an MCP admin
+          tool after the write contract is safe.
+     4. MDB-3 Atlas chart spec simplification:
+        - add chart specs that target the chart-ready collections and require
+          minimal Atlas Chart Builder encoding;
+        - keep the existing raw-aggregation specs as compatibility/reference
+          until the simplified path is live-smoked;
+        - update `docs/atlas-charts.md` so non-expert users can set up charts
+          without query-bar-heavy workflows.
+     5. MDB-4 doctor and cross-check:
+        - extend Mongo doctor/cross-check surfaces to report chart-ready
+          collection presence, freshness, schema version, row counts, and
+          obvious metric mismatches;
+        - verify chart-ready rows against `get_metrics`, report/export rows,
+          and existing dashboard cross-checks.
+     6. MDB-5 Pro vector-search validation:
+        - harden the M10+/Atlas Vector Search path, index apply/doctor
+          messages, and `pro` no-silent-fallback behavior;
+        - keep Free/M0 `full` on Python cosine unless the user explicitly
+          selects paid Atlas vector search.
+     7. MDB-6 live smoke and merge gate:
+        - run M0/full smoke for chart-ready refresh and Atlas UI setup;
+        - run M10+/pro vector smoke only when disposable paid infra is
+          available;
+        - after product-context and MongoDB branches both settle, merge,
+          resolve shared files, repack MCPB, refresh `release/latest`, and run
+          full pytest, Ruff, MCPB validate/info, natural smoke, and relevant
+          Mongo smoke.
 6. Report Quality v2.
    - Treat `export_report` as meeting/manager-report generation, not a ledger
      dump.

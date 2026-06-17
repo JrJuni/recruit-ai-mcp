@@ -12,6 +12,22 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-16
 
+### MongoDB Atlas/Pro MDB-0 audit
+
+- Added [mongodb-atlas-pro.md](mongodb-atlas-pro.md) as the current-state audit
+  and planning center for the MongoDB Atlas/Pro workstream.
+- Classified existing MongoDB surfaces:
+  - `full`/M0-compatible: ordinary indexes, collection validators, Mongo
+    doctor, raw Atlas dashboard spec rendering, dashboard cross-checks, and
+    future chart-ready collections.
+  - `pro`/M10+-only: Atlas Vector Search index creation, `$vectorSearch`, M10+
+    live smoke, and paid-infra validation.
+- Identified the main usability gap: current Atlas Charts setup works but is
+  query-bar-heavy. The next full/M0 improvement should be chart-ready
+  materialized collections such as `dashboard_weekly_pipeline`,
+  `dashboard_customer_themes`, and `dashboard_pipeline_trend`.
+- No runtime behavior changed.
+
 ### QF-11 custom framework end-to-end smoke
 
 Implemented:
