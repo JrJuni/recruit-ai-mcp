@@ -564,7 +564,7 @@ CLI pre-smoke on 2026-06-17 (before host-app live smoke):
     retrieval-quality validation. `add_interaction`/`analyze_deal` refs invariants
     were covered deterministically by their test suites in this pass, not a live
     LLM run (that remains the host-app smoke's job).
-- Validation (worktree, `event-intel` interpreter, `PYTHONPATH=<worktree>/src`):
+- Validation (worktree interpreter, `PYTHONPATH=<worktree>/src`):
   - targeted: `pytest tests/test_product_context.py tests/test_add_interaction.py
     tests/test_analyze_deal.py tests/test_config_writer.py tests/test_env_config.py
     tests/test_mcpb_manifest.py tests/test_tool_surfaces.py -q -p no:cacheprovider
@@ -1480,7 +1480,7 @@ Notes:
 - The new update tool writes only validated non-secret config and does not
   recompute historical deal scores.
 - A plain pytest run hit the known Windows temp permission issue under
-  `%LOCALAPPDATA%\Temp\pytest-of-JuniBecky`; rerunning with a workspace
+  `%LOCALAPPDATA%\Temp\pytest-of-<user>`; rerunning with a workspace
   basetemp validated the tests themselves.
 
 ### QF-1 framework contract and validator

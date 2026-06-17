@@ -18,7 +18,7 @@ PowerShell example:
 $env:DEAL_INTEL_HOME = (Resolve-Path ".tmp\d35-fresh-home").Path
 $wheel = (Resolve-Path ".tmp\d2_2_dist\deal_intel_mcp-0.2.1-py3-none-any.whl").Path
 
-node npm\bin\deal-intel-mcp.js setup --wheel-url $wheel --python "$HOME\miniconda3\envs\event-intel\python.exe"
+node npm\bin\deal-intel-mcp.js setup --wheel-url $wheel --python "$HOME\miniconda3\envs\deal-intel\python.exe"
 node npm\bin\deal-intel-mcp.js smoke --profile-only
 node npm\bin\deal-intel-mcp.js mcp-config --json
 ```
