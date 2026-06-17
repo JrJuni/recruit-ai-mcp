@@ -288,11 +288,13 @@ Recommended implementation split:
 
 #### D3.1 Bootstrapper design contract
 
-- Add `docs/bootstrapper-contract.md`.
+- Add `docs/bootstrapper-contract.md`. Done.
 - Define runtime directories, command names, environment variables, and failure
-  messages.
+  messages. Done.
 - Decide whether the npm package installs from PyPI, GitHub release artifacts,
-  or both.
+  or both. Current default: PyPI after package metadata is ready, TestPyPI for
+  pre-release validation, GitHub release wheel URL only as an explicit fallback
+  or development override.
 
 #### D3.2 Node CLI skeleton
 

@@ -48,6 +48,28 @@ Planning:
 - Updated [distribution-plan.md](distribution-plan.md) so the next distribution
   work is a dependency-inclusive bootstrapper, not a thin command alias.
 
+### D3.1 bootstrapper contract
+
+Completed:
+
+- Added [bootstrapper-contract.md](bootstrapper-contract.md) as the design
+  contract for the future dependency-inclusive `npx` bootstrapper.
+- Defined:
+  - runtime directories under `~/.deal-intel/runtime`;
+  - user-facing commands: `setup`, `doctor`, `smoke`, `mcp`, and `where`;
+  - install source policy: PyPI by default after metadata is ready, TestPyPI for
+    validation, GitHub release wheel URL only as an explicit fallback;
+  - default install profile: `deal-intel-mcp[embedding]`, with lightweight mode
+    as an explicit opt-in;
+  - secret redaction and install-state boundaries;
+  - MCPB handoff responsibility boundary.
+
+Next:
+
+- D3.2 should create the Node CLI skeleton only after this contract stays
+  stable enough to avoid building a thin wrapper around unresolved Python setup
+  ambiguity.
+
 ### D2.2 clean wheel install smoke
 
 Completed:
