@@ -10,7 +10,124 @@ Read the newest section first. Older sections are retained as an archive for
 traceability and should be searched by topic, milestone, or file path rather
 than loaded wholesale.
 
-## Latest Update - 2026-06-17
+## Latest Update - 2026-06-18
+
+### Product-context live smoke and distribution planning
+
+Completed:
+
+- Ran a live product-context smoke against the configured local source folder:
+  `.tmp-product-context/sources`.
+- Confirmed the product-context source set contains and parses:
+  - `notion-ai.pdf`
+  - `notion-enterprise-integrations-competitive.docx`
+  - `notion-enterprise-overview.md`
+  - `notion-enterprise-security.json`
+- Confirmed `index_product_context` sees 4 source files with no skips, errors,
+  or warnings. The cache path is
+  `~/.deal-intel/product-context/cache`.
+- Confirmed retrieval returns relevant bounded snippets for security,
+  integration, and ROI/value-proposition queries across PDF, DOCX, Markdown,
+  and JSON sources.
+- Confirmed the MCP wrapper path returns refs/snippets without exposing full raw
+  product documents.
+
+Notes:
+
+- One-shot CLI calls can still report embedding `warming_up` because the MCP
+  server normally warms the local embedding model in a long-running background
+  process. The live smoke warmed the provider inside one process before
+  indexing/retrieval.
+- Product-context behavior is ready to close for the current v2 pass. Future
+  improvements should be usage-driven: larger-file UX, optional PPTX/XLSX
+  parsing, cache-health visibility, and shared/Mongo product context only if
+  local cache proves insufficient.
+
+Planning:
+
+- Updated [distribution-plan.md](distribution-plan.md) so the next distribution
+  work is a dependency-inclusive bootstrapper, not a thin command alias.
+
+### D2.2 clean wheel install smoke
+
+Completed:
+
+- Rebuilt wheel and sdist artifacts with:
+  `python -m build --no-isolation --outdir .tmp\d2_2_dist`.
+- Installed the rebuilt wheel into a fresh venv:
+  `.tmp\d2_2_venv_clean`.
+- Verified the installed package metadata from the clean venv:
+  - package version: `0.2.1`
+  - base dependencies include `pymongo>=4.7` and `dnspython>=2.0`
+  - `sentence-transformers` is not installed by the base wheel and remains
+    gated behind the `embedding` extra.
+- Fixed a packaging dependency warning exposed by the clean install:
+  `pymongo[srv]` is no longer advertised by current PyMongo, so SRV support is
+  now expressed as explicit `pymongo>=4.7` plus `dnspython>=2.0`.
+- Verified clean-venv CLI behavior:
+  - `config doctor --offline --json` with `local_sample` override -> pass
+  - `smoke-profile --profile sample` -> pass
+  - installed console script `deal-intel config show` -> pass
+  - `smoke-natural-questions --as-of 2026-06-10 --output-dir <workspace-local-dir>`
+    -> pass, 12/12 questions
+
+Notes:
+
+- Locally built wheel files under `.tmp\d2_*_dist` can inherit restrictive
+  Windows sandbox ACLs. Copying the wheel to a normal workspace runtime path
+  before installing normalizes file permissions. Treat this as a local
+  sandbox/release-process note, not a package metadata failure.
+- Build-isolated artifact creation remains a release/CI gate because the local
+  Windows environment previously hit a pip-output decoding issue while creating
+  the isolated build env.
+- Fresh-install smoke commands should keep using explicit output directories
+  until the bootstrapper owns a known-writable runtime directory.
+
+### D2.1 package artifact smoke
+
+Completed:
+
+- Built local immutable artifacts with:
+  `python -m build --no-isolation --outdir .tmp\d2_1_dist`.
+- Produced:
+  - `.tmp\d2_1_dist\deal_intel_mcp-0.2.1-py3-none-any.whl`
+  - `.tmp\d2_1_dist\deal_intel_mcp-0.2.1.tar.gz`
+- Installed the wheel into `.tmp\d2_1_install` with `pip install --no-deps`
+  and verified imports from the installed target instead of the repo source
+  tree.
+- Verified packaged resources from the wheel:
+  - `defaults.yaml`
+  - `sample_datasets/weekly_pipeline_demo.v2.json`
+  - `atlas/charts/weekly_pipeline_review.v1.json`
+  - `atlas/chart_ready/weekly_pipeline_review.v1.json`
+  - `atlas/vector_indexes/deal_summary_vector.v1.json`
+  - `mongo/deals.v1.json`
+  - `mongo/dashboard_weekly_pipeline.v1.json`
+- Verified installed-artifact CLI smoke:
+  - `config doctor --offline --json` with `local_sample` override -> pass
+  - `smoke-profile --profile sample` -> pass
+  - `render-atlas-dashboard --source chart-ready --as-of 2026-06-10 --chart-id pipeline_kpis`
+    -> pass
+  - `smoke-natural-questions --as-of 2026-06-10 --output-dir <workspace-local-dir>`
+    -> pass, 12/12 questions
+
+Notes:
+
+- A default `config doctor --offline` call from the installed artifact correctly
+  reported the current user config as `full/mongo` with missing `MONGODB_URI`
+  in that subprocess. This was an environment/config check, not a packaging
+  failure.
+- A natural-question smoke call without `--output-dir` hit a local Windows
+  permission error under `~/.deal-intel/smoke`. The command succeeds when
+  given an explicit writable output directory. Treat this as a distribution UX
+  follow-up for fresh-install guidance and bootstrapper defaults, not as a
+  package-data failure.
+- `python -m build --outdir .tmp\d2_1_dist` with build isolation hit a local
+  Windows pip-output decoding error while creating the isolated build
+  environment. Local D2.1 used `--no-isolation`; isolated build remains a
+  release/CI gate before PyPI-style publishing.
+
+## Archive - 2026-06-17
 
 ### V2 integration merge and release artifact
 
