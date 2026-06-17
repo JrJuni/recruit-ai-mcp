@@ -77,16 +77,15 @@ Recommended implementation order:
      and `analyze_deal`.
    - Keep product context out of qualification scoring, customer-theme counts,
      deal summary embeddings, BI/report metrics, and raw report outputs.
-   - Defer remaining context work until the v2 closure validation pass:
-     - run a real host-app smoke with MCPB, configured source folder, PDF
-       indexing, `get_product_context`, `add_interaction`, and `analyze_deal`;
-     - treat the live smoke as successful only if product context improves
-       seller-side interpretation while staying out of customer evidence,
-       qualification scoring, customer themes, BI/report metrics, and raw
-       report/list outputs;
-     - verify cache reuse, modified-file reindexing, clear partial-indexing
-       warnings, secret-shaped source skipping, path handling from host apps,
-       and bounded snippet-only responses;
+   - Host-app live smoke DONE (2026-06-17, smoked on MCPB `0.2.0`, shipped as
+     `0.2.1`): real configured source folder with pdf/md/json/docx indexed,
+     cache reuse confirmed, `get_product_context` returned bounded snippets,
+     `add_interaction` stored refs without raising scores, and `analyze_deal`
+     used refs for strategy without raw text. Three fixes shipped: stale-config
+     cache invalidation on `update_config`, product context removed from the
+     MCPB installer form (runtime-only), and friendlier first-run
+     `product_context_not_configured` guidance. See `docs/status.md`.
+   - Defer remaining context work until later, driven by real usage:
      - add PPTX/XLSX parser support or a clearer "export to PDF first" UX if
        real user material commonly arrives as decks/spreadsheets;
      - add managed-note/file CRUD convenience only if users need to inspect,

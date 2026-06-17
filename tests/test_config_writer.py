@@ -387,3 +387,40 @@ def test_config_switch_cli_text_does_not_print_custom_secret(monkeypatch, tmp_pa
     assert result.exit_code == 0
     assert "configured-custom-secret-sentinel" not in result.stdout
     assert "Profile-managed changes:" in result.stdout
+
+
+def test_update_config_tool_resets_cached_config_after_write(monkeypatch) -> None:
+    import deal_intel.config_writer as config_writer
+    from deal_intel import _context, mcp_server
+
+    monkeypatch.setattr(_context, "_config", {"sentinel": True})
+    monkeypatch.setattr(
+        config_writer,
+        "update_config_settings",
+        lambda **kwargs: {"ok": True, "storage_written": True},
+    )
+
+    result = mcp_server.update_config(
+        dry_run=False, confirmed_by_user=True, reporting_language="ko"
+    )
+
+    assert result["storage_written"] is True
+    # Cache dropped so the running session reloads the freshly written config.
+    assert _context._config is None
+
+
+def test_update_config_tool_keeps_cache_on_dry_run(monkeypatch) -> None:
+    import deal_intel.config_writer as config_writer
+    from deal_intel import _context, mcp_server
+
+    sentinel = {"sentinel": True}
+    monkeypatch.setattr(_context, "_config", sentinel)
+    monkeypatch.setattr(
+        config_writer,
+        "update_config_settings",
+        lambda **kwargs: {"ok": True, "storage_written": False, "dry_run": True},
+    )
+
+    mcp_server.update_config(dry_run=True)
+
+    assert _context._config is sentinel

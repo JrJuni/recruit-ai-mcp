@@ -256,9 +256,10 @@ def update_config(
     - product_context_max_chunks_per_run: 10-50000
     """
     try:
+        from deal_intel import _context
         from deal_intel.config_writer import update_config_settings
 
-        return update_config_settings(
+        result = update_config_settings(
             dry_run=dry_run,
             confirmed_by_user=confirmed_by_user,
             llm_provider=llm_provider or None,
@@ -280,6 +281,12 @@ def update_config(
                 product_context_max_chunks_per_run or None
             ),
         )
+        if isinstance(result, dict) and result.get("storage_written"):
+            # Config was written to disk; drop the cached config so this running
+            # session immediately reflects the change (e.g. product context
+            # source dirs) instead of serving the stale startup snapshot.
+            _context.reset_config()
+        return result
     except Exception as exc:
         return envelope_from_exception(exc, stage=Stage.PREFLIGHT)
 

@@ -2,7 +2,7 @@
   "manifest_version": "0.2",
   "name": "deal-intel-mcp",
   "display_name": "Deal Intelligence MCP",
-  "version": "0.1.15",
+  "version": "0.2.1",
   "description": "Turn meeting notes and customer interactions into qualification-framework deal intelligence, with MEDDPICC as the default. Profile-aware MCP tool surfaces, zero-config sample mode, local-to-Mongo migration, MongoDB Atlas storage, semantic deal search, ChatGPT OAuth, Anthropic, or OpenAI API LLM backend.",
   "long_description": "deal-intel-mcp captures consultation records, meeting notes, email replies, user interviews, call summaries, and internal notes, extracts active qualification-framework signals and customer concern themes via LLM, and can run on bundled/local sample data or MongoDB Atlas-backed real team data. MEDDPICC is the bundled default framework, but saved custom frameworks can drive future scoring after backfill. Runtime tool surfaces expose sample, standard, or developer tool lists from the same package, and a dry-run-first migration path moves local personal deals into MongoDB when users graduate to full mode. Supports ChatGPT Plus OAuth, Anthropic Claude API, or the official OpenAI API as LLM backends.",
   "author": {
@@ -88,33 +88,6 @@
       "default": "en",
       "required": false
     },
-    "product_context_source_dirs": {
-      "type": "string",
-      "title": "Product/solution document folders",
-      "description": "Optional semicolon-separated folders containing your product, solution, ICP, pricing, or positioning docs for seller-side RAG context. Leave blank to use ~/.deal-intel/product-context/sources.",
-      "required": false
-    },
-    "product_context_max_source_file_mb": {
-      "type": "string",
-      "title": "Max product document size (MB)",
-      "description": "Optional product-context source file size limit from 1 to 500 MB. Increase for large catalogs. Default: 100.",
-      "default": "100",
-      "required": false
-    },
-    "product_context_max_chunks_per_file": {
-      "type": "string",
-      "title": "Max product chunks per file",
-      "description": "Optional per-file indexing budget from 10 to 20000 chunks. Large files may be partially indexed with warnings. Default: 2000.",
-      "default": "2000",
-      "required": false
-    },
-    "product_context_max_chunks_per_run": {
-      "type": "string",
-      "title": "Max product chunks per indexing run",
-      "description": "Optional per-run indexing budget from 10 to 50000 chunks. Default: 8000.",
-      "default": "8000",
-      "required": false
-    },
     "mongodb_uri": {
       "type": "string",
       "title": "MongoDB Atlas URI",
@@ -162,10 +135,6 @@
         "DEAL_INTEL_STORAGE_BACKEND": "${user_config.storage_backend}",
         "DEAL_INTEL_TOOLS_SURFACE": "${user_config.tools_surface}",
         "DEAL_INTEL_REPORTING_LANGUAGE": "${user_config.reporting_language}",
-        "DEAL_INTEL_PRODUCT_CONTEXT_SOURCE_DIRS": "${user_config.product_context_source_dirs}",
-        "DEAL_INTEL_PRODUCT_CONTEXT_MAX_SOURCE_FILE_MB": "${user_config.product_context_max_source_file_mb}",
-        "DEAL_INTEL_PRODUCT_CONTEXT_MAX_CHUNKS_PER_FILE": "${user_config.product_context_max_chunks_per_file}",
-        "DEAL_INTEL_PRODUCT_CONTEXT_MAX_CHUNKS_PER_RUN": "${user_config.product_context_max_chunks_per_run}",
         "ANTHROPIC_API_KEY": "${user_config.anthropic_api_key}",
         "OPENAI_API_KEY": "${user_config.openai_api_key}",
         "DEAL_INTEL_LLM_PROVIDER": "${user_config.llm_provider}",

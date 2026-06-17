@@ -672,15 +672,36 @@ def _iter_source_files(
     warnings: list[dict[str, Any]],
 ) -> Iterable[Path]:
     seen: set[Path] = set()
+    default_root = _resolve_path(DEFAULT_SOURCE_DIR)
     for root in settings.source_dirs:
         if not root.exists():
-            warnings.append(
-                _warning(
-                    "source_dir_missing",
-                    "Product context source directory does not exist.",
-                    source_dir=str(root),
+            if root == default_root:
+                # First-run, unconfigured state: guide the user instead of
+                # raising what looks like an error.
+                warnings.append(
+                    _warning(
+                        "product_context_not_configured",
+                        "No product context is set up yet. Add product, solution, "
+                        "ICP, pricing, or positioning documents to the default "
+                        "folder shown below, or point to your own folder, then "
+                        "index again.",
+                        source_dir=str(root),
+                        how_to_configure=(
+                            "Put files in the folder above, or set "
+                            "product_context.source_dirs via update_config "
+                            "(or the DEAL_INTEL_PRODUCT_CONTEXT_SOURCE_DIRS env)."
+                        ),
+                    )
                 )
-            )
+            else:
+                # A folder the user explicitly configured is genuinely missing.
+                warnings.append(
+                    _warning(
+                        "source_dir_missing",
+                        "Product context source directory does not exist.",
+                        source_dir=str(root),
+                    )
+                )
             continue
         paths = [root] if root.is_file() else root.rglob("*")
         for path in paths:

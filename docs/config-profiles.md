@@ -256,9 +256,9 @@ Implemented behavior:
 - Pro requirements are clearly labeled as paid-infra opt-in.
 - `mcpb/manifest.json` exposes `storage_backend`; the installer default is
   `mongo`, while `local_sample` remains available for zero-config demos.
-- The MCP bundle metadata reflects the current 29-tool internal registration
+- The MCP bundle metadata reflects the current 41-tool internal registration
   with profile-filtered surfaces.
-- The current bundle manifest version is `0.1.15`.
+- The current bundle manifest version is `0.2.1`.
 - `mcpb/README.md` now documents `tools_surface=auto`, mutable local personal
   sample data, and dry-run-first local-to-Mongo migration.
 - `tests/test_mcpb_manifest.py` validates the manifest against the tool-surface

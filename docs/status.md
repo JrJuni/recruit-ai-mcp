@@ -14,6 +14,87 @@ than loaded wholesale.
 
 ### Product / solution context layer
 
+Host-app live smoke on 2026-06-17 (complete; smoked on MCPB `0.2.0`, shipped as
+`0.2.1`):
+
+- Confirmed live in the host app: index -> retrieve works across all four indexed
+  docs; a query for "ideal customer profile and key value propositions" returned
+  the overview/security/AI sources with the seller-side "not customer evidence /
+  do not raise qualification scores" tagging preserved end to end.
+- Core invariant validated live on a disposable `create_deal` deal: `add_interaction`
+  reported and stored `product_context_refs` (metadata only, not raw text) with
+  `product_context_used: true`, while MEDDPICC scoring drew evidence only from
+  customer-stated quotes (`source_confidence: customer_stated`,
+  `score_policy: confirmed_evidence`). Product context did not raise any dimension
+  score, theme count, or fill gaps. (No `create_sample_data` tool exists; the
+  disposable-deal flow is `create_deal` -> verify -> `archive_deal`/`delete_deal`.)
+- `analyze_deal` confirmed live in the host (initially slow due to LLM latency, then
+  completed); its refs-only, no-raw-text strategy behavior held and is also covered
+  deterministically by `tests/test_analyze_deal.py`.
+- Smoke-driven fixes applied and shipped in the post-smoke `0.2.1` build (bumped
+  `mcpb/manifest.json` + `pyproject.toml` to `0.2.1`, repacked the gitignored
+  `mcpb/deal-intel-mcp-0.2.1.mcpb`; `release/latest/` stays on `0.1.15` until the
+  Phase 3 final-integration publish):
+  - Fixed a stale-config bug: `_context.config()` caches the loaded config for the
+    process lifetime, so a `update_config` write (e.g. product-context source
+    dirs) did not take effect in the same running session and the indexer kept
+    resolving to the default source dir. `update_config` now calls a new
+    `_context.reset_config()` after a confirmed write so the next tool call
+    reloads `~/.deal-intel/config.yaml`. Added targeted tests for write-resets-
+    cache and dry-run-keeps-cache.
+  - Removed the product-context fields from the MCPB installer form and the
+    forwarded env block. Product context is now a runtime-only setting (via
+    `update_config` or direct env), so first-run setup is not cluttered.
+  - Softened the first-run experience: when the default product-context source
+    folder is absent, the indexer now emits a `product_context_not_configured`
+    guidance message (with a `how_to_configure` hint) instead of the
+    error-flavored `source_dir_missing` warning. A genuinely missing
+    user-configured folder still warns. Added targeted tests for both paths.
+- Known gap (deferred): `config_doctor` does not surface the effective product-
+  context source directory; only the config-file path is shown, and `config show`
+  is CLI-only (not an MCP tool). Tracked under the backlog config-doctor/status
+  visibility follow-up.
+
+CLI pre-smoke on 2026-06-17 (before host-app live smoke):
+
+- Ran an isolated CLI pre-smoke from a `codex/product-context-layer` git worktree
+  (env-isolated: `PYTHONPATH=<worktree>/src` with an existing interpreter, so the
+  parallel `codex/mongodb-atlas-pro` checkout and the local
+  `~/.deal-intel/config.yaml` were untouched; cfg passed in-process, not persisted).
+- Multi-format source set under `.tmp-product-context/sources/` covering all four
+  supported binary/text paths (`notion-ai.pdf`, `notion-enterprise-overview.md`,
+  `notion-enterprise-security.json`,
+  `notion-enterprise-integrations-competitive.docx`):
+  - dry-run did not embed or write (`storage_written: false`, `would_index: 4`).
+  - real index produced `indexed: 4`, `indexed_chunks: 10`, all chunks embedded,
+    with all four formats parsed (pdf via pypdf, docx via stdlib, md, json).
+  - re-run reused cache (`unchanged: 4`, `indexed: 0`, zero embed calls).
+  - `retrieve_product_context` returned bounded snippets plus source metadata, not
+    raw full documents.
+  - Note: ranking used a coarse keyword stub embedding, so cross-document ordering
+    is not representative; host-app smoke with a real embedding model still owns
+    retrieval-quality validation. `add_interaction`/`analyze_deal` refs invariants
+    were covered deterministically by their test suites in this pass, not a live
+    LLM run (that remains the host-app smoke's job).
+- Validation (worktree, `event-intel` interpreter, `PYTHONPATH=<worktree>/src`):
+  - targeted: `pytest tests/test_product_context.py tests/test_add_interaction.py
+    tests/test_analyze_deal.py tests/test_config_writer.py tests/test_env_config.py
+    tests/test_mcpb_manifest.py tests/test_tool_surfaces.py -q -p no:cacheprovider
+    --basetemp=.tmp/pytest-pc-presmoke`: 102 passed, 1 warning.
+  - full regression: `pytest -q -p no:cacheprovider
+    --basetemp=.tmp/pytest-pc-full`: 696 passed, 1 warning.
+  - `ruff check .`: passed.
+  - `mcpb validate mcpb/manifest.json`: schema validation passes.
+- Packaged the product-context bundle as `0.2.0` for the host-app live smoke
+  (bumped `mcpb/manifest.json` and `pyproject.toml`, updated the manifest-version
+  test and current-version doc lines). The smoke artifact is built into the
+  gitignored build dir as `mcpb/deal-intel-mcp-0.2.0.mcpb`; `release/latest/`
+  stays on `0.1.15` because `0.2.0` is a smoke build, not a published release.
+  Re-ran the full suite (696 passed), `ruff` (passed), and `mcpb validate`
+  against the bumped manifest. The published `release/latest` refresh and the
+  final `0.2.1` repack remain post-smoke / final-integration steps per the
+  merge-prep plan.
+
 Follow-up on 2026-06-17:
 
 - Raised the default product-context source file limit from 25MB to 100MB and

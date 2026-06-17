@@ -27,6 +27,16 @@ def config() -> dict:
     return _config
 
 
+def reset_config() -> None:
+    """Drop the cached user config so the next config() call reloads from disk.
+
+    Call this after a tool writes ~/.deal-intel/config.yaml so a long-running
+    server session reflects the change without a manual restart.
+    """
+    global _config
+    _config = None
+
+
 def llm_provider() -> _llm.LLMProvider:
     global _llm_provider
     if _llm_provider is None:

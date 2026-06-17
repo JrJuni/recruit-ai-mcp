@@ -424,3 +424,34 @@ def test_mcp_get_product_context_reports_missing_embedding_dependency(monkeypatc
     assert result["ok"] is False
     assert result["error_code"] == "CONFIG_ERROR"
     assert result["warming_up"] is False
+
+
+def test_index_product_context_guides_when_default_source_dir_absent(
+    tmp_path, monkeypatch
+) -> None:
+    missing_default = tmp_path / "default-product-context" / "sources"
+    monkeypatch.setattr(product_context, "DEFAULT_SOURCE_DIR", str(missing_default))
+    cfg = {"product_context": {"cache_dir": str(tmp_path / "cache")}}
+
+    result = index_product_context(cfg, embedding_provider=None, dry_run=True)
+
+    codes = {warning["code"] for warning in result["warnings"]}
+    assert "product_context_not_configured" in codes
+    assert "source_dir_missing" not in codes
+
+
+def test_index_product_context_warns_when_configured_source_dir_absent(
+    tmp_path,
+) -> None:
+    cfg = {
+        "product_context": {
+            "source_dirs": [str(tmp_path / "does-not-exist")],
+            "cache_dir": str(tmp_path / "cache"),
+        }
+    }
+
+    result = index_product_context(cfg, embedding_provider=None, dry_run=True)
+
+    codes = {warning["code"] for warning in result["warnings"]}
+    assert "source_dir_missing" in codes
+    assert "product_context_not_configured" not in codes

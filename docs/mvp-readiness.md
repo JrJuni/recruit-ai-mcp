@@ -40,7 +40,7 @@ Green:
 - Local mode can create/update/stage/archive/delete local personal deals, then
   export, reset, or migrate them to MongoDB through dry-run-first commands.
 - Natural-question smoke has a deterministic 12-question pack.
-- Claude Desktop MCPB `0.1.15` packs successfully and reflects the current
+- Claude Desktop MCPB `0.2.1` packs successfully and reflects the current
   installer fields.
 
 Yellow:
