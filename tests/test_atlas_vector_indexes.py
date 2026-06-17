@@ -4,6 +4,8 @@ import json
 from importlib import resources
 from pathlib import Path
 
+import pytest
+
 import deal_intel.atlas_vector_indexes as vector_indexes
 from deal_intel.atlas_vector_indexes import (
     DEAL_SUMMARY_VECTOR_INDEX,
@@ -11,6 +13,7 @@ from deal_intel.atlas_vector_indexes import (
     deal_summary_vector_index_name,
     deal_summary_vector_search_settings,
     load_deal_summary_vector_index_spec,
+    validate_deal_summary_vector_index_spec,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -77,6 +80,20 @@ def test_create_search_index_command_can_override_dimensions() -> None:
     command = build_create_search_index_command(dimensions=768)
 
     assert command["indexes"][0]["definition"]["fields"][0]["numDimensions"] == 768
+
+
+def test_create_search_index_command_rejects_invalid_dimensions() -> None:
+    with pytest.raises(ValueError, match="dimensions must be between"):
+        build_create_search_index_command(dimensions=0)
+
+
+def test_vector_index_spec_validator_catches_inconsistent_spec() -> None:
+    spec = load_deal_summary_vector_index_spec()
+    spec["create_search_index"]["definition"]["fields"][0]["path"] = "wrong_path"
+
+    errors = validate_deal_summary_vector_index_spec(spec)
+
+    assert "exactly one vector field must match embedding.path" in errors
 
 
 def test_vector_search_settings_are_stable() -> None:

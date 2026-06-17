@@ -286,6 +286,29 @@ def test_mongo_doctor_reports_auxiliary_schema_checks(monkeypatch) -> None:
     assert "configured-mongodb-uri-sentinel" not in json.dumps(report)
 
 
+def test_mongo_doctor_reports_atlas_vector_index_summary(monkeypatch) -> None:
+    monkeypatch.setenv("MONGODB_URI", "configured-mongodb-uri-sentinel")
+    cfg = _full_cfg()
+    cfg["mongodb"]["vector_search"] = "atlas"
+
+    report = build_mongo_doctor_report(
+        cfg,
+        mongo_client_factory=lambda _database: FakeDoctorClient(),
+    )
+
+    check = next(check for check in report["checks"] if check["id"] == "vector_search")
+    assert check["status"] == "warn"
+    assert check["details"]["index"] == {
+        "index_name": "deal_summary_vector",
+        "collection": "deals",
+        "embedding_path": "summary_embedding",
+        "num_dimensions": 384,
+        "similarity": "cosine",
+        "minimum_cluster_tier": "M10",
+    }
+    assert "configured-mongodb-uri-sentinel" not in json.dumps(report)
+
+
 class FakeDoctorClientWithoutChartRows(FakeDoctorClient):
     def check_chart_ready_collections(self) -> dict[str, dict]:
         return {
@@ -489,8 +512,39 @@ def test_mongo_cli_apply_vector_index_dry_run(monkeypatch, tmp_path) -> None:
     assert payload["dry_run"] is True
     assert payload["index_name"] == "deal_summary_vector"
     assert payload["minimum_cluster_tier"] == "M10"
+    assert payload["index"]["embedding_path"] == "summary_embedding"
+    assert payload["index"]["num_dimensions"] == 384
+    assert payload["index"]["similarity"] == "cosine"
     assert payload["command"]["createSearchIndexes"] == "deals"
     assert "silently fall back" in payload["policy"]
+
+
+def test_mongo_cli_apply_vector_index_invalid_dimensions_returns_json(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    user_config = tmp_path / "config.yaml"
+    user_config.write_text(
+        "storage:\n"
+        "  backend: mongo\n"
+        "mongodb:\n"
+        "  database: deal_intel\n"
+        "  vector_search: atlas\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(_env, "_USER_CONFIG_PATH", user_config)
+
+    result = CliRunner().invoke(
+        app,
+        ["mongo", "apply-vector-index", "--dimensions", "0", "--json"],
+    )
+
+    assert result.exit_code == 1
+    payload = json.loads(result.stdout)
+    assert payload["ok"] is False
+    assert payload["dimensions"] == 0
+    assert "dimensions must be between 1 and 4096" in payload["error"]
+    assert "Traceback" not in result.stdout
 
 
 def test_ensure_vector_index_reports_duplicate_as_ok() -> None:

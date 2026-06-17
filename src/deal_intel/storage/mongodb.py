@@ -476,8 +476,11 @@ class MongoDBClient:
 
     def search_by_embedding(self, embedding: list[float], *, limit: int = 5) -> list[dict]:
         """$vectorSearch aggregation — M10+ only. Use get_deals_for_search() on M0."""
+        if not embedding:
+            raise ValueError("embedding must not be empty for Atlas Vector Search")
         col = self._get_db().deals
         search_settings = deal_summary_vector_search_settings()
+        limit = max(1, min(limit, search_settings["max_limit"]))
         pipeline = [
             {
                 "$vectorSearch": {

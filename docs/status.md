@@ -137,6 +137,47 @@ Validation:
   -> passed.
 
 
+### MongoDB Atlas/Pro MDB-5 static vector-search hardening
+
+Implemented:
+
+- Hardened the Pro Atlas Vector Search path before live M10+ smoke:
+  - versioned `deal_summary_vector` index specs are now validated for
+    collection, index name, embedding path, dimensions, similarity, search
+    settings, and M10+ minimum tier;
+  - invalid dimension overrides are rejected before building
+    `createSearchIndexes` commands;
+  - `search_deals` now uses the vector-index `maxLimit` contract instead of a
+    hardcoded limit;
+  - Atlas search results are allowlisted at the tool layer so raw notes,
+    interaction content, contacts, embeddings, and unexpected internal fields
+    cannot leak even if a storage projection changes;
+  - direct `MongoDBClient.search_by_embedding()` calls reject empty embeddings
+    before issuing an aggregation and clamp limits to the static index
+    contract.
+- Improved Pro readiness diagnostics:
+  - `config_doctor` and `mongo doctor` now include the expected Atlas Vector
+    Search index summary: name, collection, embedding path, dimensions,
+    similarity, and M10+ requirement;
+  - `deal-intel mongo apply-vector-index --json` includes the same
+    secret-safe index summary in dry-run output.
+- Live Atlas behavior is still intentionally unverified until a disposable M10+
+  cluster is available.
+
+Validation:
+
+- `pytest tests/test_atlas_vector_indexes.py tests/test_search_deals_startup.py tests/test_archived_read_paths.py tests/test_config_doctor.py tests/test_mongo_contracts.py -q -p no:cacheprovider --basetemp .tmp\pytest-mdb5-static-targeted`
+  -> 61 passed, 1 warning.
+- `ruff check .`
+  -> passed.
+- `deal-intel mongo apply-vector-index --json`
+  -> dry-run succeeded with index summary for `deal_summary_vector`.
+- `deal-intel mongo apply-vector-index --dimensions 0 --json`
+  -> returned structured `ok: false` JSON instead of a traceback.
+- `pytest -q -p no:cacheprovider --basetemp .tmp\pytest-mdb5-static-full`
+  -> 699 passed, 1 warning.
+
+
 ### QF-11 custom framework end-to-end smoke
 
 Implemented:

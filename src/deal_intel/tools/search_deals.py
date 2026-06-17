@@ -1,6 +1,9 @@
 ﻿from __future__ import annotations
 
-from deal_intel.atlas_vector_indexes import deal_summary_vector_index_name
+from deal_intel.atlas_vector_indexes import (
+    deal_summary_vector_index_name,
+    deal_summary_vector_search_settings,
+)
 from deal_intel.errors import ErrorCode, MCPError, Stage
 from deal_intel.schema.qualification_read import select_qualification_snapshot
 from deal_intel.storage.mongodb import MongoDBClient
@@ -39,7 +42,7 @@ def handle(
             retryable=False,
         )
 
-    limit = max(1, min(limit, 20))
+    limit = max(1, min(limit, deal_summary_vector_search_settings()["max_limit"]))
 
     try:
         query_embedding = embedding_provider.embed(query)
@@ -156,7 +159,9 @@ def _search_atlas(
             retryable=False,
         ) from exc
 
-    for r in results:
+    sanitized_results: list[dict] = []
+    for raw in results:
+        r = _sanitize_search_row(raw)
         if r.get("score") is not None:
             r["score"] = round(r["score"], 4)
         if r.get("health_pct") is not None:
@@ -169,11 +174,42 @@ def _search_atlas(
         r["qualification_gaps"] = _safe_gap_list(r.get("qualification_gaps"))
         r["gaps"] = _safe_gap_list(r.get("gaps"))
         r["industry_tags"] = r.get("industry_tags") or []
+        sanitized_results.append(r)
 
-    return {"ok": True, "query": query, "result_count": len(results), "results": results}
+    return {
+        "ok": True,
+        "query": query,
+        "result_count": len(sanitized_results),
+        "results": sanitized_results,
+    }
 
 
 def _safe_gap_list(value) -> list[str]:
     if not isinstance(value, list):
         return []
     return [str(item) for item in value if str(item).strip()]
+
+
+_SEARCH_RESULT_KEYS = (
+    "deal_id",
+    "company",
+    "deal_stage",
+    "industry",
+    "industry_tags",
+    "customer_segment",
+    "deal_size_amount",
+    "deal_size_currency",
+    "score",
+    "qualification_framework",
+    "qualification_framework_display_name",
+    "qualification_source_field",
+    "qualification_health_pct",
+    "qualification_gaps",
+    "health_pct",
+    "gaps",
+)
+
+
+def _sanitize_search_row(row: dict) -> dict:
+    """Allowlist public semantic-search fields as a defense-in-depth layer."""
+    return {key: row[key] for key in _SEARCH_RESULT_KEYS if key in row}

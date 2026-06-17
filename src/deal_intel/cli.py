@@ -978,26 +978,44 @@ def mongo_apply_vector_index(
     from deal_intel.atlas_vector_indexes import (
         build_create_search_index_command,
         deal_summary_vector_index_name,
+        deal_summary_vector_index_summary,
         load_deal_summary_vector_index_spec,
     )
     from deal_intel.storage.mongodb import MongoDBClient
 
     cfg = _env.load_config()
     database = _mapping(_mapping(cfg).get("mongodb")).get("database", "deal_intel")
-    spec = load_deal_summary_vector_index_spec()
-    command = build_create_search_index_command(dimensions=dimensions)
-    payload = {
-        "ok": True,
-        "dry_run": not apply,
-        "database": database,
-        "collection": spec["collection"],
-        "index_name": deal_summary_vector_index_name(),
-        "minimum_cluster_tier": spec["minimum_cluster_tier"],
-        "dimensions": dimensions,
-        "command": command,
-        "policy": "Pro/atlas mode must not silently fall back to python_cosine.",
-    }
-    if apply:
+    try:
+        spec = load_deal_summary_vector_index_spec()
+        command = build_create_search_index_command(dimensions=dimensions)
+        index_summary = deal_summary_vector_index_summary(dimensions=dimensions)
+        payload = {
+            "ok": True,
+            "dry_run": not apply,
+            "database": database,
+            "collection": spec["collection"],
+            "index_name": deal_summary_vector_index_name(),
+            "minimum_cluster_tier": spec["minimum_cluster_tier"],
+            "dimensions": dimensions,
+            "index": index_summary,
+            "command": command,
+            "policy": "Pro/atlas mode must not silently fall back to python_cosine.",
+        }
+    except Exception as exc:
+        payload = {
+            "ok": False,
+            "dry_run": not apply,
+            "database": database,
+            "dimensions": dimensions,
+            "result": "error",
+            "error": _redact_cli_error(exc),
+            "hint": (
+                "Use a positive vector dimension count compatible with the "
+                "embedding provider and the bundled deal_summary_vector spec."
+            ),
+        }
+
+    if payload["ok"] and apply:
         try:
             client = MongoDBClient(database=database)
             payload["result"] = _safe_mongo_command_result(

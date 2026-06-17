@@ -5,6 +5,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
+from deal_intel.atlas_vector_indexes import deal_summary_vector_index_summary
 from deal_intel.chart_ready_contracts import (
     chart_ready_collection_contract_summary,
     chart_ready_collections,
@@ -300,6 +301,7 @@ def _add_vector_search_check(
         )
         return
     if vector_search == "atlas":
+        index_summary = deal_summary_vector_index_summary()
         _add_check(
             checks,
             check_id="vector_search",
@@ -310,6 +312,7 @@ def _add_vector_search_check(
                 "vector_search": vector_search,
                 "storage_backend": backend,
                 "minimum_cluster_tier": "M10",
+                "index": index_summary,
             },
             hint="Keep python_cosine for full/M0; use atlas only for the pro profile.",
         )

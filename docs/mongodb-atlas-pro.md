@@ -195,7 +195,19 @@ cases in `docs/pro-fallback-errors.md`.
      `crosscheck-weekly-dashboard` and can be extended to chart-ready rows after
      live Atlas smoke.
 5. MDB-5 pro vector-search validation:
-   - harden M10+ path after chart-ready full work is stable.
+   - status: static hardening implemented, live M10+ smoke pending;
+   - validates the versioned `deal_summary_vector` index spec before command
+     generation;
+   - rejects invalid dimension overrides before `createSearchIndexes` command
+     output;
+   - clamps Atlas search limits to the index contract;
+   - allowlists `search_deals` Atlas-mode result fields as a second defense
+     against raw notes, interaction content, contacts, embeddings, or internal
+     fields leaking from a storage projection;
+   - config and Mongo doctors report the expected index name, collection,
+     embedding path, dimensions, similarity, and M10+ requirement;
+   - next live gate is to create the index on disposable M10+ infra and run
+     `search_deals` with `mongodb.vector_search: atlas`.
 
 ### User Action Needed
 
@@ -204,5 +216,12 @@ None for MDB-0.
 User action will be needed later for:
 
 - live M0/full Atlas UI smoke after chart-ready refresh exists;
-- optional M10+ Pro smoke if we decide to verify Atlas Vector Search on paid
-  infrastructure.
+- M10+ Pro smoke to verify Atlas Vector Search on paid infrastructure:
+  1. set `mongodb.vector_search: atlas`;
+  2. run `deal-intel mongo apply-vector-index --json` and inspect the dry-run
+     `index` summary;
+  3. run `deal-intel mongo apply-vector-index --apply --json` on an M10+
+     cluster;
+  4. run `search_deals` against data with `summary_embedding` values;
+  5. record repeatable setup failures in
+     [pro-fallback-errors.md](pro-fallback-errors.md).
