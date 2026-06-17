@@ -12,6 +12,51 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-18
 
+### Final local readiness gate before registry publish
+
+Completed:
+
+- Added [AI_USER_TEST_GUIDE.md](../AI_USER_TEST_GUIDE.md) for first external
+  tester handoff.
+- Added [release-publish-checklist.md](release-publish-checklist.md) for the
+  maintainer-only npm/PyPI/MCPB publication sequence.
+- Confirmed the local repository is ready for the next maintainer decision:
+  actual npm/PyPI publication.
+
+Validated:
+
+- Full pytest:
+  `pytest -q -p no:cacheprovider --basetemp .tmp\pytest-final-local-readiness`
+  -> `743 passed, 1 warning`.
+- Ruff:
+  `ruff check .` -> pass.
+- Natural-question smoke:
+  `smoke-natural-questions --as-of 2026-06-10 --output-dir .tmp\final-readiness-natural`
+  -> `OK: True`, 12/12 questions passed, no sensitive failures, no blocked
+  questions.
+- Deal review audit:
+  `smoke-deal-review-audit --as-of 2026-06-10 --limit 20` -> sensitive field
+  check passed and quality rules passed.
+- MCPB manifest:
+  `mcpb validate mcpb\manifest.json` -> schema validation passed.
+- Full profile offline readiness:
+  `config doctor --offline` and `smoke-profile --profile full --offline`
+  -> pass with no failed or warning checks.
+- Package surface smoke:
+  `npm pack .\npm --dry-run --cache .tmp\npm-cache` -> package
+  `deal-intel-mcp-0.2.1.tgz` dry-run succeeded.
+- Whitespace:
+  `git diff --check` -> pass.
+
+Remaining maintainer decision:
+
+- Actual npm/PyPI/TestPyPI publication has not been run. It requires maintainer
+  registry credentials and an explicit publish decision.
+- Public `npx deal-intel-mcp setup` smoke remains pending until both npm and
+  Python package sources are reachable.
+- Host-app `export_report` should be checked during user testing because report
+  export is an MCP tool surface rather than a standalone CLI command.
+
 ### Product-context live smoke and distribution planning
 
 Completed:
