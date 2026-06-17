@@ -19,6 +19,7 @@ function usage() {
     "  deal-intel-mcp doctor [--json] [--live]",
     "  deal-intel-mcp smoke [--profile-only]",
     "  deal-intel-mcp mcp",
+    "  deal-intel-mcp mcp-config [--json] [--server-name NAME]",
     "  deal-intel-mcp where [--json]",
     "  deal-intel-mcp --help",
     "",
@@ -234,6 +235,53 @@ function cmdWhere(args) {
   process.stdout.write("Deal Intelligence runtime paths\n");
   for (const [key, value] of Object.entries(payload.paths)) {
     process.stdout.write(`- ${key}: ${value}\n`);
+  }
+  return 0;
+}
+
+function mcpHandoffPayload(args) {
+  const p = paths();
+  const serverName = optionValue(args, "--server-name") || "deal-intel-mcp";
+  const config = {
+    mcpServers: {
+      [serverName]: {
+        command: p.effective_python_path,
+        args: ["-m", "deal_intel.mcp_server"],
+        env: {
+          PYTHONUTF8: "1",
+          PYTHONIOENCODING: "utf-8",
+        },
+      },
+    },
+  };
+  return {
+    ok: true,
+    bootstrapper_version: VERSION,
+    server_name: serverName,
+    mcpb_python_interpreter_path: p.effective_python_path,
+    managed_python_path: p.managed_python_path,
+    config_path: p.config_path,
+    claude_desktop_config_snippet: config,
+    notes: [
+      "For MCPB, paste mcpb_python_interpreter_path into the Python interpreter path field.",
+      "For manual Claude Desktop setup, merge claude_desktop_config_snippet into claude_desktop_config.json.",
+      "Secrets are not included; keep MongoDB/API keys in MCPB sensitive fields, .env, or shell environment.",
+    ],
+  };
+}
+
+function cmdMcpConfig(args) {
+  const payload = mcpHandoffPayload(args);
+  if (hasFlag(args, "--json")) {
+    printJson(payload);
+    return 0;
+  }
+  process.stdout.write("Deal Intelligence MCP handoff\n");
+  process.stdout.write(`MCPB Python interpreter path:\n${payload.mcpb_python_interpreter_path}\n\n`);
+  process.stdout.write("Claude Desktop config snippet:\n");
+  process.stdout.write(`${JSON.stringify(payload.claude_desktop_config_snippet, null, 2)}\n\n`);
+  for (const note of payload.notes) {
+    process.stdout.write(`- ${note}\n`);
   }
   return 0;
 }
@@ -464,6 +512,9 @@ function main(argv) {
   }
   if (command === "mcp") {
     return cmdMcp(args);
+  }
+  if (command === "mcp-config") {
+    return cmdMcpConfig(args);
   }
   process.stderr.write(`Unknown command: ${command}\n\n${usage()}\n`);
   return 2;

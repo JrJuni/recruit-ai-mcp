@@ -321,8 +321,10 @@ Recommended implementation split:
 
 #### D3.4 MCP/Claude handoff
 
-- Print MCPB-ready Python path.
-- Generate a copy-paste Claude Desktop config snippet.
+- Print MCPB-ready Python path. Initial implementation done with
+  `deal-intel-mcp mcp-config`.
+- Generate a copy-paste Claude Desktop config snippet. Initial implementation
+  done with `deal-intel-mcp mcp-config --json`.
 - Keep MCPB as the nicer UI path when users already have the `.mcpb` artifact.
 
 #### D3.5 Fresh-machine smoke

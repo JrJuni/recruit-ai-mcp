@@ -26,6 +26,7 @@ npx deal-intel-mcp setup
 npx deal-intel-mcp doctor
 npx deal-intel-mcp smoke
 npx deal-intel-mcp mcp
+npx deal-intel-mcp mcp-config
 ```
 
 ## Non-Goals
@@ -191,6 +192,20 @@ Required output:
 - smoke output path;
 - product context source/cache paths;
 - install-state path.
+
+### `mcp-config`
+
+Purpose: print copy-paste MCP handoff material.
+
+Required output:
+
+- MCPB-ready Python interpreter path;
+- Claude Desktop `mcpServers` JSON snippet;
+- server name used in the snippet;
+- note that secrets are intentionally excluded.
+
+This command may be used before the runtime exists because it is a handoff aid.
+It should not validate the runtime; `doctor` owns validation.
 
 ## Configuration And Secrets
 

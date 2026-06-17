@@ -46,6 +46,50 @@ def test_bootstrapper_where_uses_deal_intel_home(tmp_path: Path) -> None:
     assert payload["paths"]["install_state_path"] == str(runtime_root / "install-state.json")
 
 
+def test_bootstrapper_mcp_config_outputs_claude_snippet(tmp_path: Path) -> None:
+    result = subprocess.run(
+        ["node", str(BOOTSTRAPPER), "mcp-config", "--json"],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        env=_env_with_home(tmp_path),
+    )
+
+    payload = json.loads(result.stdout)
+    script_dir = "Scripts" if os.name == "nt" else "bin"
+    python_name = "python.exe" if os.name == "nt" else "python"
+    python_path = str(tmp_path / ".deal-intel" / "runtime" / "venv" / script_dir / python_name)
+    server_config = payload["claude_desktop_config_snippet"]["mcpServers"]["deal-intel-mcp"]
+
+    assert payload["ok"] is True
+    assert payload["mcpb_python_interpreter_path"] == python_path
+    assert server_config["command"] == python_path
+    assert server_config["args"] == ["-m", "deal_intel.mcp_server"]
+    assert server_config["env"]["PYTHONUTF8"] == "1"
+    assert "Secrets are not included" in " ".join(payload["notes"])
+
+
+def test_bootstrapper_mcp_config_respects_server_name_and_python_override(tmp_path: Path) -> None:
+    env = _env_with_home(tmp_path)
+    env["DEAL_INTEL_PYTHON"] = sys.executable
+    result = subprocess.run(
+        ["node", str(BOOTSTRAPPER), "mcp-config", "--json", "--server-name", "custom-deals"],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        env=env,
+    )
+
+    payload = json.loads(result.stdout)
+    server_config = payload["claude_desktop_config_snippet"]["mcpServers"]["custom-deals"]
+
+    assert payload["server_name"] == "custom-deals"
+    assert payload["mcpb_python_interpreter_path"] == sys.executable
+    assert server_config["command"] == sys.executable
+
+
 def test_bootstrapper_missing_runtime_is_actionable(tmp_path: Path) -> None:
     result = subprocess.run(
         ["node", str(BOOTSTRAPPER), "doctor", "--json"],

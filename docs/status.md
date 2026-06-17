@@ -121,6 +121,24 @@ Validation:
 - Added targeted dry-run installer tests for default, lightweight, and invalid
   source behavior.
 
+### D3.4 MCP/Claude handoff
+
+Implemented:
+
+- Added `deal-intel-mcp mcp-config`.
+- The command prints:
+  - the Python interpreter path to paste into the MCPB form;
+  - a copy-paste Claude Desktop `mcpServers` JSON snippet for manual setup;
+  - short notes that secrets are intentionally excluded.
+- `--json` returns the same handoff contract as structured data.
+- `--server-name NAME` lets AI-assisted users generate a snippet with a custom
+  MCP server name without editing JSON by hand.
+
+Validation:
+
+- Added targeted bootstrapper tests for the default handoff path, custom server
+  names, and `DEAL_INTEL_PYTHON` overrides.
+
 ### D2.2 clean wheel install smoke
 
 Completed:
