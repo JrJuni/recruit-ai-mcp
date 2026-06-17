@@ -8,6 +8,10 @@ from deal_intel.atlas_vector_indexes import (
     deal_summary_vector_index_name,
     deal_summary_vector_search_settings,
 )
+from deal_intel.chart_ready_contracts import (
+    chart_ready_collection_contract_summary,
+    chart_ready_collections,
+)
 from deal_intel.mongo_contracts import (
     build_collection_schema_command,
     build_deals_schema_command,
@@ -40,6 +44,57 @@ def _get_collection(db: Any, name: str) -> Any:
     if hasattr(db, name):
         return getattr(db, name)
     return db[name]
+
+
+def _latest_chart_ready_row(
+    collection: Any,
+    collection_name: str,
+    base_filter: dict[str, Any],
+) -> dict | None:
+    if collection_name == "dashboard_pipeline_trend":
+        sort = [("window_end", -1), ("generated_at", -1)]
+    else:
+        sort = [("as_of", -1), ("generated_at", -1)]
+    row = collection.find_one(base_filter, {"_id": 0}, sort=sort)
+    return row if isinstance(row, dict) else None
+
+
+def _chart_ready_scope(collection_name: str, row: dict | None) -> dict[str, Any] | None:
+    if not row:
+        return None
+    scope = {
+        "dashboard_id": row.get("dashboard_id"),
+        "schema_version": row.get("schema_version"),
+    }
+    if collection_name == "dashboard_pipeline_trend":
+        scope.update(
+            {
+                "window_start": row.get("window_start"),
+                "window_end": row.get("window_end"),
+                "lookback_days": row.get("lookback_days"),
+            }
+        )
+    else:
+        scope["as_of"] = row.get("as_of")
+    return {key: value for key, value in scope.items() if value is not None}
+
+
+def _chart_ready_chart_counts(
+    collection: Any,
+    scope_filter: dict[str, Any],
+) -> dict[str, int]:
+    rows = collection.aggregate(
+        [
+            {"$match": scope_filter},
+            {"$group": {"_id": "$chart_id", "count": {"$sum": 1}}},
+            {"$sort": {"_id": 1}},
+        ]
+    )
+    return {
+        str(row.get("_id")): int(row.get("count", 0))
+        for row in rows
+        if row.get("_id") is not None
+    }
 
 
 def preload_driver() -> None:
@@ -277,6 +332,80 @@ class MongoDBClient:
     def aggregate_analytics_snapshots(self, pipeline: list[dict]) -> list[dict]:
         return list(self._get_db().analytics_snapshots.aggregate(pipeline))
 
+    def replace_chart_ready_rows(
+        self,
+        *,
+        collection: str,
+        scope_filter: dict,
+        rows: list[dict],
+    ) -> dict:
+        """Replace materialized chart-ready rows for one refresh scope."""
+
+        target = _get_collection(self._get_db(), collection)
+        delete_result = target.delete_many(scope_filter)
+        inserted_count = 0
+        if rows:
+            insert_result = target.insert_many(rows, ordered=True)
+            inserted_count = len(getattr(insert_result, "inserted_ids", []))
+        return {
+            "collection": collection,
+            "matched_scope": dict(scope_filter),
+            "deleted_count": int(getattr(delete_result, "deleted_count", 0)),
+            "inserted_count": inserted_count,
+        }
+
+    def check_chart_ready_collections(self) -> dict[str, dict]:
+        """Read-only freshness and row-count check for chart-ready collections."""
+
+        db = self._get_db()
+        return {
+            collection: self._check_chart_ready_collection(db, collection)
+            for collection in chart_ready_collections()
+        }
+
+    def _check_chart_ready_collection(self, db: Any, collection: str) -> dict:
+        expected = chart_ready_collection_contract_summary(collection)
+        response = db.command("listCollections", filter={"name": collection})
+        first_batch = response.get("cursor", {}).get("firstBatch", [])
+        if not first_batch:
+            return {
+                "ok": False,
+                "status": "missing_collection",
+                "collection": collection,
+                "expected": expected,
+                "row_count": 0,
+                "latest_scope": None,
+                "chart_counts": {},
+            }
+
+        target = _get_collection(db, collection)
+        base_filter = {
+            "dashboard_id": expected["dashboard_id"],
+            "schema_version": expected["version"],
+        }
+        row_count = int(target.count_documents(base_filter))
+        total_dashboard_rows = int(
+            target.count_documents({"dashboard_id": expected["dashboard_id"]})
+        )
+        latest = _latest_chart_ready_row(target, collection, base_filter)
+        latest_scope = _chart_ready_scope(collection, latest) if latest else None
+        chart_counts = (
+            _chart_ready_chart_counts(target, latest_scope)
+            if latest_scope is not None
+            else {}
+        )
+        return {
+            "ok": row_count > 0,
+            "status": "ok" if row_count > 0 else "empty_current_schema",
+            "collection": collection,
+            "expected": expected,
+            "row_count": row_count,
+            "total_dashboard_rows": total_dashboard_rows,
+            "latest_scope": latest_scope,
+            "latest_generated_at": latest.get("generated_at") if latest else None,
+            "chart_counts": chart_counts,
+        }
+
     def list_deals_for_theme_backfill(self, *, limit: int = 0) -> list[dict]:
         cursor = self._get_db().deals.find(with_unarchived_deal_filter(), {"_id": 0})
         if limit > 0:
@@ -347,8 +476,11 @@ class MongoDBClient:
 
     def search_by_embedding(self, embedding: list[float], *, limit: int = 5) -> list[dict]:
         """$vectorSearch aggregation — M10+ only. Use get_deals_for_search() on M0."""
+        if not embedding:
+            raise ValueError("embedding must not be empty for Atlas Vector Search")
         col = self._get_db().deals
         search_settings = deal_summary_vector_search_settings()
+        limit = max(1, min(limit, search_settings["max_limit"]))
         pipeline = [
             {
                 "$vectorSearch": {

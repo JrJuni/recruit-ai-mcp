@@ -287,6 +287,47 @@ def test_search_deals_normalizes_missing_industry_tags_from_atlas() -> None:
     assert result["results"][0]["qualification_gaps"] == ["owner"]
 
 
+def test_search_deals_atlas_mode_sanitizes_sensitive_result_fields() -> None:
+    class Embedding:
+        def embed(self, _query: str) -> list[float]:
+            return [0.1, 0.2]
+
+    class Mongo:
+        def search_by_embedding(self, _embedding, *, limit):
+            assert limit == 1
+            return [
+                {
+                    "_id": "internal",
+                    "deal_id": "d1",
+                    "company": "Sensitive Co",
+                    "score": 0.5,
+                    "summary_embedding": [0.1, 0.2],
+                    "contacts": [{"email": "private@example.invalid"}],
+                    "meetings": [{"raw_notes": "private customer note"}],
+                    "interactions": [{"raw_content": "private email thread"}],
+                    "unexpected_internal_field": "do-not-return",
+                }
+            ]
+
+    result = search_tool.handle(
+        Mongo(),
+        Embedding(),
+        cfg={"mongodb": {"vector_search": "atlas"}},
+        query="sensitive query",
+        limit=1,
+    )
+
+    row = result["results"][0]
+    assert row == {
+        "deal_id": "d1",
+        "company": "Sensitive Co",
+        "score": 0.5,
+        "qualification_gaps": [],
+        "gaps": [],
+        "industry_tags": [],
+    }
+
+
 def test_get_deals_for_search_projection_includes_generic_qualification_fields() -> None:
     class FakeDeals:
         def __init__(self) -> None:

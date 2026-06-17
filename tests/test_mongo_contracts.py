@@ -5,6 +5,10 @@ import json
 from typer.testing import CliRunner
 
 from deal_intel import _env
+from deal_intel.chart_ready_contracts import (
+    chart_ready_collection_contract_summary,
+    chart_ready_collections,
+)
 from deal_intel.cli import app
 from deal_intel.mongo_contracts import (
     build_collection_schema_command,
@@ -143,6 +147,92 @@ def test_check_schema_validations_reports_every_managed_collection() -> None:
     assert report["delete_audit_logs"]["status"] == "mismatched"
 
 
+class FakeChartReadyCollection:
+    def __init__(self, rows: list[dict]) -> None:
+        self.rows = rows
+
+    def count_documents(self, query: dict) -> int:
+        return sum(1 for row in self.rows if _matches_query(row, query))
+
+    def find_one(self, query: dict, _projection: dict | None = None, *, sort: list) -> dict | None:
+        rows = [row for row in self.rows if _matches_query(row, query)]
+        for key, direction in reversed(sort):
+            rows.sort(key=lambda row: row.get(key) or "", reverse=direction < 0)
+        return dict(rows[0]) if rows else None
+
+    def aggregate(self, pipeline: list[dict]) -> list[dict]:
+        match = pipeline[0]["$match"]
+        counts: dict[str, int] = {}
+        for row in self.rows:
+            if not _matches_query(row, match):
+                continue
+            chart_id = row.get("chart_id")
+            counts[chart_id] = counts.get(chart_id, 0) + 1
+        return [
+            {"_id": key, "count": value}
+            for key, value in sorted(counts.items())
+        ]
+
+
+class FakeChartReadyDB:
+    def __init__(self, rows_by_collection: dict[str, list[dict]]) -> None:
+        self.rows_by_collection = rows_by_collection
+
+    def command(self, name: str, **kwargs):
+        if name == "listCollections":
+            collection = kwargs["filter"]["name"]
+            batch = [{"name": collection}] if collection in self.rows_by_collection else []
+            return {"cursor": {"firstBatch": batch}}
+        return {"ok": 1}
+
+    def __getitem__(self, name: str) -> FakeChartReadyCollection:
+        return FakeChartReadyCollection(self.rows_by_collection[name])
+
+
+def _matches_query(row: dict, query: dict) -> bool:
+    return all(row.get(key) == value for key, value in query.items())
+
+
+def test_check_chart_ready_collections_reports_latest_scope_and_counts() -> None:
+    db = FakeChartReadyDB(
+        {
+            "dashboard_weekly_pipeline": [
+                {
+                    "dashboard_id": "weekly_pipeline_review",
+                    "chart_id": "pipeline_kpis",
+                    "schema_version": 1,
+                    "as_of": "2026-06-09",
+                    "generated_at": "2026-06-09T00:00:00+00:00",
+                },
+                {
+                    "dashboard_id": "weekly_pipeline_review",
+                    "chart_id": "stage_breakdown",
+                    "schema_version": 1,
+                    "as_of": "2026-06-09",
+                    "generated_at": "2026-06-09T00:00:00+00:00",
+                },
+            ],
+            "dashboard_customer_themes": [],
+        }
+    )
+    client = MongoDBClient(uri="mongodb://example.invalid")
+    client._db = db
+
+    report = client.check_chart_ready_collections()
+
+    weekly = report["dashboard_weekly_pipeline"]
+    assert weekly["ok"] is True
+    assert weekly["row_count"] == 2
+    assert weekly["latest_scope"] == {
+        "dashboard_id": "weekly_pipeline_review",
+        "schema_version": 1,
+        "as_of": "2026-06-09",
+    }
+    assert weekly["chart_counts"] == {"pipeline_kpis": 1, "stage_breakdown": 1}
+    assert report["dashboard_customer_themes"]["status"] == "empty_current_schema"
+    assert report["dashboard_pipeline_trend"]["status"] == "missing_collection"
+
+
 class FakeDoctorClient:
     def ping(self) -> dict:
         return {"status": "ok", "database": "deal_intel"}
@@ -164,6 +254,21 @@ class FakeDoctorClient:
             "current": None,
         }
 
+    def check_chart_ready_collections(self) -> dict[str, dict]:
+        return {
+            collection: {
+                "ok": True,
+                "status": "ok",
+                "collection": collection,
+                "expected": chart_ready_collection_contract_summary(collection),
+                "row_count": 3,
+                "latest_scope": {"as_of": "2026-06-09"},
+                "latest_generated_at": "2026-06-09T00:00:00+00:00",
+                "chart_counts": {"example": 3},
+            }
+            for collection in chart_ready_collections()
+        }
+
 
 def test_mongo_doctor_reports_auxiliary_schema_checks(monkeypatch) -> None:
     monkeypatch.setenv("MONGODB_URI", "configured-mongodb-uri-sentinel")
@@ -177,6 +282,63 @@ def test_mongo_doctor_reports_auxiliary_schema_checks(monkeypatch) -> None:
     assert _status(report, "deals_schema") == "pass"
     assert _status(report, "analytics_snapshots_schema") == "warn"
     assert _status(report, "delete_audit_logs_schema") == "warn"
+    assert _status(report, "dashboard_weekly_pipeline_chart_ready") == "pass"
+    assert "configured-mongodb-uri-sentinel" not in json.dumps(report)
+
+
+def test_mongo_doctor_reports_atlas_vector_index_summary(monkeypatch) -> None:
+    monkeypatch.setenv("MONGODB_URI", "configured-mongodb-uri-sentinel")
+    cfg = _full_cfg()
+    cfg["mongodb"]["vector_search"] = "atlas"
+
+    report = build_mongo_doctor_report(
+        cfg,
+        mongo_client_factory=lambda _database: FakeDoctorClient(),
+    )
+
+    check = next(check for check in report["checks"] if check["id"] == "vector_search")
+    assert check["status"] == "warn"
+    assert check["details"]["index"] == {
+        "index_name": "deal_summary_vector",
+        "collection": "deals",
+        "embedding_path": "summary_embedding",
+        "num_dimensions": 384,
+        "similarity": "cosine",
+        "minimum_cluster_tier": "M10",
+    }
+    assert "configured-mongodb-uri-sentinel" not in json.dumps(report)
+
+
+class FakeDoctorClientWithoutChartRows(FakeDoctorClient):
+    def check_chart_ready_collections(self) -> dict[str, dict]:
+        return {
+            collection: {
+                "ok": False,
+                "status": "missing_collection",
+                "collection": collection,
+                "expected": chart_ready_collection_contract_summary(collection),
+                "row_count": 0,
+                "latest_scope": None,
+                "chart_counts": {},
+            }
+            for collection in chart_ready_collections()
+        }
+
+
+def test_mongo_doctor_warns_when_chart_ready_rows_are_missing(monkeypatch) -> None:
+    monkeypatch.setenv("MONGODB_URI", "configured-mongodb-uri-sentinel")
+
+    report = build_mongo_doctor_report(
+        _full_cfg(),
+        mongo_client_factory=lambda _database: FakeDoctorClientWithoutChartRows(),
+    )
+
+    assert report["ok"] is True
+    assert _status(report, "dashboard_weekly_pipeline_chart_ready") == "warn"
+    assert _status(report, "dashboard_customer_themes_chart_ready") == "warn"
+    assert _status(report, "dashboard_pipeline_trend_chart_ready") == "warn"
+    hints = json.dumps(report["next_actions"])
+    assert "refresh-chart-ready" in hints
     assert "configured-mongodb-uri-sentinel" not in json.dumps(report)
 
 
@@ -190,6 +352,7 @@ def test_mongo_doctor_offline_skips_live_checks(monkeypatch) -> None:
     assert _status(report, "storage_ping") == "skipped"
     assert _status(report, "analytics_snapshots_schema") == "skipped"
     assert _status(report, "delete_audit_logs_schema") == "skipped"
+    assert _status(report, "dashboard_weekly_pipeline_chart_ready") == "skipped"
     assert "configured-mongodb-uri-sentinel" not in json.dumps(report)
 
 
@@ -349,8 +512,39 @@ def test_mongo_cli_apply_vector_index_dry_run(monkeypatch, tmp_path) -> None:
     assert payload["dry_run"] is True
     assert payload["index_name"] == "deal_summary_vector"
     assert payload["minimum_cluster_tier"] == "M10"
+    assert payload["index"]["embedding_path"] == "summary_embedding"
+    assert payload["index"]["num_dimensions"] == 384
+    assert payload["index"]["similarity"] == "cosine"
     assert payload["command"]["createSearchIndexes"] == "deals"
     assert "silently fall back" in payload["policy"]
+
+
+def test_mongo_cli_apply_vector_index_invalid_dimensions_returns_json(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    user_config = tmp_path / "config.yaml"
+    user_config.write_text(
+        "storage:\n"
+        "  backend: mongo\n"
+        "mongodb:\n"
+        "  database: deal_intel\n"
+        "  vector_search: atlas\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(_env, "_USER_CONFIG_PATH", user_config)
+
+    result = CliRunner().invoke(
+        app,
+        ["mongo", "apply-vector-index", "--dimensions", "0", "--json"],
+    )
+
+    assert result.exit_code == 1
+    payload = json.loads(result.stdout)
+    assert payload["ok"] is False
+    assert payload["dimensions"] == 0
+    assert "dimensions must be between 1 and 4096" in payload["error"]
+    assert "Traceback" not in result.stdout
 
 
 def test_ensure_vector_index_reports_duplicate_as_ok() -> None:

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from deal_intel.storage.mongodb import MongoDBClient, with_unarchived_deal_filter
 from deal_intel.tools import get_insights
 
@@ -87,12 +89,29 @@ def test_atlas_vector_search_pipeline_excludes_archived_deals() -> None:
     db = FakeDatabase()
     client = _client_with_fake_db(db)
 
-    client.search_by_embedding([0.1, 0.2], limit=3)
+    client.search_by_embedding([0.1, 0.2], limit=30)
 
     pipeline = db.deals.aggregate_calls[0]
     assert pipeline[0]["$vectorSearch"]["index"] == "deal_summary_vector"
-    assert pipeline[0]["$vectorSearch"]["numCandidates"] == 50
+    assert pipeline[0]["$vectorSearch"]["limit"] == 20
+    assert pipeline[0]["$vectorSearch"]["numCandidates"] == 200
     assert {"$match": {"archived": {"$ne": True}}} in pipeline
+    projection = pipeline[-1]["$project"]
+    assert projection["_id"] == 0
+    assert "summary_embedding" not in projection
+    assert "contacts" not in projection
+    assert "meetings" not in projection
+    assert "interactions" not in projection
+
+
+def test_atlas_vector_search_rejects_empty_embedding_before_storage() -> None:
+    db = FakeDatabase()
+    client = _client_with_fake_db(db)
+
+    with pytest.raises(ValueError, match="embedding must not be empty"):
+        client.search_by_embedding([])
+
+    assert db.deals.aggregate_calls == []
 
 
 def test_get_insights_direct_aggregation_paths_exclude_archived_deals() -> None:

@@ -112,6 +112,17 @@ def test_config_doctor_pro_profile_warns_about_atlas_vector_search(
     assert result["ok"] is True
     assert result["profile"] == "pro"
     assert _status(result, "vector_search") == "warn"
+    vector_check = next(
+        check for check in result["checks"] if check["id"] == "vector_search"
+    )
+    assert vector_check["details"]["index"] == {
+        "index_name": "deal_summary_vector",
+        "collection": "deals",
+        "embedding_path": "summary_embedding",
+        "num_dimensions": 384,
+        "similarity": "cosine",
+        "minimum_cluster_tier": "M10",
+    }
     payload = json.dumps(result, ensure_ascii=False)
     assert "configured-mongodb-uri-sentinel" not in payload
     assert "configured-openai-key-sentinel" not in payload

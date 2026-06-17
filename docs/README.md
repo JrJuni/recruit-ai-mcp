@@ -38,6 +38,7 @@ These are active source-adjacent contracts.
 | `mvp-readiness.md` | Checking whether the package is ready for full-by-default external MVP trials |
 | `distribution-plan.md` | Planning git clone, uvx, npx, and MCPB distribution paths |
 | `atlas-charts.md` | Changing Atlas dashboard aggregation specs or UI runbooks |
+| `mongodb-atlas-pro.md` | Planning chart-ready Mongo collections, Mongo doctor, and Pro Atlas Vector Search |
 | `query-audit.md` | Auditing MongoDB read paths, projections, and index implications |
 | `architecture.md` | Needing deeper architecture context after reading this map |
 | `../mcpb/README.md` | Building or installing the Claude Desktop MCP bundle |

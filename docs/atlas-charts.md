@@ -14,20 +14,34 @@ remain in [reports.md](reports.md).
   - `Pipeline Trend Review`
   - `Customer Themes Review`
 - Data sources:
-  - `TestCluster` / `deal_intel` / `deals`
-  - `TestCluster` / `deal_intel` / `analytics_snapshots`
+  - recommended chart-ready collections:
+    - `TestCluster` / `deal_intel` / `dashboard_weekly_pipeline`
+    - `TestCluster` / `deal_intel` / `dashboard_customer_themes`
+    - `TestCluster` / `deal_intel` / `dashboard_pipeline_trend`
+  - raw reference sources:
+    - `TestCluster` / `deal_intel` / `deals`
+    - `TestCluster` / `deal_intel` / `analytics_snapshots`
 - Versioned specs:
-  - [weekly_pipeline_review.v1.json](../atlas/charts/weekly_pipeline_review.v1.json)
-  - [pipeline_trend.v1.json](../atlas/charts/pipeline_trend.v1.json)
-  - [customer_themes.v1.json](../atlas/charts/customer_themes.v1.json)
+  - chart-ready:
+    - [weekly_pipeline_review.v1.json](../atlas/chart_ready/weekly_pipeline_review.v1.json)
+    - [pipeline_trend.v1.json](../atlas/chart_ready/pipeline_trend.v1.json)
+    - [customer_themes.v1.json](../atlas/chart_ready/customer_themes.v1.json)
+  - raw aggregation reference:
+    - [weekly_pipeline_review.v1.json](../atlas/charts/weekly_pipeline_review.v1.json)
+    - [pipeline_trend.v1.json](../atlas/charts/pipeline_trend.v1.json)
+    - [customer_themes.v1.json](../atlas/charts/customer_themes.v1.json)
 - Renderer: `deal_intel.reports.atlas_charts`
 - CLI helper: `deal-intel render-atlas-dashboard`
 - LLM / embedding: none
 - MongoDB writes: none from this repository
 
 Atlas UI changes are manual because Atlas Charts dashboard objects live inside
-MongoDB Atlas. The repository stores the source aggregation pipelines and the
-exact command used to render config placeholders.
+MongoDB Atlas. The repository stores two setup paths:
+
+- `chart-ready` (recommended): refresh small materialized dashboard rows, then
+  build charts from simple fields in Atlas.
+- `raw`: paste longer aggregation pipelines that calculate from source
+  collections directly. Keep this as a reference or fallback path.
 
 Official Atlas Charts references:
 
@@ -35,7 +49,54 @@ Official Atlas Charts references:
 - [Build Charts](https://www.mongodb.com/docs/charts/build-charts/)
 - [Run Aggregation Pipelines on Your Data](https://www.mongodb.com/docs/charts/aggregation-pipeline/)
 
-## Render The Pipelines
+## Recommended Chart-Ready Flow
+
+The chart-ready flow avoids the Query bar becoming the main interface. It
+materializes small dashboard rows first, then Atlas Charts mostly becomes field
+selection and encoding.
+
+1. Refresh the dashboard collections in dry-run mode:
+
+```bash
+~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli mongo refresh-chart-ready --target all --as-of 2026-06-09
+```
+
+2. If the dry-run row counts look right, apply the refresh:
+
+```bash
+~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli mongo refresh-chart-ready --target all --as-of 2026-06-09 --apply
+```
+
+3. Render the chart-ready specs:
+
+```bash
+~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --source chart-ready --as-of 2026-06-09 --output outputs/atlas_charts/weekly_pipeline_review_chart_ready_20260609.json
+~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --source chart-ready --dashboard pipeline_trend --as-of 2026-06-10 --lookback-days 7 --output outputs/atlas_charts/pipeline_trend_chart_ready_20260610.json
+~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --source chart-ready --dashboard customer_themes --as-of 2026-06-10 --output outputs/atlas_charts/customer_themes_chart_ready_20260610.json
+```
+
+4. In Atlas Charts, use the dashboard collections as data sources:
+
+| Dashboard | Data Source |
+|---|---|
+| `Weekly Pipeline Review` | `deal_intel.dashboard_weekly_pipeline` |
+| `Pipeline Trend Review` | `deal_intel.dashboard_pipeline_trend` |
+| `Customer Themes Review` | `deal_intel.dashboard_customer_themes` |
+
+5. For each chart, either paste the short rendered chart-ready pipeline or use
+   Atlas field encoding directly with the `chart_id`/date filters shown in the
+   rendered spec.
+
+Single chart-ready pipeline example:
+
+```bash
+~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --source chart-ready --as-of 2026-06-09 --chart-id pipeline_kpis
+```
+
+## Raw Pipeline Reference
+
+Use this path when you want to inspect the source aggregation logic or when
+chart-ready collections have not been refreshed yet.
 
 Always render placeholders before pasting a pipeline into Atlas Charts.
 

@@ -10,7 +10,173 @@ Read the newest section first. Older sections are retained as an archive for
 traceability and should be searched by topic, milestone, or file path rather
 than loaded wholesale.
 
-## Latest Update - 2026-06-16
+## Latest Update - 2026-06-17
+
+### MongoDB Atlas/Pro MDB-0 audit
+
+- Added [mongodb-atlas-pro.md](mongodb-atlas-pro.md) as the current-state audit
+  and planning center for the MongoDB Atlas/Pro workstream.
+- Classified existing MongoDB surfaces:
+  - `full`/M0-compatible: ordinary indexes, collection validators, Mongo
+    doctor, raw Atlas dashboard spec rendering, dashboard cross-checks, and
+    future chart-ready collections.
+  - `pro`/M10+-only: Atlas Vector Search index creation, `$vectorSearch`, M10+
+    live smoke, and paid-infra validation.
+- Identified the main usability gap: current Atlas Charts setup works but is
+  query-bar-heavy. The next full/M0 improvement should be chart-ready
+  materialized collections such as `dashboard_weekly_pipeline`,
+  `dashboard_customer_themes`, and `dashboard_pipeline_trend`.
+- No runtime behavior changed.
+
+### MongoDB Atlas/Pro MDB-1 chart-ready data contract
+
+- Added versioned chart-ready collection contracts:
+  - `dashboard_weekly_pipeline`
+  - `dashboard_customer_themes`
+  - `dashboard_pipeline_trend`
+- Added `deal_intel.chart_ready_contracts` as the loader/summary API for these
+  contracts.
+- Kept the contracts separate from `mongo_schema_collections()` so MDB-1 does
+  not make `mongo doctor` warn about collections that the refresh engine does
+  not create yet.
+- Chose materialized collections over views for the first implementation path.
+  Rationale: easier Atlas UI setup, explicit freshness, simpler row-count
+  checks, and fewer surprises on M0.
+- Validation:
+  - `pytest tests/test_chart_ready_contracts.py tests/test_mongo_contracts.py tests/test_atlas_charts.py -q -p no:cacheprovider --basetemp .tmp\pytest-mdb1-targeted`
+    -> 37 passed.
+  - `ruff check src/deal_intel/chart_ready_contracts.py tests/test_chart_ready_contracts.py`
+    -> passed.
+  - `git diff --check` -> passed.
+
+### MongoDB Atlas/Pro MDB-2 chart-ready refresh engine
+
+Implemented:
+
+- Added deterministic chart-ready refresh engine:
+  - weekly pipeline rows from shared metric/report engines
+  - customer theme rows from theme ranking, breakdown, and curated evidence
+    paths
+  - pipeline trend rows from analytics snapshot trend calculations
+- Added `MongoDBClient.replace_chart_ready_rows()` to replace one dashboard
+  refresh scope at a time. This prevents stale chart rows from lingering after
+  source data changes.
+- Added CLI command:
+  - `deal-intel mongo refresh-chart-ready --target all --as-of YYYY-MM-DD`
+  - dry-run by default
+  - `--apply` required for MongoDB writes
+- Kept MDB-2 CLI-only. No MCP admin write tool was added yet.
+- Guardrails:
+  - no LLM calls
+  - no embedding calls
+  - chart rows exclude raw notes, raw interaction content, contacts, and
+    embeddings
+
+Validation:
+
+- `pytest tests/test_chart_ready_refresh.py tests/test_chart_ready_contracts.py tests/test_mongo_contracts.py tests/test_atlas_charts.py -q -p no:cacheprovider --basetemp .tmp\pytest-mdb2-targeted`
+  -> 42 passed.
+- `ruff check src/deal_intel/chart_ready_refresh.py src/deal_intel/chart_ready_contracts.py src/deal_intel/storage/mongodb.py src/deal_intel/cli.py tests/test_chart_ready_refresh.py tests/test_chart_ready_contracts.py`
+  -> passed.
+- `git diff --check` -> passed.
+
+
+### MongoDB Atlas/Pro MDB-3 chart-ready Atlas specs
+
+Implemented:
+
+- Added parallel chart-ready Atlas specs:
+  - `atlas/chart_ready/weekly_pipeline_review.v1.json`
+  - `atlas/chart_ready/pipeline_trend.v1.json`
+  - `atlas/chart_ready/customer_themes.v1.json`
+- Added packaged copies under
+  `src/deal_intel/resources/atlas/chart_ready/`.
+- Extended `deal_intel.reports.atlas_charts` with `source="raw"` and
+  `source="chart-ready"` support. Raw aggregation specs remain the default and
+  are preserved for compatibility/reference.
+- Added CLI support:
+  - `deal-intel render-atlas-dashboard --source chart-ready --as-of YYYY-MM-DD`
+- Updated [atlas-charts.md](atlas-charts.md) so the recommended setup path is
+  now:
+  1. run `mongo refresh-chart-ready` dry-run;
+  2. apply refresh after checking row counts;
+  3. build Atlas Charts from `dashboard_*` collections with short filters and
+     ordinary field encoding.
+
+Validation:
+
+- `pytest tests/test_atlas_charts.py tests/test_cli_atlas_charts.py tests/test_chart_ready_contracts.py -q -p no:cacheprovider --basetemp .tmp\pytest-mdb3-targeted`
+  -> 39 passed.
+
+
+### MongoDB Atlas/Pro MDB-4 doctor chart-ready checks
+
+Implemented:
+
+- Added read-only chart-ready collection checks to `MongoDBClient`:
+  - collection presence
+  - current schema row count
+  - latest refresh scope
+  - latest generated timestamp
+  - chart-level row counts for the latest scope
+- Extended `deal-intel mongo doctor` to report one check per chart-ready
+  collection:
+  - `dashboard_weekly_pipeline_chart_ready`
+  - `dashboard_customer_themes_chart_ready`
+  - `dashboard_pipeline_trend_chart_ready`
+- Missing or empty chart-ready collections are warnings, not failures. This
+  keeps Mongo readiness separate from dashboard refresh state while still
+  surfacing the next action:
+  `deal-intel mongo refresh-chart-ready --target ... --as-of YYYY-MM-DD`.
+
+Validation:
+
+- `pytest tests/test_mongo_contracts.py tests/test_chart_ready_contracts.py tests/test_chart_ready_refresh.py -q -p no:cacheprovider --basetemp .tmp\pytest-mdb4-targeted`
+  -> 29 passed.
+- `ruff check src/deal_intel/mongo_doctor.py src/deal_intel/storage/mongodb.py tests/test_mongo_contracts.py`
+  -> passed.
+
+
+### MongoDB Atlas/Pro MDB-5 static vector-search hardening
+
+Implemented:
+
+- Hardened the Pro Atlas Vector Search path before live M10+ smoke:
+  - versioned `deal_summary_vector` index specs are now validated for
+    collection, index name, embedding path, dimensions, similarity, search
+    settings, and M10+ minimum tier;
+  - invalid dimension overrides are rejected before building
+    `createSearchIndexes` commands;
+  - `search_deals` now uses the vector-index `maxLimit` contract instead of a
+    hardcoded limit;
+  - Atlas search results are allowlisted at the tool layer so raw notes,
+    interaction content, contacts, embeddings, and unexpected internal fields
+    cannot leak even if a storage projection changes;
+  - direct `MongoDBClient.search_by_embedding()` calls reject empty embeddings
+    before issuing an aggregation and clamp limits to the static index
+    contract.
+- Improved Pro readiness diagnostics:
+  - `config_doctor` and `mongo doctor` now include the expected Atlas Vector
+    Search index summary: name, collection, embedding path, dimensions,
+    similarity, and M10+ requirement;
+  - `deal-intel mongo apply-vector-index --json` includes the same
+    secret-safe index summary in dry-run output.
+- Live Atlas behavior is still intentionally unverified until a disposable M10+
+  cluster is available.
+
+Validation:
+
+- `pytest tests/test_atlas_vector_indexes.py tests/test_search_deals_startup.py tests/test_archived_read_paths.py tests/test_config_doctor.py tests/test_mongo_contracts.py -q -p no:cacheprovider --basetemp .tmp\pytest-mdb5-static-targeted`
+  -> 61 passed, 1 warning.
+- `ruff check .`
+  -> passed.
+- `deal-intel mongo apply-vector-index --json`
+  -> dry-run succeeded with index summary for `deal_summary_vector`.
+- `deal-intel mongo apply-vector-index --dimensions 0 --json`
+  -> returned structured `ok: false` JSON instead of a traceback.
+- `pytest -q -p no:cacheprovider --basetemp .tmp\pytest-mdb5-static-full`
+  -> 699 passed, 1 warning.
+
 
 ### QF-11 custom framework end-to-end smoke
 

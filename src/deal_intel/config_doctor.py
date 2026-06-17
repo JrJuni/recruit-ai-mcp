@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from deal_intel import _env
+from deal_intel.atlas_vector_indexes import deal_summary_vector_index_summary
 from deal_intel.config_profiles import list_config_profiles
 from deal_intel.providers.llm import make_llm_provider
 from deal_intel.storage.diagnostics import local_sample_mode_hint
@@ -375,6 +376,7 @@ def _add_vector_search_check(
 
     if vector_search == "atlas":
         status = "warn" if backend == "mongo" else "fail"
+        index_summary = deal_summary_vector_index_summary()
         _add_check(
             checks,
             check_id="vector_search",
@@ -387,6 +389,7 @@ def _add_vector_search_check(
             details={
                 "vector_search": "atlas",
                 "requires": "MongoDB Atlas M10+ and a vector index",
+                "index": index_summary,
             },
             hint="Use python_cosine on M0/free clusters or verify the Atlas index manually.",
         )

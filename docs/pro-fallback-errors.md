@@ -58,6 +58,21 @@ Use this shape for future entries:
 - Automation candidate: future doctor check that distinguishes M0 from missing
   index when Atlas admin verification is available.
 
+### Vector dimensions mismatch
+
+- Symptom: index creation succeeds with one dimension count, but
+  `search_deals` fails in `atlas` mode or returns no usable vector matches.
+- Likely cause: the Atlas index `numDimensions` does not match the embedding
+  provider output length.
+- Expected static contract: `deal_summary_vector` uses
+  `summary_embedding`, `numDimensions: 384`, and cosine similarity unless the
+  operator explicitly creates a compatible custom index.
+- Fix: recreate the Atlas index with dimensions matching the configured
+  embedding provider, or use the default local embedding model and the bundled
+  `atlas/vector_indexes/deal_summary_vector.v1.json` spec.
+- Workaround: set `mongodb.vector_search: python_cosine` until the index and
+  embeddings are aligned.
+
 ### Embeddings missing on existing deals
 
 - Symptom: index exists, but semantic search returns no useful results.
@@ -66,3 +81,13 @@ Use this shape for future entries:
   is ready.
 - Workaround: newly scored interactions should populate embeddings.
 - Automation candidate: future `backfill-embeddings --dry-run/--apply`.
+
+### Missing Atlas Search permissions
+
+- Symptom: `deal-intel mongo apply-vector-index --apply --json` fails even on
+  M10+.
+- Likely cause: the configured MongoDB user can read/write data but cannot
+  create Atlas Search indexes.
+- Fix: grant the required Atlas Search/index management role or create the
+  index manually in the Atlas UI from the bundled spec.
+- Workaround: set `mongodb.vector_search: python_cosine`.

@@ -1,0 +1,184 @@
+{
+  "dashboard_title": "Customer Themes Review",
+  "version": 1,
+  "source_mode": "chart_ready",
+  "database": "deal_intel",
+  "collection": "dashboard_customer_themes",
+  "description": "Atlas Charts specs for materialized customer theme rows. Run `deal-intel mongo refresh-chart-ready --target customer_themes --apply` before using these charts.",
+  "parameters": {
+    "as_of": "{{AS_OF_DATE}}",
+    "source_collection": "dashboard_customer_themes"
+  },
+  "charts": [
+    {
+      "id": "theme_overview",
+      "title": "Top Customer Themes",
+      "chart_type": "bar_or_table",
+      "description": "Materialized active-deal theme ranking.",
+      "pipeline": [
+        {
+          "$match": {
+            "dashboard_id": "customer_themes",
+            "chart_id": "theme_overview",
+            "schema_version": 1,
+            "as_of": "{{AS_OF_DATE}}"
+          }
+        },
+        {
+          "$sort": {
+            "deal_count": -1,
+            "avg_importance": -1,
+            "label": 1
+          }
+        },
+        {
+          "$project": {
+            "_id": 0,
+            "theme_key": 1,
+            "label": 1,
+            "deal_count": 1,
+            "avg_importance": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "decision_criteria_by_stage",
+      "title": "Decision Criteria By Stage",
+      "chart_type": "grouped_bar_or_table",
+      "description": "Materialized decision criteria rows grouped by stage.",
+      "pipeline": [
+        {
+          "$match": {
+            "dashboard_id": "customer_themes",
+            "chart_id": "decision_criteria_by_stage",
+            "schema_version": 1,
+            "as_of": "{{AS_OF_DATE}}"
+          }
+        },
+        {
+          "$sort": {
+            "stage": 1,
+            "count": -1,
+            "label": 1
+          }
+        },
+        {
+          "$project": {
+            "_id": 0,
+            "stage": 1,
+            "theme_key": 1,
+            "label": 1,
+            "count": 1,
+            "avg_importance": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "pain_by_industry",
+      "title": "Pain By Industry",
+      "chart_type": "grouped_bar_or_table",
+      "description": "Materialized pain rows grouped by primary industry.",
+      "pipeline": [
+        {
+          "$match": {
+            "dashboard_id": "customer_themes",
+            "chart_id": "pain_by_industry",
+            "schema_version": 1,
+            "as_of": "{{AS_OF_DATE}}"
+          }
+        },
+        {
+          "$sort": {
+            "industry": 1,
+            "count": -1,
+            "label": 1
+          }
+        },
+        {
+          "$project": {
+            "_id": 0,
+            "industry": 1,
+            "theme_key": 1,
+            "label": 1,
+            "count": 1,
+            "avg_importance": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "pain_by_industry_tag",
+      "title": "Pain By Industry Tag",
+      "chart_type": "grouped_bar_or_table",
+      "description": "Materialized pain rows grouped by multi-select industry tag.",
+      "pipeline": [
+        {
+          "$match": {
+            "dashboard_id": "customer_themes",
+            "chart_id": "pain_by_industry_tag",
+            "schema_version": 1,
+            "as_of": "{{AS_OF_DATE}}"
+          }
+        },
+        {
+          "$sort": {
+            "industry_tag": 1,
+            "count": -1,
+            "label": 1
+          }
+        },
+        {
+          "$project": {
+            "_id": 0,
+            "industry_tag": 1,
+            "theme_key": 1,
+            "label": 1,
+            "count": 1,
+            "avg_importance": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "theme_evidence_drilldown",
+      "title": "Theme Evidence Drill-down",
+      "chart_type": "table",
+      "description": "Bounded curated evidence rows. Raw notes are never included.",
+      "pipeline": [
+        {
+          "$match": {
+            "dashboard_id": "customer_themes",
+            "chart_id": "theme_evidence_drilldown",
+            "schema_version": 1,
+            "as_of": "{{AS_OF_DATE}}"
+          }
+        },
+        {
+          "$sort": {
+            "importance": -1,
+            "company": 1,
+            "label": 1
+          }
+        },
+        {
+          "$project": {
+            "_id": 0,
+            "company": 1,
+            "deal_stage": 1,
+            "theme_key": 1,
+            "label": 1,
+            "dimension": 1,
+            "importance": 1,
+            "evidence": 1,
+            "source_label": 1,
+            "interaction_type": 1,
+            "interaction_date": 1,
+            "meeting_date": 1
+          }
+        }
+      ]
+    }
+  ]
+}
