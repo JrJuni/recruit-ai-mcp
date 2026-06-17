@@ -550,7 +550,10 @@ def test_mongo_cli_apply_vector_index_invalid_dimensions_returns_json(
 def test_ensure_vector_index_reports_duplicate_as_ok() -> None:
     class DuplicateVectorDB:
         def command(self, _command: dict) -> dict:
-            raise RuntimeError("index already exists")
+            raise RuntimeError(
+                'An index named "deal_summary_vector" is already defined '
+                "for collection deals."
+            )
 
     client = MongoDBClient(uri="mongodb://example.invalid")
     client._db = DuplicateVectorDB()

@@ -466,7 +466,11 @@ class MongoDBClient:
             return {"ok": True, "status": "applied", "result": result}
         except Exception as e:
             msg = str(e).lower()
-            if "already exists" in msg or "duplicate" in msg:
+            if (
+                "already exists" in msg
+                or "already defined" in msg
+                or "duplicate" in msg
+            ):
                 return {
                     "ok": True,
                     "status": "already_exists",
