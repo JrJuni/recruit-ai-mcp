@@ -70,6 +70,29 @@ Next:
   stable enough to avoid building a thin wrapper around unresolved Python setup
   ambiguity.
 
+### D3.2 Node CLI skeleton
+
+Implemented:
+
+- Added the first npm package skeleton under `npm/`.
+- Added `npm/bin/deal-intel-mcp.js` with command routing for:
+  - `where`
+  - `setup`
+  - `doctor`
+  - `smoke`
+  - `mcp`
+- Kept the npm package `private: true` while the installer is incomplete.
+- `where` is functional and prints the future runtime paths.
+- `doctor`, `smoke`, and `mcp` delegate to the Python package when a runtime
+  Python exists or `DEAL_INTEL_PYTHON` is set.
+- `setup` intentionally returns a not-yet-implemented result until D3.3 owns
+  runtime environment installation.
+
+Validation:
+
+- Added targeted tests for package metadata, runtime path resolution, and
+  missing-runtime diagnostics.
+
 ### D2.2 clean wheel install smoke
 
 Completed:

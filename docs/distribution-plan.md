@@ -298,14 +298,16 @@ Recommended implementation split:
 
 #### D3.2 Node CLI skeleton
 
-- Create a small npm package directory.
-- Implement:
+- Create a small npm package directory. Done under `npm/`.
+- Implement command routing. Initial skeleton done:
   - `setup`
   - `doctor`
   - `smoke`
   - `mcp`
   - `where`
 - All commands should shell out to the installed Python package after setup.
+  `doctor`, `smoke`, and `mcp` already delegate when `DEAL_INTEL_PYTHON` or a
+  managed runtime Python exists. Full runtime installation is D3.3.
 
 #### D3.3 Runtime environment installer
 

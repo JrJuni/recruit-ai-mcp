@@ -1,0 +1,20 @@
+{
+  "name": "deal-intel-mcp",
+  "version": "0.0.0-dev",
+  "private": true,
+  "description": "Bootstrapper skeleton for the deal-intel-mcp Python MCP server.",
+  "license": "MIT",
+  "bin": {
+    "deal-intel-mcp": "bin/deal-intel-mcp.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "smoke": "node bin/deal-intel-mcp.js where --json"
+  },
+  "files": [
+    "bin/",
+    "README.md"
+  ]
+}
