@@ -21,6 +21,10 @@ WEEKLY_PIPELINE_DASHBOARD = "weekly_pipeline_review"
 PIPELINE_TREND_DASHBOARD = "pipeline_trend"
 CUSTOMER_THEMES_DASHBOARD = "customer_themes"
 
+ATLAS_SOURCE_RAW = "raw"
+ATLAS_SOURCE_CHART_READY = "chart-ready"
+VALID_ATLAS_SOURCES = (ATLAS_SOURCE_RAW, ATLAS_SOURCE_CHART_READY)
+
 DEFAULT_WEEKLY_PIPELINE_SPEC = (
     Path(__file__).resolve().parents[3]
     / "atlas"
@@ -39,6 +43,24 @@ DEFAULT_CUSTOMER_THEMES_SPEC = (
     / "charts"
     / "customer_themes.v1.json"
 )
+DEFAULT_WEEKLY_PIPELINE_CHART_READY_SPEC = (
+    Path(__file__).resolve().parents[3]
+    / "atlas"
+    / "chart_ready"
+    / "weekly_pipeline_review.v1.json"
+)
+DEFAULT_PIPELINE_TREND_CHART_READY_SPEC = (
+    Path(__file__).resolve().parents[3]
+    / "atlas"
+    / "chart_ready"
+    / "pipeline_trend.v1.json"
+)
+DEFAULT_CUSTOMER_THEMES_CHART_READY_SPEC = (
+    Path(__file__).resolve().parents[3]
+    / "atlas"
+    / "chart_ready"
+    / "customer_themes.v1.json"
+)
 DEFAULT_DASHBOARD_SPEC = DEFAULT_WEEKLY_PIPELINE_SPEC
 DEFAULT_DASHBOARD = WEEKLY_PIPELINE_DASHBOARD
 DASHBOARD_SPECS = {
@@ -46,83 +68,137 @@ DASHBOARD_SPECS = {
     PIPELINE_TREND_DASHBOARD: DEFAULT_PIPELINE_TREND_SPEC,
     CUSTOMER_THEMES_DASHBOARD: DEFAULT_CUSTOMER_THEMES_SPEC,
 }
-RESOURCE_DASHBOARD_SPECS = {
-    WEEKLY_PIPELINE_DASHBOARD: "weekly_pipeline_review.v1.json",
-    PIPELINE_TREND_DASHBOARD: "pipeline_trend.v1.json",
-    CUSTOMER_THEMES_DASHBOARD: "customer_themes.v1.json",
+CHART_READY_DASHBOARD_SPECS = {
+    WEEKLY_PIPELINE_DASHBOARD: DEFAULT_WEEKLY_PIPELINE_CHART_READY_SPEC,
+    PIPELINE_TREND_DASHBOARD: DEFAULT_PIPELINE_TREND_CHART_READY_SPEC,
+    CUSTOMER_THEMES_DASHBOARD: DEFAULT_CUSTOMER_THEMES_CHART_READY_SPEC,
+}
+DASHBOARD_SPECS_BY_SOURCE = {
+    ATLAS_SOURCE_RAW: DASHBOARD_SPECS,
+    ATLAS_SOURCE_CHART_READY: CHART_READY_DASHBOARD_SPECS,
+}
+RESOURCE_DASHBOARD_SPECS_BY_SOURCE = {
+    ATLAS_SOURCE_RAW: {
+        WEEKLY_PIPELINE_DASHBOARD: "weekly_pipeline_review.v1.json",
+        PIPELINE_TREND_DASHBOARD: "pipeline_trend.v1.json",
+        CUSTOMER_THEMES_DASHBOARD: "customer_themes.v1.json",
+    },
+    ATLAS_SOURCE_CHART_READY: {
+        WEEKLY_PIPELINE_DASHBOARD: "weekly_pipeline_review.v1.json",
+        PIPELINE_TREND_DASHBOARD: "pipeline_trend.v1.json",
+        CUSTOMER_THEMES_DASHBOARD: "customer_themes.v1.json",
+    },
+}
+RESOURCE_DASHBOARD_DIR_BY_SOURCE = {
+    ATLAS_SOURCE_RAW: ("atlas", "charts"),
+    ATLAS_SOURCE_CHART_READY: ("atlas", "chart_ready"),
 }
 
 
-def load_weekly_pipeline_dashboard_spec(path: str | Path | None = None) -> dict:
+def load_weekly_pipeline_dashboard_spec(
+    path: str | Path | None = None,
+    *,
+    source: str = ATLAS_SOURCE_RAW,
+) -> dict:
     """Load the version-managed Atlas Charts dashboard spec."""
-    return _load_dashboard_spec_from_path(path, WEEKLY_PIPELINE_DASHBOARD)
+    return _load_dashboard_spec_from_path(path, WEEKLY_PIPELINE_DASHBOARD, source=source)
 
 
-def load_pipeline_trend_dashboard_spec(path: str | Path | None = None) -> dict:
+def load_pipeline_trend_dashboard_spec(
+    path: str | Path | None = None,
+    *,
+    source: str = ATLAS_SOURCE_RAW,
+) -> dict:
     """Load the version-managed Atlas Charts trend dashboard spec."""
-    return _load_dashboard_spec_from_path(path, PIPELINE_TREND_DASHBOARD)
+    return _load_dashboard_spec_from_path(path, PIPELINE_TREND_DASHBOARD, source=source)
 
 
-def load_customer_themes_dashboard_spec(path: str | Path | None = None) -> dict:
+def load_customer_themes_dashboard_spec(
+    path: str | Path | None = None,
+    *,
+    source: str = ATLAS_SOURCE_RAW,
+) -> dict:
     """Load the version-managed Atlas Charts customer themes dashboard spec."""
-    return _load_dashboard_spec_from_path(path, CUSTOMER_THEMES_DASHBOARD)
+    return _load_dashboard_spec_from_path(path, CUSTOMER_THEMES_DASHBOARD, source=source)
 
 
 def load_dashboard_spec(
     dashboard: str = DEFAULT_DASHBOARD,
     *,
     path: str | Path | None = None,
+    source: str = ATLAS_SOURCE_RAW,
 ) -> dict:
+    source_specs = _dashboard_specs_for_source(source)
     if path is not None:
         spec_path = Path(path)
         return json.loads(spec_path.read_text(encoding="utf-8"))
-    if dashboard not in DASHBOARD_SPECS:
-        valid = sorted(DASHBOARD_SPECS)
+    if dashboard not in source_specs:
+        valid = sorted(source_specs)
         raise ValueError(
             f"dashboard {dashboard!r} is not valid; valid ids: {valid}"
         )
-    spec_path = DASHBOARD_SPECS[dashboard]
+    spec_path = source_specs[dashboard]
     if spec_path.exists():
         return json.loads(spec_path.read_text(encoding="utf-8"))
-    return json.loads(_dashboard_resource_text(dashboard))
+    return json.loads(_dashboard_resource_text(dashboard, source=source))
 
 
-def _dashboard_resource_text(dashboard: str) -> str:
+def _dashboard_resource_text(
+    dashboard: str,
+    *,
+    source: str = ATLAS_SOURCE_RAW,
+) -> str:
+    source = _validate_source(source)
     try:
-        file_name = RESOURCE_DASHBOARD_SPECS[dashboard]
+        file_name = RESOURCE_DASHBOARD_SPECS_BY_SOURCE[source][dashboard]
     except KeyError as exc:
-        valid = sorted(RESOURCE_DASHBOARD_SPECS)
+        valid = sorted(RESOURCE_DASHBOARD_SPECS_BY_SOURCE[source])
         raise ValueError(
             f"dashboard {dashboard!r} is not valid; valid ids: {valid}"
         ) from exc
+    resource_path = (*RESOURCE_DASHBOARD_DIR_BY_SOURCE[source], file_name)
     return (
         resources.files("deal_intel.resources")
-        .joinpath("atlas", "charts", file_name)
+        .joinpath(*resource_path)
         .read_text(encoding="utf-8")
     )
 
 
-def _default_dashboard_path(dashboard: str) -> Path:
+def _default_dashboard_path(
+    dashboard: str,
+    *,
+    source: str = ATLAS_SOURCE_RAW,
+) -> Path:
+    source_specs = _dashboard_specs_for_source(source)
     try:
-        return DASHBOARD_SPECS[dashboard]
+        return source_specs[dashboard]
     except KeyError as exc:
-        valid = sorted(DASHBOARD_SPECS)
+        valid = sorted(source_specs)
         raise ValueError(
             f"dashboard {dashboard!r} is not valid; valid ids: {valid}"
         ) from exc
 
 
-def _load_default_dashboard_spec(dashboard: str) -> dict:
-    spec_path = _default_dashboard_path(dashboard)
+def _load_default_dashboard_spec(
+    dashboard: str,
+    *,
+    source: str = ATLAS_SOURCE_RAW,
+) -> dict:
+    spec_path = _default_dashboard_path(dashboard, source=source)
     if spec_path.exists():
         return json.loads(spec_path.read_text(encoding="utf-8"))
-    return json.loads(_dashboard_resource_text(dashboard))
+    return json.loads(_dashboard_resource_text(dashboard, source=source))
 
 
-def _load_dashboard_spec_from_path(path: str | Path | None, dashboard: str) -> dict:
+def _load_dashboard_spec_from_path(
+    path: str | Path | None,
+    dashboard: str,
+    *,
+    source: str = ATLAS_SOURCE_RAW,
+) -> dict:
     if path is not None:
         return json.loads(Path(path).read_text(encoding="utf-8"))
-    return _load_default_dashboard_spec(dashboard)
+    return _load_default_dashboard_spec(dashboard, source=source)
 
 
 def render_weekly_pipeline_dashboard_spec(
@@ -130,9 +206,10 @@ def render_weekly_pipeline_dashboard_spec(
     *,
     as_of: str | date | None = None,
     path: str | Path | None = None,
+    source: str = ATLAS_SOURCE_RAW,
 ) -> dict:
     """Render Atlas Charts placeholders using the reporting and metric config."""
-    spec = load_weekly_pipeline_dashboard_spec(path)
+    spec = load_weekly_pipeline_dashboard_spec(path, source=source)
     tokens = _render_tokens(cfg, as_of=as_of)
     rendered = _render_spec(spec, tokens)
     return rendered
@@ -144,9 +221,10 @@ def render_pipeline_trend_dashboard_spec(
     as_of: str | date | None = None,
     lookback_days: int = DEFAULT_LOOKBACK_DAYS,
     path: str | Path | None = None,
+    source: str = ATLAS_SOURCE_RAW,
 ) -> dict:
     """Render Atlas Charts trend placeholders using reporting config."""
-    spec = load_pipeline_trend_dashboard_spec(path)
+    spec = load_pipeline_trend_dashboard_spec(path, source=source)
     tokens = _render_tokens(cfg, as_of=as_of, lookback_days=lookback_days)
     return _render_spec(spec, tokens)
 
@@ -156,9 +234,10 @@ def render_customer_themes_dashboard_spec(
     *,
     as_of: str | date | None = None,
     path: str | Path | None = None,
+    source: str = ATLAS_SOURCE_RAW,
 ) -> dict:
     """Render the customer themes dashboard spec."""
-    spec = load_customer_themes_dashboard_spec(path)
+    spec = load_customer_themes_dashboard_spec(path, source=source)
     tokens = _render_tokens(cfg, as_of=as_of)
     return _render_spec(spec, tokens)
 
@@ -170,9 +249,10 @@ def render_dashboard_spec(
     as_of: str | date | None = None,
     lookback_days: int = DEFAULT_LOOKBACK_DAYS,
     path: str | Path | None = None,
+    source: str = ATLAS_SOURCE_RAW,
 ) -> dict:
     """Render one version-managed dashboard spec."""
-    spec = load_dashboard_spec(dashboard, path=path)
+    spec = load_dashboard_spec(dashboard, path=path, source=source)
     tokens = _render_tokens(cfg, as_of=as_of, lookback_days=lookback_days)
     return _render_spec(spec, tokens)
 
@@ -193,6 +273,7 @@ def render_chart_pipeline(
     lookback_days: int = DEFAULT_LOOKBACK_DAYS,
     dashboard: str = DEFAULT_DASHBOARD,
     path: str | Path | None = None,
+    source: str = ATLAS_SOURCE_RAW,
 ) -> list[dict]:
     """Return one rendered chart aggregation pipeline by chart id."""
     spec = render_dashboard_spec(
@@ -201,12 +282,25 @@ def render_chart_pipeline(
         as_of=as_of,
         lookback_days=lookback_days,
         path=path,
+        source=source,
     )
     for chart in spec["charts"]:
         if chart.get("id") == chart_id:
             return deepcopy(chart["pipeline"])
     valid_ids = [chart.get("id") for chart in spec.get("charts", [])]
     raise ValueError(f"chart_id {chart_id!r} is not valid; valid ids: {valid_ids}")
+
+
+def _validate_source(source: str) -> str:
+    if source not in VALID_ATLAS_SOURCES:
+        valid = ", ".join(VALID_ATLAS_SOURCES)
+        raise ValueError(f"source must be one of: {valid}")
+    return source
+
+
+def _dashboard_specs_for_source(source: str) -> dict[str, Path]:
+    source = _validate_source(source)
+    return DASHBOARD_SPECS_BY_SOURCE[source]
 
 
 def _render_tokens(

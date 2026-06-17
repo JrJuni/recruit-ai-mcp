@@ -178,8 +178,13 @@ cases in `docs/pro-fallback-errors.md`.
      `deal-intel mongo refresh-chart-ready --target all --as-of YYYY-MM-DD`
      and add `--apply` only after reviewing dry-run output.
 3. MDB-3 simplified Atlas specs:
+   - status: implemented as parallel chart-ready Atlas specs;
    - target chart-ready collections;
-   - keep old raw aggregation specs as reference.
+   - keep old raw aggregation specs as reference;
+   - render with:
+     `deal-intel render-atlas-dashboard --source chart-ready --as-of YYYY-MM-DD`;
+   - specs live in `atlas/chart_ready/*.v1.json` and packaged copies under
+     `src/deal_intel/resources/atlas/chart_ready/*.v1.json`.
 4. MDB-4 doctor/cross-check:
    - report collection presence, freshness, schema version, row counts, and
      KPI mismatch hints.

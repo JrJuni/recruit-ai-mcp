@@ -1277,6 +1277,14 @@ def render_atlas_dashboard(
         "--lookback-days",
         help="Trend lookback window, used only by the pipeline_trend dashboard.",
     ),
+    source: str = typer.Option(
+        "raw",
+        "--source",
+        help=(
+            "Spec source: raw for source collections, "
+            "chart-ready for materialized dashboard collections."
+        ),
+    ),
     output: Path | None = typer.Option(
         None,
         "--output",
@@ -1300,6 +1308,7 @@ def render_atlas_dashboard(
                 as_of=as_of,
                 lookback_days=lookback_days,
                 dashboard=dashboard,
+                source=source,
             )
             if chart_id
             else render_dashboard_spec(
@@ -1307,6 +1316,7 @@ def render_atlas_dashboard(
                 cfg,
                 as_of=as_of,
                 lookback_days=lookback_days,
+                source=source,
             )
         )
     except ValueError as exc:

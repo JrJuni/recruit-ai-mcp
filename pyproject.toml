@@ -37,6 +37,7 @@ where = ["src"]
 "deal_intel.resources" = [
     "defaults.yaml",
     "atlas/charts/*.json",
+    "atlas/chart_ready/*.json",
     "atlas/vector_indexes/*.json",
     "mongo/*.json",
 ]

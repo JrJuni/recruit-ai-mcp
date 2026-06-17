@@ -10,7 +10,7 @@ Read the newest section first. Older sections are retained as an archive for
 traceability and should be searched by topic, milestone, or file path rather
 than loaded wholesale.
 
-## Latest Update - 2026-06-16
+## Latest Update - 2026-06-17
 
 ### MongoDB Atlas/Pro MDB-0 audit
 
@@ -79,6 +79,34 @@ Validation:
 - `ruff check src/deal_intel/chart_ready_refresh.py src/deal_intel/chart_ready_contracts.py src/deal_intel/storage/mongodb.py src/deal_intel/cli.py tests/test_chart_ready_refresh.py tests/test_chart_ready_contracts.py`
   -> passed.
 - `git diff --check` -> passed.
+
+
+### MongoDB Atlas/Pro MDB-3 chart-ready Atlas specs
+
+Implemented:
+
+- Added parallel chart-ready Atlas specs:
+  - `atlas/chart_ready/weekly_pipeline_review.v1.json`
+  - `atlas/chart_ready/pipeline_trend.v1.json`
+  - `atlas/chart_ready/customer_themes.v1.json`
+- Added packaged copies under
+  `src/deal_intel/resources/atlas/chart_ready/`.
+- Extended `deal_intel.reports.atlas_charts` with `source="raw"` and
+  `source="chart-ready"` support. Raw aggregation specs remain the default and
+  are preserved for compatibility/reference.
+- Added CLI support:
+  - `deal-intel render-atlas-dashboard --source chart-ready --as-of YYYY-MM-DD`
+- Updated [atlas-charts.md](atlas-charts.md) so the recommended setup path is
+  now:
+  1. run `mongo refresh-chart-ready` dry-run;
+  2. apply refresh after checking row counts;
+  3. build Atlas Charts from `dashboard_*` collections with short filters and
+     ordinary field encoding.
+
+Validation:
+
+- `pytest tests/test_atlas_charts.py tests/test_cli_atlas_charts.py tests/test_chart_ready_contracts.py -q -p no:cacheprovider --basetemp .tmp\pytest-mdb3-targeted`
+  -> 39 passed.
 
 
 ### QF-11 custom framework end-to-end smoke
