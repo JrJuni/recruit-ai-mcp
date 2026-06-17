@@ -353,6 +353,8 @@ Current status:
 - Public npm/PyPI `npx` smoke and macOS fresh-machine smoke remain pending.
 - Keep the detailed checklist in
   [bootstrapper-fresh-smoke.md](bootstrapper-fresh-smoke.md).
+- Keep maintainer registry publication steps in
+  [release-publish-checklist.md](release-publish-checklist.md).
 
 ### D4. MCPB installer polish
 

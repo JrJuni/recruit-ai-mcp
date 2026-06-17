@@ -204,6 +204,10 @@ Implemented:
   leaving actual npm publication as a maintainer credential step.
 - Added [AI_NPX_INSTALL_GUIDE.md](../AI_NPX_INSTALL_GUIDE.md) for the future
   no-git-clone install path after npm/PyPI publication.
+- Added [AI_USER_TEST_GUIDE.md](../AI_USER_TEST_GUIDE.md) for first external
+  tester handoff once an install path is available.
+- Added [release-publish-checklist.md](release-publish-checklist.md) for the
+  maintainer-only npm/PyPI/MCPB publication sequence.
 - Linked the npx guide from README, AI_START_HERE, and the docs map.
 - Updated the bootstrapper runtime version to read from `npm/package.json`,
   preventing package metadata/runtime output drift.
@@ -225,6 +229,9 @@ Validated:
   `ruff check .`.
 - Public docs path hygiene scan found no maintainer-specific conda environment
   name or local user path references in the checked docs/npm surfaces.
+- Release handoff docs were added and smoke-checked:
+  `AI_USER_TEST_GUIDE.md`, `docs/release-publish-checklist.md`, and
+  `npm pack .\npm --dry-run --cache .tmp\npm-cache`.
 
 Remaining:
 

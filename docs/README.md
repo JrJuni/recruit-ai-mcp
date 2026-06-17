@@ -17,9 +17,11 @@ Read these first for normal work:
      zero-config evaluation.
 4. `../AI_NPX_INSTALL_GUIDE.md`
    - Future no-git-clone bootstrapper install path after npm/PyPI publication.
-5. `status.md`
+5. `../AI_USER_TEST_GUIDE.md`
+   - First external tester handoff flow after an install path is available.
+6. `status.md`
    - Latest completed work and current verification notes.
-6. `baseline.md`
+7. `baseline.md`
    - MCP tool contracts, input/output shape, persistence behavior, and current
      registration expectations.
 
@@ -41,6 +43,7 @@ These are active source-adjacent contracts.
 | `distribution-plan.md` | Planning git clone, uvx, npx, and MCPB distribution paths |
 | `bootstrapper-contract.md` | Designing or changing the future dependency-inclusive npx/bootstrapper runtime |
 | `bootstrapper-fresh-smoke.md` | Running pre-publish and post-publish fresh-install bootstrapper smoke checks |
+| `release-publish-checklist.md` | Maintainer-only npm/PyPI/MCPB publication checklist |
 | `atlas-charts.md` | Changing Atlas dashboard aggregation specs or UI runbooks |
 | `mongodb-atlas-pro.md` | Planning chart-ready Mongo collections, Mongo doctor, and Pro Atlas Vector Search |
 | `query-audit.md` | Auditing MongoDB read paths, projections, and index implications |
