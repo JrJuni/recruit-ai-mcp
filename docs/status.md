@@ -12,6 +12,51 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-17
 
+### V2 integration merge and release artifact
+
+Implemented:
+
+- Merged the MongoDB Atlas/Pro branch and the product/solution context branch
+  through `codex/v2-integration`, then merged the verified integration branch
+  into `main` and pushed `origin/main`.
+- Resolved the only merge conflict in [backlog.md](backlog.md) by preserving
+  both the MongoDB MDB workstream notes and the product-context roadmap.
+- Refreshed `release/latest/` to MCPB `0.2.1`:
+  - replaced `release/latest/deal-intel-mcp-0.1.15.mcpb`;
+  - added `release/latest/deal-intel-mcp-0.2.1.mcpb`;
+  - updated `release/latest/VERSION` and `checksums.txt`.
+- Hardened Atlas Vector Search index creation so a live Atlas response such as
+  "already defined" is treated as the idempotent `already_exists` state, not a
+  failed apply.
+
+Validation:
+
+- Targeted integration gate:
+  `pytest tests/test_config_doctor.py tests/test_mongo_contracts.py tests/test_chart_ready_refresh.py tests/test_product_context.py tests/test_add_interaction.py tests/test_analyze_deal.py tests/test_tool_surfaces.py tests/test_mcpb_manifest.py -q -p no:cacheprovider --basetemp=.tmp\pytest-v2-integration`
+  -> 115 passed.
+- Full regression:
+  `pytest -q -p no:cacheprovider --basetemp=.tmp\pytest-v2-full-final`
+  -> 731 passed, 1 warning.
+- `ruff check .` -> passed.
+- `mcpb validate mcpb\manifest.json` -> passed.
+- `mcpb pack mcpb mcpb\deal-intel-mcp-0.2.1.mcpb` -> passed.
+- `mcpb info mcpb\deal-intel-mcp-0.2.1.mcpb` -> passed, unsigned warning only.
+- Natural-question smoke:
+  `deal-intel smoke-natural-questions --as-of 2026-06-10`
+  -> `OK: True`.
+- `deal-intel mongo doctor --json` -> `ok: true` on the current full/Mongo
+  configuration with `python_cosine`.
+
+Operational follow-up:
+
+- The current M0/free MongoDB cluster is ready, but `mongo doctor` reports
+  warnings until the latest collection validators and chart-ready rows are
+  applied/refreshed:
+  - apply current validators for `deals` and `analytics_snapshots`;
+  - run `mongo refresh-chart-ready --target all --as-of YYYY-MM-DD --apply`;
+  - then smoke the simplified Atlas Charts path from the `dashboard_*`
+    collections.
+
 ### MongoDB Atlas/Pro MDB-0 audit
 
 - Added [mongodb-atlas-pro.md](mongodb-atlas-pro.md) as the current-state audit
@@ -198,9 +243,9 @@ Host-app live smoke on 2026-06-17 (complete; smoked on MCPB `0.2.0`, shipped as
   completed); its refs-only, no-raw-text strategy behavior held and is also covered
   deterministically by `tests/test_analyze_deal.py`.
 - Smoke-driven fixes applied and shipped in the post-smoke `0.2.1` build (bumped
-  `mcpb/manifest.json` + `pyproject.toml` to `0.2.1`, repacked the gitignored
-  `mcpb/deal-intel-mcp-0.2.1.mcpb`; `release/latest/` stays on `0.1.15` until the
-  Phase 3 final-integration publish):
+  `mcpb/manifest.json` + `pyproject.toml` to `0.2.1`, repacked
+  `mcpb/deal-intel-mcp-0.2.1.mcpb`; final v2 integration later refreshed
+  `release/latest/` to `0.2.1`):
   - Fixed a stale-config bug: `_context.config()` caches the loaded config for the
     process lifetime, so a `update_config` write (e.g. product-context source
     dirs) did not take effect in the same running session and the indexer kept
@@ -254,12 +299,12 @@ CLI pre-smoke on 2026-06-17 (before host-app live smoke):
 - Packaged the product-context bundle as `0.2.0` for the host-app live smoke
   (bumped `mcpb/manifest.json` and `pyproject.toml`, updated the manifest-version
   test and current-version doc lines). The smoke artifact is built into the
-  gitignored build dir as `mcpb/deal-intel-mcp-0.2.0.mcpb`; `release/latest/`
-  stays on `0.1.15` because `0.2.0` is a smoke build, not a published release.
+  gitignored build dir as `mcpb/deal-intel-mcp-0.2.0.mcpb`. At that pre-smoke
+  checkpoint, `release/latest/` stayed on `0.1.15` because `0.2.0` was a smoke
+  build, not a published release. This is superseded by the final v2 integration
+  entry above, which publishes `0.2.1`.
   Re-ran the full suite (696 passed), `ruff` (passed), and `mcpb validate`
-  against the bumped manifest. The published `release/latest` refresh and the
-  final `0.2.1` repack remain post-smoke / final-integration steps per the
-  merge-prep plan.
+  against the bumped manifest.
 
 Follow-up on 2026-06-17:
 
@@ -275,13 +320,15 @@ Follow-up on 2026-06-17:
   silently treating the file as fully indexed.
 - Exposed the new product-context limits through `update_config`, runtime env
   loading, and MCPB installer config fields.
-- Refreshed `release/latest/deal-intel-mcp-0.1.15.mcpb` and checksum after the
-  manifest update.
+- Historical note: this intermediate product-context branch refresh touched
+  `release/latest/deal-intel-mcp-0.1.15.mcpb`; final v2 integration later
+  replaced it with `release/latest/deal-intel-mcp-0.2.1.mcpb`.
 - Smoke:
   - A temporary Notion AI page PDF under `.tmp-product-context/` indexed and
     retrieved successfully with `indexed_chunks: 5`.
-- Live host-app smoke handoff:
-  - Run this from the product-context branch before closing the context layer.
+- Live host-app smoke notes:
+  - Completed before final v2 integration and kept here as the expected
+    behavior contract for future product-context regressions.
   - Expected effect: product/solution context should help `add_interaction`
     and `analyze_deal` interpret seller-side terminology, ICP, value
     propositions, disqualifiers, competitor positioning, and product fit more

@@ -4,23 +4,22 @@ This document records the MongoDB Atlas/Pro workstream. It separates
 Free/M0-compatible MongoDB features that belong in `full` from paid-infra
 features that belong in `pro`.
 
-## MDB-0 Current-State Audit - 2026-06-17
+## Current State - 2026-06-17
 
 ### Summary
 
-The current repository already has three Atlas dashboard specs, MongoDB schema
-and index maintenance commands, Mongo doctor checks, and a guarded Atlas Vector
-Search skeleton.
+The current repository has raw Atlas dashboard specs, chart-ready Atlas specs,
+MongoDB schema and index maintenance commands, Mongo doctor checks,
+chart-ready refresh commands, and a guarded Atlas Vector Search path.
 
-The main usability gap is Atlas Charts setup. Today, users paste large rendered
-aggregation pipelines into the Atlas Charts query bar. This works, but it is a
-poor non-developer experience. The next practical `full` improvement is a
-chart-ready collection refresh path that materializes slim dashboard rows in
-MongoDB, so Atlas Charts can mostly use field selection instead of large custom
-pipelines.
+The main Free/M0 usability improvement is now implemented: chart-ready
+collections can materialize slim dashboard rows in MongoDB, so Atlas Charts can
+mostly use field selection instead of large custom query-bar pipelines.
 
 The paid-infra `pro` path should remain focused on Atlas Vector Search and
-M10+ validation. It should not block the Free/M0 chart-ready work.
+M10+ validation. It should not block the Free/M0 chart-ready path. A disposable
+M10 live smoke has been completed once; normal full/M0 operation should continue
+to use `python_cosine`.
 
 ### Existing Atlas Dashboard Specs
 
@@ -131,54 +130,45 @@ Pro mode must not silently fall back from Atlas Vector Search to Python cosine.
 If Atlas vector search fails, return a structured error and record repeatable
 cases in `docs/pro-fallback-errors.md`.
 
-### Gaps For MDB-1+
+### Implemented State After MDB-6
 
-1. No chart-ready collections exist yet.
-2. No chart-ready refresh engine exists yet.
-3. No chart-ready schemas, ordinary indexes, doctor checks, or freshness
-   checks exist yet.
-4. Atlas setup remains query-bar-heavy for non-developers.
-5. Existing raw dashboard specs should remain as compatibility/reference until
-   chart-ready specs are live-smoked.
-6. Generic qualification migration is mostly reflected in chart specs, but the
-   ordinary `health_pct_desc` index still points at `meddpicc_latest.health_pct`.
-7. Live M10+ Atlas Vector Search smoke is still deferred until disposable paid
-   infra is available.
+- Chart-ready contracts, refresh engine, packaged chart-ready Atlas specs, and
+  Mongo doctor checks are implemented.
+- `deal-intel mongo refresh-chart-ready` materializes:
+  - `dashboard_weekly_pipeline`
+  - `dashboard_customer_themes`
+  - `dashboard_pipeline_trend`
+- Chart-ready rows are deterministic and LLM-free. They must not include raw
+  notes, contacts, embeddings, secrets, or full product-context documents.
+- `deal-intel render-atlas-dashboard --source chart-ready` renders simplified
+  Atlas chart specs that target the dashboard collections.
+- `deal-intel mongo doctor` reports chart-ready presence, freshness, schema
+  version, and row-count warnings.
+- `deal-intel mongo apply-vector-index` supports dry-run/apply and treats an
+  existing vector index name as an idempotent `already_exists` result.
+- Atlas Vector Search was live-smoked once on disposable M10 infrastructure,
+  then the workspace was migrated back to M0/free with `python_cosine`.
 
-### Recommended MDB Implementation Order
+### Implemented MDB Work Units
 
 1. MDB-1 chart-ready data contract:
-   - status: implemented as versioned contracts, not refresh/write behavior;
-   - start with materialized collections, not views, because manual Atlas UI
+   - status: implemented;
+   - uses materialized collections rather than views, because manual Atlas UI
      setup is simpler and freshness can be inspected directly;
-   - collections:
-     - `dashboard_weekly_pipeline`
-     - `dashboard_customer_themes`
-     - `dashboard_pipeline_trend`
-   - common fields:
-     - `dashboard_id`
-     - `chart_id`
-     - `row_type`
-     - `row_key`
-     - `schema_version`
-     - `generated_at`
-     - plus `as_of` for point-in-time dashboards or `window_start`,
-       `window_end`, and `lookback_days` for trend dashboards;
    - contracts live in `src/deal_intel/resources/mongo/dashboard_*.v1.json`
      and load through `deal_intel.chart_ready_contracts`.
 2. MDB-2 refresh engine:
-   - status: implemented as CLI refresh path;
-   - dry-run-first;
-   - explicit apply;
+   - status: implemented;
+   - dry-run-first, explicit apply;
    - replaces rows by dashboard/as_of/schema scope to prevent stale chart rows;
-   - source rows are computed from existing deterministic metric, report,
+   - source rows are computed from deterministic metric, report,
      customer-theme, and trend engines;
    - no LLM or embedding calls;
    - command:
      `deal-intel mongo refresh-chart-ready --target all --as-of YYYY-MM-DD`
      and add `--apply` only after reviewing dry-run output.
 3. MDB-3 simplified Atlas specs:
-   - status: implemented as parallel chart-ready Atlas specs;
+   - status: implemented;
    - target chart-ready collections;
    - keep old raw aggregation specs as reference;
    - render with:
@@ -186,16 +176,14 @@ cases in `docs/pro-fallback-errors.md`.
    - specs live in `atlas/chart_ready/*.v1.json` and packaged copies under
      `src/deal_intel/resources/atlas/chart_ready/*.v1.json`.
 4. MDB-4 doctor/cross-check:
-   - status: implemented for Mongo doctor chart-ready presence/freshness
-     checks;
-   - report collection presence, freshness, schema version, row counts, and
+   - status: implemented;
+   - Mongo doctor reports collection presence, freshness, schema version, and
      row counts;
    - chart-ready checks warn, not fail, when rows have not been refreshed yet;
    - KPI mismatch cross-check remains available through
-     `crosscheck-weekly-dashboard` and can be extended to chart-ready rows after
-     live Atlas smoke.
+     `crosscheck-weekly-dashboard`.
 5. MDB-5 pro vector-search validation:
-   - status: static hardening implemented, live M10+ smoke pending;
+   - status: static hardening and live smoke completed;
    - validates the versioned `deal_summary_vector` index spec before command
      generation;
    - rejects invalid dimension overrides before `createSearchIndexes` command
@@ -205,23 +193,17 @@ cases in `docs/pro-fallback-errors.md`.
      against raw notes, interaction content, contacts, embeddings, or internal
      fields leaking from a storage projection;
    - config and Mongo doctors report the expected index name, collection,
-     embedding path, dimensions, similarity, and M10+ requirement;
-   - next live gate is to create the index on disposable M10+ infra and run
-     `search_deals` with `mongodb.vector_search: atlas`.
+     embedding path, dimensions, similarity, and M10+ requirement.
 
-### User Action Needed
+### Remaining Operational Follow-up
 
-None for MDB-0.
+After migrating back to the M0/free cluster:
 
-User action will be needed later for:
-
-- live M0/full Atlas UI smoke after chart-ready refresh exists;
-- M10+ Pro smoke to verify Atlas Vector Search on paid infrastructure:
-  1. set `mongodb.vector_search: atlas`;
-  2. run `deal-intel mongo apply-vector-index --json` and inspect the dry-run
-     `index` summary;
-  3. run `deal-intel mongo apply-vector-index --apply --json` on an M10+
-     cluster;
-  4. run `search_deals` against data with `summary_embedding` values;
-  5. record repeatable setup failures in
-     [pro-fallback-errors.md](pro-fallback-errors.md).
+1. Apply current collection validators for `deals` and `analytics_snapshots`.
+2. Refresh chart-ready rows:
+   `deal-intel mongo refresh-chart-ready --target all --as-of YYYY-MM-DD --apply`
+3. Re-run `deal-intel mongo doctor --json` and confirm only expected warnings
+   remain.
+4. Smoke Atlas Charts UI from `dashboard_*` collections.
+5. Keep Atlas Vector Search in `pro` only; M0/full should remain on
+   `python_cosine`.
