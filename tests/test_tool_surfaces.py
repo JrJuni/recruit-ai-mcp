@@ -31,7 +31,7 @@ def test_tool_surface_contract_covers_registered_mcp_tools(monkeypatch) -> None:
     contracted = {contract.name for contract in list_tool_surface_contracts()}
 
     assert registered == contracted
-    assert len(contracted) == 38
+    assert len(contracted) == 41
 
 
 def test_tool_intent_aliases_cover_every_registered_tool() -> None:
@@ -45,6 +45,9 @@ def test_tool_intent_aliases_cover_every_registered_tool() -> None:
     assert aliases["theme.evidence"] == "get_customer_theme_evidence"
     assert aliases["report.export"] == "export_report"
     assert aliases["data.export"] == "export_data"
+    assert aliases["context.note.add"] == "add_product_context_note"
+    assert aliases["context.index"] == "index_product_context"
+    assert aliases["context.get"] == "get_product_context"
 
 
 def test_tool_surface_matrix_is_stable_and_serializable() -> None:
@@ -122,6 +125,9 @@ def test_sample_surface_is_zero_config_safe_local_personal() -> None:
         "analyze_deal",
         "add_meeting",
         "get_insights",
+        "add_product_context_note",
+        "index_product_context",
+        "get_product_context",
         "get_qualification_templates",
         "validate_qualification_framework",
         "update_qualification_framework",
@@ -158,6 +164,9 @@ def test_sample_local_personal_target_promotes_safe_non_llm_writes() -> None:
         "add_meeting",
         "create_sample_data",
         "delete_sample_data",
+        "add_product_context_note",
+        "index_product_context",
+        "get_product_context",
         "get_qualification_templates",
         "validate_qualification_framework",
         "update_qualification_framework",
@@ -183,6 +192,9 @@ def test_standard_surface_keeps_real_operator_admin_tools() -> None:
         "migrate_local_data",
         "analyze_deal",
         "search_deals",
+        "add_product_context_note",
+        "index_product_context",
+        "get_product_context",
         "get_qualification_templates",
         "validate_qualification_framework",
         "update_qualification_framework",
@@ -191,6 +203,9 @@ def test_standard_surface_keeps_real_operator_admin_tools() -> None:
         "delete_qualification_framework",
         "backfill_qualification",
         "backfill_qualification_reextract",
+        "add_product_context_note",
+        "index_product_context",
+        "get_product_context",
     }.issubset(standard_tools)
     assert "add_meeting" not in standard_tools
     assert "create_sample_data" not in standard_tools
@@ -282,6 +297,13 @@ def test_high_traffic_tool_descriptions_guide_tool_selection(monkeypatch) -> Non
 
     expected_snippets = {
         "get_tool_catalog": ["truncated subset", "current profile", "catalog.tools"],
+        "add_product_context_note": [
+            "pastes product docs",
+            "dry_run=true",
+            "context.note.add",
+        ],
+        "index_product_context": ["seller-side product", "dry_run=true", "context.index"],
+        "get_product_context": ["seller-side product", "full raw", "context.get"],
         "get_metrics": ["kpi", "get_deal_review", "pipeline.metrics"],
         "list_deals": ["quick pipeline table", "get_metrics", "deal.list"],
         "get_deal_review": ["default tool", "llm-free", "analyze_deal", "deal.review"],
@@ -403,6 +425,8 @@ def test_get_tool_catalog_can_include_hidden_tools(monkeypatch) -> None:
     names = {tool["name"] for tool in result["tools"]}
     assert names == {contract.name for contract in list_tool_surface_contracts()}
     assert "search_deals" in names
+    assert "index_product_context" in names
+    assert "get_product_context" in names
     assert any(
         tool["name"] == "search_deals" and tool["visible"] is False
         for tool in result["tools"]
@@ -412,6 +436,14 @@ def test_get_tool_catalog_can_include_hidden_tools(monkeypatch) -> None:
     )
     assert hidden_search["intent_alias"] == "search.deals"
     assert result["tool_aliases"]["search.deals"] == "search_deals"
+    assert result["tool_aliases"]["context.note.add"] == "add_product_context_note"
+    assert result["tool_aliases"]["context.index"] == "index_product_context"
+    assert result["tool_aliases"]["context.get"] == "get_product_context"
+    assert result["intent_groups"]["product_context"]["tools"] == [
+        "add_product_context_note",
+        "index_product_context",
+        "get_product_context",
+    ]
     assert result["intent_groups"]["customer_theme_analysis"]["tools"] == [
         "get_customer_themes",
         "get_customer_theme_breakdown",
@@ -422,6 +454,9 @@ def test_get_tool_catalog_can_include_hidden_tools(monkeypatch) -> None:
     }
     assert guide_by_intent["customer_theme_ranking"]["primary_tool"] == (
         "get_customer_themes"
+    )
+    assert guide_by_intent["product_context_setup"]["primary_tool"] == (
+        "index_product_context"
     )
 
 

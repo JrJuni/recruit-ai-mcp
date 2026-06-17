@@ -1,0 +1,204 @@
+{
+  "dashboard_title": "Weekly Pipeline Review",
+  "version": 1,
+  "source_mode": "chart_ready",
+  "database": "deal_intel",
+  "collection": "dashboard_weekly_pipeline",
+  "description": "Atlas Charts specs for materialized Weekly Pipeline Review rows. Run `deal-intel mongo refresh-chart-ready --target weekly_pipeline --apply` before using these charts.",
+  "parameters": {
+    "as_of": "{{AS_OF_DATE}}",
+    "source_collection": "dashboard_weekly_pipeline"
+  },
+  "charts": [
+    {
+      "id": "pipeline_kpis",
+      "title": "Pipeline KPIs",
+      "chart_type": "number_or_table",
+      "description": "Single materialized KPI row.",
+      "pipeline": [
+        {
+          "$match": {
+            "dashboard_id": "weekly_pipeline_review",
+            "chart_id": "pipeline_kpis",
+            "schema_version": 1,
+            "as_of": "{{AS_OF_DATE}}"
+          }
+        },
+        {
+          "$project": {
+            "_id": 0,
+            "deal_count": 1,
+            "active_deal_count": 1,
+            "open_deal_count": 1,
+            "open_pipeline_value_amount": 1,
+            "open_pipeline_value_currency": 1,
+            "avg_health_pct": 1,
+            "health_coverage_pct": 1,
+            "attention_deal_count": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "stage_breakdown",
+      "title": "Stage Breakdown",
+      "chart_type": "bar_or_table",
+      "description": "One materialized row per stage.",
+      "pipeline": [
+        {
+          "$match": {
+            "dashboard_id": "weekly_pipeline_review",
+            "chart_id": "stage_breakdown",
+            "schema_version": 1,
+            "as_of": "{{AS_OF_DATE}}"
+          }
+        },
+        {
+          "$sort": {
+            "stage_order": 1
+          }
+        },
+        {
+          "$project": {
+            "_id": 0,
+            "stage": 1,
+            "stage_order": 1,
+            "count": 1,
+            "pipeline_value_amount": 1,
+            "pipeline_value_currency": 1,
+            "avg_health_pct": 1,
+            "health_coverage_pct": 1,
+            "stuck_count": 1,
+            "overdue_count": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "health_bands",
+      "title": "Health Bands",
+      "chart_type": "donut_or_table",
+      "description": "One materialized row per health band.",
+      "pipeline": [
+        {
+          "$match": {
+            "dashboard_id": "weekly_pipeline_review",
+            "chart_id": "health_bands",
+            "schema_version": 1,
+            "as_of": "{{AS_OF_DATE}}"
+          }
+        },
+        {
+          "$sort": {
+            "row_key": 1
+          }
+        },
+        {
+          "$project": {
+            "_id": 0,
+            "health_band": 1,
+            "count": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "attention_deals",
+      "title": "Stuck / Overdue / At Risk Deals",
+      "chart_type": "table",
+      "description": "Materialized attention deal rows.",
+      "pipeline": [
+        {
+          "$match": {
+            "dashboard_id": "weekly_pipeline_review",
+            "chart_id": "attention_deals",
+            "schema_version": 1,
+            "as_of": "{{AS_OF_DATE}}"
+          }
+        },
+        {
+          "$sort": {
+            "is_overdue": -1,
+            "is_stuck": -1,
+            "health_pct": 1,
+            "company": 1
+          }
+        },
+        {
+          "$project": {
+            "_id": 0,
+            "company": 1,
+            "deal_stage": 1,
+            "deal_size_amount": 1,
+            "deal_size_currency": 1,
+            "expected_close_date": 1,
+            "days_in_stage": 1,
+            "is_overdue": 1,
+            "is_stuck": 1,
+            "health_pct": 1,
+            "health_band": 1,
+            "attention_reasons": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "qualification_gap_distribution",
+      "title": "Qualification Gap Distribution",
+      "chart_type": "bar_or_table",
+      "description": "Materialized qualification gap counts.",
+      "pipeline": [
+        {
+          "$match": {
+            "dashboard_id": "weekly_pipeline_review",
+            "chart_id": "qualification_gap_distribution",
+            "schema_version": 1,
+            "as_of": "{{AS_OF_DATE}}"
+          }
+        },
+        {
+          "$sort": {
+            "count": -1,
+            "gap": 1
+          }
+        },
+        {
+          "$project": {
+            "_id": 0,
+            "gap": 1,
+            "count": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "meddpicc_gap_distribution",
+      "title": "Qualification Gap Distribution (legacy id)",
+      "chart_type": "bar_or_table",
+      "description": "Compatibility chart id backed by the same materialized qualification gap rows.",
+      "pipeline": [
+        {
+          "$match": {
+            "dashboard_id": "weekly_pipeline_review",
+            "row_type": "qualification_gap",
+            "schema_version": 1,
+            "as_of": "{{AS_OF_DATE}}"
+          }
+        },
+        {
+          "$sort": {
+            "count": -1,
+            "gap": 1
+          }
+        },
+        {
+          "$project": {
+            "_id": 0,
+            "gap": 1,
+            "count": 1
+          }
+        }
+      ]
+    }
+  ]
+}

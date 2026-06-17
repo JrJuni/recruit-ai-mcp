@@ -10,7 +10,434 @@ Read the newest section first. Older sections are retained as an archive for
 traceability and should be searched by topic, milestone, or file path rather
 than loaded wholesale.
 
-## Latest Update - 2026-06-16
+## Latest Update - 2026-06-17
+
+### MongoDB Atlas/Pro MDB-0 audit
+
+- Added [mongodb-atlas-pro.md](mongodb-atlas-pro.md) as the current-state audit
+  and planning center for the MongoDB Atlas/Pro workstream.
+- Classified existing MongoDB surfaces:
+  - `full`/M0-compatible: ordinary indexes, collection validators, Mongo
+    doctor, raw Atlas dashboard spec rendering, dashboard cross-checks, and
+    future chart-ready collections.
+  - `pro`/M10+-only: Atlas Vector Search index creation, `$vectorSearch`, M10+
+    live smoke, and paid-infra validation.
+- Identified the main usability gap: current Atlas Charts setup works but is
+  query-bar-heavy. The next full/M0 improvement should be chart-ready
+  materialized collections such as `dashboard_weekly_pipeline`,
+  `dashboard_customer_themes`, and `dashboard_pipeline_trend`.
+- No runtime behavior changed.
+
+### MongoDB Atlas/Pro MDB-1 chart-ready data contract
+
+- Added versioned chart-ready collection contracts:
+  - `dashboard_weekly_pipeline`
+  - `dashboard_customer_themes`
+  - `dashboard_pipeline_trend`
+- Added `deal_intel.chart_ready_contracts` as the loader/summary API for these
+  contracts.
+- Kept the contracts separate from `mongo_schema_collections()` so MDB-1 does
+  not make `mongo doctor` warn about collections that the refresh engine does
+  not create yet.
+- Chose materialized collections over views for the first implementation path.
+  Rationale: easier Atlas UI setup, explicit freshness, simpler row-count
+  checks, and fewer surprises on M0.
+- Validation:
+  - `pytest tests/test_chart_ready_contracts.py tests/test_mongo_contracts.py tests/test_atlas_charts.py -q -p no:cacheprovider --basetemp .tmp\pytest-mdb1-targeted`
+    -> 37 passed.
+  - `ruff check src/deal_intel/chart_ready_contracts.py tests/test_chart_ready_contracts.py`
+    -> passed.
+  - `git diff --check` -> passed.
+
+### MongoDB Atlas/Pro MDB-2 chart-ready refresh engine
+
+Implemented:
+
+- Added deterministic chart-ready refresh engine:
+  - weekly pipeline rows from shared metric/report engines
+  - customer theme rows from theme ranking, breakdown, and curated evidence
+    paths
+  - pipeline trend rows from analytics snapshot trend calculations
+- Added `MongoDBClient.replace_chart_ready_rows()` to replace one dashboard
+  refresh scope at a time. This prevents stale chart rows from lingering after
+  source data changes.
+- Added CLI command:
+  - `deal-intel mongo refresh-chart-ready --target all --as-of YYYY-MM-DD`
+  - dry-run by default
+  - `--apply` required for MongoDB writes
+- Kept MDB-2 CLI-only. No MCP admin write tool was added yet.
+- Guardrails:
+  - no LLM calls
+  - no embedding calls
+  - chart rows exclude raw notes, raw interaction content, contacts, and
+    embeddings
+
+Validation:
+
+- `pytest tests/test_chart_ready_refresh.py tests/test_chart_ready_contracts.py tests/test_mongo_contracts.py tests/test_atlas_charts.py -q -p no:cacheprovider --basetemp .tmp\pytest-mdb2-targeted`
+  -> 42 passed.
+- `ruff check src/deal_intel/chart_ready_refresh.py src/deal_intel/chart_ready_contracts.py src/deal_intel/storage/mongodb.py src/deal_intel/cli.py tests/test_chart_ready_refresh.py tests/test_chart_ready_contracts.py`
+  -> passed.
+- `git diff --check` -> passed.
+
+
+### MongoDB Atlas/Pro MDB-3 chart-ready Atlas specs
+
+Implemented:
+
+- Added parallel chart-ready Atlas specs:
+  - `atlas/chart_ready/weekly_pipeline_review.v1.json`
+  - `atlas/chart_ready/pipeline_trend.v1.json`
+  - `atlas/chart_ready/customer_themes.v1.json`
+- Added packaged copies under
+  `src/deal_intel/resources/atlas/chart_ready/`.
+- Extended `deal_intel.reports.atlas_charts` with `source="raw"` and
+  `source="chart-ready"` support. Raw aggregation specs remain the default and
+  are preserved for compatibility/reference.
+- Added CLI support:
+  - `deal-intel render-atlas-dashboard --source chart-ready --as-of YYYY-MM-DD`
+- Updated [atlas-charts.md](atlas-charts.md) so the recommended setup path is
+  now:
+  1. run `mongo refresh-chart-ready` dry-run;
+  2. apply refresh after checking row counts;
+  3. build Atlas Charts from `dashboard_*` collections with short filters and
+     ordinary field encoding.
+
+Validation:
+
+- `pytest tests/test_atlas_charts.py tests/test_cli_atlas_charts.py tests/test_chart_ready_contracts.py -q -p no:cacheprovider --basetemp .tmp\pytest-mdb3-targeted`
+  -> 39 passed.
+
+
+### MongoDB Atlas/Pro MDB-4 doctor chart-ready checks
+
+Implemented:
+
+- Added read-only chart-ready collection checks to `MongoDBClient`:
+  - collection presence
+  - current schema row count
+  - latest refresh scope
+  - latest generated timestamp
+  - chart-level row counts for the latest scope
+- Extended `deal-intel mongo doctor` to report one check per chart-ready
+  collection:
+  - `dashboard_weekly_pipeline_chart_ready`
+  - `dashboard_customer_themes_chart_ready`
+  - `dashboard_pipeline_trend_chart_ready`
+- Missing or empty chart-ready collections are warnings, not failures. This
+  keeps Mongo readiness separate from dashboard refresh state while still
+  surfacing the next action:
+  `deal-intel mongo refresh-chart-ready --target ... --as-of YYYY-MM-DD`.
+
+Validation:
+
+- `pytest tests/test_mongo_contracts.py tests/test_chart_ready_contracts.py tests/test_chart_ready_refresh.py -q -p no:cacheprovider --basetemp .tmp\pytest-mdb4-targeted`
+  -> 29 passed.
+- `ruff check src/deal_intel/mongo_doctor.py src/deal_intel/storage/mongodb.py tests/test_mongo_contracts.py`
+  -> passed.
+
+
+### MongoDB Atlas/Pro MDB-5 static vector-search hardening
+
+Implemented:
+
+- Hardened the Pro Atlas Vector Search path before live M10+ smoke:
+  - versioned `deal_summary_vector` index specs are now validated for
+    collection, index name, embedding path, dimensions, similarity, search
+    settings, and M10+ minimum tier;
+  - invalid dimension overrides are rejected before building
+    `createSearchIndexes` commands;
+  - `search_deals` now uses the vector-index `maxLimit` contract instead of a
+    hardcoded limit;
+  - Atlas search results are allowlisted at the tool layer so raw notes,
+    interaction content, contacts, embeddings, and unexpected internal fields
+    cannot leak even if a storage projection changes;
+  - direct `MongoDBClient.search_by_embedding()` calls reject empty embeddings
+    before issuing an aggregation and clamp limits to the static index
+    contract.
+- Improved Pro readiness diagnostics:
+  - `config_doctor` and `mongo doctor` now include the expected Atlas Vector
+    Search index summary: name, collection, embedding path, dimensions,
+    similarity, and M10+ requirement;
+  - `deal-intel mongo apply-vector-index --json` includes the same
+    secret-safe index summary in dry-run output.
+- Live Atlas behavior is still intentionally unverified until a disposable M10+
+  cluster is available.
+
+Validation:
+
+- `pytest tests/test_atlas_vector_indexes.py tests/test_search_deals_startup.py tests/test_archived_read_paths.py tests/test_config_doctor.py tests/test_mongo_contracts.py -q -p no:cacheprovider --basetemp .tmp\pytest-mdb5-static-targeted`
+  -> 61 passed, 1 warning.
+- `ruff check .`
+  -> passed.
+- `deal-intel mongo apply-vector-index --json`
+  -> dry-run succeeded with index summary for `deal_summary_vector`.
+- `deal-intel mongo apply-vector-index --dimensions 0 --json`
+  -> returned structured `ok: false` JSON instead of a traceback.
+- `pytest -q -p no:cacheprovider --basetemp .tmp\pytest-mdb5-static-full`
+  -> 699 passed, 1 warning.
+
+
+### Product / solution context layer
+
+Host-app live smoke on 2026-06-17 (complete; smoked on MCPB `0.2.0`, shipped as
+`0.2.1`):
+
+- Confirmed live in the host app: index -> retrieve works across all four indexed
+  docs; a query for "ideal customer profile and key value propositions" returned
+  the overview/security/AI sources with the seller-side "not customer evidence /
+  do not raise qualification scores" tagging preserved end to end.
+- Core invariant validated live on a disposable `create_deal` deal: `add_interaction`
+  reported and stored `product_context_refs` (metadata only, not raw text) with
+  `product_context_used: true`, while MEDDPICC scoring drew evidence only from
+  customer-stated quotes (`source_confidence: customer_stated`,
+  `score_policy: confirmed_evidence`). Product context did not raise any dimension
+  score, theme count, or fill gaps. (No `create_sample_data` tool exists; the
+  disposable-deal flow is `create_deal` -> verify -> `archive_deal`/`delete_deal`.)
+- `analyze_deal` confirmed live in the host (initially slow due to LLM latency, then
+  completed); its refs-only, no-raw-text strategy behavior held and is also covered
+  deterministically by `tests/test_analyze_deal.py`.
+- Smoke-driven fixes applied and shipped in the post-smoke `0.2.1` build (bumped
+  `mcpb/manifest.json` + `pyproject.toml` to `0.2.1`, repacked the gitignored
+  `mcpb/deal-intel-mcp-0.2.1.mcpb`; `release/latest/` stays on `0.1.15` until the
+  Phase 3 final-integration publish):
+  - Fixed a stale-config bug: `_context.config()` caches the loaded config for the
+    process lifetime, so a `update_config` write (e.g. product-context source
+    dirs) did not take effect in the same running session and the indexer kept
+    resolving to the default source dir. `update_config` now calls a new
+    `_context.reset_config()` after a confirmed write so the next tool call
+    reloads `~/.deal-intel/config.yaml`. Added targeted tests for write-resets-
+    cache and dry-run-keeps-cache.
+  - Removed the product-context fields from the MCPB installer form and the
+    forwarded env block. Product context is now a runtime-only setting (via
+    `update_config` or direct env), so first-run setup is not cluttered.
+  - Softened the first-run experience: when the default product-context source
+    folder is absent, the indexer now emits a `product_context_not_configured`
+    guidance message (with a `how_to_configure` hint) instead of the
+    error-flavored `source_dir_missing` warning. A genuinely missing
+    user-configured folder still warns. Added targeted tests for both paths.
+- Known gap (deferred): `config_doctor` does not surface the effective product-
+  context source directory; only the config-file path is shown, and `config show`
+  is CLI-only (not an MCP tool). Tracked under the backlog config-doctor/status
+  visibility follow-up.
+
+CLI pre-smoke on 2026-06-17 (before host-app live smoke):
+
+- Ran an isolated CLI pre-smoke from a `codex/product-context-layer` git worktree
+  (env-isolated: `PYTHONPATH=<worktree>/src` with an existing interpreter, so the
+  parallel `codex/mongodb-atlas-pro` checkout and the local
+  `~/.deal-intel/config.yaml` were untouched; cfg passed in-process, not persisted).
+- Multi-format source set under `.tmp-product-context/sources/` covering all four
+  supported binary/text paths (`notion-ai.pdf`, `notion-enterprise-overview.md`,
+  `notion-enterprise-security.json`,
+  `notion-enterprise-integrations-competitive.docx`):
+  - dry-run did not embed or write (`storage_written: false`, `would_index: 4`).
+  - real index produced `indexed: 4`, `indexed_chunks: 10`, all chunks embedded,
+    with all four formats parsed (pdf via pypdf, docx via stdlib, md, json).
+  - re-run reused cache (`unchanged: 4`, `indexed: 0`, zero embed calls).
+  - `retrieve_product_context` returned bounded snippets plus source metadata, not
+    raw full documents.
+  - Note: ranking used a coarse keyword stub embedding, so cross-document ordering
+    is not representative; host-app smoke with a real embedding model still owns
+    retrieval-quality validation. `add_interaction`/`analyze_deal` refs invariants
+    were covered deterministically by their test suites in this pass, not a live
+    LLM run (that remains the host-app smoke's job).
+- Validation (worktree, `event-intel` interpreter, `PYTHONPATH=<worktree>/src`):
+  - targeted: `pytest tests/test_product_context.py tests/test_add_interaction.py
+    tests/test_analyze_deal.py tests/test_config_writer.py tests/test_env_config.py
+    tests/test_mcpb_manifest.py tests/test_tool_surfaces.py -q -p no:cacheprovider
+    --basetemp=.tmp/pytest-pc-presmoke`: 102 passed, 1 warning.
+  - full regression: `pytest -q -p no:cacheprovider
+    --basetemp=.tmp/pytest-pc-full`: 696 passed, 1 warning.
+  - `ruff check .`: passed.
+  - `mcpb validate mcpb/manifest.json`: schema validation passes.
+- Packaged the product-context bundle as `0.2.0` for the host-app live smoke
+  (bumped `mcpb/manifest.json` and `pyproject.toml`, updated the manifest-version
+  test and current-version doc lines). The smoke artifact is built into the
+  gitignored build dir as `mcpb/deal-intel-mcp-0.2.0.mcpb`; `release/latest/`
+  stays on `0.1.15` because `0.2.0` is a smoke build, not a published release.
+  Re-ran the full suite (696 passed), `ruff` (passed), and `mcpb validate`
+  against the bumped manifest. The published `release/latest` refresh and the
+  final `0.2.1` repack remain post-smoke / final-integration steps per the
+  merge-prep plan.
+
+Follow-up on 2026-06-17:
+
+- Raised the default product-context source file limit from 25MB to 100MB and
+  made source size/chunk budgets configurable:
+  - `product_context.max_source_file_mb`
+  - `product_context.max_note_mb`
+  - `product_context.max_chunks_per_file`
+  - `product_context.max_chunks_per_run`
+- Added partial-indexing guardrails for large product catalogs. When a catalog
+  exceeds per-file or per-run chunk budgets, the indexer records
+  `counts.partial_indexed`, warning codes, and cache metadata rather than
+  silently treating the file as fully indexed.
+- Exposed the new product-context limits through `update_config`, runtime env
+  loading, and MCPB installer config fields.
+- Refreshed `release/latest/deal-intel-mcp-0.1.15.mcpb` and checksum after the
+  manifest update.
+- Smoke:
+  - A temporary Notion AI page PDF under `.tmp-product-context/` indexed and
+    retrieved successfully with `indexed_chunks: 5`.
+- Live host-app smoke handoff:
+  - Run this from the product-context branch before closing the context layer.
+  - Expected effect: product/solution context should help `add_interaction`
+    and `analyze_deal` interpret seller-side terminology, ICP, value
+    propositions, disqualifiers, competitor positioning, and product fit more
+    accurately.
+  - Non-goal: product context must not become customer-stated evidence. It
+    must not directly raise qualification scores, customer-theme counts,
+    BI/report metrics, or deal summary embeddings.
+  - Success criteria:
+    - MCPB/full install loads the product-context tools and `config_doctor`
+      remains ready.
+    - `config show` or `config_doctor` makes the effective product-context
+      source directories understandable enough for a host app to guide users.
+    - A configured source folder containing at least one PDF and one text-like
+      note indexes successfully; a second unchanged run reuses cache.
+    - `get_product_context` returns relevant bounded snippets and metadata,
+      not full raw documents.
+    - `add_interaction` reports product-context refs when relevant, stores refs
+      only, and does not raise scoring from product context alone.
+    - `analyze_deal` can use product-context refs for strategy interpretation
+      without returning or storing raw product text.
+    - Natural-question smoke still passes after indexing.
+  - Watch points:
+    - Host apps may pass Windows paths, escaped backslashes, or spaces
+      differently from CLI tests.
+    - MCPB installer config must forward source dirs and size/chunk limits as
+      expected.
+    - Large PDFs may be partial-indexed; this is acceptable only when warning
+      codes and counts are clear.
+    - Scanned PDFs may extract little text and should produce understandable
+      warnings rather than misleading empty success.
+    - Embedding/OAuth readiness can fail independently from storage readiness.
+    - Secret-shaped files or notes must be skipped/rejected without leaking
+      source content.
+    - Generic product wording can over-match; retrieved context must remain
+      seller-side guidance, not evidence.
+    - Cache invalidation should reprocess modified files while leaving
+      unchanged files untouched.
+- Validation:
+  - `pytest tests/test_product_context.py tests/test_config_writer.py tests/test_env_config.py tests/test_mcpb_manifest.py -q -p no:cacheprovider --basetemp=.pytest-product-context-limits`:
+    49 passed, 1 warning.
+  - `ruff check .`:
+    passed.
+  - `mcpb validate mcpb\manifest.json`:
+    passed.
+
+- Added first-pass DOCX parsing for product context indexing. The parser reads
+  Word document paragraphs from `word/document.xml` with the Python standard
+  library, so no new runtime dependency is required.
+- `pptx` and `xlsx` remain warning-only and are still tracked as future parser
+  work.
+- Connected indexed product context to `analyze_deal`.
+  - The strategy prompt may use bounded seller-side snippets for product fit,
+    positioning, ICP, competitor, or disqualifier context.
+  - The saved deal stores only `bd_strategy_product_context_refs`, not raw
+    product text.
+  - Deterministic review/report paths remain product-context-free.
+- Validation:
+  - `pytest tests/test_product_context.py -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-docx`:
+    13 passed, 1 warning.
+  - `pytest tests/test_analyze_deal.py tests/test_product_context.py tests/test_add_interaction.py -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-analyze-targeted`:
+    30 passed, 1 warning.
+  - `pytest tests/test_analyze_deal.py tests/test_product_context.py tests/test_add_interaction.py tests/test_tool_surfaces.py tests/test_mcpb_manifest.py -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-strategy-targeted`:
+    74 passed, 1 warning.
+  - `pytest tests/test_product_context.py tests/test_add_interaction.py tests/test_tool_surfaces.py tests/test_mcpb_manifest.py tests/test_config_writer.py -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-docx-targeted`:
+    88 passed, 1 warning.
+  - `pytest -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-docx-full-rerun`:
+    689 passed, 1 warning.
+  - `pytest -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-strategy-full`:
+    691 passed, 1 warning.
+  - `ruff check .`:
+    passed.
+  - `mcpb validate mcpb\manifest.json`:
+    passed.
+
+Implemented:
+
+- Added a local seller-side product context cache under
+  `~/.deal-intel/product-context`.
+- Added config defaults for source dirs, cache dir, retrieval limits, and first
+  supported file types: `txt`, `md`, `json`, `csv`, `pdf`, and `docx`.
+- Added safe source-folder configuration for product context:
+  - `update_config(product_context_source_dirs=...)`
+  - `DEAL_INTEL_PRODUCT_CONTEXT_SOURCE_DIRS` for MCPB/runtime env injection
+  - `config show` now surfaces the effective product-context source dirs.
+  - Cache location remains engine-managed by default.
+- Added `src/deal_intel/product_context.py` for scanning, parsing, chunking,
+  secret scanning, embedding, cache reuse, and retrieval.
+- Added MCP tools:
+  - `add_product_context_note`
+  - `index_product_context`
+  - `get_product_context`
+- Added tool catalog grouping and intent aliases:
+  - `context.note.add`
+  - `context.index`
+  - `context.get`
+- Added managed note intake for pasted product/solution text.
+  - `add_product_context_note` is dry-run-first and writes only managed
+    Markdown source files under the configured product-context source
+    directory.
+  - Apply mode requires `confirmed_by_user=true`.
+  - The tool rejects secret-shaped content and does not call LLMs, embeddings,
+    MongoDB, or indexing automatically.
+- Added user/agent-facing UX guidance in `README.md` and `AI_START_HERE.md`
+  for the two normal product-context flows:
+  folder-based docs and pasted managed notes.
+- Connected product context to `add_interaction`.
+  - The LLM extraction prompt can receive a bounded seller/product context
+    block when relevant chunks are indexed.
+  - The prompt explicitly states that product context is seller-side knowledge,
+    not customer-stated evidence.
+  - Stored interactions keep only `product_context_refs` metadata, not raw
+    product snippets.
+
+Guardrails:
+
+- Product context does not directly increase qualification scores.
+- Product context is not counted as customer-theme evidence.
+- Product context is not mixed into deal `summary_embedding`.
+- Product context is not used in BI/report metric calculation paths.
+- Secret-shaped source files are skipped.
+- Secret-shaped pasted notes are rejected before writing.
+- Presentation and spreadsheet files (`pptx`, `xlsx`) are warning-only for the
+  first pass.
+
+Validation so far:
+
+- `pytest tests/test_product_context.py tests/test_add_interaction.py tests/test_tool_surfaces.py tests/test_mcpb_manifest.py -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-targeted`:
+  64 passed, 1 warning.
+- `pytest tests/test_product_context.py tests/test_add_interaction.py tests/test_tool_surfaces.py tests/test_mcpb_manifest.py -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-targeted-rerun`:
+  64 passed, 1 warning.
+- `pytest -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-full-rerun`:
+  678 passed, 1 warning.
+- `ruff check .`:
+  passed.
+- `mcpb validate mcpb\manifest.json`:
+  passed.
+- `deal-intel smoke-natural-questions --as-of 2026-06-10`:
+  OK true, 12/12 questions passed.
+- `pytest tests/test_config_writer.py tests/test_config_doctor.py tests/test_env_config.py tests/test_product_context.py tests/test_mcpb_manifest.py -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-config`:
+  49 passed, 1 warning.
+- Targeted Ruff for config/product-context setting files:
+  passed.
+- `pytest tests/test_product_context.py tests/test_tool_surfaces.py tests/test_mcpb_manifest.py -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-note`:
+  56 passed, 1 warning.
+- `pytest tests/test_config_doctor.py tests/test_sample_data.py tests/test_tool_surfaces.py tests/test_mcpb_manifest.py -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-note-counts`:
+  65 passed, 1 warning.
+- `pytest -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-note-full-rerun`:
+  688 passed, 1 warning.
+- Targeted Ruff for product-context note files:
+  passed.
+- `ruff check .`:
+  passed.
+- `mcpb validate mcpb\manifest.json`:
+  passed.
+- `deal-intel smoke-natural-questions --as-of 2026-06-10`:
+  OK true, 12/12 questions passed.
 
 ### QF-11 custom framework end-to-end smoke
 
@@ -127,8 +554,8 @@ Implemented:
 - Moved `get_customer_themes` from the legacy Mongo aggregation path onto the
   restricted `list_deals_for_metrics()` read path.
 - Exposed `get_customer_themes` in sample mode so customer-theme ranking starts
-  from the same tool in sample/full profiles. Current counts are `sample=24`,
-  `standard=35`, `developer=38`.
+  from the same tool in sample/full profiles. Counts at that QF-9 checkpoint
+  were `sample=24`, `standard=35`, `developer=38`.
 
 Validation:
 
@@ -192,7 +619,8 @@ Implemented:
     uses the dedicated raw-content maintenance read path.
   - Responses never include raw interaction content.
 - Updated MCP tool-surface contracts and MCPB manifest tool declarations.
-- Current surface counts are `sample=24`, `standard=35`, `developer=38`.
+- Surface counts at that QF-7c checkpoint were `sample=24`, `standard=35`,
+  `developer=38`.
 
 Validation:
 
@@ -207,8 +635,8 @@ Validation:
 - `ruff check .`:
   passed.
 - Runtime registration smoke:
-  developer surface exposes 38 tools and includes `backfill_qualification` plus
-  `backfill_qualification_reextract`.
+  developer surface exposed 38 tools at that checkpoint and included
+  `backfill_qualification` plus `backfill_qualification_reextract`.
 
 ### QF-7b qualification LLM re-extraction backfill
 

@@ -61,6 +61,57 @@ def test_render_atlas_dashboard_cli_writes_full_spec(tmp_path) -> None:
     assert "{{" not in output.read_text(encoding="utf-8")
 
 
+def test_render_atlas_dashboard_cli_supports_chart_ready_source(tmp_path) -> None:
+    runner = CliRunner()
+    output = tmp_path / "weekly_pipeline_review.chart_ready.rendered.json"
+
+    result = runner.invoke(
+        app,
+        [
+            "render-atlas-dashboard",
+            "--source",
+            "chart-ready",
+            "--as-of",
+            "2026-06-09",
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["source_mode"] == "chart_ready"
+    assert payload["collection"] == "dashboard_weekly_pipeline"
+    assert "{{" not in output.read_text(encoding="utf-8")
+
+
+def test_render_atlas_dashboard_cli_prints_chart_ready_single_chart_pipeline() -> None:
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "render-atlas-dashboard",
+            "--source",
+            "chart-ready",
+            "--as-of",
+            "2026-06-09",
+            "--chart-id",
+            "pipeline_kpis",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert payload[0]["$match"] == {
+        "dashboard_id": "weekly_pipeline_review",
+        "chart_id": "pipeline_kpis",
+        "schema_version": 1,
+        "as_of": "2026-06-09",
+    }
+    assert payload[-1]["$project"]["open_pipeline_value_amount"] == 1
+
+
 def test_render_atlas_dashboard_cli_supports_pipeline_trend_dashboard(tmp_path) -> None:
     runner = CliRunner()
     output = tmp_path / "pipeline_trend.rendered.json"
@@ -145,3 +196,19 @@ def test_render_atlas_dashboard_cli_rejects_unknown_dashboard() -> None:
 
     assert result.exit_code != 0
     assert "dashboard" in result.output
+
+
+def test_render_atlas_dashboard_cli_rejects_unknown_source() -> None:
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "render-atlas-dashboard",
+            "--source",
+            "unknown",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "source must be one of" in result.output

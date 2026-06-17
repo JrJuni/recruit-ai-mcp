@@ -40,7 +40,7 @@ Green:
 - Local mode can create/update/stage/archive/delete local personal deals, then
   export, reset, or migrate them to MongoDB through dry-run-first commands.
 - Natural-question smoke has a deterministic 12-question pack.
-- Claude Desktop MCPB `0.1.15` packs successfully and reflects the current
+- Claude Desktop MCPB `0.2.1` packs successfully and reflects the current
   installer fields.
 
 Yellow:
@@ -223,7 +223,7 @@ Run the relevant tests:
 Pass criteria:
 
 - `sample`, `standard`, and `developer` tool counts match the documented
-  contract: `sample=24`, `standard=35`, `developer=38`.
+  contract: `sample=24`, `standard=38`, `developer=41`.
 - `add_interaction` is visible on sample/standard.
 - Deprecated `add_meeting` is hidden from sample/standard and only visible on
   developer.

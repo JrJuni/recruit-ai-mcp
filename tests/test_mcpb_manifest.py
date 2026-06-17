@@ -38,7 +38,7 @@ def test_mcpb_manifest_tools_match_registered_surface_contracts() -> None:
     contract_tool_names = [contract.name for contract in list_tool_surface_contracts()]
 
     assert manifest_tool_names == contract_tool_names
-    assert len(manifest_tool_names) == 38
+    assert len(manifest_tool_names) == 41
 
 
 def test_mcpb_manifest_describes_meddpicc_as_default_framework() -> None:
@@ -63,12 +63,18 @@ def test_mcpb_manifest_user_config_defaults_to_full_and_is_secret_safe() -> None
     manifest = _manifest()
     user_config = manifest["user_config"]
 
-    assert manifest["version"] == "0.1.15"
+    assert manifest["version"] == "0.2.1"
     assert user_config["python_path"]["required"] is True
     assert user_config["storage_backend"]["default"] == "mongo"
     assert user_config["storage_backend"]["required"] is False
     assert user_config["tools_surface"]["default"] == "auto"
     assert user_config["reporting_language"]["default"] == "en"
+    # Product context is a runtime-only setting (configured via update_config or
+    # env), so it must not clutter the first-run installer form.
+    assert "product_context_source_dirs" not in user_config
+    assert "product_context_max_source_file_mb" not in user_config
+    assert "product_context_max_chunks_per_file" not in user_config
+    assert "product_context_max_chunks_per_run" not in user_config
     assert user_config["mongodb_uri"]["required"] is False
     assert user_config["mongodb_uri"]["sensitive"] is True
     assert user_config["llm_provider"]["default"] == "chatgpt_oauth"
@@ -102,6 +108,12 @@ def test_mcpb_manifest_env_maps_installer_fields_to_runtime_config() -> None:
     assert env["DEAL_INTEL_STORAGE_BACKEND"] == "${user_config.storage_backend}"
     assert env["DEAL_INTEL_TOOLS_SURFACE"] == "${user_config.tools_surface}"
     assert env["DEAL_INTEL_REPORTING_LANGUAGE"] == "${user_config.reporting_language}"
+    # Product context env is not forwarded from installer fields; it stays a
+    # runtime-only setting via update_config / direct env.
+    assert "DEAL_INTEL_PRODUCT_CONTEXT_SOURCE_DIRS" not in env
+    assert "DEAL_INTEL_PRODUCT_CONTEXT_MAX_SOURCE_FILE_MB" not in env
+    assert "DEAL_INTEL_PRODUCT_CONTEXT_MAX_CHUNKS_PER_FILE" not in env
+    assert "DEAL_INTEL_PRODUCT_CONTEXT_MAX_CHUNKS_PER_RUN" not in env
     assert env["DEAL_INTEL_LLM_PROVIDER"] == "${user_config.llm_provider}"
     assert env["DEAL_INTEL_USE_CHATGPT_OAUTH"] == "${user_config.use_chatgpt_oauth}"
     assert env["ANTHROPIC_API_KEY"] == "${user_config.anthropic_api_key}"

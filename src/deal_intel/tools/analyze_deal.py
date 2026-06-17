@@ -4,6 +4,11 @@ from collections import defaultdict
 from datetime import UTC, datetime
 
 from deal_intel.errors import ErrorCode, MCPError, Stage
+from deal_intel.product_context import (
+    product_context_refs,
+    render_product_context_prompt_block,
+    retrieve_product_context,
+)
 from deal_intel.providers.llm import LLMProvider
 from deal_intel.schema.interactions import scoring_interactions
 from deal_intel.storage.mongodb import MongoDBClient
@@ -17,6 +22,7 @@ Analyze this deal's MEDDPICC qualification status and provide a concrete BD stra
 Deal: {company} | Stage: {stage} | Interactions: {interaction_count}
 Industry: {industry} | Customer segment: {customer_segment}
 {size_line}
+{product_context_prompt}
 MEDDPICC scores (avg across scoring-eligible interactions, 0=no data / 5=confirmed):
 {meddpicc_summary}
 
@@ -58,7 +64,84 @@ def _meddpicc_summary(interactions: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def handle(mongo: MongoDBClient, llm: LLMProvider, cfg: dict, *, deal_id: str) -> dict:
+def _product_context_query(deal: dict, interactions: list[dict]) -> str:
+    parts = [
+        str(deal.get("company") or ""),
+        str(deal.get("industry") or ""),
+        str(deal.get("customer_segment") or ""),
+        str(deal.get("deal_stage") or ""),
+    ]
+    for theme in (deal.get("customer_themes") or [])[:8]:
+        if not isinstance(theme, dict):
+            continue
+        parts.extend(
+            [
+                str(theme.get("label") or ""),
+                str(theme.get("dimension") or ""),
+                str(theme.get("evidence") or ""),
+            ]
+        )
+    for interaction in interactions[-3:]:
+        if not isinstance(interaction, dict):
+            continue
+        if interaction.get("summary"):
+            parts.append(str(interaction["summary"]))
+        for item in (interaction.get("meddpicc") or {}).values():
+            if isinstance(item, dict) and item.get("evidence"):
+                parts.append(str(item["evidence"]))
+    return "\n".join(part.strip() for part in parts if part and part.strip())[:6000]
+
+
+def _retrieve_product_context_for_strategy(
+    *,
+    cfg: dict,
+    embedding_provider,
+    deal: dict,
+    interactions: list[dict],
+) -> dict:
+    if embedding_provider is None:
+        return {"ok": True, "result_count": 0, "results": [], "warnings": []}
+    product_cfg = cfg.get("product_context") if isinstance(cfg, dict) else None
+    if isinstance(product_cfg, dict) and product_cfg.get("enabled") is False:
+        return {"ok": True, "result_count": 0, "results": [], "warnings": []}
+    query = _product_context_query(deal, interactions)
+    if not query:
+        return {"ok": True, "result_count": 0, "results": [], "warnings": []}
+    try:
+        payload = retrieve_product_context(
+            cfg,
+            embedding_provider=embedding_provider,
+            query=query,
+        )
+    except Exception as exc:
+        return {
+            "ok": False,
+            "result_count": 0,
+            "results": [],
+            "warnings": [
+                {
+                    "code": "product_context_retrieval_failed",
+                    "message": str(exc),
+                }
+            ],
+        }
+    suppress_codes = {"product_context_index_empty_or_unembedded"}
+    payload["warnings"] = [
+        warning
+        for warning in payload.get("warnings", [])
+        if warning.get("code") not in suppress_codes
+    ]
+    return payload
+
+
+def handle(
+    mongo: MongoDBClient,
+    llm: LLMProvider,
+    cfg: dict,
+    embedding_provider=None,
+    *,
+    deal_id: str,
+) -> dict:
     deal = mongo.get_deal(deal_id)
     if deal is None:
         raise MCPError(
@@ -69,6 +152,17 @@ def handle(mongo: MongoDBClient, llm: LLMProvider, cfg: dict, *, deal_id: str) -
         )
 
     interactions = scoring_interactions(deal)
+    product_context_payload = _retrieve_product_context_for_strategy(
+        cfg=cfg,
+        embedding_provider=embedding_provider,
+        deal=deal,
+        interactions=interactions,
+    )
+    product_context_prompt = render_product_context_prompt_block(
+        product_context_payload
+    )
+    product_context_references = product_context_refs(product_context_payload)
+    product_context_warnings = product_context_payload.get("warnings", [])
     currency = deal.get("deal_size_currency") or "KRW"
     size_line = (
         f"Deal size: {deal['deal_size_amount']:,} {currency}\n"
@@ -82,6 +176,9 @@ def handle(mongo: MongoDBClient, llm: LLMProvider, cfg: dict, *, deal_id: str) -
         customer_segment=deal.get("customer_segment") or "unknown",
         interaction_count=len(interactions),
         size_line=size_line,
+        product_context_prompt=(
+            f"{product_context_prompt}\n\n" if product_context_prompt else ""
+        ),
         meddpicc_summary=_meddpicc_summary(interactions),
     )
 
@@ -102,6 +199,7 @@ def handle(mongo: MongoDBClient, llm: LLMProvider, cfg: dict, *, deal_id: str) -
     )
     deal["bd_strategy"] = resp.text
     deal["bd_strategy_usage"] = llm_usage
+    deal["bd_strategy_product_context_refs"] = product_context_references
     deal["updated_at"] = datetime.now(UTC).isoformat()
     try:
         mongo.upsert_deal(deal)
@@ -112,6 +210,10 @@ def handle(mongo: MongoDBClient, llm: LLMProvider, cfg: dict, *, deal_id: str) -
         "ok": True,
         "deal_id": deal_id,
         "analysis": resp.text,
+        "product_context_used": bool(product_context_references),
+        "product_context_ref_count": len(product_context_references),
+        "product_context_refs": product_context_references,
+        "warnings": product_context_warnings,
         "usage": resp.usage,
         "usage_summary": {
             "calls": llm_usage["calls"],

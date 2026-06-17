@@ -217,6 +217,9 @@ def test_update_config_settings_dry_run_does_not_write(tmp_path) -> None:
         openai_api_model="gpt-5.4-mini",
         reporting_output_dir="~/.deal-intel/reports",
         reporting_language="ko",
+        product_context_source_dirs="~/company-docs;~/solution-docs",
+        product_context_max_source_file_mb="250",
+        product_context_max_chunks_per_file="5000",
     )
 
     assert result["ok"] is True
@@ -228,6 +231,9 @@ def test_update_config_settings_dry_run_does_not_write(tmp_path) -> None:
         "llm.openai_api_model",
         "reporting.output_dir",
         "reporting.language",
+        "product_context.source_dirs",
+        "product_context.max_source_file_mb",
+        "product_context.max_chunks_per_file",
     ]
 
 
@@ -268,6 +274,11 @@ def test_update_config_settings_writes_and_backs_up_existing_config(tmp_path) ->
         openai_api_model="gpt-5.4-mini",
         reporting_language="ko",
         tools_surface="standard",
+        product_context_source_dirs='["~/company-docs", "~/solution-docs"]',
+        product_context_max_source_file_mb="250",
+        product_context_max_note_mb="10",
+        product_context_max_chunks_per_file="5000",
+        product_context_max_chunks_per_run="12000",
     )
 
     backup = tmp_path / "config.yaml.bak.20260614-010203"
@@ -281,6 +292,14 @@ def test_update_config_settings_writes_and_backs_up_existing_config(tmp_path) ->
     assert data["llm"]["openai_api_model"] == "gpt-5.4-mini"
     assert data["reporting"]["language"] == "ko"
     assert data["tools"]["surface"] == "standard"
+    assert data["product_context"]["source_dirs"] == [
+        "~/company-docs",
+        "~/solution-docs",
+    ]
+    assert data["product_context"]["max_source_file_mb"] == 250
+    assert data["product_context"]["max_note_mb"] == 10
+    assert data["product_context"]["max_chunks_per_file"] == 5000
+    assert data["product_context"]["max_chunks_per_run"] == 12000
     assert data["custom"]["keep"] is True
 
 
@@ -293,6 +312,28 @@ def test_update_config_settings_rejects_secret_shaped_values(tmp_path) -> None:
     assert result["ok"] is False
     assert result["error_code"] == "INVALID_INPUT"
     assert "MongoDB URI" in result["message"]
+
+
+def test_update_config_settings_rejects_secret_shaped_product_context_dir(tmp_path) -> None:
+    result = update_config_settings(
+        config_path=tmp_path / "config.yaml",
+        product_context_source_dirs="~/docs;mongodb+srv://secret.example",
+    )
+
+    assert result["ok"] is False
+    assert result["error_code"] == "INVALID_INPUT"
+    assert "MongoDB URI" in result["message"]
+
+
+def test_update_config_settings_rejects_invalid_product_context_limits(tmp_path) -> None:
+    result = update_config_settings(
+        config_path=tmp_path / "config.yaml",
+        product_context_max_source_file_mb="9999",
+    )
+
+    assert result["ok"] is False
+    assert result["error_code"] == "INVALID_INPUT"
+    assert "product_context_max_source_file_mb" in result["message"]
 
 
 def test_update_config_settings_rejects_invalid_reporting_language(tmp_path) -> None:
@@ -346,3 +387,40 @@ def test_config_switch_cli_text_does_not_print_custom_secret(monkeypatch, tmp_pa
     assert result.exit_code == 0
     assert "configured-custom-secret-sentinel" not in result.stdout
     assert "Profile-managed changes:" in result.stdout
+
+
+def test_update_config_tool_resets_cached_config_after_write(monkeypatch) -> None:
+    import deal_intel.config_writer as config_writer
+    from deal_intel import _context, mcp_server
+
+    monkeypatch.setattr(_context, "_config", {"sentinel": True})
+    monkeypatch.setattr(
+        config_writer,
+        "update_config_settings",
+        lambda **kwargs: {"ok": True, "storage_written": True},
+    )
+
+    result = mcp_server.update_config(
+        dry_run=False, confirmed_by_user=True, reporting_language="ko"
+    )
+
+    assert result["storage_written"] is True
+    # Cache dropped so the running session reloads the freshly written config.
+    assert _context._config is None
+
+
+def test_update_config_tool_keeps_cache_on_dry_run(monkeypatch) -> None:
+    import deal_intel.config_writer as config_writer
+    from deal_intel import _context, mcp_server
+
+    sentinel = {"sentinel": True}
+    monkeypatch.setattr(_context, "_config", sentinel)
+    monkeypatch.setattr(
+        config_writer,
+        "update_config_settings",
+        lambda **kwargs: {"ok": True, "storage_written": False, "dry_run": True},
+    )
+
+    mcp_server.update_config(dry_run=True)
+
+    assert _context._config is sentinel

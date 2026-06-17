@@ -55,6 +55,60 @@ def _install_tool_surface_filter(server: FastMCP) -> None:
 _install_tool_surface_filter(app)
 
 
+def _embedding_preflight_response():
+    from deal_intel import _context
+
+    embedding_provider = _context.embedding_provider()
+    if embedding_provider is None:
+        return None, {
+            "ok": False,
+            "error_code": "CONFIG_ERROR",
+            "stage": "preflight",
+            "message": "The local embedding provider is not installed.",
+            "hint": {"fix": 'pip install -e ".[embedding]"'},
+            "retryable": False,
+            "warming_up": False,
+        }
+    if embedding_provider.load_error:
+        return None, {
+            "ok": False,
+            "error_code": "UPSTREAM_ERROR",
+            "stage": "preflight",
+            "message": "The local embedding model failed to load.",
+            "hint": {"detail": embedding_provider.load_error},
+            "retryable": False,
+            "warming_up": False,
+        }
+    if not embedding_provider.is_ready:
+        warmup_status = embedding_provider.warmup_status
+        if warmup_status["elapsed_seconds"] >= _MAX_EMBEDDING_WARMUP_SECONDS:
+            return None, {
+                "ok": False,
+                "error_code": "UPSTREAM_ERROR",
+                "stage": "preflight",
+                "message": "The local embedding model warmup is stalled.",
+                "hint": {
+                    **warmup_status,
+                    "fix": "Restart the MCP server and check stderr for warmup errors.",
+                },
+                "retryable": False,
+                "warming_up": False,
+            }
+        return None, {
+            "ok": False,
+            "error_code": "UPSTREAM_ERROR",
+            "stage": "preflight",
+            "message": "The local embedding model is still loading. Retry shortly.",
+            "hint": {
+                "retry_after_seconds": 5,
+                **warmup_status,
+            },
+            "retryable": True,
+            "warming_up": True,
+        }
+    return embedding_provider, None
+
+
 @app.tool()
 def config_doctor(offline: bool = False) -> dict:
     """Diagnose profile, storage, vector search, and LLM readiness.
@@ -173,6 +227,11 @@ def update_config(
     reporting_timezone: str = "",
     reporting_language: str = "",
     tools_surface: str = "",
+    product_context_source_dirs: str = "",
+    product_context_max_source_file_mb: str = "",
+    product_context_max_note_mb: str = "",
+    product_context_max_chunks_per_file: str = "",
+    product_context_max_chunks_per_run: str = "",
 ) -> dict:
     """Preview or apply safe non-secret user-config changes.
 
@@ -190,11 +249,17 @@ def update_config(
     - reporting_timezone
     - reporting_language: en | ko
     - tools_surface: auto | sample | standard | developer
+    - product_context_source_dirs: semicolon-separated paths or JSON array string
+    - product_context_max_source_file_mb: 1-500
+    - product_context_max_note_mb: 1-20
+    - product_context_max_chunks_per_file: 10-20000
+    - product_context_max_chunks_per_run: 10-50000
     """
     try:
+        from deal_intel import _context
         from deal_intel.config_writer import update_config_settings
 
-        return update_config_settings(
+        result = update_config_settings(
             dry_run=dry_run,
             confirmed_by_user=confirmed_by_user,
             llm_provider=llm_provider or None,
@@ -204,6 +269,129 @@ def update_config(
             reporting_timezone=reporting_timezone or None,
             reporting_language=reporting_language or None,
             tools_surface=tools_surface or None,
+            product_context_source_dirs=product_context_source_dirs or None,
+            product_context_max_source_file_mb=(
+                product_context_max_source_file_mb or None
+            ),
+            product_context_max_note_mb=product_context_max_note_mb or None,
+            product_context_max_chunks_per_file=(
+                product_context_max_chunks_per_file or None
+            ),
+            product_context_max_chunks_per_run=(
+                product_context_max_chunks_per_run or None
+            ),
+        )
+        if isinstance(result, dict) and result.get("storage_written"):
+            # Config was written to disk; drop the cached config so this running
+            # session immediately reflects the change (e.g. product context
+            # source dirs) instead of serving the stale startup snapshot.
+            _context.reset_config()
+        return result
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.PREFLIGHT)
+
+
+@app.tool()
+def add_product_context_note(
+    title: str,
+    content: str,
+    source_name: str = "",
+    dry_run: bool = True,
+    confirmed_by_user: bool = False,
+) -> dict:
+    """Save pasted product/solution text as a managed context note.
+
+    Use this when the user pastes product docs, solution notes, ICP notes,
+    pricing/packaging notes, positioning, competitor notes, or other
+    seller-side knowledge directly into the host app. Intent alias:
+    context.note.add.
+
+    Defaults to dry_run=true and does not call LLMs, embeddings, MongoDB, or
+    indexing. Actual local file writes require confirmed_by_user=true. After
+    saving, run index_product_context to build the retrieval cache, then
+    get_product_context to verify retrieval. The response returns metadata and
+    paths only, not the full raw note content.
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.tools import add_product_context_note as _t
+
+        return _t.handle(
+            cfg=_context.config(),
+            title=title,
+            content=content,
+            source_name=source_name,
+            dry_run=dry_run,
+            confirmed_by_user=confirmed_by_user,
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.PREFLIGHT)
+
+
+@app.tool()
+def index_product_context(
+    source_dir: str = "",
+    force_rebuild: bool = False,
+    dry_run: bool = True,
+) -> dict:
+    """Index seller-side product/solution documents into local RAG cache.
+
+    Use this after placing product docs in the configured product_context
+    source directory, or pass source_dir for a one-off folder/file. This scans
+    txt/md/json/csv/pdf/docx files, skips unsupported pptx/xlsx files for now, rejects
+    secret-shaped content, chunks safe text, and stores local embeddings for
+    later retrieval. Intent alias: context.index.
+
+    Defaults to dry_run=true so the user can preview what would be indexed.
+    Actual cache writes require dry_run=false. This is seller-side knowledge;
+    it is kept separate from customer evidence and does not update deal scores.
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.tools import index_product_context as _t
+
+        embedding_provider = None
+        if not dry_run:
+            embedding_provider, response = _embedding_preflight_response()
+            if response is not None:
+                return response
+        return _t.handle(
+            cfg=_context.config(),
+            embedding_provider=embedding_provider,
+            source_dir=source_dir,
+            force_rebuild=force_rebuild,
+            dry_run=dry_run,
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.PREFLIGHT)
+
+
+@app.tool()
+def get_product_context(query: str, limit: int = 5) -> dict:
+    """Retrieve seller-side product/solution context snippets.
+
+    Use this when the user asks what product knowledge the server can use, or
+    before strategy/extraction work that needs ICP, value props, competitors,
+    integrations, disqualifiers, or positioning context. This reads only the
+    local product-context cache built by index_product_context. Intent alias:
+    context.get.
+
+    Read-only. Returns bounded snippets and source metadata, not full raw
+    documents. Product context is seller-side knowledge: it can guide
+    interpretation but must not be treated as customer-stated evidence.
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.tools import get_product_context as _t
+
+        embedding_provider, response = _embedding_preflight_response()
+        if response is not None:
+            return response
+        return _t.handle(
+            cfg=_context.config(),
+            embedding_provider=embedding_provider,
+            query=query,
+            limit=limit,
         )
     except Exception as exc:
         return envelope_from_exception(exc, stage=Stage.PREFLIGHT)
@@ -1498,9 +1686,11 @@ def analyze_deal(deal_id: str) -> dict:
     Use this only when the user explicitly asks for generated strategy prose,
     next-meeting strategy, or wants bd_strategy persisted. It calls the
     configured server-side LLM and may write the generated strategy back to the
-    deal. For routine status/risk/uncertainty review, use get_deal_review. For
-    missing-info prioritization, use get_deal_gaps. Do not call this just
-    because the user asks "how is this deal going?"; start with get_deal_review.
+    deal. If product context is indexed, it may use bounded seller-side snippets
+    for positioning context and stores only refs metadata. For routine
+    status/risk/uncertainty review, use get_deal_review. For missing-info
+    prioritization, use get_deal_gaps. Do not call this just because the user
+    asks "how is this deal going?"; start with get_deal_review.
     Intent alias: strategy.analyze.
     """
     try:
@@ -1511,6 +1701,7 @@ def analyze_deal(deal_id: str) -> dict:
             mongo=_context.mongo(),
             llm=_context.llm_provider(),
             cfg=_context.config(),
+            embedding_provider=_context.embedding_provider(),
             deal_id=deal_id,
         )
     except Exception as exc:

@@ -31,6 +31,7 @@ CONFIG_ENV_KEYS = (
     "DEAL_INTEL_STORAGE_BACKEND",
     "DEAL_INTEL_TOOLS_SURFACE",
     "DEAL_INTEL_REPORTING_LANGUAGE",
+    "DEAL_INTEL_PRODUCT_CONTEXT_SOURCE_DIRS",
 )
 
 
@@ -978,26 +979,44 @@ def mongo_apply_vector_index(
     from deal_intel.atlas_vector_indexes import (
         build_create_search_index_command,
         deal_summary_vector_index_name,
+        deal_summary_vector_index_summary,
         load_deal_summary_vector_index_spec,
     )
     from deal_intel.storage.mongodb import MongoDBClient
 
     cfg = _env.load_config()
     database = _mapping(_mapping(cfg).get("mongodb")).get("database", "deal_intel")
-    spec = load_deal_summary_vector_index_spec()
-    command = build_create_search_index_command(dimensions=dimensions)
-    payload = {
-        "ok": True,
-        "dry_run": not apply,
-        "database": database,
-        "collection": spec["collection"],
-        "index_name": deal_summary_vector_index_name(),
-        "minimum_cluster_tier": spec["minimum_cluster_tier"],
-        "dimensions": dimensions,
-        "command": command,
-        "policy": "Pro/atlas mode must not silently fall back to python_cosine.",
-    }
-    if apply:
+    try:
+        spec = load_deal_summary_vector_index_spec()
+        command = build_create_search_index_command(dimensions=dimensions)
+        index_summary = deal_summary_vector_index_summary(dimensions=dimensions)
+        payload = {
+            "ok": True,
+            "dry_run": not apply,
+            "database": database,
+            "collection": spec["collection"],
+            "index_name": deal_summary_vector_index_name(),
+            "minimum_cluster_tier": spec["minimum_cluster_tier"],
+            "dimensions": dimensions,
+            "index": index_summary,
+            "command": command,
+            "policy": "Pro/atlas mode must not silently fall back to python_cosine.",
+        }
+    except Exception as exc:
+        payload = {
+            "ok": False,
+            "dry_run": not apply,
+            "database": database,
+            "dimensions": dimensions,
+            "result": "error",
+            "error": _redact_cli_error(exc),
+            "hint": (
+                "Use a positive vector dimension count compatible with the "
+                "embedding provider and the bundled deal_summary_vector spec."
+            ),
+        }
+
+    if payload["ok"] and apply:
         try:
             client = MongoDBClient(database=database)
             payload["result"] = _safe_mongo_command_result(
@@ -1020,6 +1039,70 @@ def mongo_apply_vector_index(
         typer.echo(json.dumps(payload, ensure_ascii=False, indent=2, default=str))
     else:
         typer.echo(_format_mongo_apply_vector_index(payload))
+
+    if not payload["ok"]:
+        raise typer.Exit(code=1)
+
+
+@mongo_app.command("refresh-chart-ready")
+def mongo_refresh_chart_ready(
+    target: str = typer.Option(
+        "all",
+        "--target",
+        help="Refresh target: all, weekly_pipeline, customer_themes, or pipeline_trend.",
+    ),
+    as_of: str | None = typer.Option(
+        None,
+        "--as-of",
+        help="Dashboard date in YYYY-MM-DD format. Defaults to reporting timezone today.",
+    ),
+    lookback_days: int = typer.Option(
+        7,
+        "--lookback-days",
+        help="Trend lookback window, used only by pipeline_trend.",
+    ),
+    apply: bool = typer.Option(
+        False,
+        "--apply",
+        help="Write materialized chart-ready rows. Without this flag, dry-run only.",
+    ),
+    json_output: bool = typer.Option(
+        False,
+        "--json",
+        help="Print structured JSON instead of concise text.",
+    ),
+) -> None:
+    """Build or refresh chart-ready MongoDB collections for Atlas Charts."""
+
+    from deal_intel import _context
+    from deal_intel.chart_ready_refresh import refresh_chart_ready_collections
+
+    try:
+        payload = refresh_chart_ready_collections(
+            _context.mongo(),
+            _context.config(),
+            target=target,
+            as_of=as_of,
+            lookback_days=lookback_days,
+            apply=apply,
+        )
+    except Exception as exc:
+        payload = {
+            "ok": False,
+            "dry_run": not apply,
+            "target": target,
+            "error": _redact_cli_error(exc),
+        }
+        if json_output:
+            typer.echo(json.dumps(payload, ensure_ascii=False, indent=2, default=str))
+        else:
+            typer.echo(_format_mongo_refresh_chart_ready(payload))
+        raise typer.Exit(code=1) from exc
+
+    if json_output:
+        typer.echo(json.dumps(payload, ensure_ascii=False, indent=2, default=str))
+    else:
+        typer.echo(_format_mongo_refresh_chart_ready(payload))
 
     if not payload["ok"]:
         raise typer.Exit(code=1)
@@ -1213,6 +1296,14 @@ def render_atlas_dashboard(
         "--lookback-days",
         help="Trend lookback window, used only by the pipeline_trend dashboard.",
     ),
+    source: str = typer.Option(
+        "raw",
+        "--source",
+        help=(
+            "Spec source: raw for source collections, "
+            "chart-ready for materialized dashboard collections."
+        ),
+    ),
     output: Path | None = typer.Option(
         None,
         "--output",
@@ -1236,6 +1327,7 @@ def render_atlas_dashboard(
                 as_of=as_of,
                 lookback_days=lookback_days,
                 dashboard=dashboard,
+                source=source,
             )
             if chart_id
             else render_dashboard_spec(
@@ -1243,6 +1335,7 @@ def render_atlas_dashboard(
                 cfg,
                 as_of=as_of,
                 lookback_days=lookback_days,
+                source=source,
             )
         )
     except ValueError as exc:
@@ -2254,6 +2347,47 @@ def _format_mongo_apply_vector_index(payload: dict) -> str:
     return "\n".join(lines)
 
 
+def _format_mongo_refresh_chart_ready(payload: dict) -> str:
+    if not payload.get("ok"):
+        lines = [
+            "Mongo chart-ready refresh: failed",
+            f"Target: {payload.get('target')}",
+        ]
+        if payload.get("error"):
+            lines.append(f"Error: {payload['error']}")
+        return "\n".join(lines)
+
+    status = "dry-run" if payload.get("dry_run") else "applied"
+    lines = [
+        f"Mongo chart-ready refresh: {status}",
+        f"Target: {payload.get('target')}",
+        f"As of: {payload.get('as_of')}",
+        f"Generated at: {payload.get('generated_at')}",
+        f"Total rows: {payload.get('total_row_count')}",
+    ]
+    for target in payload.get("targets") or []:
+        lines.append(
+            "- "
+            f"{target.get('target')} -> {target.get('collection')}: "
+            f"{target.get('row_count')} row(s)"
+        )
+        write_result = target.get("write_result")
+        if write_result:
+            lines.append(
+                "  write: "
+                f"deleted={write_result.get('deleted_count')}, "
+                f"inserted={write_result.get('inserted_count')}"
+            )
+    warnings = payload.get("warnings") or []
+    if warnings:
+        lines.append("Warnings:")
+        for warning in warnings:
+            lines.append(f"- {warning}")
+    if payload.get("dry_run"):
+        lines.append("Run again with --apply to replace rows in MongoDB.")
+    return "\n".join(lines)
+
+
 def _format_local_data_status(payload: dict) -> str:
     return "\n".join(
         [
@@ -2355,6 +2489,7 @@ def _summarize_config_for_display(cfg: dict[str, Any]) -> dict[str, Any]:
     storage = _mapping(cfg.get("storage"))
     tools = _mapping(cfg.get("tools"))
     reporting = _mapping(cfg.get("reporting"))
+    product_context = _mapping(cfg.get("product_context"))
     pipeline = _mapping(cfg.get("pipeline"))
     expected_close = _mapping(pipeline.get("expected_close"))
     metrics = _mapping(cfg.get("metrics"))
@@ -2390,6 +2525,11 @@ def _summarize_config_for_display(cfg: dict[str, Any]) -> dict[str, Any]:
         "reporting": {
             "timezone": reporting.get("timezone"),
             "output_dir": reporting.get("output_dir"),
+        },
+        "product_context": {
+            "enabled": product_context.get("enabled", True),
+            "source_dirs": product_context.get("source_dirs"),
+            "cache_dir": product_context.get("cache_dir"),
         },
         "pipeline": {
             "expected_close_default_days": expected_close.get("default_days"),

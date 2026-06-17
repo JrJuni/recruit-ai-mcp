@@ -65,6 +65,45 @@ def load_config() -> dict:
     if reporting_language_env in _VALID_REPORT_LANGUAGES:
         config.setdefault("reporting", {})["language"] = reporting_language_env
 
+    source_dirs_env = os.environ.get("DEAL_INTEL_PRODUCT_CONTEXT_SOURCE_DIRS", "").strip()
+    if source_dirs_env:
+        source_dirs = [
+            item.strip()
+            for item in source_dirs_env.split(";")
+            if item.strip() and not _looks_secret_like(item.strip())
+        ]
+        if source_dirs:
+            config.setdefault("product_context", {})["source_dirs"] = source_dirs
+
+    _apply_product_context_int_env(
+        config,
+        "DEAL_INTEL_PRODUCT_CONTEXT_MAX_SOURCE_FILE_MB",
+        "max_source_file_mb",
+        minimum=1,
+        maximum=500,
+    )
+    _apply_product_context_int_env(
+        config,
+        "DEAL_INTEL_PRODUCT_CONTEXT_MAX_NOTE_MB",
+        "max_note_mb",
+        minimum=1,
+        maximum=20,
+    )
+    _apply_product_context_int_env(
+        config,
+        "DEAL_INTEL_PRODUCT_CONTEXT_MAX_CHUNKS_PER_FILE",
+        "max_chunks_per_file",
+        minimum=10,
+        maximum=20000,
+    )
+    _apply_product_context_int_env(
+        config,
+        "DEAL_INTEL_PRODUCT_CONTEXT_MAX_CHUNKS_PER_RUN",
+        "max_chunks_per_run",
+        minimum=10,
+        maximum=50000,
+    )
+
     return config
 
 
@@ -74,3 +113,31 @@ def _deep_merge(base: dict, override: dict) -> None:
             _deep_merge(base[k], v)
         else:
             base[k] = v
+
+
+def _looks_secret_like(value: str) -> bool:
+    lowered = value.lower()
+    return (
+        "mongodb://" in lowered
+        or "mongodb+srv://" in lowered
+        or value.startswith(("sk-", "sk_", "xoxb-", "ghp_"))
+    )
+
+
+def _apply_product_context_int_env(
+    config: dict,
+    env_name: str,
+    field: str,
+    *,
+    minimum: int,
+    maximum: int,
+) -> None:
+    raw = os.environ.get(env_name, "").strip()
+    if not raw:
+        return
+    try:
+        value = int(raw)
+    except ValueError:
+        return
+    if minimum <= value <= maximum:
+        config.setdefault("product_context", {})[field] = value
