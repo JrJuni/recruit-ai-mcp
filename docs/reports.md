@@ -576,6 +576,10 @@ CSV and Markdown artifacts.
 - Reads `analytics_snapshots` through `MongoDBClient.list_analytics_snapshots()`.
 - Reuses `build_pipeline_trend_summary()`.
 - Writes a UTF-8 BOM CSV and a Markdown summary.
+- Markdown uses the configured reporting timezone for the visible generated
+  timestamp while preserving UTC metadata in the response contract.
+- Markdown includes a deterministic executive summary and human-readable KPI
+  formatting for counts, money, health percentage, and deltas.
 - LLM / embedding: none.
 - MongoDB writes: none.
 

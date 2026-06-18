@@ -70,6 +70,9 @@ Immediate post-v2 quality order:
    - Started on 2026-06-18 with human-facing Markdown header polish:
      visible report timestamps now use the configured reporting timezone while
      machine `generated_at` remains UTC.
+   - Pipeline trend Markdown now has timezone-aware headers, deterministic
+     executive-summary bullets, and readable KPI formatting for counts, money,
+     health percentages, and deltas.
    - Treat `export_report` as meeting/manager-report generation, not a ledger
      dump.
    - Keep deterministic metrics as the source of truth, but allow host-assisted

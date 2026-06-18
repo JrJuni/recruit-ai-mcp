@@ -232,6 +232,7 @@ def _handle_pipeline_trend(
         report,
         generated_at=reporting.generated_at,
         language=language,
+        timezone=reporting.timezone,
     )
     csv_result = save_report_csv(
         report,

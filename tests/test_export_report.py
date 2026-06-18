@@ -287,7 +287,7 @@ def test_export_report_writes_pipeline_trend_csv_and_markdown(tmp_path) -> None:
 
     result = export_report.handle(
         mongo=mongo,
-        cfg={"reporting": {"output_dir": str(tmp_path)}},
+        cfg={"reporting": {"output_dir": str(tmp_path), "timezone": "Asia/Seoul"}},
         report_type="pipeline_trend",
         stage="proposal",
         industry="IT",
@@ -320,7 +320,13 @@ def test_export_report_writes_pipeline_trend_csv_and_markdown(tmp_path) -> None:
     assert markdown_path.name.startswith("pipeline_trend_")
     assert csv_path.read_bytes().startswith(b"\xef\xbb\xbf")
     assert markdown_path.read_bytes().startswith(b"\xef\xbb\xbf")
-    assert "Pipeline Trend Report" in markdown_path.read_text(encoding="utf-8-sig")
+    markdown = markdown_path.read_text(encoding="utf-8-sig")
+    assert "Pipeline Trend Report" in markdown
+    assert "Generated at:" in markdown
+    assert "Asia/Seoul" in markdown
+    assert "## Executive Summary" in markdown
+    assert "100,000,000 KRW" in markdown
+    assert "70%" in markdown
 
     with csv_path.open(encoding="utf-8-sig", newline="") as file:
         rows = list(csv.DictReader(file))
@@ -336,7 +342,13 @@ def test_export_report_uses_configured_pipeline_trend_language(tmp_path) -> None
 
     result = export_report.handle(
         mongo=mongo,
-        cfg={"reporting": {"output_dir": str(tmp_path), "language": "ko"}},
+        cfg={
+            "reporting": {
+                "output_dir": str(tmp_path),
+                "language": "ko",
+                "timezone": "Asia/Seoul",
+            }
+        },
         report_type="pipeline_trend",
         as_of="2026-06-10",
         lookback_days=7,
@@ -346,6 +358,10 @@ def test_export_report_uses_configured_pipeline_trend_language(tmp_path) -> None
     assert result["language"] == "ko"
     markdown = Path(result["markdown_path"]).read_text(encoding="utf-8-sig")
     assert "# 파이프라인 추세 보고서" in markdown
+    assert "생성 시각:" in markdown
+    assert "Asia/Seoul" in markdown
+    assert "## 핵심 요약" in markdown
+    assert "스냅샷 이력이 아직 부족합니다" in markdown
     assert "## KPI 변화" in markdown
 
 

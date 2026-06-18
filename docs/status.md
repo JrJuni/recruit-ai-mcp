@@ -12,6 +12,28 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-18
 
+### Report Quality v2 - pipeline trend readability polish
+
+Completed:
+
+- Updated `export_report(report_type="pipeline_trend")` Markdown so the
+  visible generated timestamp uses the configured reporting timezone.
+- Added a deterministic executive summary before the KPI table.
+- Formatted trend KPI values for human review: comma-separated counts,
+  currency-suffixed pipeline value, health percentages, and signed deltas.
+- Preserved the deterministic report contract: no LLM, no embeddings, no
+  MongoDB writes, and the returned `generated_at` remains UTC metadata.
+
+Validated:
+
+- `pytest tests\test_export_report.py tests\test_pipeline_trends.py -q -p no:cacheprovider --basetemp .tmp\pytest-pipeline-trend-polish-final`
+  -> 26 passed, 1 environment warning.
+- `ruff check src\deal_intel\reports\pipeline_trend.py src\deal_intel\tools\export_report.py tests\test_export_report.py`
+  -> passed.
+- Local-sample Korean `export_report(report_type="pipeline_trend",
+  as_of="2026-06-10")` generated a Markdown report with an `Asia/Seoul`
+  timestamp, executive summary, readable KRW values, and percentage deltas.
+
 ### Report Quality v2 - timezone-aware Markdown header
 
 Completed:
