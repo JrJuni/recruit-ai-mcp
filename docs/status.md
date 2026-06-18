@@ -59,6 +59,20 @@ Validation:
 - Stale version scan found no `0.2.1`/`0.2.2` references in current release
   entrypoint docs and package metadata.
 
+Deployment:
+
+- Committed and pushed `57acf65` (`Release 0.2.3 npx MCPB handoff`) to
+  `main`.
+- Pushed release tag `v0.2.3`.
+- GitHub Actions release run `27767000102` completed successfully:
+  - release-candidate tests passed;
+  - Python package publish to PyPI passed;
+  - npm bootstrapper publish passed.
+- Registry verification:
+  - PyPI latest: `deal-intel-mcp 0.2.3`;
+  - npm latest: `deal-intel-mcp 0.2.3`;
+  - npm available versions: `0.2.1`, `0.2.2`, `0.2.3`.
+
 ### npm publish auth note
 
 Recorded:
