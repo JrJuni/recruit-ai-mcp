@@ -60,9 +60,9 @@ Yellow:
 
 Not MVP-blocking:
 
-- npx/uvx wrappers.
+- Additional npx polish and future uvx support.
 - Signed MCPB bundles.
-- Atlas Vector Search live validation.
+- Pro-scale Atlas Vector Search hardening beyond the current live smoke.
 - OpenAI API live smoke with paid credits.
 - Deep account people graph / CRM-like contact model.
 
@@ -251,8 +251,8 @@ From `mcpb/`:
 
 ```powershell
 mcpb validate manifest.json
-mcpb pack . deal-intel-mcp-0.1.15.mcpb
-mcpb info deal-intel-mcp-0.1.15.mcpb
+mcpb pack . deal-intel-mcp-0.2.1.mcpb
+mcpb info deal-intel-mcp-0.2.1.mcpb
 ```
 
 Pass criteria:
@@ -263,7 +263,7 @@ Pass criteria:
 - Reinstall smoke in Claude Desktop should show the expected sample or standard
   surface based on selected config.
 - For the current package, the latest known build is
-  `deal-intel-mcp-0.1.15.mcpb` with an unsigned-package warning only.
+  `deal-intel-mcp-0.2.1.mcpb` with an unsigned-package warning only.
 
 ## User Trial Script
 
@@ -297,9 +297,9 @@ Optional zero-config demo script:
 
 Do not block the first MVP on these:
 
-- npx/uvx no-git-clone wrapper.
-- Pro-grade Atlas Vector Search validation.
-- MongoDB Change Streams, Time Series Collections, and Schema Validation.
+- Additional npx/uvx distribution polish beyond the current public npx path.
+- Pro-grade Atlas Vector Search scale validation beyond the current live smoke.
+- MongoDB Change Streams and Time Series Collections.
 - Full customer/account people graph.
 - Human-readable CSV redesign beyond the current weekly/trend reports.
 - OpenAI API live smoke when no API credits are available.

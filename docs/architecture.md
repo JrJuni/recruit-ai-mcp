@@ -56,6 +56,23 @@ Feature placement rule:
 - `pro` is reserved for paid infrastructure, paid API defaults, scale paths, or
   admin automation that assumes capabilities beyond Free/M0.
 
+## Distribution Surfaces
+
+The same Python MCP server is shipped through several front doors. None of
+these should duplicate product logic.
+
+| Surface | Current role | Primary files | Notes |
+|---|---|---|---|
+| PyPI package | Immutable Python package source for runtime installs | `pyproject.toml`, packaged resources under `src/deal_intel/resources` | Published as `deal-intel-mcp==0.2.1`; base install excludes embedding dependencies unless the `embedding` extra is selected. |
+| npm/npx bootstrapper | No-git-clone setup, runtime creation, smoke, and MCP handoff | `npm/package.json`, `npm/bin/deal-intel-mcp.js`, `docs/bootstrapper-contract.md` | Published as `deal-intel-mcp@0.2.1`; still requires Node.js 18+ and Python 3.11+. It creates `~/.deal-intel/runtime/venv` and installs the PyPI package. |
+| MCPB bundle | Claude Desktop installer/config surface | `mcpb/manifest.json`, `mcpb/server/launcher.py`, `mcpb/README.md` | It launches an already installed Python runtime. It should not install Python dependencies or store secrets in repo files. |
+| Git clone/editable install | Contributor and customizer path | repo root, `pyproject.toml`, docs | Best for developers who want to inspect or modify prompts, reports, storage, or framework logic. |
+
+Version alignment matters across `pyproject.toml`, `npm/package.json`, and
+`mcpb/manifest.json`. Release artifacts may lag intentionally during smoke
+work, but public docs should name the latest published package path and avoid
+claiming that npx is future-only.
+
 ## Core Components
 
 ### FastMCP Server

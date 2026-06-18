@@ -24,9 +24,9 @@ keeping the product usable for one-person or small AI-assisted sales teams.
 
 Current positioning:
 
-- v1 is a public MVP: useful enough to try, honest about limitations, and
-  optimized for AI-assisted setup with `full`/MongoDB as the default real-data
-  path.
+- v1/v2 public package line is useful enough to try, honest about limitations,
+  and optimized for AI-assisted setup with `full`/MongoDB as the default
+  real-data path.
 - v2 should deepen the product and architecture before adding a no-clone
   wrapper. The main risk after v1 is not installation friction; it is hardcoded
   product assumptions becoming expensive to undo.
@@ -35,12 +35,14 @@ Current positioning:
   qualification dimensions, weights, extraction hints, and stage rules.
 - MongoDB Free/M0-compatible hardening belongs in `full`; paid-infra paths such
   as Atlas Vector Search at scale belong in `pro`.
-- A future `npx` path should be a real full bootstrapper, not a thin wrapper
-  that still asks non-developers to understand Python packaging details.
+- The public `npx` path now exists. Future distribution work should harden
+  prerequisite detection, cross-platform smoke, and installer UX rather than
+  adding another thin wrapper.
 
 Current v2 state:
 
-- V1 public release happened with the git-clone/MCPB-assisted install path.
+- Public release now includes PyPI `deal-intel-mcp==0.2.1`, npm
+  `deal-intel-mcp@0.2.1`, MCPB artifacts, and the git-clone/customizer path.
 - Architecture developer-map expansion is in place in [architecture.md](architecture.md).
 - Qualification Framework v2 is implemented as the default architecture:
   MEDDPICC remains the immutable built-in default preset, while custom
@@ -55,6 +57,8 @@ Current v2 state:
   checks, Pro Atlas Vector Search static hardening, live M10+ vector smoke, and
   final integration packaging.
 - `release/latest/` now points at MCPB `0.2.1`.
+- `AI_INSTALL_SCENARIOS.md` documents the current install routes for
+  non-developers, beginners, and developers.
 
 Immediate v2 closure order:
 
@@ -113,14 +117,13 @@ Deferred after v2 closure:
      warnings, and cache health.
    - Optional Mongo/shared product context storage after local cache proves
      useful.
-2. Full npx bootstrapper.
-   - Defer until the product shape is stable enough that packaging does not
-     hide architecture churn.
-   - Target a true no-git-clone flow: install/check/run commands that can guide
-     Python discovery, package installation, config doctor, smoke tests, and MCP
-     startup.
-   - Do not ship a thin `npx` wrapper as the main post-v1 answer if it still
-     requires users to manually understand the Python install path.
+2. Bootstrapper polish and install UX hardening.
+   - Keep the current npx path, but improve prerequisite detection and
+     cross-platform guidance.
+   - Add or refresh Windows/macOS fresh-machine smoke notes after meaningful
+     packaging changes.
+   - Keep MCPB as the host configuration surface and npx/PyPI as the runtime
+     installation path.
 3. Post-v2 workspace/project profiles.
    - Support multiple sales workspaces without editing global config by hand.
    - A workspace should bundle at least MongoDB database name, optional URI

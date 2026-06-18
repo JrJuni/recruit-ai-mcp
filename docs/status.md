@@ -12,6 +12,31 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-18
 
+### Documentation current-state sweep
+
+Completed:
+
+- Updated Korean companion docs and active contract docs to the current
+  `0.2.1` public package state.
+- Aligned the documented MCP tool surface with the runtime contract:
+  `sample=24`, `standard=38`, `developer=41`.
+- Updated distribution/bootstrapper docs so npm/npx is described as the current
+  published no-git-clone front door, not a future-only plan.
+- Added a Distribution Surfaces section to
+  [architecture.md](architecture.md) covering PyPI, npm/npx, MCPB, and editable
+  git-clone paths.
+- Added lesson-learned entries for npm browser/device-key authentication and
+  the MCPB/runtime dependency boundary.
+
+Validated:
+
+- `deal-intel config show` on the local full profile reported
+  `resolved=standard` and `mcp_tools=38`.
+- `deal-intel config doctor --offline --json` reported `ok: true`, full/mongo,
+  zero failed checks, and only the expected offline storage-ping skip.
+- Direct runtime surface check reported
+  `sample=24`, `standard=38`, `developer=41`.
+
 ### Install scenario routing for Claude Desktop users
 
 Completed:

@@ -356,8 +356,8 @@ Before Milestone 1 started, all 28 findings were resolved. The current gate is:
 pytest -> 128 passed
 ruff check . -> All checks passed
 wheel build -> passed
-FastMCP runtime surface exposure -> sample 24 tools, standard 35 tools,
-developer 38 tools
+FastMCP runtime surface exposure -> sample 24 tools, standard 38 tools,
+developer 41 tools
 MongoDB Atlas read smoke -> passed
 ```
 

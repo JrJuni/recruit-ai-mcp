@@ -20,6 +20,57 @@ Related: files or docs
 
 ---
 
+## [2026-06-18] npm publish may require browser/device-key authentication
+
+Tried: Publish `deal-intel-mcp@0.2.1` with `npm publish --access public`.
+
+Result: The first publish attempt failed with a 403 because the npm account
+required two-factor authentication or a granular token that can bypass 2FA.
+With security-key/recovery-code style 2FA, there may be no one-time password to
+paste at the CLI. Re-running publish prompted a browser authentication URL and
+completed successfully after the account was authenticated there.
+
+Lesson:
+
+- Do not assume npm 2FA always means `--otp <code>`.
+- If npm returns a 403 about 2FA, rerun publish and follow the browser/device
+  authentication flow when offered.
+- Keep npm publication steps in a maintainer-only checklist, because registry
+  authentication is account-specific and should not be scripted into normal
+  user setup.
+- Verify the published package with `npm view deal-intel-mcp version` or a
+  fresh `npx deal-intel-mcp@<version> ...` smoke after publish.
+
+Related: `docs/release-publish-checklist.md`, `npm/README.md`.
+
+---
+
+## [2026-06-18] MCPB is a config surface, not a dependency installer
+
+Tried: Treat the Claude Desktop MCPB bundle as the main non-developer install
+surface.
+
+Result: MCPB can collect sensitive runtime settings and launch a selected
+Python interpreter, but it does not bundle or install Python dependencies. A
+non-developer with only Claude Desktop still needs Node.js and Python for the
+npx bootstrapper path, or an existing Python runtime prepared by another setup
+path.
+
+Lesson:
+
+- Separate "host app is installed" from "server runtime is installed".
+- In user-facing docs, route non-developers through `npx deal-intel-mcp setup`
+  after Node.js 18+ and Python 3.11+ are available.
+- Use MCPB to pass the resulting Python path and sensitive config values into
+  Claude Desktop.
+- Do not claim a true one-click zero-prerequisite install until the package
+  actually bundles or provisions the runtime dependencies.
+
+Related: `AI_INSTALL_SCENARIOS.md`, `AI_NPX_INSTALL_GUIDE.md`,
+`mcpb/README.md`, `docs/bootstrapper-contract.md`.
+
+---
+
 ## [2026-06-13] PyMongo command responses can contain non-JSON types
 
 Tried: Print the result of `deal-intel mongo apply-schema --apply --json`

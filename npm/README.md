@@ -1,10 +1,11 @@
 # deal-intel-mcp Bootstrapper
 
-This is the future `npx` front door for Deal Intelligence MCP.
+This is the published `npx` front door for Deal Intelligence MCP.
 
-Current status: D3.5 local-wheel fresh-runtime smoke passed. The npm package
-metadata is publish-shaped but not published yet, so public
-`npx deal-intel-mcp ...` smoke is pending.
+Current status: `deal-intel-mcp@0.2.1` is published to npm and installs the
+Python package from PyPI by default. Public npx smoke has passed with an
+explicit Python 3.11+ interpreter path. The bootstrapper removes the need for a
+git clone or editable install, but it does not bundle Node.js or Python itself.
 
 The Node package must not reimplement the MCP server. It installs, finds, and
 runs the Python package described by `docs/bootstrapper-contract.md`.
@@ -49,9 +50,18 @@ $env:DEAL_INTEL_PYTHON="$HOME\miniconda3\envs\deal-intel\python.exe"
 node bin\deal-intel-mcp.js doctor
 ```
 
-## Pre-publish fresh smoke
+## Release smoke
 
-Before npm/PyPI publication, use a local wheel:
+For normal public-release smoke, use the published package:
+
+```powershell
+npx.cmd deal-intel-mcp@0.2.1 setup --python "<path-to-python-3.11+>"
+npx.cmd deal-intel-mcp@0.2.1 smoke --profile-only
+npx.cmd deal-intel-mcp@0.2.1 where --json
+npx.cmd deal-intel-mcp@0.2.1 mcp-config --json
+```
+
+For pre-publish or local regression smoke, use a local wheel:
 
 ```powershell
 $env:DEAL_INTEL_HOME = (Resolve-Path ".tmp\d35-fresh-home").Path

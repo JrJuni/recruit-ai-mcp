@@ -2,18 +2,18 @@
 
 This plan keeps distribution priorities straight:
 
-1. The first external MVP can ship with an AI-assisted git-clone path.
-2. No-git-clone wrappers are useful, but they should not block the current
-   full-by-default MVP readiness path.
-3. Wrapper work should be mechanical only after the Python package is safe to
-   run outside a repo checkout.
-4. Post-v2 wrapper work should produce a full bootstrapper, not a thin wrapper
-   that merely moves the Python path problem into Node.js.
+1. The public `0.2.1` line ships through PyPI, npm/npx, and MCPB artifacts.
+2. The main human setup path remains `full` with MongoDB Atlas; `sample` is an
+   optional no-MongoDB trial.
+3. The npm package is a bootstrapper, not a second implementation of the MCP
+   server.
+4. The next distribution work is install UX hardening, not another thin
+   wrapper.
 
 ## Current Decision
 
 The dependency-inclusive bootstrapper is available as `npx deal-intel-mcp`.
-It is now the preferred no-git-clone path when the user has Node.js and a
+It is the preferred no-git-clone path when the user has Node.js 18+ and a
 usable Python 3.11+ interpreter.
 
 The bootstrapper reduces the current prerequisite burden:
@@ -33,28 +33,30 @@ The recommended path is:
 4. Keep MCPB as the Claude Desktop installer/config surface, but stop making it
    responsible for Python dependency installation.
 
-## Current MVP Distribution
+## Current Public Distribution
 
 Supported today:
 
-- Git clone.
-- Conda or existing Python 3.11+ interpreter.
-- `pip install -e ".[dev,embedding]"` for development, or `pip install -e .`
-  for a lightweight install.
-- Claude Desktop MCPB bundle that points at the user-selected Python
-  interpreter.
+- PyPI: `pip install "deal-intel-mcp[embedding]==0.2.1"`.
+- npm/npx: `npx deal-intel-mcp@0.2.1 setup --python <python-3.11+>`.
+- Git clone plus editable install for contributors and customizers.
+- Claude Desktop MCPB bundle that points at either the npx-managed Python
+  runtime or a user-selected Python interpreter.
 - `full` profile for the default human install path.
 - `sample` profile for zero-config AI evaluation or demos.
+- `pro` profile for paid-infra Atlas Vector Search/API-key defaults.
 - Safe user-memory tools for repo-local operating preferences and feedback.
 
-This is acceptable for the first MVP because the target user can ask an AI
-assistant to clone the repo, run setup commands, and configure Claude Desktop.
-Point that assistant at `AI_START_HERE.md` first.
+Point AI-assisted installers at `AI_START_HERE.md` first, then
+`AI_INSTALL_SCENARIOS.md` to choose between npx, PyPI/editable install, and
+sample/full/pro setup.
 
 ## Packaging Constraint
 
-The Python package now has the first wheel/uvx-readiness layer, but wrappers
-should still be treated as a follow-up distribution surface.
+The Python package has passed wheel/sdist and clean-install smoke, and the npm
+bootstrapper is published. Future wrapper work should focus on first-run
+guidance, prerequisite detection, and cross-platform smoke, not duplicating the
+Python server.
 
 Current contract:
 
@@ -104,11 +106,12 @@ Why first:
 
 ### D1. External MVP trial readiness
 
-Goal: prove that the current git-clone plus editable-install path is clear
-enough for a first external evaluator before adding wrapper maintenance.
+Goal: keep first-run documentation clear across the current published paths:
+npx bootstrapper, PyPI, MCPB, and git clone for customizers.
 
-Current status: first-pass checklist implemented; full sign-off still requires
-the gates in `docs/mvp-readiness.md`.
+Current status: first-pass checklist implemented. Public release readiness is
+tracked through `docs/mvp-readiness.md`, `AI_START_HERE.md`, and
+`AI_INSTALL_SCENARIOS.md`.
 
 Scope boundary: D1 is a first-run distribution gate, not deep MongoDB feature
 validation. The human-facing trial should start in `full`. `sample` is an
@@ -138,22 +141,23 @@ MongoDB-backed feature checks belong outside D1:
 - targeted storage/index/schema tests
 - bounded Atlas read/write smoke when the change touches live persistence
 
-Why this comes before wrappers:
+Why this still matters after wrappers:
 
 - It tests the experience users have today.
-- It prevents npx/uvx work from covering over unclear product setup language.
+- It prevents npx from covering over unclear product setup language.
 - It gives a concrete checklist for friend-review and AI-assisted setup without
   turning the demo profile into the product default.
 
 ### D2. Python package distribution hardening
 
-Goal: make the Python package installable from an immutable distribution source
-before wrapping it with Node.
+Goal: keep the Python package installable from an immutable distribution source
+so npx/MCPB/generic Python installs all rely on the same server package.
 
 Current status:
 
 - D2.1 local artifact smoke is complete.
 - D2.2 clean wheel install smoke is complete.
+- PyPI `deal-intel-mcp==0.2.1` is published.
 - Local `--no-isolation` build produced both wheel and sdist artifacts.
 - The wheel installs into a temp target and can load packaged defaults, sample
   data, Atlas chart specs, chart-ready specs, Mongo validators, and vector-index
@@ -170,7 +174,7 @@ Current status:
 - Build-isolated artifact creation still needs a CI/release gate. A local
   Windows build-isolation attempt hit a pip-output decoding issue while
   creating the isolated environment.
-- Fresh-install guidance or the future bootstrapper should make smoke output
+- Fresh-install guidance and the npx bootstrapper should make smoke output
   directories explicit, because a local Windows run found `~/.deal-intel/smoke`
   can be permission-sensitive on an already-used machine.
 - Locally built artifacts under `.tmp\d2_*_dist` can inherit restrictive
@@ -178,7 +182,7 @@ Current status:
   normal CI or release workspace and validate that a fresh environment can read
   and install the final wheel.
 
-Target UX after publish:
+Optional uvx-style target for future validation:
 
 ```bash
 uvx deal-intel-mcp config doctor --offline
@@ -204,9 +208,9 @@ Implementation tasks:
 - Keep dependency profile split explicit:
   - base install for config/read-only/sample features;
   - `embedding` extra for semantic search and product context.
-- Decide first registry:
-  - TestPyPI first if publishing package metadata is still uncertain;
-  - PyPI when the package name and public metadata are ready.
+- Registry:
+  - PyPI is the public registry for the Python package.
+  - TestPyPI remains useful only for pre-release validation.
 
 Pros:
 
@@ -214,11 +218,11 @@ Pros:
 - No Node bridge needed.
 - Easier to keep versioning and dependencies in one ecosystem.
 
-Cons:
+Remaining risks:
 
-- Requires users to have or install `uv`.
 - Claude Desktop MCPB still needs a configured Python command or launcher.
-- Needs package-data readiness first.
+- Build-isolated Windows artifact creation should be validated in CI or a clean
+  release workspace.
 
 ### D3. Full npx bootstrapper
 
@@ -227,7 +231,7 @@ Status: implemented and published for `0.2.1`.
 Goal: provide a true no-git-clone command path for non-developer and
 AI-assisted setup.
 
-Target UX after npm publish:
+Current public UX:
 
 ```bash
 npx deal-intel-mcp setup
@@ -247,11 +251,8 @@ Bootstrapper behavior:
 
 - Detect OS and architecture.
 - Detect an existing usable Python 3.11+ interpreter.
-- Prefer `uv` if available for faster and more reproducible installs.
-- If `uv` is missing:
-  - offer clear install instructions;
-  - on supported platforms, optionally install `uv` only after explicit user
-    confirmation.
+- Use Python `venv` plus `pip` as the portable baseline.
+- Future versions may optionally prefer `uv`, but `uv` is not required today.
 - Create or reuse:
   - `~/.deal-intel/runtime/venv`
   - `~/.deal-intel/runtime/bin` or Windows launcher scripts

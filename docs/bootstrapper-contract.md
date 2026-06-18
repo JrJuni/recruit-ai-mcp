@@ -3,9 +3,14 @@
 This contract defines the first dependency-inclusive bootstrapper for
 `deal-intel-mcp`.
 
-The bootstrapper is the future `npx` front door for users who should not need
-to clone the repository, run editable installs, or manually reason about Python
-interpreter paths before the first doctor check.
+The bootstrapper is the published `npx` front door for users who should not
+need to clone the repository or run editable installs before the first doctor
+check.
+
+As of package version `0.2.1`, the public npm package is available and installs
+the Python package from PyPI by default. It still requires Node.js 18+ and a
+usable Python 3.11+ interpreter on the user's machine; it does not bundle
+Python, PyTorch, or embedding models inside the npm tarball.
 
 It must not become a second implementation of the MCP server. Its job is to
 install, locate, and run the Python package safely.
@@ -19,7 +24,7 @@ Target user:
 - a small team that wants the `full` MongoDB-backed path but needs guided setup;
 - a developer who wants a fast disposable setup without reading the repo first.
 
-The bootstrapper should make these commands possible after npm publication:
+The bootstrapper exposes these commands:
 
 ```bash
 npx deal-intel-mcp setup
@@ -80,9 +85,9 @@ Do not write mutable runtime state under:
 
 ## Install Source
 
-Preferred release path:
+Current release path:
 
-1. Install `deal-intel-mcp[embedding]` from PyPI once package metadata is ready.
+1. Install `deal-intel-mcp[embedding]` from PyPI by default.
 2. Use TestPyPI only for pre-release validation.
 3. Allow a GitHub release wheel URL as an explicit fallback or development
    override.
@@ -120,8 +125,8 @@ Required behavior:
 
 - detect OS and architecture;
 - detect usable Python 3.11+;
-- prefer `uv` if available;
-- if `uv` is unavailable, fall back to `python -m venv` and `pip`;
+- use `python -m venv` and `pip` for the current public bootstrapper;
+- keep `uv` as an optional future optimization, not a required dependency;
 - create or reuse `~/.deal-intel/runtime/venv`;
 - install the selected Python package source;
 - write `~/.deal-intel/runtime/install-state.json`;
@@ -257,9 +262,10 @@ Suggested fields:
 
 Do not put secrets in this file.
 
-## Acceptance Gate
+## Regression Gate
 
-D3 implementation is not done until these pass:
+D3 is implemented, but the bootstrapper is only safe to keep publishing while
+these checks continue to pass:
 
 - fresh Windows setup smoke;
 - fresh macOS setup smoke;

@@ -52,33 +52,42 @@ Atlas Charts에서 쓸 수 있게 한다.
 6. 검증하지 못한 위험은 `docs/status.md` 또는 `docs/backlog.md`에 남긴다.
 7. docs를 업데이트하고 의도한 범위만 커밋한다. push는 요청받았을 때 진행한다.
 
-Windows에서 pytest를 돌릴 때는 기본 `%TEMP%`를 쓰지 말고 레포 내부 temp를 쓴다.
-
-```powershell
-& "$HOME\miniconda3\envs\deal-intel\python.exe" -m pytest -q --basetemp=.tmp\pytest-full
-```
-
-Codex/Claude sandbox에서는 `%TEMP%` 아래 `pytest-of-*` 경로가 읽기 불가일 수
-있고, 이 경우 테스트 자체가 실패한 게 아니라 fixture setup 단계에서 막힌다.
-
 ## 현재 MCP 도구
 
-현재 tool count는 21개다. 정확한 기준은 `src/deal_intel/mcp_server.py`다.
+정확한 기준:
 
-- Write/lifecycle:
-  `create_deal`, `add_meeting`, `update_stage`, `update_deal`,
-  `archive_deal`, `restore_deal`, `delete_deal`
-- Demo data:
-  `create_sample_data`, `delete_sample_data`
-- Read/review:
-  `get_deal`, `list_deals`, `get_deal_gaps`, `get_deal_review`
-- BI/reporting:
-  `get_insights`, `get_metrics`, `export_report`
-- Customer themes:
-  `get_customer_themes`, `get_customer_theme_breakdown`,
+- 등록: `src/deal_intel/mcp_server.py`
+- profile별 노출: `src/deal_intel/tool_surfaces.py`
+- 런타임 확인: `get_tool_catalog`, `config_doctor`,
+  `deal-intel config show`
+
+현재 계약 기준 tool surface는 `sample=24`, `standard=38`, `developer=41`이다.
+다만 agent-facing 문서에서는 가능하면 숫자를 하드코딩하지 말고 런타임 도구로
+확인한다.
+
+주요 그룹:
+
+- Config/readiness: `config_doctor`, `update_config`
+- Discovery: `get_tool_catalog`
+- Write/lifecycle: `create_deal`, `add_interaction`, `update_stage`,
+  `update_deal`, `archive_deal`, `restore_deal`, `delete_deal`
+- Product context: `add_product_context_note`, `index_product_context`,
+  `get_product_context`
+- Qualification framework admin: `get_qualification_templates`,
+  `validate_qualification_framework`, `update_qualification_framework`,
+  `list_qualification_frameworks`, `set_active_qualification_framework`,
+  `delete_qualification_framework`, `backfill_qualification`,
+  `backfill_qualification_reextract`
+- Read/review: `get_deal`, `list_deals`, `get_deal_gaps`,
+  `get_deal_review`
+- BI/reporting/export: `get_insights`, `get_metrics`, `get_usage`,
+  `export_report`, `export_data`
+- User memory: `get_user_memory`, `record_user_memory`
+- Customer themes: `get_customer_themes`, `get_customer_theme_breakdown`,
   `get_customer_theme_evidence`
-- Search/analysis:
-  `search_deals`, `analyze_deal`
+- Search/analysis: `search_deals`, `analyze_deal`
+- Deprecated compatibility: `add_meeting`은 developer surface 전용 alias이며,
+  새 작업은 `add_interaction(interaction_type="meeting")`을 사용한다.
 
 ## 중요한 규칙
 
@@ -86,7 +95,8 @@ Codex/Claude sandbox에서는 `%TEMP%` 아래 `pytest-of-*` 경로가 읽기 불
 - provider class를 직접 만들지 말고 `make_llm_provider(config)`를 쓴다.
 - BI/reporting 경로에서는 LLM과 embedding을 사용하지 않는다.
 - metric/report/review 경로는 raw notes, contacts, embedding을 기본적으로 제외한다.
-- `add_meeting`은 stage를 자동 변경하지 않는다. `stage_suggestion`만 반환하고,
-  실제 변경은 사용자 확인 후 `update_stage`로 한다.
+- `add_interaction`은 stage를 자동 변경하지 않는다. 필요하면
+  `stage_suggestion`만 반환하고, 실제 변경은 사용자 확인 후 `update_stage`로 한다.
+- `add_meeting`은 deprecated compatibility alias다.
 - 삭제/수정 도구는 dry-run, 명시적 확인, reason, audit-safe snapshot을 우선한다.
 - 테스트나 문서에 진짜 secret처럼 보이는 placeholder를 쓰지 않는다.
