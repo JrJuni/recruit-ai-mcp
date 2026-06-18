@@ -52,6 +52,14 @@ Follow-up from first trusted-publishing run:
   and support `workflow_dispatch` with `target=npm` so the npm publish can be
   retried without republishing the same PyPI version.
 
+Final registry verification:
+
+- PyPI latest: `deal-intel-mcp 0.2.2`.
+- npm latest: `deal-intel-mcp 0.2.2`.
+- npm available versions: `0.2.1`, `0.2.2`.
+- npm-only trusted-publishing rerun succeeded through GitHub Actions
+  `workflow_dispatch` run `27753104966`.
+
 ### V2 docs and MCPB 0.2.2 release-candidate prep
 
 Completed:
