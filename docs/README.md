@@ -13,17 +13,13 @@ Read these first for normal work:
 2. `../AGENTS.md` or `../CLAUDE.md`
    - Current agent rules, workflow, tool count, and architecture guardrails.
 3. `../AI_START_HERE.md`
-   - AI setup guide: full-by-default for humans, optional sample path for
-     zero-config evaluation.
-4. `../AI_INSTALL_SCENARIOS.md`
-   - Scenario selector for non-developer, beginner, and developer setup paths.
-5. `../AI_NPX_INSTALL_GUIDE.md`
-   - No-git-clone npx bootstrapper install path.
-6. `../AI_USER_TEST_GUIDE.md`
+   - Canonical AI setup guide: full-by-default for humans, npx/editable install
+     routes, optional sample path for zero-config evaluation.
+4. `../AI_USER_TEST_GUIDE.md`
    - First external tester handoff flow after an install path is available.
-7. `status.md`
+5. `status.md`
    - Latest completed work and current verification notes.
-8. `baseline.md`
+6. `baseline.md`
    - MCP tool contracts, input/output shape, persistence behavior, and current
      registration expectations.
 
@@ -35,6 +31,8 @@ These are active source-adjacent contracts.
 
 | File | Use When |
 |---|---|
+| `extending.md` | Forking or customizing the project for a specific sales motion |
+| `customization-recipes.md` | Following practical examples for common fork changes |
 | `baseline.md` | Changing MCP tools, storage behavior, or smoke expectations |
 | `metrics.md` | Changing health, pipeline value, timing, win rate, data quality, or trend metrics |
 | `reports.md` | Changing CSV/Markdown exports or report row shapes |
@@ -51,6 +49,24 @@ These are active source-adjacent contracts.
 | `query-audit.md` | Auditing MongoDB read paths, projections, and index implications |
 | `architecture.md` | Needing deeper architecture context after reading this map |
 | `../mcpb/README.md` | Building or installing the Claude Desktop MCP bundle |
+
+## Developer Customization And Forking
+
+Use these docs when a developer or AI coding agent wants to adapt the server to
+another sales process:
+
+1. `extending.md`
+   - first stop for extension seams, guardrails, and validation habits.
+2. `customization-recipes.md`
+   - concrete examples such as custom qualification frameworks, custom fields,
+     new MCP tools, read-only surfaces, report variants, and product-context
+     parser extensions.
+3. `architecture.md`
+   - deeper ownership map for modules, tools, engines, and change playbooks.
+
+The root `README.md` should stay full-mode product and install oriented. Put
+deep fork instructions in these docs instead of turning the public README into
+an implementation manual.
 
 ## Planning And History
 

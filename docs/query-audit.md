@@ -55,7 +55,7 @@ O1 was an audit only. Follow-up hardening has started in O2/O3:
 | Themes | `get_customer_theme_breakdown` | `list_deals_for_metrics` | Safe restricted projection. |
 | Themes | `get_customer_theme_evidence` | `list_deals_for_metrics` | Safe restricted projection. |
 | Search | `search_deals` | `get_deals_for_search` or `search_by_embedding` | Intentional embedding read for scoring; output strips vectors. |
-| Maintenance | `backfill-customer-themes` | `list_deals_for_theme_backfill` | Intentional raw-note LLM path; keep out of BI/sample-first flow. |
+| Maintenance | `backfill-customer-themes` | `list_deals_for_theme_backfill` | Intentional raw-note LLM path; keep out of BI and zero-config trial flows. |
 | Maintenance | `backfill-qualification-reextract` CLI / `backfill_qualification_reextract` MCP | `list_deals_for_qualification_reextract` | Intentional raw-content LLM path; dry-run first and response must not expose raw content. |
 
 ## Atlas Charts Findings

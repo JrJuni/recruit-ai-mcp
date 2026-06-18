@@ -57,7 +57,7 @@ Current v2 state:
   checks, Pro Atlas Vector Search static hardening, live M10+ vector smoke, and
   final integration packaging.
 - `release/latest/` now points at MCPB `0.2.1`.
-- `AI_INSTALL_SCENARIOS.md` documents the current install routes for
+- `AI_START_HERE.md` documents the current install routes for
   non-developers, beginners, and developers.
 - The v2 readiness gate with UX friction review found no blocker. Functional
   smoke passed across tests, config/profile flow, natural questions,

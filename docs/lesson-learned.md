@@ -66,8 +66,8 @@ Lesson:
 - Do not claim a true one-click zero-prerequisite install until the package
   actually bundles or provisions the runtime dependencies.
 
-Related: `AI_INSTALL_SCENARIOS.md`, `AI_NPX_INSTALL_GUIDE.md`,
-`mcpb/README.md`, `docs/bootstrapper-contract.md`.
+Related: `AI_START_HERE.md`, `mcpb/README.md`,
+`docs/bootstrapper-contract.md`.
 
 ---
 

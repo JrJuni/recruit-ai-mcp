@@ -1,23 +1,21 @@
 # AI Start Here
 
-This is the shortest path for an AI agent helping a new user set up
-`deal-intel-mcp`.
+This is the canonical first-run guide for an AI agent helping a new user set up
+`deal-intel-mcp`. Use it before reading deeper install docs.
 
 For a step-by-step walkthrough for non-developer full-mode setup, read
 [`AI_FULL_INSTALL_GUIDE.md`](AI_FULL_INSTALL_GUIDE.md). For Korean users, use
 [`AI_FULL_INSTALL_GUIDE.ko.md`](AI_FULL_INSTALL_GUIDE.ko.md).
-
-For choosing between non-developer, beginner, and developer install paths, read
-[`AI_INSTALL_SCENARIOS.md`](AI_INSTALL_SCENARIOS.md).
-
-For the no-git-clone npx bootstrapper path, read
-[`AI_NPX_INSTALL_GUIDE.md`](AI_NPX_INSTALL_GUIDE.md).
 
 For first external tester handoff, read
 [`AI_USER_TEST_GUIDE.md`](AI_USER_TEST_GUIDE.md).
 
 For a short public/community demo script, read
 [`docs/public-demo-script.md`](docs/public-demo-script.md).
+
+For fork/customization work, read [`docs/extending.md`](docs/extending.md)
+first, then [`docs/customization-recipes.md`](docs/customization-recipes.md),
+then [`docs/architecture.md`](docs/architecture.md) for the deeper module map.
 
 ## Default Decision
 
@@ -35,12 +33,13 @@ the main product posture.
 
 ## First Run For A Human User
 
-First classify the user's setup:
+First classify the user's setup and choose one route. Keep the human product
+default as `full`; the route only decides how the package gets installed.
 
-- Claude installed, but no Python/IDE: use the npx bootstrapper, but explain
-  that Node.js and Python 3.11+ still need to be installed first.
-- Python/VS Code/Warp already exists: use npx for fast usage, or git clone for
-  customization.
+- Non-developer: use the npx bootstrapper after installing Node.js 18+ and
+  Python 3.11+.
+- Python/VS Code/Warp already exists: use npx for fast usage, or git clone /
+  editable install for customization.
 - Developer/infra engineer: let them use their own Python environment,
   editable install, PyPI install, or npx by preference.
 
@@ -78,8 +77,21 @@ new local setup, the recommended environment name is `deal-intel`:
 & "$HOME\miniconda3\envs\deal-intel\python.exe" -c "import sys; print(sys.executable)"
 ```
 
-If the package is not installed yet, have the user clone or download the repo,
-open a terminal in the repo root, and run:
+If the user wants the no-git-clone install path, run the npx bootstrapper with
+the Python path you just found:
+
+```powershell
+npx.cmd deal-intel-mcp setup --python "$HOME\miniconda3\envs\deal-intel\python.exe"
+npx.cmd deal-intel-mcp mcp-config
+```
+
+The bootstrapper creates a managed runtime under `~/.deal-intel/runtime`,
+installs the Python package, runs a sample smoke check, and prints the Python
+interpreter path to use in MCPB or manual MCP config. It still requires Node.js
+and Python to be installed first.
+
+If the user wants to inspect or customize source code, have them clone or
+download the repo, open a terminal in the repo root, and run:
 
 ```powershell
 & "$HOME\miniconda3\envs\deal-intel\python.exe" -m pip install -e ".[embedding]"
@@ -253,6 +265,15 @@ notices when redistributing modified versions.
 If you are helping customize this repo, prefer small explicit changes. Avoid
 storing secrets in docs. Record meaningful local modifications in docs or user
 memory so future agents can understand what changed.
+
+When the user asks to customize or fork the project:
+
+1. Read `docs/extending.md` for the available extension seams.
+2. Check `docs/customization-recipes.md` for a matching recipe.
+3. Use `docs/architecture.md` only after identifying the subsystem to change.
+4. Prefer built-in extension paths before rewriting core modules.
+5. Keep the default product posture full-first; use sample only as an optional
+   zero-config trial.
 
 ## Do Not
 

@@ -47,9 +47,8 @@ Supported today:
 - `pro` profile for paid-infra Atlas Vector Search/API-key defaults.
 - Safe user-memory tools for repo-local operating preferences and feedback.
 
-Point AI-assisted installers at `AI_START_HERE.md` first, then
-`AI_INSTALL_SCENARIOS.md` to choose between npx, PyPI/editable install, and
-sample/full/pro setup.
+Point AI-assisted installers at `AI_START_HERE.md`. It is the canonical entry
+for npx, PyPI/editable install, and sample/full/pro setup choices.
 
 ## Packaging Constraint
 
@@ -110,8 +109,7 @@ Goal: keep first-run documentation clear across the current published paths:
 npx bootstrapper, PyPI, MCPB, and git clone for customizers.
 
 Current status: first-pass checklist implemented. Public release readiness is
-tracked through `docs/mvp-readiness.md`, `AI_START_HERE.md`, and
-`AI_INSTALL_SCENARIOS.md`.
+tracked through `docs/mvp-readiness.md` and `AI_START_HERE.md`.
 
 Scope boundary: D1 is a first-run distribution gate, not deep MongoDB feature
 validation. The human-facing trial should start in `full`. `sample` is an

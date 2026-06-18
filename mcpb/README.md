@@ -48,8 +48,8 @@ MongoDB Atlas links:
 ```bash
 cd mcpb
 mcpb validate manifest.json
-mcpb pack . deal-intel-mcp-0.2.1.mcpb   # output goes into mcpb/ folder
-mcpb info deal-intel-mcp-0.2.1.mcpb
+mcpb pack . deal-intel-mcp-0.2.2.mcpb   # output goes into mcpb/ folder
+mcpb info deal-intel-mcp-0.2.2.mcpb
 ```
 
 `mcpb` CLI: `npm install -g @anthropic-ai/mcpb` (Node.js 18+).

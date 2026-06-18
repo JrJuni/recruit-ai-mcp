@@ -12,6 +12,27 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-18
 
+### V2 docs and MCPB 0.2.2 release-candidate prep
+
+Completed:
+
+- Added clearer README architecture-at-a-glance and developer customization
+  entry points.
+- Added forkability docs for extension entry points and customization recipes.
+- Consolidated the AI install entrypoint around `AI_START_HERE.md`; removed the
+  separate scenario and npx install guides to reduce first-run document
+  clutter.
+- Prepared source package, npm bootstrapper, and MCPB metadata for `0.2.2`.
+- `release/latest/` intentionally remains on the previous explicit handoff
+  artifact until the maintainer asks to refresh it.
+
+Validation:
+
+- Documentation scans found no stale deleted install-guide links, no stale
+  sample-first wording, and no maintainer-local path/environment references in
+  active public docs.
+- `git diff --check` reports only expected Windows line-ending warnings.
+
 ### V2 polish close-out gate
 
 Completed:
@@ -35,7 +56,7 @@ Validated:
   -> 757 passed, 1 environment warning.
 - `config doctor --offline --json` -> `ok: true`, full profile, zero failed
   checks; runtime diagnostics still correctly report local editable-install
-  version drift (`0.1.0` package metadata vs `0.2.1` source tree).
+  version drift (`0.1.0` package metadata vs the current source tree).
 - `smoke-profile --profile full --offline` -> passed.
 - `smoke-profile --profile sample` -> passed.
 - `smoke-natural-questions --as-of 2026-06-10` -> `OK: True`; output:
@@ -408,7 +429,8 @@ Validated:
 
 Completed:
 
-- Added [AI_INSTALL_SCENARIOS.md](../AI_INSTALL_SCENARIOS.md) to make the
+- Added install scenario guidance, now consolidated into
+  [AI_START_HERE.md](../AI_START_HERE.md), to make the
   three current user setup paths explicit:
   - non-developer with Claude Desktop but no Python/IDE;
   - beginner with Python, VS Code, Warp, or similar tools;
@@ -696,8 +718,9 @@ Implemented:
 - Updated the npm bootstrapper package metadata to match `0.2.1`.
 - Marked the npm package publish-shaped with public access metadata, while
   leaving actual npm publication as a maintainer credential step.
-- Added [AI_NPX_INSTALL_GUIDE.md](../AI_NPX_INSTALL_GUIDE.md) for the future
-  no-git-clone install path after npm/PyPI publication.
+- Added npx install guidance, now consolidated into
+  [AI_START_HERE.md](../AI_START_HERE.md), for the future no-git-clone install
+  path after npm/PyPI publication.
 - Added [AI_USER_TEST_GUIDE.md](../AI_USER_TEST_GUIDE.md) for first external
   tester handoff once an install path is available.
 - Added [release-publish-checklist.md](release-publish-checklist.md) for the
@@ -2838,7 +2861,7 @@ Implemented:
 
 Validation:
 
-- Documentation scan confirmed no stale first-run `sample-first` wording or
+- Documentation scan confirmed no stale first-run sample-oriented wording or
   old `sample=17`, `standard=21`, `developer=24` counts in the active
   first-run docs.
 - Natural question smoke passed:
@@ -3454,7 +3477,7 @@ Verification:
 
 Implemented:
 
-- Added `docs/mvp-readiness.md` as the sample-first external MVP readiness
+- Added `docs/mvp-readiness.md` as the external MVP readiness
   checklist.
 - Captured required gates for full tests, Ruff, sample profile smoke, natural
   question smoke, deal review audit, tool surface/MCPB contract checks, local
@@ -4242,7 +4265,7 @@ Notes:
 
 Implemented:
 
-- Reworked README onboarding to be sample-first: profile inspection, sample
+- Reworked README onboarding to be sample-oriented at that milestone: profile inspection, sample
   dry-run, local sample smoke, then optional Claude Desktop / MongoDB setup.
 - Updated `README.ko.md` with the same user-facing sample/full/pro flow.
 - Updated `mcpb/README.md` for first-run `local_sample` installs.
@@ -4281,7 +4304,7 @@ Not run:
 Implemented:
 
 - Added root-level `AI_START_HERE.md` for AI agents onboarding a new user.
-- The guide enforces a sample-first flow before asking for MongoDB, API keys,
+- The guide enforced a sample-oriented flow before asking for MongoDB, API keys,
   Atlas Vector Search, or paid infrastructure.
 - It points agents to `config profiles`, `config show`,
   `config init --profile sample --dry-run`, `config doctor --offline`,

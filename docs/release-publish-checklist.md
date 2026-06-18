@@ -10,7 +10,7 @@ performed by an AI agent without explicit approval.
 
 - Python package: `deal-intel-mcp`
 - Node bootstrapper package: `deal-intel-mcp`
-- Current version: `0.2.1`
+- Current version: `0.2.2`
 - License: MIT
 - Source repository: `https://github.com/JrJuni/deal-intel-mcp`
 
@@ -69,7 +69,7 @@ dependencies, so include PyPI as an extra index:
 ```powershell
 python -m venv .tmp\testpypi-install
 .\.tmp\testpypi-install\Scripts\python.exe -m pip install --upgrade pip
-.\.tmp\testpypi-install\Scripts\python.exe -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ "deal-intel-mcp[embedding]==0.2.1"
+.\.tmp\testpypi-install\Scripts\python.exe -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ "deal-intel-mcp[embedding]==0.2.2"
 .\.tmp\testpypi-install\Scripts\python.exe -m deal_intel.cli smoke-profile --profile sample
 ```
 
@@ -86,7 +86,7 @@ After publishing, verify:
 ```powershell
 python -m venv .tmp\pypi-install
 .\.tmp\pypi-install\Scripts\python.exe -m pip install --upgrade pip
-.\.tmp\pypi-install\Scripts\python.exe -m pip install "deal-intel-mcp[embedding]==0.2.1"
+.\.tmp\pypi-install\Scripts\python.exe -m pip install "deal-intel-mcp[embedding]==0.2.2"
 .\.tmp\pypi-install\Scripts\python.exe -m deal_intel.cli smoke-profile --profile sample
 ```
 
@@ -103,9 +103,9 @@ Then run a fresh public `npx` smoke from a disposable home:
 
 ```powershell
 $env:DEAL_INTEL_HOME = (Resolve-Path "..\.tmp\npx-public-home").Path
-npx --yes deal-intel-mcp@0.2.1 setup
-npx --yes deal-intel-mcp@0.2.1 smoke --profile-only
-npx --yes deal-intel-mcp@0.2.1 mcp-config --json
+npx --yes deal-intel-mcp@0.2.2 setup
+npx --yes deal-intel-mcp@0.2.2 smoke --profile-only
+npx --yes deal-intel-mcp@0.2.2 mcp-config --json
 ```
 
 Pass criteria:
@@ -123,8 +123,8 @@ If refreshing the MCPB bundle:
 ```powershell
 mcpb validate mcpb\manifest.json
 Push-Location mcpb
-mcpb pack . deal-intel-mcp-0.2.1.mcpb
-mcpb info deal-intel-mcp-0.2.1.mcpb
+mcpb pack . deal-intel-mcp-0.2.2.mcpb
+mcpb info deal-intel-mcp-0.2.2.mcpb
 Pop-Location
 ```
 
@@ -137,7 +137,7 @@ After successful publication, update:
 
 - `docs/status.md` with exact command evidence;
 - `docs/bootstrapper-fresh-smoke.md` current evidence;
-- `AI_NPX_INSTALL_GUIDE.md` if any command changed;
+- `AI_START_HERE.md` if any install command changed;
 - release notes or GitHub release text if creating a tagged release.
 
 ## Rollback Notes

@@ -20,22 +20,16 @@ The default operating path is MongoDB Atlas-backed `full` mode, including the
 free/M0 tier. A bundled no-MongoDB `sample` mode exists for AI agents, quick
 evaluation, and demos, but real team use should start from `full`.
 
-If an AI assistant is helping you set this up, point it at
-[`AI_START_HERE.md`](AI_START_HERE.md) first. That file is intentionally short
-and tells the assistant to start with `full`, use `sample` only for an explicit
-zero-config trial, and run `config_doctor` before deeper troubleshooting.
-For a short public/community demo script, use
-[`docs/public-demo-script.md`](docs/public-demo-script.md).
-For an English full-mode walkthrough aimed at AI-assisted installation, use
-[`AI_FULL_INSTALL_GUIDE.md`](AI_FULL_INSTALL_GUIDE.md).
-For choosing between non-developer, beginner, and developer setup paths, use
-[`AI_INSTALL_SCENARIOS.md`](AI_INSTALL_SCENARIOS.md).
-For the no-git-clone npx bootstrapper path, use
-[`AI_NPX_INSTALL_GUIDE.md`](AI_NPX_INSTALL_GUIDE.md).
-For first external tester handoff, use
-[`AI_USER_TEST_GUIDE.md`](AI_USER_TEST_GUIDE.md).
-For a Korean full-mode walkthrough aimed at non-developer users, use
-[`AI_FULL_INSTALL_GUIDE.ko.md`](AI_FULL_INSTALL_GUIDE.ko.md).
+Start here:
+
+- Setup with an AI assistant: [`AI_START_HERE.md`](AI_START_HERE.md).
+- Longer full-mode walkthrough: [`AI_FULL_INSTALL_GUIDE.md`](AI_FULL_INSTALL_GUIDE.md).
+- Public demo prompts: [`docs/public-demo-script.md`](docs/public-demo-script.md).
+- First external tester handoff: [`AI_USER_TEST_GUIDE.md`](AI_USER_TEST_GUIDE.md).
+- Fork/customize the project: [`docs/extending.md`](docs/extending.md),
+  [`docs/customization-recipes.md`](docs/customization-recipes.md), then
+  [`docs/architecture.md`](docs/architecture.md).
+- Korean full-mode walkthrough: [`AI_FULL_INSTALL_GUIDE.ko.md`](AI_FULL_INSTALL_GUIDE.ko.md).
 
 ---
 
@@ -66,6 +60,60 @@ For a Korean full-mode walkthrough aimed at non-developer users, use
 - It is not a hosted SaaS that owns your deal data. The normal full path uses
   your MongoDB Atlas project and your selected LLM provider.
 - It does not claim revenue lift numbers. If the data is incomplete, it says so.
+
+## Architecture At A Glance
+
+This is not just a prompt wrapper. It is a small deal-intelligence backend
+exposed through MCP:
+
+```text
+[AI host: Claude / Codex / ChatGPT]
+        |
+        v
+[MCP tool surface]
+        |
+        v
+[Domain service layer]
+  |-- deal and interaction intake
+  |-- qualification extraction
+  |-- product context retrieval
+  |-- metrics, gaps, themes, reports
+  `-- export and diagnostics
+        |
+        v
+[Storage and retrieval]
+  |-- MongoDB Atlas full mode
+  |-- local sample/personal mode
+  `-- Atlas Vector Search pro mode
+```
+
+A normal write path looks like this:
+
+```text
+1. A meeting note, email reply, interview, or call summary enters through add_interaction.
+2. The server-side LLM extracts structured deal signals from customer evidence.
+3. Raw evidence, source metadata, and derived qualification fields are stored.
+4. Deal summaries and product-context chunks can be embedded for retrieval.
+5. Read-only tools compute metrics, gaps, reports, themes, and exports without extra LLM calls.
+6. The MCP host narrates the final answer to the user.
+```
+
+Important boundaries:
+
+- MCP is the interface layer; Claude, Codex, or ChatGPT can be the UI.
+- Customer evidence is separated from derived intelligence such as health,
+  gaps, themes, and qualification snapshots.
+- LLM-heavy paths are mostly write/enrichment paths. Read/report/export paths
+  are deterministic where possible.
+- Product context is seller-side RAG context. It helps interpretation but is
+  not counted as customer-stated evidence.
+- `sample -> full -> pro` is the scaling path: zero-config trial, MongoDB-backed
+  real data, then Atlas Vector Search when paid infrastructure is intentional.
+- Tool surfaces are profile-filtered so normal users, sample users, and
+  maintainers do not need the same visible tool set.
+
+For the deeper module map, read [`docs/architecture.md`](docs/architecture.md).
+For fork/customization entry points, read [`docs/extending.md`](docs/extending.md).
 
 ## Live demo
 
@@ -206,124 +254,120 @@ maintainer/debug surface.
 
 ---
 
+## Fork And Customize
+
+Fork this if your sales process is too specific for a generic CRM, but too
+important to live only in notes, spreadsheets, and memory.
+
+The repo is designed as a customizable MCP deal intelligence engine, not only a
+fixed demo app. Useful fork paths include:
+
+- early B2B SaaS or AI teams that need structure before adopting a heavy CRM;
+- RevOps-minded developers who want BANT, SPICED, or their own qualification
+  framework instead of the bundled MEDDPICC default;
+- MCP workflow builders experimenting with chat-first deal operations;
+- consulting, SI, or agency teams that want meeting, proposal, and risk memory
+  across accounts.
+
+Common extension seams:
+
+- qualification frameworks and scoring criteria;
+- profile and tool-surface visibility;
+- storage backends and MongoDB operational contracts;
+- server-side LLM providers and cost tracking;
+- report/export formats;
+- product/solution context parsers;
+- new MCP tools for team-specific workflows.
+
+This project is MIT-licensed. You may use, copy, modify, merge, publish,
+distribute, sublicense, and sell modified versions, subject to the license
+terms. Keep the license and attribution notices when redistributing a fork.
+
+For implementation entry points, read:
+
+- [`docs/extending.md`](docs/extending.md) - extension seams and contracts;
+- [`docs/customization-recipes.md`](docs/customization-recipes.md) - practical
+  fork recipes;
+- [`docs/architecture.md`](docs/architecture.md) - module ownership, tool
+  ownership, and change playbooks.
+
+---
+
 ## Install Overview
 
-Default first-run path:
+The normal product path is `full`: MongoDB Atlas-backed real deal data, an MCP
+host, and one LLM credential path for extraction.
 
-1. Choose the right install route:
-   - non-developer with Claude only: install Node.js + Python 3.11+, then use
-     `npx deal-intel-mcp setup`;
-   - beginner with Python/VS Code/Warp: use `npx` for usage only, or git clone
-     for customization;
-   - developer/infra: use PyPI, editable install, or `npx` by preference.
-2. Configure `full` with MongoDB Atlas (`MONGODB_URI`).
-3. Run `config doctor --offline`.
-4. Connect Claude Desktop through the MCPB bundle.
-
-Use `sample` only for a no-MongoDB demo or AI-only workflow check.
+If you are a non-developer, the easiest route is to ask your AI assistant to
+read [`AI_START_HERE.md`](AI_START_HERE.md). It will walk you through Python,
+Node.js, MongoDB Atlas, and Claude/Codex/ChatGPT setup.
 
 ### Prerequisites
 
 - Python 3.11+ in a conda environment
-- Node.js 18+ if using the no-git-clone `npx` bootstrapper
+- Node.js 18+ for the no-git-clone `npx` bootstrapper
 - One MCP chat client: Claude Desktop, or Codex/ChatGPT with MCP support
 - For `full`: MongoDB Atlas account, Free/M0 cluster, and `MONGODB_URI`
 - For LLM extraction/scoring: ChatGPT OAuth from a compatible subscription,
   `ANTHROPIC_API_KEY`, or `OPENAI_API_KEY`
 
-For a non-developer setup, the shortest explanation is:
+Short version:
 
 ```text
-Prepare Node.js and Python so the installer can run, MongoDB Atlas for storage,
-Claude Desktop or Codex/ChatGPT for the chat surface, and one LLM credential
-path for extraction. MongoDB Atlas M0/free tier is enough for the default full
-profile.
+Install Python and Node.js, prepare a MongoDB Atlas M0 connection string,
+connect an MCP host, and choose one LLM path. Then use npx or an editable
+Python install.
 ```
 
-### Steps
+### npx install path
 
-**Step 1 - Install the package**
-
-No-git-clone path:
+For most users, start here:
 
 ```bash
 npx deal-intel-mcp setup --python /path/to/python
 npx deal-intel-mcp mcp-config
 ```
 
-Use the Python path printed by `mcp-config` in Claude Desktop MCPB. On Windows,
-use `npx.cmd` if PowerShell blocks `npx`.
+Use the Python path printed by `mcp-config` in Claude Desktop MCPB. Set
+`MONGODB_URI` through the MCPB install form, `.env`, or your shell environment.
+On Windows, use `npx.cmd` if PowerShell blocks `npx`.
 
-Repo/customization path:
+Detailed install guides:
 
-Clone or download this repository first, then run the install command from the
-repository root. The examples below use a conda environment named `deal-intel`;
-if you chose a different name, replace the Python path with the path printed by
-`import sys; print(sys.executable)` from that environment.
+- [`AI_START_HERE.md`](AI_START_HERE.md) - canonical AI-agent setup path,
+  including npx, editable install, full/sample choice, and first checks
+- [`AI_FULL_INSTALL_GUIDE.md`](AI_FULL_INSTALL_GUIDE.md) - longer full-mode
+  walkthrough for non-developer users
+- [`mcpb/README.md`](mcpb/README.md) - Claude Desktop MCP bundle
+
+### Git clone / customization path
+
+Clone or download this repository when you want to inspect or modify prompts,
+reports, storage, qualification frameworks, or MCP tools. From the repository
+root:
 
 ```bash
-# run from the deal-intel-mcp repository root
 ~/miniconda3/envs/deal-intel/python.exe -m pip install -e ".[embedding]"
 ```
 
-Adding `[embedding]` also installs `sentence-transformers` (for similar-deal search).
-After install, the `deal-intel` console command should be available in that
-environment. If your shell cannot find it, use the explicit module form:
+Replace the Python path with the interpreter where you want the package
+installed. Adding `[embedding]` installs local semantic-search dependencies.
 
-```bash
-~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli config profiles
-```
-
-**Step 2 - Configure the default full profile**
-
-For real use, configure MongoDB Atlas first. M0/free tier is enough for the
-`full` profile.
-
-MongoDB Atlas setup:
-
-1. Sign up for MongoDB Atlas:
-   <https://www.mongodb.com/cloud/atlas/register>
-2. Create a Free/M0 cluster:
-   <https://www.mongodb.com/docs/atlas/tutorial/deploy-free-tier-cluster/>
-3. In Atlas, create a database user and allow your current IP address.
-4. Copy the driver connection string for the cluster.
-5. Save that string as `MONGODB_URI`.
-
-Do not paste the connection string into chat logs or user-memory files. Put it
-in `.env`, the MCPB install form, or your local shell environment.
-
-Copy `.env.example` to `.env` or set the same values through your MCP bundle:
-
-```text
-MONGODB_URI=your-atlas-connection-string
-ANTHROPIC_API_KEY=optional-if-using-anthropic
-OPENAI_API_KEY=optional-if-using-openai-api
-```
-
-Then inspect the effective config:
+After install, check the effective config:
 
 ```bash
 deal-intel config profiles
 deal-intel config show
 ```
 
-If you want an explicit user config file, preview and write the `full` profile:
+### Readiness check
 
-```bash
-deal-intel config init --profile full --dry-run
-deal-intel config init --profile full
-```
-
-**Step 3 - Check full readiness**
+Run these before troubleshooting deeper issues:
 
 ```bash
 deal-intel config doctor --offline
 deal-intel smoke-profile --profile full --offline
 ```
-
-`config doctor --offline` diagnoses the current effective config. `smoke-profile
---profile full --offline` verifies the target full-profile contract without
-running writes, LLM completions, embeddings, or Atlas admin calls.
 
 When network access to Atlas is available, run a live storage ping:
 
@@ -331,7 +375,10 @@ When network access to Atlas is available, run a live storage ping:
 deal-intel storage-status
 ```
 
-**Step 4 - Optional: run the zero-config sample smoke**
+Use `config_doctor` from the MCP host after installing the bundle. It is the
+first recovery tool when paths, profiles, MongoDB, or LLM readiness are unclear.
+
+### Optional zero-config smoke
 
 ```bash
 $env:DEAL_INTEL_STORAGE_BACKEND='local_sample'
@@ -342,44 +389,6 @@ deal-intel smoke-natural-questions --as-of 2026-06-10
 
 Use this only for zero-config evaluation. It starts with bundled fictional data
 and does not require MongoDB, paid APIs, or Atlas Vector Search.
-
-**Step 5 - Optional: connect Claude Desktop**
-
-Build or install the MCP bundle from [`mcpb/README.md`](mcpb/README.md). The
-bundle form defaults to `mongo` storage for real data. Choose `local_sample`
-only for a zero-config demo. Use `deal-intel config switch pro` later if you
-want the Atlas Vector Search upgrade path.
-
-For ChatGPT subscribers, run OAuth login once:
-
-```bash
-deal-intel login-chatgpt
-```
-
-Then restart Claude Desktop.
-
-You're done when the MCP tool list loads. Some host apps show only the top
-matching tools during search; ask for `get_tool_catalog` to see the full
-current Deal Intelligence surface. The server registers internal tools, then
-exposes a profile-filtered surface; `src/deal_intel/mcp_server.py` and
-`docs/baseline.md` are the source of truth.
-
-```
-config_doctor / get_tool_catalog / update_config
-create_deal / add_interaction / get_deal / update_stage / update_deal
-archive_deal / restore_deal / delete_deal / migrate_local_data
-list_deals / get_insights / get_metrics / get_deal_gaps / get_deal_review
-get_usage / export_report / export_data / get_user_memory / record_user_memory
-get_customer_themes / get_customer_theme_breakdown / get_customer_theme_evidence
-search_deals / analyze_deal
-```
-
-Developer-only maintenance tools:
-
-```text
-create_sample_data / delete_sample_data
-deprecated compatibility alias: add_meeting
-```
 
 `full` starts with the user's own MongoDB data and does not auto-seed sample
 records. If you want a richer Atlas-backed demo, switch to the `developer` tool

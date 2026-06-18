@@ -254,6 +254,17 @@ operational than conceptual: it tells an agent or contributor where ownership
 lives, which adjacent modules usually move together, and which tests catch the
 common regressions.
 
+For fork/customization work, start with:
+
+- `docs/extending.md` for extension seams and contracts.
+- `docs/customization-recipes.md` for concrete recipes.
+- the change playbooks below when you know which subsystem will move.
+
+The project is intentionally customizable, but not every implementation detail
+should become a public tool. Prefer the existing seams first: qualification
+frameworks, tool surfaces, config profiles, storage adapters, reports, product
+context parsers, and LLM providers.
+
 ### Runtime Entry Points
 
 | Entry point | File | Owns | Usually touches | Do not break |

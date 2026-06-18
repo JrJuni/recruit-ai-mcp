@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "deal-intel-mcp"
-version = "0.2.1"
+version = "0.2.2"
 description = "Self-owned MCP deal intelligence layer for early B2B teams."
 readme = "README.md"
 requires-python = ">=3.11"
