@@ -43,6 +43,15 @@ Pending maintainer setup:
 - Register the npm trusted publisher for `JrJuni/deal-intel-mcp`.
 - Push a release tag such as `v0.2.2` after registry setup.
 
+Follow-up from first trusted-publishing run:
+
+- PyPI publication for `0.2.2` succeeded.
+- npm publication failed under Node 20 / npm 10.8.2 with an npm registry
+  `E404` after provenance signing.
+- Updated the release workflow to use Node 24, upgrade npm before publishing,
+  and support `workflow_dispatch` with `target=npm` so the npm publish can be
+  retried without republishing the same PyPI version.
+
 ### V2 docs and MCPB 0.2.2 release-candidate prep
 
 Completed:

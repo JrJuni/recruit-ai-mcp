@@ -79,6 +79,16 @@ git tag v0.2.2
 git push origin v0.2.2
 ```
 
+If the Python package published successfully but the npm job failed, fix the
+workflow and rerun only the npm target instead of republishing the same Python
+version:
+
+```powershell
+gh workflow run release.yml -f target=npm
+```
+
+The npm trusted publishing job must use Node 22.14+ and npm 11.5.1+.
+
 Fallback manual order:
 
 1. Build Python wheel/sdist.
