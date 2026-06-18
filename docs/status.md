@@ -12,6 +12,27 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-18
 
+### V2 MCPB artifact refresh
+
+Completed:
+
+- Repacked `mcpb/deal-intel-mcp-0.2.1.mcpb` from the current `mcpb/`
+  manifest and launcher.
+- Intentionally left `release/latest` unchanged. That folder is reserved for
+  explicit handoff releases, not every release-candidate rebuild.
+- Removed public-doc references to the maintainer-specific smoke path and old
+  environment-name scan text.
+
+Validated:
+
+- `mcpb validate mcpb\manifest.json` -> passed.
+- `mcpb info mcpb\deal-intel-mcp-0.2.1.mcpb` -> readable artifact, unsigned.
+- `pytest tests\test_tool_surfaces.py tests\test_mcpb_manifest.py -q -p no:cacheprovider --basetemp .tmp\pytest-artifact-refresh`
+  -> 44 passed, 1 environment warning.
+- Public-facing doc scan found no stale personal path, old env name, old tool
+  count, or old current-version references.
+- `git diff --check` -> no blocking whitespace errors.
+
 ### V2 polish final gate - storage, runtime, context, and review UX
 
 Completed:
@@ -32,7 +53,7 @@ Validated:
   -> 754 passed, 1 environment warning.
 - `smoke-natural-questions --as-of 2026-06-10`
   -> `OK: True`; output:
-  `C:\Users\JuniBecky\.deal-intel\smoke\natural-question-pack-20260618_150502`.
+  `~/.deal-intel/smoke/natural-question-pack-20260618_150502`.
 - `smoke-deal-review-audit --as-of 2026-06-10 --limit 20`
   -> sensitive field check passed; quality rules passed.
 - `config doctor --offline --json`
@@ -137,7 +158,7 @@ Validated:
   -> 17 passed, 1 environment warning.
 - `ruff check src\deal_intel\runtime.py src\deal_intel\cli.py src\deal_intel\config_doctor.py tests\test_cli_config_profiles.py tests\test_config_doctor.py`
   -> passed.
-- `rg "JuniBecky|event-intel" AGENTS.md CLAUDE.md README.md AI_START_HERE.md docs mcpb -g "*.md" -g "*.json"`
+- `rg "<maintainer-user>|<old-env-name>" AGENTS.md CLAUDE.md README.md AI_START_HERE.md docs mcpb -g "*.md" -g "*.json"`
   -> no tracked public-doc matches.
 
 ### V2 polish step 1 - storage error hints
