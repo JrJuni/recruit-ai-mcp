@@ -44,10 +44,12 @@ def _ok_sample_ping() -> dict:
     }
 
 
+def _check(result: dict, check_id: str) -> dict:
+    return next(check for check in result["checks"] if check["id"] == check_id)
+
+
 def _status(result: dict, check_id: str) -> str:
-    return next(check for check in result["checks"] if check["id"] == check_id)[
-        "status"
-    ]
+    return _check(result, check_id)["status"]
 
 
 def test_config_doctor_sample_profile_passes_without_mongodb_uri(
@@ -69,6 +71,11 @@ def test_config_doctor_sample_profile_passes_without_mongodb_uri(
     assert result["summary"]["resolved_tool_surface"] == "sample"
     assert _status(result, "sample_storage") == "pass"
     assert _status(result, "llm_provider") == "warn"
+    assert [step["tool"] for step in result["first_data_next_steps"]] == [
+        "create_deal",
+        "add_interaction",
+        "get_deal_review",
+    ]
 
 
 def test_config_doctor_full_profile_fails_when_mongodb_uri_is_missing(
@@ -89,6 +96,13 @@ def test_config_doctor_full_profile_fails_when_mongodb_uri_is_missing(
     assert result["ok"] is False
     assert result["profile"] == "full"
     assert _status(result, "mongodb_uri") == "fail"
+    mongodb_uri_check = _check(result, "mongodb_uri")
+    hint = mongodb_uri_check["hint"]
+    assert "zero-config sample mode" in hint["question"]
+    assert "MONGODB_URI" in hint["fix"]
+    assert hint["atlas_setup"]["atlas_signup_url"].startswith("https://www.mongodb.com/")
+    assert hint["atlas_setup"]["steps"]
+    assert hint["sample_mode"]["offer"].startswith("MongoDB URI is missing.")
     assert result["next_actions"]
 
 
@@ -236,10 +250,14 @@ def test_config_doctor_cli_json_and_text_are_secret_safe(monkeypatch, tmp_path) 
     assert "version_mismatch" in payload["runtime"]
     assert payload["runtime"]["python_executable"]
     assert payload["runtime"]["package_location"]
+    assert payload["first_data_next_steps"][0]["tool"] == "create_deal"
+    assert payload["first_data_next_steps"][1]["tool"] == "add_interaction"
     assert "Runtime:" in text_result.stdout
     assert "source=" in text_result.stdout
     assert "Python:" in text_result.stdout
     assert "Module:" in text_result.stdout
+    assert "First data flow:" in text_result.stdout
+    assert "add_interaction" in text_result.stdout
 
 
 def test_config_doctor_cli_exits_nonzero_on_fail(monkeypatch, tmp_path) -> None:
@@ -260,6 +278,28 @@ def test_config_doctor_cli_exits_nonzero_on_fail(monkeypatch, tmp_path) -> None:
     payload = json.loads(result.stdout)
     assert payload["ok"] is False
     assert _status(payload, "llm_provider") == "fail"
+    assert payload["first_data_next_steps"] == []
+
+
+def test_config_doctor_cli_missing_mongodb_uri_text_offers_sample(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    user_config = tmp_path / "config.yaml"
+    user_config.write_text(
+        "storage:\n"
+        "  backend: mongo\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(_env, "_USER_CONFIG_PATH", user_config)
+    monkeypatch.delenv("MONGODB_URI", raising=False)
+
+    result = CliRunner().invoke(app, ["config", "doctor"])
+
+    assert result.exit_code == 1
+    assert "zero-config sample mode" in result.stdout
+    assert "Atlas setup:" in result.stdout
+    assert "Zero-config sample PowerShell:" in result.stdout
 
 
 def test_config_doctor_mcp_wrapper_uses_shared_report(monkeypatch, tmp_path) -> None:

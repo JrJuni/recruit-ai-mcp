@@ -229,6 +229,17 @@ One repo, one package, three operating profiles:
 | `sample` | Zero-config AI evaluation, demos, and lightweight local personal use | Python package only |
 | `pro` | Paid-infra upgrade with Atlas Vector Search and API-key LLMs | Atlas M10+, `deal_summary_vector` index, `OPENAI_API_KEY` by default |
 
+MongoDB Atlas URI quick path for `full`:
+
+1. Create or sign in to MongoDB Atlas:
+   <https://www.mongodb.com/cloud/atlas/register>
+2. Create a Free/M0 cluster.
+3. Create a database user with read/write access.
+4. Add your current IP address under Network Access.
+5. Open Connect -> Drivers and copy the connection string.
+6. Replace `<password>` locally and provide the URI through MCPB, `.env`, or
+   your shell environment. Do not paste the URI into chat or docs.
+
 Start humans in `full`. Use `sample` only when the user explicitly wants a
 zero-config trial, or when an AI agent needs to confirm the basic workflow
 before asking for MongoDB. It begins with bundled fictional data; once you
@@ -377,6 +388,10 @@ deal-intel storage-status
 
 Use `config_doctor` from the MCP host after installing the bundle. It is the
 first recovery tool when paths, profiles, MongoDB, or LLM readiness are unclear.
+When `config_doctor` is OK, add the first customer evidence before expecting
+meaningful analytics: create or select a deal, paste a meeting note, customer
+email reply, call summary, user interview, or internal sales note, store it with
+`add_interaction`, then run `get_deal_review`.
 
 ### Optional zero-config smoke
 

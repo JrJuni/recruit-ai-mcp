@@ -48,8 +48,8 @@ MongoDB Atlas links:
 ```bash
 cd mcpb
 mcpb validate manifest.json
-mcpb pack . deal-intel-mcp-0.2.2.mcpb   # output goes into mcpb/ folder
-mcpb info deal-intel-mcp-0.2.2.mcpb
+mcpb pack . deal-intel-mcp-0.2.3.mcpb   # output goes into mcpb/ folder
+mcpb info deal-intel-mcp-0.2.3.mcpb
 ```
 
 `mcpb` CLI: `npm install -g @anthropic-ai/mcpb` (Node.js 18+).
@@ -88,13 +88,25 @@ Use the `mcp-config` Python path in the MCPB form.
 5. Verify the MCP tool list loads. The current tool contract is documented in
    `docs/baseline.md` and implemented in `src/deal_intel/mcp_server.py`.
 
+If you do not have a MongoDB Atlas URI yet, choose one path explicitly:
+
+- normal full mode: create a Free/M0 Atlas cluster, copy the Connect -> Drivers
+  URI, and enter it only in the MCPB form, `.env`, or a local shell
+  environment;
+- temporary trial: set **Storage backend** to `local_sample` and use the
+  bundled zero-config sample data until you are ready to configure Atlas.
+
 Suggested first install:
 
 1. Set **Storage backend** to `mongo`.
 2. Set **MCP tool surface** to `auto`.
 3. Fill **MongoDB Atlas URI**. M0/free tier works for the `full` profile.
 4. Restart Claude Desktop and run `config_doctor(offline=true)`.
-5. Use the standard tool surface for real data.
+5. If `config_doctor` is OK, create the first deal and paste the first meeting
+   note, customer email reply, call summary, user interview, or internal note
+   with `add_interaction`.
+6. Run `get_deal_review` for the first deal before asking broader pipeline
+   questions.
 
 Zero-config demo install:
 

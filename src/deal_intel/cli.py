@@ -2794,11 +2794,48 @@ def _format_config_doctor(payload: dict) -> str:
     if payload["next_actions"]:
         lines.extend(["", "Next actions:"])
         for action in payload["next_actions"]:
-            rendered = action["action"]
-            if isinstance(rendered, dict):
-                rendered = json.dumps(rendered, ensure_ascii=False)
+            rendered = _format_config_next_action(action["action"])
             lines.append(f"- [{action['check_id']}] {rendered}")
+    if payload.get("first_data_next_steps"):
+        lines.extend(["", "First data flow:"])
+        for step in payload["first_data_next_steps"]:
+            lines.append(
+                f"- {step['tool']}: {step['message']}"
+            )
     return "\n".join(lines)
+
+
+def _format_config_next_action(action: object) -> str:
+    if not isinstance(action, dict):
+        return str(action)
+
+    parts: list[str] = []
+    question = action.get("question")
+    if isinstance(question, str) and question:
+        parts.append(question)
+    fix = action.get("fix")
+    if isinstance(fix, str) and fix:
+        parts.append(fix)
+
+    atlas_setup = action.get("atlas_setup")
+    if isinstance(atlas_setup, dict):
+        steps = atlas_setup.get("steps")
+        if isinstance(steps, list) and steps:
+            first_steps = " / ".join(str(step) for step in steps[:3])
+            parts.append(f"Atlas setup: {first_steps} / ...")
+
+    sample_mode = action.get("sample_mode")
+    if isinstance(sample_mode, dict):
+        offer = sample_mode.get("offer")
+        powershell = sample_mode.get("powershell")
+        if isinstance(offer, str) and offer:
+            parts.append(offer)
+        if isinstance(powershell, str) and powershell:
+            parts.append(f"Zero-config sample PowerShell: {powershell}")
+
+    if parts:
+        return " ".join(parts)
+    return json.dumps(action, ensure_ascii=False)
 
 
 def _format_usage_summary(payload: dict) -> str:

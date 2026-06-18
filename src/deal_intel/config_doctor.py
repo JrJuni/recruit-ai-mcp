@@ -10,7 +10,10 @@ from deal_intel.atlas_vector_indexes import deal_summary_vector_index_summary
 from deal_intel.config_profiles import list_config_profiles
 from deal_intel.providers.llm import make_llm_provider
 from deal_intel.runtime import build_runtime_diagnostics
-from deal_intel.storage.diagnostics import local_sample_mode_hint
+from deal_intel.storage.diagnostics import (
+    local_sample_mode_hint,
+    mongodb_atlas_setup_hint,
+)
 from deal_intel.tool_surfaces import resolve_tool_surface, tool_names_for_config
 
 CheckStatus = str
@@ -111,6 +114,10 @@ def build_config_doctor_report(
         },
         "checks": checks,
         "next_actions": _next_actions(checks),
+        "first_data_next_steps": _first_data_next_steps(
+            failed=failed,
+            backend=str(backend),
+        ),
     }
     return report
 
@@ -250,7 +257,17 @@ def _add_mongo_readiness_check(
             message="MONGODB_URI is not configured for mongo storage.",
             details={"configured": False, "database": database},
             hint={
-                "fix": "Set MONGODB_URI in .env or switch to local_sample.",
+                "question": (
+                    "MongoDB URI is missing. Do you want to continue in "
+                    "zero-config sample mode for now, or set up MongoDB Atlas "
+                    "for the normal full mode?"
+                ),
+                "fix": (
+                    "For full mode, create or open a MongoDB Atlas Free/M0 "
+                    "cluster and set MONGODB_URI through MCPB, .env, or the "
+                    "shell environment."
+                ),
+                "atlas_setup": mongodb_atlas_setup_hint(),
                 "sample_mode": local_sample_mode_hint(),
             },
         )
@@ -531,6 +548,52 @@ def _next_actions(checks: list[dict[str, Any]]) -> list[dict[str, Any]]:
             }
         )
     return actions
+
+
+def _first_data_next_steps(*, failed: int, backend: str) -> list[dict[str, str]]:
+    if failed:
+        return []
+
+    steps = [
+        {
+            "step": "create_or_choose_deal",
+            "tool": "create_deal",
+            "message": (
+                "For a real workspace, create the first customer/deal before "
+                "asking analytics questions. In sample mode, you can either "
+                "use the bundled fictional deals or create your own local deal."
+            ),
+        },
+        {
+            "step": "add_customer_evidence",
+            "tool": "add_interaction",
+            "message": (
+                "Paste the first meeting note, customer email reply, interview, "
+                "call summary, or internal note with the matching interaction_type."
+            ),
+        },
+        {
+            "step": "review_first_deal",
+            "tool": "get_deal_review",
+            "message": (
+                "Review that deal for health, qualification gaps, uncertainty, "
+                "risk signals, and next questions before moving to pipeline KPIs."
+            ),
+        },
+    ]
+    if backend == "mongo":
+        steps.insert(
+            0,
+            {
+                "step": "start_with_evidence",
+                "tool": "create_deal + add_interaction",
+                "message": (
+                    "A new full workspace starts empty. The first useful action "
+                    "is to add a real prospect and at least one customer evidence item."
+                ),
+            },
+        )
+    return steps
 
 
 def _safe_ping_details(ping: dict[str, Any]) -> dict[str, Any]:

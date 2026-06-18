@@ -69,6 +69,28 @@ If you do not want to set up MongoDB yet, we can run the sample mode first, but
 that is a trial path, not the default real-data setup.
 ```
 
+### MongoDB Atlas URI Quick Guide
+
+If the user does not already have `MONGODB_URI`, guide them through this short
+flow:
+
+1. Go to <https://www.mongodb.com/cloud/atlas/register> and create or sign in
+   to a MongoDB Atlas account.
+2. Create a Free/M0 cluster.
+3. In Database Access, create a database user with read/write access.
+4. In Network Access, add the user's current IP address.
+5. Open the cluster's Connect -> Drivers flow and copy the connection string.
+6. Replace `<password>` locally. Store the URI in the MCPB form, `.env`, or a
+   shell environment variable. Do not ask the user to paste the URI into chat.
+
+If the user is not ready to create the URI, ask:
+
+```text
+MongoDB Atlas is the normal full-mode storage path. Do you want to set that up
+now, or continue in zero-config sample mode for now and come back to MongoDB
+later?
+```
+
 Use the conda environment Python directly. First help the user identify the
 interpreter path for the environment where `deal-intel-mcp` is installed. For a
 new local setup, the recommended environment name is `deal-intel`:
@@ -165,9 +187,49 @@ host-side search limit rather than a server loading failure. Ask it to call
 
 After restart, ask Claude/Codex to run `config_doctor` first.
 
+## First Customer Evidence
+
+If `config_doctor` is OK, do not stop at diagnostics. Help the user add the
+first real customer evidence so the system has something useful to remember.
+
+For a new `full` workspace, the first value path is:
+
+1. Create or identify the first deal with `create_deal` or `list_deals`.
+2. Ask the user to paste one customer evidence item:
+   - a meeting note,
+   - a customer email reply,
+   - a call summary,
+   - a user interview,
+   - or an internal sales note.
+3. Store it with `add_interaction`.
+4. Run `get_deal_review` on that deal to show health, gaps, uncertainty, and
+   next questions.
+
+Use this prompt after a successful first `config_doctor`:
+
+```text
+Setup looks ready. The next step is to add your first customer evidence.
+
+Please paste one of these:
+- a meeting note,
+- a customer email reply,
+- a call summary,
+- a user interview,
+- or an internal sales note.
+
+If this is a new prospect, also tell me the company name, industry if known,
+current stage, rough deal size if known, and expected close date if known.
+I will create or select the deal, store the evidence with add_interaction, then
+show you the first deal review.
+```
+
+For sample mode, explain that fictional deals already exist. The user can ask
+sample questions immediately, or create a local personal deal and then paste
+their own evidence.
+
 ## First Useful Questions
 
-After setup succeeds, ask:
+After at least one deal/evidence item exists, ask:
 
 ```text
 How healthy is the current pipeline?

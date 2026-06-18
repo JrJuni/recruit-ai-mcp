@@ -35,10 +35,23 @@ configured yet. After the user enters real config values, run:
 node bin/deal-intel-mcp.js doctor --live
 ```
 
+For normal full mode, the user also needs a MongoDB Atlas URI. Create a
+Free/M0 Atlas cluster, create a database user, add the current IP under Network
+Access, then copy the Connect -> Drivers connection string. Enter that URI only
+in the MCPB form, `.env`, or a local shell environment. If the user is not ready
+to create Atlas yet, ask whether they want to continue in zero-config
+`local_sample` mode for now.
+
 `mcpb` prints the local MCPB file path and the Python interpreter path to paste
 into the Claude Desktop MCPB form. `mcp-config` prints the same MCPB handoff
 plus a copy-paste Claude Desktop JSON snippet for users who configure MCP
 manually.
+
+After installing the MCPB and running `config_doctor`, the first real user
+action should be adding customer evidence, not only asking analytics questions:
+create or select a deal, paste a meeting note, customer email reply, call
+summary, user interview, or internal note, then store it with `add_interaction`
+and review it with `get_deal_review`.
 
 For local development without the managed runtime, point the wrapper at an
 existing Python environment:

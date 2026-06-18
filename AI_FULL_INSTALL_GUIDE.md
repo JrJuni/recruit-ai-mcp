@@ -82,12 +82,24 @@ Use the printed value in the MCPB field named `Python interpreter path`.
 
 Guide the user through Atlas:
 
-1. Create or open a MongoDB Atlas account.
-2. Create a Free/M0 cluster.
-3. Create a database user.
-4. Add the user's current IP under Network Access.
-5. Copy the cluster driver connection string.
-6. Replace `<password>` in the URI locally.
+1. Create or open a MongoDB Atlas account:
+   <https://www.mongodb.com/cloud/atlas/register>
+2. Create a Free/M0 cluster. Use the free-tier guide if the user is lost:
+   <https://www.mongodb.com/docs/atlas/tutorial/deploy-free-tier-cluster/>
+3. In Database Access, create a database user with read/write access.
+4. In Network Access, add the user's current IP address.
+5. Open the cluster's Connect -> Drivers flow.
+6. Copy the connection string.
+7. Replace `<password>` in the URI locally.
+8. Save the URI in the MCPB form, `.env`, or a shell environment variable.
+
+If the user does not want to create Atlas yet, ask this instead of blocking:
+
+```text
+MongoDB Atlas is the normal full-mode storage path. Do you want to set that up
+now, or continue in zero-config sample mode for now and come back to MongoDB
+later?
+```
 
 Tell the user:
 

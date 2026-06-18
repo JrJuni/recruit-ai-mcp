@@ -103,6 +103,11 @@ def local_sample_mode_hint() -> dict[str, str]:
     """Return the standard hint for entering MongoDB-free sample mode."""
 
     return {
+        "offer": (
+            "MongoDB URI is missing. Ask the user: 'Do you want to continue "
+            "in zero-config sample mode for now, or set up MongoDB Atlas for "
+            "the normal full mode?'"
+        ),
         "purpose": (
             "Use the bundled sample dataset when MongoDB Atlas is not configured "
             "yet. The bundled fixture is immutable; user-created local personal "
@@ -113,6 +118,31 @@ def local_sample_mode_hint() -> dict[str, str]:
         "user_config_path": "~/.deal-intel/config.yaml",
         "user_config": "storage:\n  backend: local_sample",
         "diagnostic_command": "python -m deal_intel.cli storage-status",
+    }
+
+
+def mongodb_atlas_setup_hint() -> dict[str, object]:
+    """Return a secret-safe first-time Atlas setup hint."""
+
+    return {
+        "purpose": "Full mode stores real deal data in the user's MongoDB Atlas project.",
+        "steps": [
+            "Create or sign in to a MongoDB Atlas account.",
+            "Create a Free/M0 cluster.",
+            "Create a database user with read/write access.",
+            "Add the current IP address under Network Access.",
+            "Open Connect -> Drivers and copy the connection string.",
+            (
+                "Replace <password> locally and provide the URI through MCPB, "
+                ".env, or a shell environment variable."
+            ),
+        ],
+        "atlas_signup_url": "https://www.mongodb.com/cloud/atlas/register",
+        "free_cluster_guide_url": "https://www.mongodb.com/docs/atlas/tutorial/deploy-free-tier-cluster/",
+        "secret_handling": (
+            "The connection string usually contains a password. Do not paste it "
+            "into chat or docs; enter it in the MCPB form, .env, or local shell."
+        ),
     }
 
 

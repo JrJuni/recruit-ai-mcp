@@ -112,6 +112,7 @@ function mcpbHandoff() {
       "Paste mcpb_python_interpreter_path into the Python interpreter path field.",
       "Choose storage backend: mongo for real data, local_sample for a quick trial.",
       "Restart Claude Desktop and ask: Run config_doctor.",
+      "If config_doctor is OK, create the first deal and paste the first meeting note, customer email reply, interview, or call summary with add_interaction.",
     ],
   };
 }
@@ -619,7 +620,7 @@ function cmdSetup(args) {
   payload.install_state_path = p.install_state_path;
   payload.mcpb = mcpbHandoff();
   payload.next_action = payload.ok
-    ? "Install the local MCPB file in Claude Desktop, paste the Python path, then run config_doctor."
+    ? "Install the local MCPB file in Claude Desktop, paste the Python path, run config_doctor, then add your first customer evidence with add_interaction."
     : "Inspect the post-install smoke output, then rerun `deal-intel-mcp smoke --profile-only`.";
   if (json) {
     printJson(payload);

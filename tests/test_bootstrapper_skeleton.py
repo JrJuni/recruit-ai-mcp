@@ -89,6 +89,7 @@ def test_bootstrapper_mcp_config_outputs_claude_snippet(tmp_path: Path) -> None:
     assert server_config["args"] == ["-m", "deal_intel.mcp_server"]
     assert server_config["env"]["PYTHONUTF8"] == "1"
     assert "Secrets are not included" in " ".join(payload["notes"])
+    assert any("add_interaction" in step for step in payload["mcpb"]["claude_steps"])
 
 
 def test_bootstrapper_mcp_config_respects_server_name_and_python_override(tmp_path: Path) -> None:
@@ -243,6 +244,8 @@ def test_bootstrapper_mcpb_command_outputs_local_handoff(tmp_path: Path) -> None
         tmp_path / ".deal-intel" / "runtime" / "mcpb" / f"deal-intel-mcp-{package['version']}.mcpb"
     )
     assert "Install the local MCPB file" in payload["mcpb"]["install_summary"]
+    assert any("first meeting note" in step for step in payload["mcpb"]["claude_steps"])
+    assert any("add_interaction" in step for step in payload["mcpb"]["claude_steps"])
 
 
 def test_bootstrapper_mcpb_command_reports_missing_bundle(tmp_path: Path) -> None:

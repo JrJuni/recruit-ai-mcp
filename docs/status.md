@@ -10,7 +10,35 @@ Read the newest section first. Older sections are retained as an archive for
 traceability and should be searched by topic, milestone, or file path rather
 than loaded wholesale.
 
-## Latest Update - 2026-06-18
+## Latest Update - 2026-06-19
+
+### First evidence onboarding after config doctor
+
+Completed:
+
+- Added `first_data_next_steps` to `config_doctor` so a successful readiness
+  check tells first-time users to create or choose a deal, paste customer
+  evidence with `add_interaction`, and review it with `get_deal_review`.
+- Updated CLI text output to show a `First data flow` section after
+  `config_doctor`.
+- Updated the npm bootstrapper, MCPB README, npm README, root README, and
+  `AI_START_HERE.md` so the install flow no longer stops at diagnostics.
+- Added a short MongoDB Atlas URI setup path to README, AI onboarding docs, and
+  MCPB/npm install docs.
+- Updated the missing-`MONGODB_URI` `config_doctor` hint so hosts ask whether
+  to continue in zero-config sample mode for now or set up Atlas full mode.
+- Updated the MCP baseline contract for `config_doctor`.
+
+Validation:
+
+- `pytest tests/test_config_doctor.py tests/test_bootstrapper_skeleton.py -q
+  -p no:cacheprovider --basetemp .tmp\pytest-first-evidence` -> 23 passed, 1
+  third-party deprecation warning.
+- `ruff check src\deal_intel\config_doctor.py src\deal_intel\cli.py
+  tests\test_config_doctor.py tests\test_bootstrapper_skeleton.py` -> passed.
+- `node --check npm\bin\deal-intel-mcp.js` -> passed.
+
+## Previous Update - 2026-06-18
 
 ### 0.2.3 npx bootstrapper + MCPB handoff prep
 
