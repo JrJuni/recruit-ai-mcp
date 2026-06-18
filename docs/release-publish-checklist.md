@@ -122,8 +122,10 @@ If refreshing the MCPB bundle:
 
 ```powershell
 mcpb validate mcpb\manifest.json
-mcpb pack mcpb mcpb\deal-intel-mcp-0.2.1.mcpb
-mcpb info mcpb\deal-intel-mcp-0.2.1.mcpb
+Push-Location mcpb
+mcpb pack . deal-intel-mcp-0.2.1.mcpb
+mcpb info deal-intel-mcp-0.2.1.mcpb
+Pop-Location
 ```
 
 Do not overwrite `release/latest` on every development change. Refresh it only

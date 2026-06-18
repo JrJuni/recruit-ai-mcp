@@ -1,3 +1,4 @@
 *.mcpb
+.claude/**
 **/__pycache__/**
 **/*.pyc

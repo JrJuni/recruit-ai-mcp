@@ -12,6 +12,82 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-18
 
+### V2 readiness gate with UX friction review
+
+Completed:
+
+- Ran the v2 readiness gate across functional checks and user-experience
+  friction checks. No v2 release blocker was found.
+- Used the environment whose editable install points at this repository after
+  finding that the documented local conda environment on this machine was stale
+  and pointed at a different checkout. This is tracked as a maintainer/dev UX
+  polish item, not a product runtime failure.
+- Verified core regression:
+  - `ruff check .` -> passed.
+  - `pytest -q -p no:cacheprovider --basetemp .tmp\pytest-v2-full`
+    -> 743 passed, 1 warning.
+  - targeted config/Mongo/vector/product-context/add-interaction/analyze-deal
+    tests passed.
+- Verified install/config/profile flow:
+  - `config doctor --offline --json` -> `ok: true`, full/mongo, zero failed
+    checks, only the expected offline storage-ping skip.
+  - `smoke-profile --profile full --offline` -> pass.
+  - `smoke-profile --profile sample` -> pass.
+- Verified natural question and deal review smoke:
+  - `smoke-natural-questions --as-of 2026-06-10` -> `OK: True`; output:
+    `~/.deal-intel/smoke/natural-question-pack-20260618_114707`.
+  - `smoke-deal-review-audit --as-of 2026-06-10 --limit 20` -> sensitive
+    field check passed; 20/20 reviews completed.
+- Verified product-context flow:
+  - existing local test sources included Markdown, JSON, PDF, and DOCX files;
+  - `add_product_context_note` dry-run returned a clear next-action path;
+  - `index_product_context` dry-run reported unchanged indexed files;
+  - `analyze_deal` used product-context refs (`product_context_used: true`,
+    `product_context_ref_count: 5`) without returning raw product content.
+- Verified MongoDB/Atlas full path:
+  - `mongo doctor --json` -> `ok: true`, zero failed/warning/skipped checks.
+  - `crosscheck-weekly-dashboard --as-of 2026-06-10` -> `ok: true`.
+  - `mongo refresh-chart-ready --target all --as-of 2026-06-10 --json`
+    -> dry-run pass; 200 chart-ready rows across weekly pipeline, customer
+    themes, and pipeline trend targets.
+- Verified export/report flow:
+  - `export_report(report_type="weekly_pipeline", as_of="2026-06-10")`
+    -> `ok: true`, 13 rows, `incomplete_data_quality` warning, artifacts under
+    `~/.deal-intel/reports`.
+  - `export_data(dataset="open_deals", as_of="2026-06-10")`
+    -> `ok: true`, 13 rows, ledger CSV artifact under `~/.deal-intel/reports`.
+  - The Markdown report now reads as a meeting agenda/watchlist/action report,
+    not a raw dump. CSV remains the ledger-style export surface.
+- Verified distribution surfaces:
+  - `mcpb validate mcpb\manifest.json` -> passed.
+  - From `mcpb/`, `mcpb pack . deal-intel-mcp-0.2.1.mcpb` -> passed.
+  - `mcpb info mcpb\deal-intel-mcp-0.2.1.mcpb` -> passed, unsigned warning
+    only.
+  - npm latest: `0.2.1`; PyPI latest: `0.2.1`.
+- Hardened MCPB packaging hygiene:
+  - added `.claude/**` to `mcpb/.mcpbignore`;
+  - repacked locally from the `mcpb/` directory;
+  - confirmed the bundle contains only `manifest.json`, `README.md`, and
+    `server/launcher.py`.
+  - `release/latest/` was intentionally left unchanged.
+
+UX findings:
+
+- `blocker`: none.
+- `v2 polish`:
+  - make environment drift easier to diagnose, e.g. document or automate
+    checking that `pip show deal-intel-mcp` points at the intended checkout;
+  - improve storage/DNS error hints for Mongo-backed exports so retry/network
+    next actions are not `null`;
+  - improve product-context cold-start behavior or messaging for direct CLI/tool
+    calls that see the local embedding model as still warming up;
+  - improve deal-review uncertainty messaging for cases where high uncertainty
+    appears without a clear gap or warning.
+- `post-v2`:
+  - run macOS fresh-machine smoke after the next packaging or installer change;
+  - consider broader installer diagnostics for missing Python/Node and stale
+    editable installs.
+
 ### Documentation current-state sweep
 
 Completed:
@@ -473,7 +549,7 @@ Validation:
   -> 731 passed, 1 warning.
 - `ruff check .` -> passed.
 - `mcpb validate mcpb\manifest.json` -> passed.
-- `mcpb pack mcpb mcpb\deal-intel-mcp-0.2.1.mcpb` -> passed.
+- From `mcpb/`, `mcpb pack . deal-intel-mcp-0.2.1.mcpb` -> passed.
 - `mcpb info mcpb\deal-intel-mcp-0.2.1.mcpb` -> passed, unsigned warning only.
 - Natural-question smoke:
   `deal-intel smoke-natural-questions --as-of 2026-06-10`
@@ -523,7 +599,7 @@ Follow-up completed later on 2026-06-17:
   `Pipeline Trend Review`.
 - Refreshed the local MCPB package artifact in `mcpb/` only:
   - `mcpb validate mcpb\manifest.json` -> passed;
-  - `mcpb pack mcpb mcpb\deal-intel-mcp-0.2.1.mcpb` -> passed after
+  - from `mcpb/`, `mcpb pack . deal-intel-mcp-0.2.1.mcpb` -> passed after
     rerunning outside the sandbox because Windows denied the sandboxed pack;
   - `mcpb info mcpb\deal-intel-mcp-0.2.1.mcpb` -> passed with the expected
     unsigned-package warning.

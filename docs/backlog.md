@@ -59,25 +59,18 @@ Current v2 state:
 - `release/latest/` now points at MCPB `0.2.1`.
 - `AI_INSTALL_SCENARIOS.md` documents the current install routes for
   non-developers, beginners, and developers.
+- The v2 readiness gate with UX friction review found no blocker. Functional
+  smoke passed across tests, config/profile flow, natural questions,
+  deal-review audit, product context, Mongo/Atlas chart-ready data,
+  export/report, and distribution surfaces.
 
 Immediate v2 closure order:
 
-1. M0/full Mongo operational refresh.
-   - Apply current validators for `deals` and `analytics_snapshots` on the new
-     M0/free cluster.
-   - Refresh chart-ready collections with
-     `deal-intel mongo refresh-chart-ready --target all --as-of YYYY-MM-DD --apply`.
-   - Re-run `deal-intel mongo doctor --json` and confirm only expected warnings,
-     if any, remain.
-2. Atlas chart-ready UI smoke.
-   - Build or update Atlas Charts from `dashboard_weekly_pipeline`,
-     `dashboard_customer_themes`, and `dashboard_pipeline_trend`.
-   - Confirm the chart-ready path reduces query-bar-heavy setup.
-3. V2 public docs/readiness sweep.
+1. V2 public docs/readiness sweep.
    - Ensure README, AI start guide, baseline, status, and release docs all
      describe the merged `0.2.1` state.
    - Avoid hardcoded tool counts unless tests keep them synchronized.
-4. Report Quality v2.
+2. Report Quality v2.
    - Treat `export_report` as meeting/manager-report generation, not a ledger
      dump.
    - Keep deterministic metrics as the source of truth, but allow host-assisted
@@ -85,7 +78,7 @@ Immediate v2 closure order:
      mode.
    - Prefer polished Markdown/DOCX/PDF-style output for weekly review; reserve
      CSV for ledger-style `export_data`.
-5. Deal Review Quality v2.
+3. Deal Review Quality v2.
    - Revisit review scoring after framework abstraction.
    - Separate evidence-rich but risky deals from evidence-poor deals with high
      uncertainty.
@@ -95,18 +88,33 @@ Immediate v2 closure order:
      evidence supports action.
    - Add corner-case synthetic datasets from realistic meetings, emails, and
      user interviews to stress the review engine.
-6. Tool namespace and customer-theme workflow cleanup.
+4. Tool namespace and customer-theme workflow cleanup.
    - Keep broad renaming deferred until real host-agent confusion appears.
    - Continue strengthening tool descriptions and catalog workflow hints.
    - Revisit `get_customer_themes`, `get_customer_theme_breakdown`, and
      `get_customer_theme_evidence` only if smoke traces show unnecessary
      multi-tool friction.
-7. Usage and cost tracking v2.
+5. Usage and cost tracking v2.
    - Extend the v1 usage tool beyond LLM calls when useful: report generation,
      embedding/search work, MongoDB/Atlas assumptions, and maintenance
      backfills.
    - Keep cost numbers explicitly labeled as estimates unless pulled from a
      provider billing API.
+
+V2 readiness UX polish queue:
+
+- Environment drift diagnostics: make it easier for maintainers and advanced
+  users to confirm that their Python environment imports this checkout, not a
+  stale editable install from another folder.
+- Mongo/export storage errors: add clearer next-action hints for DNS/network
+  failures instead of returning `hint: null`.
+- Product-context cold start: improve direct tool/CLI cold-start messaging or
+  warmup behavior when the local embedding model is still loading.
+- Deal-review uncertainty wording: explain high uncertainty even when no
+  obvious gap or warning is shown.
+- Keep the corrected MCPB packing rule: run pack from `mcpb/` with
+  `mcpb pack . deal-intel-mcp-<version>.mcpb`; do not pack from the repo root
+  with `mcpb` as the source directory.
 
 Deferred after v2 closure:
 
@@ -141,8 +149,8 @@ V2 closure validation gate:
   - `pytest -q -p no:cacheprovider --basetemp=<repo-local-temp>`
   - `ruff check .`
   - `mcpb validate mcpb\manifest.json`
-  - `mcpb pack mcpb mcpb\deal-intel-mcp-<version>.mcpb`
-  - `mcpb info <artifact>`
+  - from `mcpb/`, `mcpb pack . deal-intel-mcp-<version>.mcpb`
+  - `mcpb info mcpb\deal-intel-mcp-<version>.mcpb`
 - Smoke suites:
   - natural-question smoke
   - deal-review audit
