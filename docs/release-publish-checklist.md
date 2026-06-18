@@ -6,6 +6,10 @@ MCPB, and smoke checks pass.
 Actual npm/PyPI publication requires maintainer credentials and should not be
 performed by an AI agent without explicit approval.
 
+Preferred publication path: GitHub Actions trusted publishing. Local `twine`
+and `npm publish` remain fallback/debug paths only, because maintainer accounts
+may use security-key/WebAuthn authentication that does not expose a CLI OTP.
+
 ## Current Release Shape
 
 - Python package: `deal-intel-mcp`
@@ -45,7 +49,37 @@ Publish Python first, then npm.
 Reason: `npx deal-intel-mcp setup` installs the Python package. If npm is
 published first but Python is not reachable, the no-git-clone path will fail.
 
-Recommended order:
+The release workflow in `.github/workflows/release.yml` enforces this order:
+
+1. Run release-targeted tests and package smoke.
+2. Publish the Python package to PyPI.
+3. Publish the npm bootstrapper package.
+
+Before using it, configure trusted publishers on both registries.
+
+PyPI trusted publisher values:
+
+- Owner: `JrJuni`
+- Repository: `deal-intel-mcp`
+- Workflow filename: `release.yml`
+- Environment name: `pypi`
+
+npm trusted publisher values:
+
+- Provider: GitHub Actions
+- Owner: `JrJuni`
+- Repository: `deal-intel-mcp`
+- Workflow filename: `release.yml`
+- Environment name: `npm`
+
+Then publish by pushing a version tag:
+
+```powershell
+git tag v0.2.2
+git push origin v0.2.2
+```
+
+Fallback manual order:
 
 1. Build Python wheel/sdist.
 2. Optionally upload to TestPyPI.
@@ -98,6 +132,22 @@ Publish from the `npm/` directory after the Python package is reachable:
 cd npm
 npm publish --access public
 ```
+
+Maintainer auth note:
+
+- npm accounts may use security-key/WebAuthn 2FA instead of a visible
+  authenticator-app OTP.
+- If `npm publish` returns `EOTP` but the npm website only shows security keys
+  and recovery codes, do not keep looking for a nonexistent OTP field.
+- The previously successful path for this project was to rerun
+  `npm publish --access public`, follow the browser authentication URL printed
+  by the CLI, and authenticate with the account security key/device flow.
+- If the browser/device flow is not offered or fails, use one of these
+  supported alternatives:
+  - create a short-lived granular access token on npm with package write access
+    and "bypass 2FA" enabled, then publish with that token; or
+  - configure trusted publishing for a future CI release flow.
+- Never paste npm tokens into chat or committed files.
 
 Then run a fresh public `npx` smoke from a disposable home:
 

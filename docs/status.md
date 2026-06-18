@@ -12,6 +12,37 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-18
 
+### npm publish auth note
+
+Recorded:
+
+- npm `publish` may return `EOTP` even when the maintainer account uses
+  security-key/WebAuthn 2FA and no authenticator-app OTP is visible.
+- The previously successful maintainer path for this project was to rerun
+  `npm publish --access public`, follow the CLI browser authentication URL, and
+  authenticate with the account security key/device flow.
+- Granular tokens with package write access and 2FA bypass, or future trusted
+  publishing, are fallback paths. Do not ask the maintainer to find a
+  nonexistent OTP field.
+
+### Trusted publishing workflow
+
+Completed:
+
+- Added `.github/workflows/release.yml` for tag-based GitHub Actions releases.
+- The workflow runs release-targeted checks, publishes the Python package to
+  PyPI first, then publishes the npm bootstrapper.
+- PyPI trusted publisher should use workflow `release.yml` and environment
+  `pypi`.
+- npm trusted publisher should use workflow `release.yml` and environment
+  `npm`.
+
+Pending maintainer setup:
+
+- Register the PyPI trusted publisher for `JrJuni/deal-intel-mcp`.
+- Register the npm trusted publisher for `JrJuni/deal-intel-mcp`.
+- Push a release tag such as `v0.2.2` after registry setup.
+
 ### V2 docs and MCPB 0.2.2 release-candidate prep
 
 Completed:
