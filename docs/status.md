@@ -12,6 +12,25 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-18
 
+### V2 public docs/readiness sweep
+
+Completed:
+
+- Updated `docs/mvp-readiness.md` from pre-release MVP-candidate wording to
+  the current v2 public-trial-ready posture.
+- Reframed the active backlog from "v2 closure" to the remaining post-v2
+  quality order: report quality, deal-review quality, tool workflow cleanup,
+  and usage/cost tracking.
+- Confirmed `release/latest` already points at MCPB `0.2.1`; the newer
+  candidate rebuild remains in `mcpb/deal-intel-mcp-0.2.1.mcpb` until an
+  explicit handoff-release refresh is desired.
+
+Validated:
+
+- Public docs use the current `0.2.1` package line and avoid stale personal
+  path, old env-name, and old tool-count references.
+- `release/latest/VERSION` and tracked release artifact are still `0.2.1`.
+
 ### V2 MCPB artifact refresh
 
 Completed:

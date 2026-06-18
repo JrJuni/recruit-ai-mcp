@@ -18,7 +18,7 @@ experience.
 
 ## Release Position
 
-Current position: **MVP candidate, full-by-default with optional zero-config sample**.
+Current position: **v2 public-trial ready, full-by-default with optional zero-config sample**.
 
 Green:
 
@@ -52,9 +52,11 @@ Yellow:
 - Claude Desktop MCPB reinstall should be smoked after manifest or bundle
   changes. Current package build is available, but each external evaluator's
   install still needs a quick `config_doctor` check.
-- Full MongoDB mode works in development, but a disposable live migration smoke
-  is still recommended before a broader external release.
-- Pro mode is a skeleton upgrade path, not a fully validated paid-infra product.
+- Full MongoDB mode has passed bounded live smoke, but each external evaluator
+  should still run `config_doctor` against their own Atlas project.
+- Pro mode has passed the first Atlas Vector Search smoke, but remains a paid
+  infrastructure path that should be validated per user's cluster before
+  relying on it operationally.
 - The first-run copy is now full-by-default, but Korean companion docs may need
   a final pass before a non-English external trial.
 
@@ -66,13 +68,14 @@ Not MVP-blocking:
 - OpenAI API live smoke with paid credits.
 - Deep account people graph / CRM-like contact model.
 
-Remaining v1 polish candidates before broader public release:
+Remaining post-v2 quality candidates:
 
 - Keep validating tool-selection descriptions through natural-question smoke
   traces and real host usage.
-- Polish public demo copy and first-run screenshots before broader launch.
+- Improve report and deal-review quality with real user traces and synthetic
+  corner-case datasets.
 
-Post-v1 tool design cleanup:
+Post-v2 tool design cleanup:
 
 - Consolidate customer-theme analysis after real host usage is observed.
   Ranking, breakdown, and evidence are one user workflow today, but this is not
@@ -86,7 +89,7 @@ Post-v2 tool design candidates:
 - Add response verbosity controls such as `response_format=concise|detailed`
   only if real traces show meaningful token pressure.
 - Consider broad tool namespace changes only as a breaking-version cleanup, not
-  as v1 polish.
+  as a v2 patch.
 
 ## Required Gates
 

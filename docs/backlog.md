@@ -64,13 +64,9 @@ Current v2 state:
   deal-review audit, product context, Mongo/Atlas chart-ready data,
   export/report, and distribution surfaces.
 
-Immediate v2 closure order:
+Immediate post-v2 quality order:
 
-1. V2 public docs/readiness sweep.
-   - Ensure README, AI start guide, baseline, status, and release docs all
-     describe the merged `0.2.1` state.
-   - Avoid hardcoded tool counts unless tests keep them synchronized.
-2. Report Quality v2.
+1. Report Quality v2.
    - Treat `export_report` as meeting/manager-report generation, not a ledger
      dump.
    - Keep deterministic metrics as the source of truth, but allow host-assisted
@@ -78,7 +74,7 @@ Immediate v2 closure order:
      mode.
    - Prefer polished Markdown/DOCX/PDF-style output for weekly review; reserve
      CSV for ledger-style `export_data`.
-3. Deal Review Quality v2.
+2. Deal Review Quality v2.
    - Revisit review scoring after framework abstraction.
    - Separate evidence-rich but risky deals from evidence-poor deals with high
      uncertainty.
@@ -88,13 +84,13 @@ Immediate v2 closure order:
      evidence supports action.
    - Add corner-case synthetic datasets from realistic meetings, emails, and
      user interviews to stress the review engine.
-4. Tool namespace and customer-theme workflow cleanup.
+3. Tool namespace and customer-theme workflow cleanup.
    - Keep broad renaming deferred until real host-agent confusion appears.
    - Continue strengthening tool descriptions and catalog workflow hints.
    - Revisit `get_customer_themes`, `get_customer_theme_breakdown`, and
      `get_customer_theme_evidence` only if smoke traces show unnecessary
      multi-tool friction.
-5. Usage and cost tracking v2.
+4. Usage and cost tracking v2.
    - Extend the v1 usage tool beyond LLM calls when useful: report generation,
      embedding/search work, MongoDB/Atlas assumptions, and maintenance
      backfills.
