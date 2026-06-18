@@ -28,6 +28,8 @@ For a short public/community demo script, use
 [`docs/public-demo-script.md`](docs/public-demo-script.md).
 For an English full-mode walkthrough aimed at AI-assisted installation, use
 [`AI_FULL_INSTALL_GUIDE.md`](AI_FULL_INSTALL_GUIDE.md).
+For choosing between non-developer, beginner, and developer setup paths, use
+[`AI_INSTALL_SCENARIOS.md`](AI_INSTALL_SCENARIOS.md).
 For the no-git-clone npx bootstrapper path, use
 [`AI_NPX_INSTALL_GUIDE.md`](AI_NPX_INSTALL_GUIDE.md).
 For first external tester handoff, use
@@ -204,11 +206,16 @@ maintainer/debug surface.
 
 ---
 
-## Install (5 minutes)
+## Install Overview
 
 Default first-run path:
 
-1. Install the package in Python.
+1. Choose the right install route:
+   - non-developer with Claude only: install Node.js + Python 3.11+, then use
+     `npx deal-intel-mcp setup`;
+   - beginner with Python/VS Code/Warp: use `npx` for usage only, or git clone
+     for customization;
+   - developer/infra: use PyPI, editable install, or `npx` by preference.
 2. Configure `full` with MongoDB Atlas (`MONGODB_URI`).
 3. Run `config doctor --offline`.
 4. Connect Claude Desktop through the MCPB bundle.
@@ -218,6 +225,7 @@ Use `sample` only for a no-MongoDB demo or AI-only workflow check.
 ### Prerequisites
 
 - Python 3.11+ in a conda environment
+- Node.js 18+ if using the no-git-clone `npx` bootstrapper
 - One MCP chat client: Claude Desktop, or Codex/ChatGPT with MCP support
 - For `full`: MongoDB Atlas account, Free/M0 cluster, and `MONGODB_URI`
 - For LLM extraction/scoring: ChatGPT OAuth from a compatible subscription,
@@ -226,14 +234,27 @@ Use `sample` only for a no-MongoDB demo or AI-only workflow check.
 For a non-developer setup, the shortest explanation is:
 
 ```text
-Prepare MongoDB Atlas for storage, Claude Desktop or Codex/ChatGPT for the
-chat surface, and one LLM credential path for extraction. MongoDB Atlas M0/free
-tier is enough for the default full profile.
+Prepare Node.js and Python so the installer can run, MongoDB Atlas for storage,
+Claude Desktop or Codex/ChatGPT for the chat surface, and one LLM credential
+path for extraction. MongoDB Atlas M0/free tier is enough for the default full
+profile.
 ```
 
 ### Steps
 
 **Step 1 - Install the package**
+
+No-git-clone path:
+
+```bash
+npx deal-intel-mcp setup --python /path/to/python
+npx deal-intel-mcp mcp-config
+```
+
+Use the Python path printed by `mcp-config` in Claude Desktop MCPB. On Windows,
+use `npx.cmd` if PowerShell blocks `npx`.
+
+Repo/customization path:
 
 Clone or download this repository first, then run the install command from the
 repository root. The examples below use a conda environment named `deal-intel`;

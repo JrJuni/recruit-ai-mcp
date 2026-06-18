@@ -12,6 +12,29 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-18
 
+### Install scenario routing for Claude Desktop users
+
+Completed:
+
+- Added [AI_INSTALL_SCENARIOS.md](../AI_INSTALL_SCENARIOS.md) to make the
+  three current user setup paths explicit:
+  - non-developer with Claude Desktop but no Python/IDE;
+  - beginner with Python, VS Code, Warp, or similar tools;
+  - developer/infra engineer with an existing environment.
+- Updated README and AI start docs to point setup assistants at the scenario
+  selector before choosing npx, git clone, PyPI, or editable install.
+- Updated MCPB documentation so the npx-managed Python runtime path is treated
+  as the easiest no-git-clone preparation path, not only editable installs.
+
+Current scenario assessment:
+
+- Scenario 1 is supported, but not zero-prerequisite: the user still needs
+  Node.js 18+ and Python 3.11+ before `npx deal-intel-mcp setup` can create the
+  managed runtime. MCPB alone does not bundle Python dependencies.
+- Scenario 2 is supported through either npx or git clone depending on whether
+  the user wants usage only or customization.
+- Scenario 3 is supported through PyPI, editable install, or npx by preference.
+
 ### Public npm/PyPI bootstrapper release
 
 Completed:

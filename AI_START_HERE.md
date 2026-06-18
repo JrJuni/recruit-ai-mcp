@@ -7,6 +7,9 @@ For a step-by-step walkthrough for non-developer full-mode setup, read
 [`AI_FULL_INSTALL_GUIDE.md`](AI_FULL_INSTALL_GUIDE.md). For Korean users, use
 [`AI_FULL_INSTALL_GUIDE.ko.md`](AI_FULL_INSTALL_GUIDE.ko.md).
 
+For choosing between non-developer, beginner, and developer install paths, read
+[`AI_INSTALL_SCENARIOS.md`](AI_INSTALL_SCENARIOS.md).
+
 For the no-git-clone npx bootstrapper path, read
 [`AI_NPX_INSTALL_GUIDE.md`](AI_NPX_INSTALL_GUIDE.md).
 
@@ -31,6 +34,15 @@ Do not present `sample` as the normal install path. It is useful, but it is not
 the main product posture.
 
 ## First Run For A Human User
+
+First classify the user's setup:
+
+- Claude installed, but no Python/IDE: use the npx bootstrapper, but explain
+  that Node.js and Python 3.11+ still need to be installed first.
+- Python/VS Code/Warp already exists: use npx for fast usage, or git clone for
+  customization.
+- Developer/infra engineer: let them use their own Python environment,
+  editable install, PyPI install, or npx by preference.
 
 Before asking the user to run commands, explain the required pieces in plain
 language:

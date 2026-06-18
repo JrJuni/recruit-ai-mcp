@@ -6,10 +6,18 @@ This folder builds `deal-intel-mcp.mcpb`, a [Claude Desktop MCP Bundle](https://
 
 The bundle ships the manifest + user-config schema. When the user double-clicks `deal-intel-mcp-{version}.mcpb`, Claude Desktop prompts for the required paths/keys via a UI form instead of asking the user to hand-edit JSON.
 
-This bundle does not include the Python package or dependencies. Install the
-project into Python first, then provide these fields:
+This bundle does not include the Python package or dependencies. The easiest
+no-git-clone path is to run `npx deal-intel-mcp setup` first, then paste the
+Python interpreter path printed by `npx deal-intel-mcp mcp-config` into the
+MCPB form.
 
-- **`python_path`** - select the Python interpreter that already ran `pip install -e ".[embedding]"`. The editable install makes `deal_intel` importable without `PYTHONPATH`.
+Alternatively, install the project into an existing Python environment first,
+then provide these fields:
+
+- **`python_path`** - select the Python interpreter where `deal-intel-mcp` is
+  installed. This can be the npx-managed runtime path or an existing Python
+  environment that ran `pip install "deal-intel-mcp[embedding]"` or
+  `pip install -e ".[embedding]"`.
 - **`storage_backend`** - choose `mongo` for real Atlas-backed data. Use
   `local_sample` only for zero-config sample/local personal mode.
 - **`tools_surface`** - choose `auto` for profile-based filtering. Advanced
@@ -53,10 +61,20 @@ release artifact.
 
 ## Install
 
+Recommended no-git-clone preparation:
+
+```bash
+npx deal-intel-mcp setup --python /path/to/python
+npx deal-intel-mcp mcp-config
+```
+
+Use the `mcp-config` Python path in the MCPB form.
+
 1. Open Claude Desktop -> Settings -> Extensions
 2. Drag `deal-intel-mcp-{version}.mcpb` onto the Extensions pane (or click "Install from file")
 3. Fill the user_config form:
-   - **Python interpreter path** - select the conda environment's `python.exe`
+   - **Python interpreter path** - select the npx-managed Python path or an
+     existing environment's `python.exe`
    - **Storage backend** - `mongo` for real Atlas data; `local_sample` only for zero-config sample mode
    - **MCP tool surface** - `auto` for normal installs; `sample`, `standard`,
      or `developer` only when intentionally overriding the profile default

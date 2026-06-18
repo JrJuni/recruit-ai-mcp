@@ -15,13 +15,15 @@ Read these first for normal work:
 3. `../AI_START_HERE.md`
    - AI setup guide: full-by-default for humans, optional sample path for
      zero-config evaluation.
-4. `../AI_NPX_INSTALL_GUIDE.md`
+4. `../AI_INSTALL_SCENARIOS.md`
+   - Scenario selector for non-developer, beginner, and developer setup paths.
+5. `../AI_NPX_INSTALL_GUIDE.md`
    - No-git-clone npx bootstrapper install path.
-5. `../AI_USER_TEST_GUIDE.md`
+6. `../AI_USER_TEST_GUIDE.md`
    - First external tester handoff flow after an install path is available.
-6. `status.md`
+7. `status.md`
    - Latest completed work and current verification notes.
-7. `baseline.md`
+8. `baseline.md`
    - MCP tool contracts, input/output shape, persistence behavior, and current
      registration expectations.
 
