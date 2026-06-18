@@ -234,11 +234,16 @@ def test_weekly_pipeline_markdown_can_render_korean() -> None:
         report,
         generated_at=GENERATED_AT,
         language="ko",
+        timezone="Asia/Seoul",
     )
 
     assert result["language"] == "ko"
+    assert result["timezone"] == "Asia/Seoul"
+    assert result["generated_at"] == "2026-06-10T01:02:03+00:00"
+    assert result["generated_at_display"] == "2026-06-10 10:02:03 Asia/Seoul"
     markdown = result["markdown"]
     assert "# 주간 파이프라인 보고서" in markdown
+    assert "생성 시각: 2026-06-10 10:02:03 Asia/Seoul" in markdown
     assert "## 핵심 요약" in markdown
     assert "## 회의 진행안" in markdown
     assert "핵심 KPI와 데이터 신뢰도 확인" in markdown
@@ -353,6 +358,11 @@ def test_weekly_pipeline_markdown_validates_input_contract() -> None:
         build_weekly_pipeline_markdown(
             {"report_type": "weekly_pipeline", "rows": []},
             language="jp",
+        )
+    with pytest.raises(ValueError, match="timezone"):
+        build_weekly_pipeline_markdown(
+            {"report_type": "weekly_pipeline", "rows": []},
+            timezone="Not/AZone",
         )
 
 

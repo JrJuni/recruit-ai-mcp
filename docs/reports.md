@@ -315,6 +315,8 @@ understand normal UTF-8 should also accept the BOM.
 {
   "report_type": "weekly_pipeline",
   "generated_at": "2026-06-09T12:34:56+00:00",
+  "generated_at_display": "2026-06-09 21:34:56 Asia/Seoul",
+  "timezone": "Asia/Seoul",
   "metrics": {},
   "warnings": [],
   "briefing": "...",
@@ -328,7 +330,10 @@ understand normal UTF-8 should also accept the BOM.
 }
 ```
 
-`generated_at` must be timezone-aware. It is converted to UTC before rendering.
+`generated_at` must be timezone-aware. It is converted to UTC for machine
+contracts and filenames. The visible Markdown header uses
+`generated_at_display` in the configured reporting timezone so the report reads
+like a meeting artifact instead of a raw UTC log.
 
 ### Metric Source
 

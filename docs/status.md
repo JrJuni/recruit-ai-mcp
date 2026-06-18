@@ -12,6 +12,29 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-18
 
+### Report Quality v2 - timezone-aware Markdown header
+
+Completed:
+
+- Updated weekly pipeline Markdown reports so the visible `Generated at` /
+  `생성 시각` header uses the configured reporting timezone instead of a raw
+  UTC ISO timestamp.
+- Preserved the machine contract: returned `generated_at` remains UTC, while
+  `generated_at_display` and `timezone` make the human-facing report header
+  explicit.
+- Replaced the remaining internal "export" wording in the meeting-flow text
+  with "report" wording.
+
+Validated:
+
+- `pytest tests\test_weekly_pipeline_markdown.py tests\test_export_report.py tests\test_export_data.py -q -p no:cacheprovider --basetemp .tmp\pytest-report-quality-timezone`
+  -> 31 passed, 1 environment warning.
+- `ruff check src\deal_intel\reports\markdown_summary.py src\deal_intel\tools\export_report.py tests\test_weekly_pipeline_markdown.py tests\test_export_report.py`
+  -> passed.
+- Local-sample Korean `export_report(report_type="weekly_pipeline",
+  as_of="2026-06-10")` generated a report whose header now reads like
+  `생성 시각: YYYY-MM-DD HH:MM:SS Asia/Seoul`.
+
 ### V2 public docs/readiness sweep
 
 Completed:

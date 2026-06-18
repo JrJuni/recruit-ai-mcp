@@ -221,7 +221,13 @@ def test_export_report_uses_configured_markdown_language(tmp_path) -> None:
 
     result = export_report.handle(
         mongo=mongo,
-        cfg={"reporting": {"output_dir": str(tmp_path), "language": "ko"}},
+        cfg={
+            "reporting": {
+                "output_dir": str(tmp_path),
+                "language": "ko",
+                "timezone": "Asia/Seoul",
+            }
+        },
         report_type="weekly_pipeline",
         as_of="2026-06-10",
     )
@@ -231,6 +237,8 @@ def test_export_report_uses_configured_markdown_language(tmp_path) -> None:
     assert "숫자, 회사명, stage" in result["host_report_prompt"]
     markdown = Path(result["markdown_path"]).read_text(encoding="utf-8-sig")
     assert "# 주간 파이프라인 보고서" in markdown
+    assert "생성 시각:" in markdown
+    assert "Asia/Seoul" in markdown
     assert "## 회의 진행안" in markdown
     assert "| 오픈 딜 | 1 |" in markdown
 

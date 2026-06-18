@@ -67,6 +67,9 @@ Current v2 state:
 Immediate post-v2 quality order:
 
 1. Report Quality v2.
+   - Started on 2026-06-18 with human-facing Markdown header polish:
+     visible report timestamps now use the configured reporting timezone while
+     machine `generated_at` remains UTC.
    - Treat `export_report` as meeting/manager-report generation, not a ledger
      dump.
    - Keep deterministic metrics as the source of truth, but allow host-assisted

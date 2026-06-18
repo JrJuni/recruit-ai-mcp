@@ -3,6 +3,7 @@
 import json
 from datetime import UTC, datetime
 from typing import Any
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from deal_intel.reports.weekly_pipeline import REPORT_TYPE
 from deal_intel.schema.metrics import (
@@ -130,7 +131,7 @@ TEXT = {
             " deal(s) with incomplete data only where it affects sales action "
             "or forecast trust."
         ),
-        "flow_no_cleanup": "4. No major report data-quality cleanup is required from this export.",
+        "flow_no_cleanup": "4. No major report data-quality cleanup is required for this report.",
         "host_prompt_title": "Host-App Report Polish Prompt",
     },
     "ko": {
@@ -242,7 +243,7 @@ TEXT = {
             "개의 데이터 품질 이슈는 영업 액션이나 forecast 신뢰도에 영향을 줄 때만 "
             "보완합니다."
         ),
-        "flow_no_cleanup": "4. 이번 export 기준으로 큰 데이터 품질 정리는 필요하지 않습니다.",
+        "flow_no_cleanup": "4. 이번 보고서 기준으로 큰 데이터 품질 정리는 필요하지 않습니다.",
         "host_prompt_title": "호스트 앱 보고서 다듬기 프롬프트",
     },
 }
@@ -398,6 +399,7 @@ def build_weekly_pipeline_markdown(
     *,
     generated_at: datetime | None = None,
     language: str = "en",
+    timezone: str = "UTC",
 ) -> dict:
     """Build an LLM-free Markdown summary from weekly pipeline report rows."""
     if report.get("report_type") != REPORT_TYPE:
@@ -405,6 +407,11 @@ def build_weekly_pipeline_markdown(
 
     report_language = validate_report_language(language)
     generated = _generated_at(generated_at)
+    timezone_name = _validate_timezone(timezone)
+    generated_display = _format_generated_at_display(
+        generated,
+        timezone_name=timezone_name,
+    )
     rows = report.get("rows") if isinstance(report.get("rows"), list) else []
     warnings = [
         str(warning)
@@ -417,6 +424,7 @@ def build_weekly_pipeline_markdown(
         rows,
         filters=report.get("filters") if isinstance(report.get("filters"), dict) else {},
         generated_at=generated,
+        generated_at_display=generated_display,
         metrics=metrics,
         warnings=warnings,
         language=report_language,
@@ -433,6 +441,8 @@ def build_weekly_pipeline_markdown(
     return {
         "report_type": REPORT_TYPE,
         "generated_at": generated.isoformat(),
+        "generated_at_display": generated_display,
+        "timezone": timezone_name,
         "language": report_language,
         "metrics": metrics,
         "warnings": warnings,
@@ -459,6 +469,23 @@ def _generated_at(value: datetime | None) -> datetime:
     if generated.tzinfo is None or generated.utcoffset() is None:
         raise ValueError("generated_at must be timezone-aware")
     return generated.astimezone(UTC)
+
+
+def _validate_timezone(value: str | None) -> str:
+    timezone_name = value or "UTC"
+    if not isinstance(timezone_name, str) or not timezone_name.strip():
+        raise ValueError("timezone must be a non-empty IANA timezone")
+    timezone_name = timezone_name.strip()
+    try:
+        ZoneInfo(timezone_name)
+    except ZoneInfoNotFoundError as exc:
+        raise ValueError("timezone must be a valid IANA timezone") from exc
+    return timezone_name
+
+
+def _format_generated_at_display(value: datetime, *, timezone_name: str) -> str:
+    local_time = value.astimezone(ZoneInfo(timezone_name))
+    return f"{local_time:%Y-%m-%d %H:%M:%S} {timezone_name}"
 
 
 def _summarize_rows(rows: list[dict]) -> dict:
@@ -596,6 +623,7 @@ def _build_markdown(
     *,
     filters: dict,
     generated_at: datetime,
+    generated_at_display: str,
     metrics: dict,
     warnings: list[str],
     language: str,
@@ -604,7 +632,7 @@ def _build_markdown(
     lines = [
         f"# {_text(language, 'title')}",
         "",
-        f"{_text(language, 'generated_at')}: {generated_at.isoformat()}",
+        f"{_text(language, 'generated_at')}: {generated_at_display}",
         f"{_text(language, 'filters')}: "
         f"stage={_filter_value(filters.get('stage'), language)}, "
         f"industry={_filter_value(filters.get('industry'), language)}",

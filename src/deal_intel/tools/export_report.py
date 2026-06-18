@@ -151,6 +151,7 @@ def _handle_weekly_pipeline(
         report,
         generated_at=reporting.generated_at,
         language=language,
+        timezone=reporting.timezone,
     )
     csv_result = save_report_csv(
         report,
