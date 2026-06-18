@@ -39,6 +39,16 @@ class KeywordEmbedding:
         ]
 
 
+class LoadingEmbedding:
+    dimensions = 3
+    is_ready = False
+    load_error = None
+    warmup_status = {"phase": "loading_model", "elapsed_seconds": 2.0}
+
+    def embed(self, text: str) -> list[float]:
+        raise AssertionError("loading embedding must not be used")
+
+
 def _cfg(tmp_path) -> dict:
     return {
         "product_context": {
@@ -414,6 +424,7 @@ def test_retrieve_product_context_requires_embedding_provider(tmp_path) -> None:
         retrieve_product_context(_cfg(tmp_path), embedding_provider=None, query="security")
 
     assert exc_info.value.error_code == ErrorCode.CONFIG_ERROR
+    assert exc_info.value.hint["embedding_status"]["state"] == "not_installed"
 
 
 def test_mcp_get_product_context_reports_missing_embedding_dependency(monkeypatch) -> None:
@@ -424,6 +435,35 @@ def test_mcp_get_product_context_reports_missing_embedding_dependency(monkeypatc
     assert result["ok"] is False
     assert result["error_code"] == "CONFIG_ERROR"
     assert result["warming_up"] is False
+    assert result["embedding_status"]["state"] == "not_installed"
+    assert result["product_context_status"]["state"] == "embedding_unavailable"
+
+
+def test_mcp_get_product_context_reports_loading_embedding(monkeypatch) -> None:
+    monkeypatch.setattr(_context, "embedding_provider", lambda: LoadingEmbedding())
+
+    result = mcp_server.get_product_context("security")
+
+    assert result["ok"] is False
+    assert result["retryable"] is True
+    assert result["warming_up"] is True
+    assert result["embedding_status"]["state"] == "loading"
+    assert result["embedding_status"]["phase"] == "loading_model"
+    assert result["product_context_status"]["state"] == "embedding_loading"
+
+
+def test_retrieve_product_context_no_index_returns_next_action(tmp_path) -> None:
+    result = retrieve_product_context(
+        _cfg(tmp_path),
+        embedding_provider=KeywordEmbedding(),
+        query="security",
+    )
+
+    assert result["ok"] is True
+    assert result["result_count"] == 0
+    assert result["product_context_status"]["state"] == "not_indexed"
+    assert result["embedding_status"]["state"] == "ready"
+    assert result["next_actions"][0]["tool"] == "index_product_context"
 
 
 def test_index_product_context_guides_when_default_source_dir_absent(

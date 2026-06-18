@@ -270,6 +270,17 @@ class FakeDoctorClient:
         }
 
 
+class FakeDoctorClientWithDnsFailure(FakeDoctorClient):
+    def ping(self) -> dict:
+        return {
+            "status": "error",
+            "message": (
+                "The resolution lifetime expired after 8 seconds: "
+                "DNS operation timed out for configured-mongodb-uri-sentinel"
+            ),
+        }
+
+
 def test_mongo_doctor_reports_auxiliary_schema_checks(monkeypatch) -> None:
     monkeypatch.setenv("MONGODB_URI", "configured-mongodb-uri-sentinel")
 
@@ -283,6 +294,22 @@ def test_mongo_doctor_reports_auxiliary_schema_checks(monkeypatch) -> None:
     assert _status(report, "analytics_snapshots_schema") == "warn"
     assert _status(report, "delete_audit_logs_schema") == "warn"
     assert _status(report, "dashboard_weekly_pipeline_chart_ready") == "pass"
+    assert "configured-mongodb-uri-sentinel" not in json.dumps(report)
+
+
+def test_mongo_doctor_storage_ping_failure_has_actionable_safe_hint(monkeypatch) -> None:
+    monkeypatch.setenv("MONGODB_URI", "configured-mongodb-uri-sentinel")
+
+    report = build_mongo_doctor_report(
+        _full_cfg(),
+        mongo_client_factory=lambda _database: FakeDoctorClientWithDnsFailure(),
+    )
+
+    assert report["ok"] is False
+    check = next(check for check in report["checks"] if check["id"] == "storage_ping")
+    assert check["status"] == "fail"
+    assert check["hint"]["likely_issue"] == "dns_or_network"
+    assert "Network Access/IP allowlist" in " ".join(check["hint"]["next_actions"])
     assert "configured-mongodb-uri-sentinel" not in json.dumps(report)
 
 

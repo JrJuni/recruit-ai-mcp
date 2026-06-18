@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 
 from deal_intel.errors import ErrorCode, MCPError, Stage
 from deal_intel.product_context import (
+    embedding_readiness_status,
     product_context_refs,
     render_product_context_prompt_block,
     retrieve_product_context,
@@ -100,13 +101,72 @@ def _retrieve_product_context_for_strategy(
     interactions: list[dict],
 ) -> dict:
     if embedding_provider is None:
-        return {"ok": True, "result_count": 0, "results": [], "warnings": []}
+        return {
+            "ok": True,
+            "result_count": 0,
+            "results": [],
+            "warnings": [
+                {
+                    "code": "product_context_embedding_not_installed",
+                    "message": "Product context was skipped because embeddings are not installed.",
+                }
+            ],
+            "embedding_status": embedding_readiness_status(embedding_provider),
+            "product_context_status": {
+                "state": "embedding_unavailable",
+                "message": "Product context retrieval requires embeddings.",
+            },
+        }
     product_cfg = cfg.get("product_context") if isinstance(cfg, dict) else None
     if isinstance(product_cfg, dict) and product_cfg.get("enabled") is False:
-        return {"ok": True, "result_count": 0, "results": [], "warnings": []}
+        return {
+            "ok": True,
+            "result_count": 0,
+            "results": [],
+            "warnings": [],
+            "embedding_status": embedding_readiness_status(embedding_provider),
+            "product_context_status": {
+                "state": "disabled",
+                "message": "Product context is disabled in config.",
+            },
+        }
+    embedding_status = embedding_readiness_status(embedding_provider)
+    if embedding_status["state"] != "ready":
+        return {
+            "ok": True,
+            "result_count": 0,
+            "results": [],
+            "warnings": [
+                {
+                    "code": "product_context_embedding_not_ready",
+                    "message": (
+                        "Product context was skipped because the local embedding "
+                        "model is not ready yet."
+                    ),
+                    "embedding_status": embedding_status,
+                }
+            ],
+            "embedding_status": embedding_status,
+            "product_context_status": {
+                "state": "embedding_loading"
+                if embedding_status["state"] in {"loading", "not_started"}
+                else "embedding_failed",
+                "message": "Product context retrieval is not ready.",
+            },
+        }
     query = _product_context_query(deal, interactions)
     if not query:
-        return {"ok": True, "result_count": 0, "results": [], "warnings": []}
+        return {
+            "ok": True,
+            "result_count": 0,
+            "results": [],
+            "warnings": [],
+            "embedding_status": embedding_status,
+            "product_context_status": {
+                "state": "no_query",
+                "message": "No deal text was available for product-context retrieval.",
+            },
+        }
     try:
         payload = retrieve_product_context(
             cfg,
@@ -213,6 +273,10 @@ def handle(
         "product_context_used": bool(product_context_references),
         "product_context_ref_count": len(product_context_references),
         "product_context_refs": product_context_references,
+        "product_context_status": product_context_payload.get(
+            "product_context_status"
+        ),
+        "embedding_status": product_context_payload.get("embedding_status"),
         "warnings": product_context_warnings,
         "usage": resp.usage,
         "usage_summary": {

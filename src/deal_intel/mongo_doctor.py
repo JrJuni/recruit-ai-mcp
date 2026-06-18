@@ -15,6 +15,7 @@ from deal_intel.mongo_contracts import (
     collection_schema_contract_summary,
     mongo_schema_collections,
 )
+from deal_intel.storage.diagnostics import storage_error_hint
 
 MongoClientFactory = Callable[[str], Any]
 
@@ -136,6 +137,10 @@ def _add_mongo_checks(
             details=_redact(ping),
         )
     else:
+        error_hint = storage_error_hint(
+            Exception(str(ping.get("message") or "MongoDB ping failed.")),
+            operation="mongo doctor storage ping",
+        )
         _add_check(
             checks,
             check_id="storage_ping",
@@ -143,7 +148,7 @@ def _add_mongo_checks(
             status="fail",
             message="MongoDB ping failed.",
             details=_redact(ping),
-            hint="Check Atlas network access, credentials, and the target database name.",
+            hint=error_hint,
         )
         _add_skipped_mongo_checks(checks, "MongoDB ping failed.", include_uri=False)
         return

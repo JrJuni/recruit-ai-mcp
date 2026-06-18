@@ -57,19 +57,27 @@ _install_tool_surface_filter(app)
 
 def _embedding_preflight_response():
     from deal_intel import _context
+    from deal_intel.product_context import embedding_readiness_status
 
     embedding_provider = _context.embedding_provider()
     if embedding_provider is None:
+        embedding_status = embedding_readiness_status(embedding_provider)
         return None, {
             "ok": False,
             "error_code": "CONFIG_ERROR",
             "stage": "preflight",
             "message": "The local embedding provider is not installed.",
-            "hint": {"fix": 'pip install -e ".[embedding]"'},
+            "hint": {"fix": embedding_status["next_action"]},
             "retryable": False,
             "warming_up": False,
+            "embedding_status": embedding_status,
+            "product_context_status": {
+                "state": "embedding_unavailable",
+                "message": "Product context retrieval requires embeddings.",
+            },
         }
     if embedding_provider.load_error:
+        embedding_status = embedding_readiness_status(embedding_provider)
         return None, {
             "ok": False,
             "error_code": "UPSTREAM_ERROR",
@@ -78,9 +86,15 @@ def _embedding_preflight_response():
             "hint": {"detail": embedding_provider.load_error},
             "retryable": False,
             "warming_up": False,
+            "embedding_status": embedding_status,
+            "product_context_status": {
+                "state": "embedding_failed",
+                "message": "Product context retrieval cannot run until embeddings load.",
+            },
         }
     if not embedding_provider.is_ready:
         warmup_status = embedding_provider.warmup_status
+        embedding_status = embedding_readiness_status(embedding_provider)
         if warmup_status["elapsed_seconds"] >= _MAX_EMBEDDING_WARMUP_SECONDS:
             return None, {
                 "ok": False,
@@ -93,6 +107,11 @@ def _embedding_preflight_response():
                 },
                 "retryable": False,
                 "warming_up": False,
+                "embedding_status": embedding_status,
+                "product_context_status": {
+                    "state": "embedding_failed",
+                    "message": "Embedding warmup appears stalled.",
+                },
             }
         return None, {
             "ok": False,
@@ -105,6 +124,11 @@ def _embedding_preflight_response():
             },
             "retryable": True,
             "warming_up": True,
+            "embedding_status": embedding_status,
+            "product_context_status": {
+                "state": "embedding_loading",
+                "message": "Product context retrieval will be available after warmup.",
+            },
         }
     return embedding_provider, None
 

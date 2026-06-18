@@ -15,6 +15,7 @@ from deal_intel.schema.metrics import (
     PipelineTimingSettings,
     ReportingContext,
 )
+from deal_intel.storage.diagnostics import storage_error_hint
 from deal_intel.storage.mongodb import MongoDBClient
 from deal_intel.tools.export_report import (
     DEFAULT_OUTPUT_DIR,
@@ -77,6 +78,10 @@ def handle(
             error_code=ErrorCode.STORAGE_ERROR,
             stage=Stage.STORAGE,
             message=str(exc),
+            hint=storage_error_hint(
+                exc,
+                operation="export_data.read_deals",
+            ),
             retryable=True,
         ) from exc
 

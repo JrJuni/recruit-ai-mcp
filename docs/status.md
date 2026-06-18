@@ -12,6 +12,158 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-18
 
+### V2 polish final gate - storage, runtime, context, and review UX
+
+Completed:
+
+- Closed the v2 polish queue for storage error hints, runtime drift
+  diagnostics, product-context cold-start messaging, and deal-review
+  uncertainty wording.
+- Extended `mongo doctor` to reuse the same secret-safe storage diagnostics as
+  export paths. Live DNS/network failures now report a classified
+  `dns_or_network` hint with next actions instead of a generic Mongo failure.
+- Confirmed that the current live Mongo read/report paths still work even when
+  a standalone doctor ping sees transient DNS timeout behavior on this machine.
+
+Validated:
+
+- `ruff check .` -> passed.
+- `pytest -q -p no:cacheprovider --basetemp .tmp\pytest-v2-polish-final`
+  -> 754 passed, 1 environment warning.
+- `smoke-natural-questions --as-of 2026-06-10`
+  -> `OK: True`; output:
+  `C:\Users\JuniBecky\.deal-intel\smoke\natural-question-pack-20260618_150502`.
+- `smoke-deal-review-audit --as-of 2026-06-10 --limit 20`
+  -> sensitive field check passed; quality rules passed.
+- `config doctor --offline --json`
+  -> `ok: true`, full profile, zero failed checks; runtime diagnostics
+  correctly surfaced local package/source version drift (`0.1.0` metadata vs
+  `0.2.1` source tree).
+- `smoke-profile --profile full --offline` -> pass.
+- `smoke-profile --profile sample` -> pass.
+- `crosscheck-weekly-dashboard --as-of 2026-06-10` -> `ok: true`; generated
+  CSV/Markdown artifacts under `~/.deal-intel/reports`.
+- `mongo refresh-chart-ready --target all --as-of 2026-06-10 --json`
+  -> dry-run pass; 200 chart-ready rows across weekly pipeline, customer
+  themes, and pipeline trend.
+- `mongo doctor --json` currently reports one live `storage_ping` failure caused
+  by local DNS timeout. The response now classifies the issue as
+  `dns_or_network` and returns actionable next steps; this is tracked as an
+  environment/UX observation, not a v2 release blocker.
+
+UX findings:
+
+- `blocker`: none.
+- `v2 polish`: none remaining from the current queue.
+- `post-v2`:
+  - make runtime version drift easier to repair automatically, not just
+    diagnose;
+  - consider making Mongo doctor less all-or-nothing when read-only Mongo
+    checks succeed but the initial ping path sees transient DNS failure;
+  - keep improving sample data quality so deal-review uncertainty does not look
+    alarming without context.
+
+### V2 polish step 4 - deal-review uncertainty wording
+
+Completed:
+
+- `get_deal_review` now returns structured `uncertainty_reasons` whenever the
+  review should stay cautious.
+- `health_interpretation` also includes `uncertainty_reason_codes` for compact
+  host summaries.
+- Reasons distinguish low/partial qualification coverage, missing customer
+  evidence, invalid/unknown/estimated deal value, invalid/missing/estimated
+  structured fields, unassessed health, and seller-side product context that
+  must not be treated as customer-stated evidence.
+- Deal-review smoke text now prints uncertainty reasons, and the audit accepts
+  structured reasons as a valid backing for high uncertainty.
+- No scoring, health-band, or forecast-confidence thresholds changed.
+
+Validated:
+
+- `pytest tests/test_deal_review.py tests/test_cli_deal_review_smoke.py -q -p no:cacheprovider --basetemp .tmp\pytest-deal-review-uncertainty`
+  -> 31 passed, 1 environment warning.
+- `ruff check src\deal_intel\schema\deal_review.py src\deal_intel\cli.py tests\test_deal_review.py tests\test_cli_deal_review_smoke.py`
+  -> passed.
+
+### V2 polish step 3 - product-context cold-start UX
+
+Completed:
+
+- Product-context retrieval now returns explicit `product_context_status`,
+  `embedding_status`, and `next_actions` fields.
+- `get_product_context` distinguishes missing embeddings, loading/not-started
+  embeddings, failed warmup, disabled product context, and an empty/unindexed
+  cache.
+- `analyze_deal` no longer risks blocking on product-context retrieval when the
+  local embedding model is still warming. It skips seller-side context, keeps
+  strategy generation running, and returns a warning plus embedding status.
+- No raw product documents are returned or stored; `analyze_deal` still stores
+  only product-context refs when context is actually used.
+
+Validated:
+
+- `pytest tests/test_product_context.py tests/test_analyze_deal.py -q -p no:cacheprovider --basetemp .tmp\pytest-product-context-coldstart`
+  -> 22 passed, 1 environment warning.
+- `ruff check src\deal_intel\product_context.py src\deal_intel\mcp_server.py src\deal_intel\tools\analyze_deal.py tests\test_product_context.py tests\test_analyze_deal.py`
+  -> passed.
+
+### V2 polish step 2 - runtime drift diagnostics
+
+Completed:
+
+- Added a shared runtime diagnostic helper used by both `config show` and
+  `config doctor`.
+- Runtime diagnostics now report the package name/version, source-tree version
+  when running from a checkout, Python executable, Python version, module file,
+  and package location.
+- If installed package metadata and the source tree version differ, the runtime
+  block reports `version_mismatch: true` with a next-action warning to reinstall
+  or rebuild artifacts before publishing.
+- `config doctor` MCP/CLI JSON now includes the same runtime block as
+  `config show`, making Claude/Codex host setup drift easier to diagnose.
+- Text output now separates runtime location from config readiness so users can
+  distinguish "wrong Python/package" from "wrong Mongo/API config".
+
+Observed:
+
+- Local `config show` now reports package metadata `0.1.0` beside source-tree
+  version `0.2.1`, which correctly surfaces the stale editable-install drift
+  that motivated this polish item.
+
+Validated:
+
+- `pytest tests/test_cli_config_profiles.py tests/test_config_doctor.py -q -p no:cacheprovider --basetemp .tmp\pytest-runtime-diagnostics`
+  -> 17 passed, 1 environment warning.
+- `ruff check src\deal_intel\runtime.py src\deal_intel\cli.py src\deal_intel\config_doctor.py tests\test_cli_config_profiles.py tests\test_config_doctor.py`
+  -> passed.
+- `rg "JuniBecky|event-intel" AGENTS.md CLAUDE.md README.md AI_START_HERE.md docs mcpb -g "*.md" -g "*.json"`
+  -> no tracked public-doc matches.
+
+### V2 polish step 1 - storage error hints
+
+Completed:
+
+- Added secret-safe storage diagnostics for Mongo-backed export failures.
+- `export_report` now returns actionable `STORAGE_ERROR.hint` values for
+  weekly pipeline and pipeline trend read failures.
+- `export_data` now returns the same style of hint for ledger export read
+  failures.
+- The hint classifies common failure modes such as missing `MONGODB_URI`,
+  authentication/authorization, DNS/network trouble, and Atlas failover or
+  cluster unavailability.
+- Hints include next actions such as running `deal-intel config doctor`,
+  checking Atlas Network Access/IP allowlist, verifying credentials, and
+  retrying after cluster resume/failover. Hints intentionally omit MongoDB URIs,
+  API keys, tokens, and raw credentials.
+
+Validated:
+
+- `pytest tests/test_storage_diagnostics.py tests/test_export_report.py tests/test_export_data.py -q -p no:cacheprovider --basetemp .tmp\pytest-storage-hints`
+  -> 30 passed, 1 environment warning.
+- `ruff check src\deal_intel\storage\diagnostics.py src\deal_intel\tools\export_report.py src\deal_intel\tools\export_data.py tests\test_storage_diagnostics.py tests\test_export_report.py tests\test_export_data.py`
+  -> passed.
+
 ### V2 readiness gate with UX friction review
 
 Completed:

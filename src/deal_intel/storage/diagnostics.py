@@ -1,6 +1,104 @@
 from __future__ import annotations
 
 
+def storage_error_hint(exc: Exception, *, operation: str) -> dict[str, object]:
+    """Return a secret-safe, user-actionable hint for Mongo/storage failures."""
+
+    likely_issue = classify_storage_error(exc)
+    next_actions = [
+        "Run `deal-intel config doctor` to check profile, storage, and MongoDB readiness.",
+        "Verify MONGODB_URI is configured for the environment running this MCP server.",
+        "Check MongoDB Atlas Network Access/IP allowlist, credentials, and cluster status.",
+        "If Atlas is resuming, upgrading, or selecting a new primary, wait briefly and retry.",
+    ]
+    if likely_issue == "missing_mongodb_uri":
+        next_actions = [
+            "Set MONGODB_URI in .env or in the host MCP configuration.",
+            "Run `deal-intel config doctor` to confirm the full/pro MongoDB profile is ready.",
+            "Use `deal-intel config show` to confirm which profile and storage backend are active.",
+        ]
+    elif likely_issue == "authentication_or_authorization":
+        next_actions = [
+            "Verify the MongoDB username, password, and database user permissions.",
+            "Confirm the URI is being supplied to the same Python runtime used by the MCP server.",
+            "Run `deal-intel config doctor` after updating credentials.",
+        ]
+    elif likely_issue == "dns_or_network":
+        next_actions = [
+            "Check internet/VPN/DNS connectivity from this machine.",
+            "Verify the Atlas cluster hostname and Network Access/IP allowlist.",
+            "Run `deal-intel config doctor` and retry after transient DNS or network recovery.",
+        ]
+    elif likely_issue == "atlas_failover_or_cluster_unavailable":
+        next_actions = [
+            "Wait 30-60 seconds for Atlas resume, upgrade, or failover to finish.",
+            "Check the Atlas cluster status page/metrics for primary election or maintenance.",
+            "Run `deal-intel config doctor` and retry the export.",
+        ]
+
+    return {
+        "operation": operation,
+        "likely_issue": likely_issue,
+        "diagnostic_command": "deal-intel config doctor",
+        "next_actions": next_actions,
+        "safe_detail": (
+            "Original storage errors may contain environment-specific details; "
+            "this hint intentionally omits URIs, API keys, tokens, and raw credentials."
+        ),
+    }
+
+
+def classify_storage_error(exc: Exception) -> str:
+    """Classify common storage failures without returning the original message."""
+
+    text = f"{type(exc).__name__}: {exc}".lower()
+    if "mongodb_uri" in text and ("not set" in text or "missing" in text):
+        return "missing_mongodb_uri"
+    if any(
+        marker in text
+        for marker in (
+            "authenticationfailed",
+            "auth failed",
+            "authentication failed",
+            "bad auth",
+            "not authorized",
+            "unauthorized",
+            "permission denied",
+            "commandnotfound",
+        )
+    ):
+        return "authentication_or_authorization"
+    if any(
+        marker in text
+        for marker in (
+            "replicasetnoprimary",
+            "no primary",
+            "not primary",
+            "node is recovering",
+            "interruptedatshutdown",
+            "shutdown in progress",
+        )
+    ):
+        return "atlas_failover_or_cluster_unavailable"
+    if any(
+        marker in text
+        for marker in (
+            "dns",
+            "getaddrinfo",
+            "name or service not known",
+            "nodename nor servname",
+            "connection refused",
+            "connection reset",
+            "timed out",
+            "timeout",
+            "network is unreachable",
+            "temporary failure in name resolution",
+        )
+    ):
+        return "dns_or_network"
+    return "storage_access"
+
+
 def local_sample_mode_hint() -> dict[str, str]:
     """Return the standard hint for entering MongoDB-free sample mode."""
 

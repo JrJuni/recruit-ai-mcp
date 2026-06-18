@@ -64,6 +64,17 @@ class FailingMongo:
         raise AssertionError("preflight should fail before storage")
 
 
+class StorageFailingMongo:
+    def __init__(self, message: str) -> None:
+        self.message = message
+
+    def list_deals_for_metrics(self) -> list[dict]:
+        raise RuntimeError(self.message)
+
+    def list_analytics_snapshots(self, **_kwargs) -> list[dict]:
+        raise RuntimeError(self.message)
+
+
 def _deal(
     deal_id: str,
     *,
@@ -476,6 +487,52 @@ def test_export_report_returns_io_error_when_artifact_write_fails(tmp_path) -> N
     assert exc_info.value.error_code == ErrorCode.IO_ERROR
     assert exc_info.value.stage == "storage"
     assert exc_info.value.hint == {"output_dir": str(output_file)}
+
+
+def test_export_report_storage_error_includes_actionable_secret_safe_hint(
+    tmp_path,
+) -> None:
+    secret_uri = "mongodb+srv://user:super-secret@example.mongodb.net"
+    with pytest.raises(MCPError) as exc_info:
+        export_report.handle(
+            mongo=StorageFailingMongo(
+                f"ServerSelectionTimeoutError: getaddrinfo failed for {secret_uri}"
+            ),
+            cfg={"reporting": {"output_dir": str(tmp_path)}},
+            report_type="weekly_pipeline",
+            as_of="2026-06-10",
+        )
+
+    assert exc_info.value.error_code == ErrorCode.STORAGE_ERROR
+    assert exc_info.value.stage == "storage"
+    assert exc_info.value.retryable is True
+    hint = exc_info.value.hint
+    assert isinstance(hint, dict)
+    assert hint["operation"] == "export_report.weekly_pipeline.read_deals"
+    assert hint["likely_issue"] == "dns_or_network"
+    assert hint["diagnostic_command"] == "deal-intel config doctor"
+    assert hint["next_actions"]
+    serialized_hint = str(hint)
+    assert "mongodb+srv" not in serialized_hint
+    assert "super-secret" not in serialized_hint
+
+
+def test_export_report_pipeline_trend_storage_error_hints_failover(
+    tmp_path,
+) -> None:
+    with pytest.raises(MCPError) as exc_info:
+        export_report.handle(
+            mongo=StorageFailingMongo("ReplicaSetNoPrimary: No primary available"),
+            cfg={"reporting": {"output_dir": str(tmp_path)}},
+            report_type="pipeline_trend",
+            as_of="2026-06-10",
+        )
+
+    hint = exc_info.value.hint
+    assert isinstance(hint, dict)
+    assert hint["operation"] == "export_report.pipeline_trend.read_snapshots"
+    assert hint["likely_issue"] == "atlas_failover_or_cluster_unavailable"
+    assert "Wait 30-60 seconds" in str(hint["next_actions"])
 
 
 def test_mcp_runtime_registers_export_report() -> None:

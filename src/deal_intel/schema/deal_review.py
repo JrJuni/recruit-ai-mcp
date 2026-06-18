@@ -8,6 +8,7 @@ from deal_intel.schema.deal_gaps import build_deal_gaps_summary
 from deal_intel.schema.gap_actionability import annotate_gap_actionability
 from deal_intel.schema.metrics import (
     DataQualityStatus,
+    DealValueAssessment,
     DealValueStatus,
     HealthBand,
     HealthBandThresholds,
@@ -173,6 +174,16 @@ def build_deal_review(
         value_valid=value.is_valid,
         settings=settings,
     )
+    uncertainty_reasons = _uncertainty_reasons(
+        deal,
+        review_snapshot=review_snapshot,
+        coverage=coverage,
+        health_band=health_band,
+        data_quality=data_quality,
+        missing_information=missing_information,
+        value=value,
+        settings=settings,
+    )
     review_band = _review_band(
         health_band=health_band,
         coverage_pct=coverage["coverage_pct"],
@@ -232,6 +243,9 @@ def build_deal_review(
             "filled_meddpicc_count": coverage["filled_count"],
             "total_meddpicc_count": coverage["total_count"],
             "uncertainty_level": uncertainty_level,
+            "uncertainty_reason_codes": [
+                reason["reason_id"] for reason in uncertainty_reasons
+            ],
             "review_band": review_band,
             "alert_level": alert_level,
             "forecast_confidence": _forecast_confidence(
@@ -248,6 +262,7 @@ def build_deal_review(
         "actionable_gaps": actionable_gaps,
         "gap_observations": gap_observations,
         "missing_information": missing_information,
+        "uncertainty_reasons": uncertainty_reasons,
         "confirmed_risks": confirmed_risks,
         "known_signals": _known_signals(scorecard, value_status=value.status),
         "recommended_questions": _recommended_questions(gaps, scorecard),
@@ -619,6 +634,243 @@ def _recommended_actions(gaps: list[dict], risks: list[dict]) -> list[str]:
     if any(str(risk["risk_id"]).startswith("timing:") for risk in risks):
         actions.append("review_timing_and_close_plan")
     return _dedupe_strings(actions)[:8]
+
+
+def _uncertainty_reasons(
+    deal: dict,
+    *,
+    review_snapshot: QualificationReviewSnapshot,
+    coverage: dict,
+    health_band: HealthBand,
+    data_quality: Any,
+    missing_information: list[dict],
+    value: DealValueAssessment,
+    settings: DealReviewSettings,
+) -> list[dict]:
+    reasons: list[dict] = []
+    coverage_pct = coverage["coverage_pct"]
+    framework = review_snapshot.framework_display_name
+
+    if coverage_pct is None:
+        reasons.append(
+            _uncertainty_reason(
+                "qualification_coverage_unknown",
+                field="qualification",
+                impact_area="evidence",
+                severity="high",
+                reason=(
+                    f"{framework} coverage is unknown, so the health score cannot "
+                    "be treated as customer-validated."
+                ),
+                next_action="add_customer_evidence",
+            )
+        )
+    elif coverage_pct < settings.coverage_low_max:
+        reasons.append(
+            _uncertainty_reason(
+                "low_qualification_coverage",
+                field="qualification",
+                impact_area="evidence",
+                severity="high",
+                reason=(
+                    f"Only {coverage['filled_count']}/{coverage['total_count']} "
+                    f"{framework} dimensions have customer-stated evidence."
+                ),
+                next_action="ask_missing_qualification_questions",
+            )
+        )
+    elif coverage_pct < settings.coverage_high_min:
+        reasons.append(
+            _uncertainty_reason(
+                "partial_qualification_coverage",
+                field="qualification",
+                impact_area="evidence",
+                severity="medium",
+                reason=(
+                    f"{framework} coverage is partial at {coverage_pct}%, so the "
+                    "review should stay cautious."
+                ),
+                next_action="confirm_remaining_qualification_fields",
+            )
+        )
+
+    if health_band == HealthBand.UNASSESSED:
+        reasons.append(
+            _uncertainty_reason(
+                "health_unassessed",
+                field="qualification",
+                impact_area="evidence",
+                severity="high",
+                reason="No usable qualification health score is available.",
+                next_action="record_or_reextract_customer_evidence",
+            )
+        )
+
+    if missing_information:
+        fields = _dedupe_strings(
+            [
+                str(item.get("field"))
+                for item in missing_information
+                if item.get("field")
+            ]
+        )
+        reasons.append(
+            _uncertainty_reason(
+                "missing_customer_evidence",
+                field="qualification",
+                impact_area="sales_action",
+                severity="medium",
+                reason=(
+                    f"{len(missing_information)} open information gap(s) still "
+                    "need customer-side confirmation."
+                ),
+                next_action="review_missing_information",
+                details={"fields": fields[:8]},
+            )
+        )
+
+    if not value.is_valid:
+        reasons.append(
+            _uncertainty_reason(
+                "deal_value_invalid",
+                field="deal_value",
+                impact_area="forecast_trust",
+                severity="high",
+                reason=(
+                    "Deal value/status is invalid, so forecast value should not "
+                    "be trusted yet."
+                ),
+                next_action="update_deal_value_status",
+            )
+        )
+    elif value.status is None or value.status == DealValueStatus.UNKNOWN:
+        reasons.append(
+            _uncertainty_reason(
+                "deal_value_unknown",
+                field="deal_value",
+                impact_area="forecast_trust",
+                severity="medium",
+                reason="Deal value is not yet classified or confirmed.",
+                next_action="confirm_budget_or_mark_unknown",
+            )
+        )
+    elif value.status == DealValueStatus.ROUGH_ESTIMATE:
+        reasons.append(
+            _uncertainty_reason(
+                "deal_value_rough_estimate",
+                field="deal_value",
+                impact_area="forecast_trust",
+                severity="medium",
+                reason="Deal value is based on a rough estimate.",
+                next_action="confirm_customer_budget_or_quote",
+            )
+        )
+
+    data_quality_dict = data_quality.to_dict()
+    invalid_fields = data_quality_dict.get("invalid_fields") or []
+    estimated_fields = data_quality_dict.get("estimated_fields") or []
+    missing_fields = data_quality_dict.get("missing_fields") or []
+    if invalid_fields:
+        reasons.append(
+            _uncertainty_reason(
+                "invalid_data_quality_fields",
+                field="data_quality",
+                impact_area="forecast_trust",
+                severity="high",
+                reason="Some structured fields are invalid.",
+                next_action="fix_invalid_deal_fields",
+                details={"fields": invalid_fields},
+            )
+        )
+    if estimated_fields:
+        reasons.append(
+            _uncertainty_reason(
+                "estimated_data_quality_fields",
+                field="data_quality",
+                impact_area="forecast_trust",
+                severity="medium",
+                reason="Some forecast or timing fields are estimates, not confirmations.",
+                next_action="confirm_estimated_fields",
+                details={"fields": estimated_fields},
+            )
+        )
+    if missing_fields:
+        reasons.append(
+            _uncertainty_reason(
+                "missing_data_quality_fields",
+                field="data_quality",
+                impact_area="sales_action",
+                severity="medium",
+                reason="Some required structured fields are missing.",
+                next_action="fill_missing_deal_fields",
+                details={"fields": missing_fields},
+            )
+        )
+
+    if _has_product_context_refs(deal) and (
+        coverage_pct is None or coverage_pct < settings.coverage_high_min
+    ):
+        reasons.append(
+            _uncertainty_reason(
+                "seller_context_not_customer_evidence",
+                field="product_context_refs",
+                impact_area="evidence",
+                severity="medium",
+                reason=(
+                    "Seller-side product context is available, but it is not "
+                    "customer-stated evidence and cannot raise qualification confidence."
+                ),
+                next_action="confirm_fit_with_customer",
+            )
+        )
+
+    return _dedupe_uncertainty_reasons(reasons)
+
+
+def _uncertainty_reason(
+    reason_id: str,
+    *,
+    field: str,
+    impact_area: str,
+    severity: str,
+    reason: str,
+    next_action: str,
+    details: dict | None = None,
+) -> dict:
+    row = {
+        "reason_id": reason_id,
+        "field": field,
+        "impact_area": impact_area,
+        "severity": severity,
+        "reason": reason,
+        "next_action": next_action,
+    }
+    if details:
+        row["details"] = details
+    return row
+
+
+def _has_product_context_refs(deal: dict) -> bool:
+    for interaction in deal.get("interactions") or []:
+        if not isinstance(interaction, dict):
+            continue
+        refs = interaction.get("product_context_refs")
+        if isinstance(refs, list) and refs:
+            return True
+    refs = deal.get("bd_strategy_product_context_refs")
+    return isinstance(refs, list) and bool(refs)
+
+
+def _dedupe_uncertainty_reasons(reasons: list[dict]) -> list[dict]:
+    seen = set()
+    result = []
+    for reason in reasons:
+        reason_id = reason.get("reason_id")
+        if reason_id in seen:
+            continue
+        seen.add(reason_id)
+        result.append(reason)
+    return result
 
 
 def _uncertainty_level(

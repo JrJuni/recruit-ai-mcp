@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from deal_intel.errors import MCPError
+from deal_intel.errors import ErrorCode, MCPError
 from deal_intel.reports.data_export import build_data_export
 from deal_intel.schema.qualification import compute_qualification_latest
 from deal_intel.schema.qualification_framework import get_qualification_template
@@ -25,6 +25,14 @@ class FakeMetricsStore:
 class ExplodingStore:
     def list_deals_for_metrics(self) -> list[dict]:
         raise AssertionError("storage should not be reached")
+
+
+class StorageFailingStore:
+    def __init__(self, message: str) -> None:
+        self.message = message
+
+    def list_deals_for_metrics(self) -> list[dict]:
+        raise RuntimeError(self.message)
 
 
 def _deal(
@@ -214,3 +222,31 @@ def test_export_data_rejects_invalid_inputs_before_storage(kwargs: dict) -> None
             output_dir="reports",
             **kwargs,
         )
+
+
+def test_export_data_storage_error_includes_actionable_secret_safe_hint(
+    tmp_path: Path,
+) -> None:
+    secret_uri = "mongodb+srv://user:super-secret@example.mongodb.net"
+
+    with pytest.raises(MCPError) as exc_info:
+        export_data.handle(
+            StorageFailingStore(f"MONGODB_URI is not set; attempted {secret_uri}"),  # type: ignore[arg-type]
+            {},
+            dataset="open_deals",
+            output_dir=str(tmp_path),
+            as_of="2026-06-10",
+        )
+
+    assert exc_info.value.error_code == ErrorCode.STORAGE_ERROR
+    assert exc_info.value.stage == "storage"
+    assert exc_info.value.retryable is True
+    hint = exc_info.value.hint
+    assert isinstance(hint, dict)
+    assert hint["operation"] == "export_data.read_deals"
+    assert hint["likely_issue"] == "missing_mongodb_uri"
+    assert hint["diagnostic_command"] == "deal-intel config doctor"
+    assert hint["next_actions"]
+    serialized_hint = str(hint)
+    assert "mongodb+srv" not in serialized_hint
+    assert "super-secret" not in serialized_hint

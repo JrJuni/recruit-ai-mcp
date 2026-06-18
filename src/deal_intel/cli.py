@@ -103,6 +103,7 @@ def config_show(
 
     from deal_intel import _env
     from deal_intel.config_profiles import get_config_profile, infer_config_profile
+    from deal_intel.runtime import build_runtime_diagnostics
 
     cfg = _env.load_config()
     profile_name = infer_config_profile(cfg)
@@ -116,6 +117,7 @@ def config_show(
         "user_config_exists": user_config.exists(),
         "effective_config": _summarize_config_for_display(cfg),
         "environment": _summarize_config_environment(),
+        "runtime": build_runtime_diagnostics(),
     }
     if json_output:
         typer.echo(json.dumps(payload, ensure_ascii=False, indent=2, default=str))
@@ -2669,6 +2671,7 @@ def _format_config_profiles(payload: dict) -> str:
 def _format_config_show(payload: dict) -> str:
     cfg = payload["effective_config"]
     env = payload["environment"]
+    runtime = payload.get("runtime") or {}
     configured_env = [
         key for key, value in env.items() if value.get("configured")
     ]
@@ -2676,6 +2679,14 @@ def _format_config_show(payload: dict) -> str:
         f"Config profile: {payload['profile']}",
         f"User config: {payload['user_config_path']} "
         f"({'exists' if payload['user_config_exists'] else 'missing'})",
+        (
+            "Runtime: "
+            f"{runtime.get('package_name', 'deal-intel-mcp')} "
+            f"{runtime.get('package_version', 'unknown')} | "
+            f"source={runtime.get('source_tree_version') or 'n/a'} | "
+            f"Python: {runtime.get('python_executable', 'unknown')}"
+        ),
+        f"Module: {runtime.get('package_location', 'unknown')}",
         (
             "Storage: "
             f"{cfg['storage']['backend']} | "
@@ -2706,16 +2717,28 @@ def _format_config_show(payload: dict) -> str:
         ),
         "Secret values are redacted; only configured true/false is shown.",
     ]
+    if runtime.get("warnings"):
+        lines.append("Runtime warnings:")
+        lines.extend(f"- {warning}" for warning in runtime["warnings"])
     return "\n".join(lines)
 
 
 def _format_config_doctor(payload: dict) -> str:
     summary = payload["summary"]
+    runtime = payload.get("runtime") or {}
     lines = [
         f"Config doctor: {'OK' if payload['ok'] else 'not ready'}",
         f"Profile: {payload['profile']}",
         (
             "Runtime: "
+            f"{runtime.get('package_name', 'deal-intel-mcp')} "
+            f"{runtime.get('package_version', 'unknown')} | "
+            f"source={runtime.get('source_tree_version') or 'n/a'} | "
+            f"Python: {runtime.get('python_executable', 'unknown')}"
+        ),
+        f"Module: {runtime.get('package_location', 'unknown')}",
+        (
+            "Config: "
             f"storage={summary['storage_backend']}, "
             f"database={summary['mongodb_database']}, "
             f"vector_search={summary['vector_search']}, "
@@ -2731,6 +2754,10 @@ def _format_config_doctor(payload: dict) -> str:
         "",
         "Details:",
     ]
+    if runtime.get("warnings"):
+        lines.append("Runtime warnings:")
+        lines.extend(f"- {warning}" for warning in runtime["warnings"])
+        lines.append("")
     for check in payload["checks"]:
         marker = {
             "pass": "PASS",
@@ -3973,6 +4000,7 @@ def _audit_deal_review_quality(review: dict) -> list[dict]:
     interpretation = review.get("health_interpretation") or {}
     warnings = set(str(item) for item in review.get("warnings") or [])
     missing = review.get("missing_information") or []
+    uncertainty_reasons = review.get("uncertainty_reasons") or []
     risks = review.get("confirmed_risks") or []
     questions = review.get("recommended_questions") or []
     actions = review.get("recommended_actions") or []
@@ -4094,7 +4122,11 @@ def _audit_deal_review_quality(review: dict) -> list[dict]:
             )
         )
 
-    if interpretation.get("uncertainty_level") == "high" and not missing:
+    if (
+        interpretation.get("uncertainty_level") == "high"
+        and not missing
+        and not uncertainty_reasons
+    ):
         if "insufficient_evidence" not in warnings:
             issues.append(
                 _quality_issue(
@@ -4315,6 +4347,8 @@ def _format_deal_review_smoke(payload: dict) -> str:
                 f"Attention: {_format_string_list(review.get('attention_reasons') or [])}",
                 f"Missing: {_format_gap_list(review.get('missing_information') or [])}",
                 f"Risks: {_format_risk_list(review.get('confirmed_risks') or [])}",
+                "Uncertainty reasons: "
+                f"{_format_uncertainty_reason_list(review.get('uncertainty_reasons') or [])}",
                 f"Actions: {_format_string_list(review.get('recommended_actions') or [])}",
                 "Gap observations: "
                 f"{_format_gap_list(review.get('gap_observations') or [], limit=3)}",
@@ -4417,6 +4451,17 @@ def _format_risk_list(risks: list[dict]) -> str:
         for risk in risks[:3]
     ]
     suffix = f" (+{len(risks) - 3} more)" if len(risks) > 3 else ""
+    return "; ".join(values) + suffix
+
+
+def _format_uncertainty_reason_list(reasons: list[dict]) -> str:
+    if not reasons:
+        return "none"
+    values = [
+        f"{reason.get('reason_id')}:{reason.get('severity')}"
+        for reason in reasons[:5]
+    ]
+    suffix = f" (+{len(reasons) - 5} more)" if len(reasons) > 5 else ""
     return "; ".join(values) + suffix
 
 

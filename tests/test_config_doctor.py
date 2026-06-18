@@ -230,6 +230,16 @@ def test_config_doctor_cli_json_and_text_are_secret_safe(monkeypatch, tmp_path) 
     payload = json.loads(json_result.stdout)
     assert payload["ok"] is True
     assert payload["summary"]["storage_backend"] == "local_sample"
+    assert payload["runtime"]["package_name"] == "deal-intel-mcp"
+    assert payload["runtime"]["package_version"]
+    assert "source_tree_version" in payload["runtime"]
+    assert "version_mismatch" in payload["runtime"]
+    assert payload["runtime"]["python_executable"]
+    assert payload["runtime"]["package_location"]
+    assert "Runtime:" in text_result.stdout
+    assert "source=" in text_result.stdout
+    assert "Python:" in text_result.stdout
+    assert "Module:" in text_result.stdout
 
 
 def test_config_doctor_cli_exits_nonzero_on_fail(monkeypatch, tmp_path) -> None:
@@ -266,6 +276,9 @@ def test_config_doctor_mcp_wrapper_uses_shared_report(monkeypatch, tmp_path) -> 
 
     assert result["ok"] is True
     assert result["profile"] == "sample"
+    assert result["runtime"]["package_name"] == "deal-intel-mcp"
+    assert "version_mismatch" in result["runtime"]
+    assert result["runtime"]["python_executable"]
     assert _status(result, "sample_storage") == "pass"
 
 

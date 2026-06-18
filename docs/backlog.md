@@ -103,15 +103,25 @@ Immediate v2 closure order:
 
 V2 readiness UX polish queue:
 
-- Environment drift diagnostics: make it easier for maintainers and advanced
-  users to confirm that their Python environment imports this checkout, not a
-  stale editable install from another folder.
-- Mongo/export storage errors: add clearer next-action hints for DNS/network
-  failures instead of returning `hint: null`.
-- Product-context cold start: improve direct tool/CLI cold-start messaging or
-  warmup behavior when the local embedding model is still loading.
-- Deal-review uncertainty wording: explain high uncertainty even when no
-  obvious gap or warning is shown.
+- Environment drift diagnostics: done on 2026-06-18. `config show` and
+  `config doctor` now report package metadata version, source-tree version,
+  Python executable, module location, and version mismatch warnings.
+- Mongo/export storage errors: done on 2026-06-18. Export storage failures now
+  include secret-safe next-action hints instead of returning `hint: null`.
+  `mongo doctor` also uses the same classifier for DNS/network, auth, missing
+  URI, and Atlas failover-style failures.
+- Product-context cold start: done on 2026-06-18. Product-context retrieval and
+  `analyze_deal` now distinguish disabled context, missing embeddings,
+  loading/not-started embeddings, failed warmup, empty index, and ready states.
+- Deal-review uncertainty wording: done on 2026-06-18. Deal reviews now include
+  structured `uncertainty_reasons` and compact `uncertainty_reason_codes`,
+  including the case where seller-side product context exists but cannot replace
+  customer-stated evidence.
+- V2 polish final gate: done on 2026-06-18. Ruff, full pytest, natural-question
+  smoke, deal-review audit, profile smoke, dashboard crosscheck, and
+  chart-ready dry-run passed. Current live `mongo doctor` can still surface
+  local DNS timeout as `dns_or_network`; this is actionable and not a release
+  blocker.
 - Keep the corrected MCPB packing rule: run pack from `mcpb/` with
   `mcpb pack . deal-intel-mcp-<version>.mcpb`; do not pack from the repo root
   with `mcpb` as the source directory.
@@ -132,7 +142,12 @@ Deferred after v2 closure:
      packaging changes.
    - Keep MCPB as the host configuration surface and npx/PyPI as the runtime
      installation path.
-3. Post-v2 workspace/project profiles.
+3. Runtime and Mongo diagnostic repair UX.
+   - Add a user-facing repair path for source/package version drift after the
+     diagnostic identifies it.
+   - Consider a more nuanced Mongo doctor result when chart-ready/report reads
+     succeed but the initial ping path sees transient DNS timeout.
+4. Post-v2 workspace/project profiles.
    - Support multiple sales workspaces without editing global config by hand.
    - A workspace should bundle at least MongoDB database name, optional URI
      reference, default currency, qualification framework, reporting output

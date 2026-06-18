@@ -9,6 +9,7 @@ from deal_intel import _env
 from deal_intel.atlas_vector_indexes import deal_summary_vector_index_summary
 from deal_intel.config_profiles import list_config_profiles
 from deal_intel.providers.llm import make_llm_provider
+from deal_intel.runtime import build_runtime_diagnostics
 from deal_intel.storage.diagnostics import local_sample_mode_hint
 from deal_intel.tool_surfaces import resolve_tool_surface, tool_names_for_config
 
@@ -93,6 +94,7 @@ def build_config_doctor_report(
         "ok": failed == 0,
         "profile": profile,
         "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
+        "runtime": build_runtime_diagnostics(),
         "summary": {
             "status": "ready" if failed == 0 else "needs_attention",
             "offline": offline,

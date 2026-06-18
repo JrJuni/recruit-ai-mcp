@@ -355,6 +355,41 @@ def test_deal_review_audit_quality_rules_require_closed_gap_reporting() -> None:
     assert "lost_close_reason_gap_not_reported" in issue_ids
 
 
+def test_deal_review_audit_accepts_structured_uncertainty_reasons() -> None:
+    review = {
+        "deal_stage": "proposal",
+        "review_version": "v2",
+        "assessment": {},
+        "health_interpretation": {
+            "health_band": "healthy",
+            "evidence_coverage_pct": 35.0,
+            "review_band": "promising_but_unproven",
+            "alert_level": "watch",
+            "uncertainty_level": "high",
+        },
+        "warnings": ["win_probability_suppressed", "overconfidence_warning"],
+        "missing_information": [],
+        "uncertainty_reasons": [
+            {
+                "reason_id": "low_qualification_coverage",
+                "field": "qualification",
+                "severity": "high",
+                "reason": "Only a small portion of evidence is known.",
+            }
+        ],
+        "confirmed_risks": [],
+        "recommended_questions": [],
+        "recommended_actions": [],
+        "data_quality": {"is_confirmed_complete": False},
+    }
+
+    issue_ids = {
+        issue["issue_id"] for issue in _audit_deal_review_quality(review)
+    }
+
+    assert "high_uncertainty_without_gap_or_warning" not in issue_ids
+
+
 def test_deal_review_audit_allows_terminal_risks_without_next_actions() -> None:
     review = {
         "deal_stage": "lost",

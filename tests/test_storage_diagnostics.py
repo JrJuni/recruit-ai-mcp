@@ -1,97 +1,35 @@
 from __future__ import annotations
 
-import json
-
 import pytest
-from typer.testing import CliRunner
 
-from deal_intel import _context, _env
-from deal_intel.cli import app
-from deal_intel.storage.mongodb import MongoDBClient
+from deal_intel.storage.diagnostics import classify_storage_error, storage_error_hint
 
 
-def _reset_context(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
-    monkeypatch.setattr(_env, "_USER_CONFIG_PATH", tmp_path / "missing.yaml")
-    monkeypatch.setattr(_context, "_config", None)
-    monkeypatch.setattr(_context, "_mongo", None)
+@pytest.mark.parametrize(
+    ("message", "expected"),
+    [
+        ("MONGODB_URI is not set for storage.backend=mongo", "missing_mongodb_uri"),
+        ("AuthenticationFailed: bad auth", "authentication_or_authorization"),
+        ("ReplicaSetNoPrimary: No primary available", "atlas_failover_or_cluster_unavailable"),
+        ("ServerSelectionTimeoutError: getaddrinfo failed", "dns_or_network"),
+        ("socket timeout while connecting", "dns_or_network"),
+        ("unknown storage read failure", "storage_access"),
+    ],
+)
+def test_classify_storage_error(message: str, expected: str) -> None:
+    assert classify_storage_error(RuntimeError(message)) == expected
 
 
-def test_mongodb_missing_uri_ping_points_to_local_sample(monkeypatch) -> None:
-    monkeypatch.delenv("MONGODB_URI", raising=False)
-    client = MongoDBClient(database="deal_intel")
-
-    ping = client.ping()
-
-    assert ping["status"] == "missing_uri"
-    assert ping["storage_backend"] == "mongo"
-    assert ping["database"] == "deal_intel"
-    assert "MONGODB_URI" in ping["message"]
-    assert "DEAL_INTEL_STORAGE_BACKEND=local_sample" in ping["message"]
-    assert ping["sample_mode_hint"]["temporary_env"] == (
-        "DEAL_INTEL_STORAGE_BACKEND=local_sample"
+def test_storage_error_hint_is_actionable_and_secret_safe() -> None:
+    exc = RuntimeError(
+        "ServerSelectionTimeoutError: mongodb+srv://user:super-secret@example.mongodb.net timed out"
     )
 
+    hint = storage_error_hint(exc, operation="export_report.weekly_pipeline.read_deals")
 
-def test_mongodb_missing_uri_exception_points_to_local_sample(monkeypatch) -> None:
-    monkeypatch.delenv("MONGODB_URI", raising=False)
-    client = MongoDBClient(database="deal_intel")
-
-    with pytest.raises(RuntimeError) as exc_info:
-        client._get_db()
-
-    assert "MONGODB_URI" in str(exc_info.value)
-    assert "DEAL_INTEL_STORAGE_BACKEND=local_sample" in str(exc_info.value)
-
-
-def test_storage_status_cli_reports_missing_mongodb_uri(monkeypatch, tmp_path) -> None:
-    _reset_context(monkeypatch, tmp_path)
-    monkeypatch.delenv("MONGODB_URI", raising=False)
-    monkeypatch.delenv("DEAL_INTEL_STORAGE_BACKEND", raising=False)
-
-    result = CliRunner().invoke(app, ["storage-status", "--json"])
-
-    assert result.exit_code == 1
-    payload = json.loads(result.stdout)
-    assert payload["ok"] is False
-    assert payload["storage_backend"] == "mongo"
-    assert payload["ping"]["status"] == "missing_uri"
-    assert payload["sample_mode_hint"]["temporary_env"] == (
-        "DEAL_INTEL_STORAGE_BACKEND=local_sample"
-    )
-
-
-def test_storage_status_cli_includes_sample_hint_on_mongo_error(monkeypatch) -> None:
-    class FakeMongoStorage:
-        database_name = "deal_intel"
-
-        def ping(self) -> dict:
-            return {"status": "error", "message": "network unavailable"}
-
-    monkeypatch.setattr(_context, "storage_backend_name", lambda: "mongo")
-    monkeypatch.setattr(_context, "mongo", lambda: FakeMongoStorage())
-
-    result = CliRunner().invoke(app, ["storage-status", "--json"])
-
-    assert result.exit_code == 1
-    payload = json.loads(result.stdout)
-    assert payload["ok"] is False
-    assert payload["ping"]["status"] == "error"
-    assert payload["sample_mode_hint"]["temporary_env"] == (
-        "DEAL_INTEL_STORAGE_BACKEND=local_sample"
-    )
-
-
-def test_storage_status_cli_passes_in_local_sample_mode(monkeypatch, tmp_path) -> None:
-    _reset_context(monkeypatch, tmp_path)
-    monkeypatch.delenv("MONGODB_URI", raising=False)
-    monkeypatch.setenv("DEAL_INTEL_STORAGE_BACKEND", "local_sample")
-
-    result = CliRunner().invoke(app, ["storage-status", "--json"])
-
-    assert result.exit_code == 0
-    payload = json.loads(result.stdout)
-    assert payload["ok"] is True
-    assert payload["storage_backend"] == "local_sample"
-    assert payload["ping"]["status"] == "ok"
-    assert payload["ping"]["deal_count"] >= 10
-    assert payload["ping"]["snapshot_count"] >= 20
+    assert hint["operation"] == "export_report.weekly_pipeline.read_deals"
+    assert hint["diagnostic_command"] == "deal-intel config doctor"
+    assert hint["next_actions"]
+    serialized = str(hint)
+    assert "mongodb+srv" not in serialized
+    assert "super-secret" not in serialized

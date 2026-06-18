@@ -55,6 +55,16 @@ class KeywordEmbedding:
         ]
 
 
+class LoadingEmbedding:
+    dimensions = 3
+    is_ready = False
+    load_error = None
+    warmup_status = {"phase": "loading_model", "elapsed_seconds": 3.0}
+
+    def embed(self, text: str) -> list[float]:
+        raise AssertionError("loading embedding must not be used")
+
+
 def _cfg(tmp_path) -> dict:
     return {
         "llm": {"provider": "chatgpt_oauth"},
@@ -154,4 +164,28 @@ def test_analyze_deal_without_product_context_keeps_existing_prompt(tmp_path) ->
     assert result["ok"] is True
     assert result["product_context_used"] is False
     assert result["product_context_ref_count"] == 0
+    assert "Seller/product context:" not in llm.calls[0]["user"]
+
+
+def test_analyze_deal_skips_product_context_when_embedding_is_loading(
+    tmp_path,
+) -> None:
+    cfg = _cfg(tmp_path)
+    mongo = FakeMongo(_deal())
+    llm = FakeLLM()
+
+    result = analyze_deal.handle(
+        mongo=mongo,
+        llm=llm,
+        cfg=cfg,
+        embedding_provider=LoadingEmbedding(),
+        deal_id="deal-1",
+    )
+
+    assert result["ok"] is True
+    assert result["product_context_used"] is False
+    assert result["product_context_ref_count"] == 0
+    assert result["embedding_status"]["state"] == "loading"
+    assert result["product_context_status"]["state"] == "embedding_loading"
+    assert result["warnings"][0]["code"] == "product_context_embedding_not_ready"
     assert "Seller/product context:" not in llm.calls[0]["user"]

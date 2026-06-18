@@ -151,8 +151,12 @@ def test_high_health_low_coverage_is_promising_but_unproven() -> None:
     assert interpretation["uncertainty_level"] == "high"
     assert interpretation["review_band"] == "promising_but_unproven"
     assert interpretation["alert_level"] == "watch"
+    assert "low_qualification_coverage" in interpretation["uncertainty_reason_codes"]
     assert "overconfidence_warning" in review["warnings"]
     assert review["missing_information"]
+    reason_ids = {item["reason_id"] for item in review["uncertainty_reasons"]}
+    assert "low_qualification_coverage" in reason_ids
+    assert "missing_customer_evidence" in reason_ids
     assert any(item["status"] == "unknown" for item in review["scorecard"])
     payload = json.dumps(review, ensure_ascii=False)
     assert "probability_estimate" not in payload
@@ -275,6 +279,44 @@ def test_high_coverage_estimated_close_is_not_verified_or_low_uncertainty() -> N
         item["field"] == "expected_close_date"
         for item in review["missing_information"]
     )
+    assert any(
+        reason["reason_id"] == "estimated_data_quality_fields"
+        for reason in review["uncertainty_reasons"]
+    )
+
+
+def test_deal_review_separates_product_context_from_customer_evidence() -> None:
+    deal = _deal(
+        health_pct=86,
+        scores={"metrics": 5, "identify_pain": 5},
+    )
+    deal["interactions"] = [
+        {
+            "interaction_type": "meeting",
+            "summary": "Customer likes security.",
+            "product_context_refs": [
+                {
+                    "doc_id": "doc-1",
+                    "chunk_id": "chunk-1",
+                    "source_name": "solution.md",
+                    "score": 0.42,
+                    "snippet": "must not leak",
+                }
+            ],
+        }
+    ]
+
+    review = build_deal_review(deal, as_of=AS_OF)
+
+    reason = next(
+        item
+        for item in review["uncertainty_reasons"]
+        if item["reason_id"] == "seller_context_not_customer_evidence"
+    )
+    assert reason["field"] == "product_context_refs"
+    assert reason["impact_area"] == "evidence"
+    payload = json.dumps(review, ensure_ascii=False)
+    assert "must not leak" not in payload
 
 
 def test_low_coverage_low_health_prioritizes_missing_information() -> None:

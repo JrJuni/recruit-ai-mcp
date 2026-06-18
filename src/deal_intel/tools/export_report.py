@@ -29,6 +29,7 @@ from deal_intel.schema.pipeline_trends import (
     build_pipeline_trend_summary,
     validate_lookback_days,
 )
+from deal_intel.storage.diagnostics import storage_error_hint
 from deal_intel.storage.mongodb import MongoDBClient
 
 REPORT_TYPE_WEEKLY_PIPELINE = "weekly_pipeline"
@@ -131,6 +132,10 @@ def _handle_weekly_pipeline(
             error_code=ErrorCode.STORAGE_ERROR,
             stage=Stage.STORAGE,
             message=str(exc),
+            hint=storage_error_hint(
+                exc,
+                operation="export_report.weekly_pipeline.read_deals",
+            ),
             retryable=True,
         ) from exc
 
@@ -207,6 +212,10 @@ def _handle_pipeline_trend(
             error_code=ErrorCode.STORAGE_ERROR,
             stage=Stage.STORAGE,
             message=str(exc),
+            hint=storage_error_hint(
+                exc,
+                operation="export_report.pipeline_trend.read_snapshots",
+            ),
             retryable=True,
         ) from exc
 

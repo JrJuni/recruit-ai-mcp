@@ -77,9 +77,15 @@ def test_config_show_cli_summarizes_effective_config_without_secrets(
     assert payload["effective_config"]["tools"] == {
         "surface": "auto",
         "resolved_surface": "sample",
-            "mcp_tool_count": 24,
+        "mcp_tool_count": 24,
     }
     assert payload["effective_config"]["llm"]["provider"] == "openai_api"
+    assert payload["runtime"]["package_name"] == "deal-intel-mcp"
+    assert payload["runtime"]["package_version"]
+    assert "source_tree_version" in payload["runtime"]
+    assert "version_mismatch" in payload["runtime"]
+    assert payload["runtime"]["python_executable"]
+    assert payload["runtime"]["package_location"]
     assert payload["environment"]["MONGODB_URI"]["configured"] is True
     assert payload["environment"]["OPENAI_API_KEY"]["configured"] is True
     assert payload["environment"]["ANTHROPIC_API_KEY"]["configured"] is True
@@ -111,5 +117,9 @@ def test_config_show_cli_text_does_not_print_secret_values(monkeypatch, tmp_path
 
     assert result.exit_code == 0
     assert "Config profile:" in result.stdout
+    assert "Runtime:" in result.stdout
+    assert "source=" in result.stdout
+    assert "Python:" in result.stdout
+    assert "Module:" in result.stdout
     assert "MONGODB_URI" in result.stdout
     assert "configured-mongodb-uri-sentinel" not in result.stdout

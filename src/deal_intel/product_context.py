@@ -513,16 +513,34 @@ def retrieve_product_context(
             query=cleaned_query,
             results=[],
             warnings=[_warning("product_context_disabled", "product_context is disabled.")],
+            product_context_status={
+                "state": "disabled",
+                "message": "Product context is disabled in config.",
+            },
+            embedding_status=embedding_readiness_status(embedding_provider),
+            next_actions=[
+                {
+                    "tool": "update_config",
+                    "hint": (
+                        "Enable product_context before indexing or retrieving "
+                        "seller-side context."
+                    ),
+                }
+            ],
         )
     if embedding_provider is None:
         raise MCPError(
             error_code=ErrorCode.CONFIG_ERROR,
             stage=Stage.PREFLIGHT,
             message="Embedding provider is required for product context retrieval.",
-            hint={"fix": 'Install embeddings with pip install -e ".[embedding]".'},
+            hint={
+                "fix": 'Install embeddings with pip install -e ".[embedding]".',
+                "embedding_status": embedding_readiness_status(embedding_provider),
+            },
             retryable=False,
         )
 
+    embedding_status = embedding_readiness_status(embedding_provider)
     _manifest, chunks = _load_cache(settings.cache_dir)
     embedded_chunks = [
         chunk
@@ -540,6 +558,21 @@ def retrieve_product_context(
                     "No embedded product context chunks are available. "
                     "Run index_product_context first.",
                 )
+            ],
+            product_context_status={
+                "state": "not_indexed",
+                "embedded_chunk_count": 0,
+                "message": "No indexed product-context chunks were found.",
+            },
+            embedding_status=embedding_status,
+            next_actions=[
+                {
+                    "tool": "index_product_context",
+                    "hint": (
+                        "Run index_product_context after adding product docs "
+                        "or saving a managed note."
+                    ),
+                }
             ],
         )
 
@@ -577,7 +610,52 @@ def retrieve_product_context(
         query=cleaned_query,
         results=results,
         warnings=[],
+        product_context_status={
+            "state": "ready",
+            "embedded_chunk_count": len(embedded_chunks),
+            "message": "Product-context cache is indexed and searchable.",
+        },
+        embedding_status=embedding_status,
+        next_actions=[],
     )
+
+
+def embedding_readiness_status(embedding_provider) -> dict[str, Any]:
+    if embedding_provider is None:
+        return {
+            "state": "not_installed",
+            "phase": "missing_provider",
+            "retryable": False,
+            "next_action": 'Install embeddings with pip install -e ".[embedding]".',
+        }
+    load_error = getattr(embedding_provider, "load_error", None)
+    if load_error:
+        return {
+            "state": "failed",
+            "phase": "failed",
+            "retryable": False,
+            "error": str(load_error),
+            "next_action": "Restart the MCP server and check stderr for warmup errors.",
+        }
+    if not getattr(embedding_provider, "is_ready", False):
+        warmup = getattr(embedding_provider, "warmup_status", {}) or {}
+        phase = str(warmup.get("phase") or "loading")
+        state = "not_started" if phase == "not_started" else "loading"
+        return {
+            "state": state,
+            "phase": phase,
+            "elapsed_seconds": warmup.get("elapsed_seconds"),
+            "retryable": True,
+            "retry_after_seconds": 5,
+            "next_action": "The local embedding model is loading; retry shortly.",
+        }
+    warmup = getattr(embedding_provider, "warmup_status", {}) or {}
+    return {
+        "state": "ready",
+        "phase": warmup.get("phase", "ready"),
+        "elapsed_seconds": warmup.get("elapsed_seconds"),
+        "retryable": False,
+    }
 
 
 def render_product_context_prompt_block(payload: dict[str, Any]) -> str:
@@ -656,6 +734,9 @@ def _retrieval_payload(
     query: str,
     results: list[dict[str, Any]],
     warnings: list[dict[str, Any]],
+    product_context_status: dict[str, Any] | None = None,
+    embedding_status: dict[str, Any] | None = None,
+    next_actions: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     return {
         "ok": True,
@@ -664,6 +745,10 @@ def _retrieval_payload(
         "result_count": len(results),
         "results": results,
         "warnings": warnings,
+        "product_context_status": product_context_status
+        or {"state": "unknown", "message": "Product-context status was not evaluated."},
+        "embedding_status": embedding_status,
+        "next_actions": next_actions or [],
     }
 
 
