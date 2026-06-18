@@ -12,10 +12,11 @@ This plan keeps distribution priorities straight:
 
 ## Current Decision
 
-After the v2 product-context, qualification-framework, and MongoDB chart-ready
-work, the next distribution goal is a **dependency-inclusive bootstrapper**.
+The dependency-inclusive bootstrapper is available as `npx deal-intel-mcp`.
+It is now the preferred no-git-clone path when the user has Node.js and a
+usable Python 3.11+ interpreter.
 
-The bootstrapper should reduce the current prerequisite burden:
+The bootstrapper reduces the current prerequisite burden:
 
 - no manual git clone for normal users;
 - no manual editable install;
@@ -221,6 +222,8 @@ Cons:
 
 ### D3. Full npx bootstrapper
 
+Status: implemented and published for `0.2.1`.
+
 Goal: provide a true no-git-clone command path for non-developer and
 AI-assisted setup.
 
@@ -231,6 +234,13 @@ npx deal-intel-mcp setup
 npx deal-intel-mcp doctor
 npx deal-intel-mcp smoke
 npx deal-intel-mcp mcp
+```
+
+On machines where Python is installed but not discoverable, pass the
+interpreter explicitly:
+
+```bash
+npx deal-intel-mcp setup --python /path/to/python
 ```
 
 Bootstrapper behavior:
@@ -344,13 +354,15 @@ Current status:
 
 - Windows local-wheel fresh-runtime smoke passed with an isolated
   `DEAL_INTEL_HOME`.
-- Python and npm package metadata are now publish-shaped and version-aligned at
-  `0.2.1`, but registry publication has not been performed.
+- Python and npm package metadata are version-aligned at `0.2.1`.
+- PyPI and npm registry publication are complete for `0.2.1`.
 - `setup` now runs `smoke-profile --profile sample` as the post-install check
   so missing MongoDB/API values do not make the first install look broken.
 - `smoke --profile-only` and `mcp-config --json` passed from the managed
   runtime.
-- Public npm/PyPI `npx` smoke and macOS fresh-machine smoke remain pending.
+- Public npm/PyPI `npx` smoke passed on Windows with an explicit Python 3.11+
+  interpreter path.
+- macOS fresh-machine smoke remains pending.
 - Keep the detailed checklist in
   [bootstrapper-fresh-smoke.md](bootstrapper-fresh-smoke.md).
 - Keep maintainer registry publication steps in

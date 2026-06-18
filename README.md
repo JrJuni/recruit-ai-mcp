@@ -28,7 +28,7 @@ For a short public/community demo script, use
 [`docs/public-demo-script.md`](docs/public-demo-script.md).
 For an English full-mode walkthrough aimed at AI-assisted installation, use
 [`AI_FULL_INSTALL_GUIDE.md`](AI_FULL_INSTALL_GUIDE.md).
-For the future no-git-clone npx bootstrapper path, use
+For the no-git-clone npx bootstrapper path, use
 [`AI_NPX_INSTALL_GUIDE.md`](AI_NPX_INSTALL_GUIDE.md).
 For first external tester handoff, use
 [`AI_USER_TEST_GUIDE.md`](AI_USER_TEST_GUIDE.md).

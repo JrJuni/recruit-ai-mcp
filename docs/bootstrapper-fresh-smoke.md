@@ -35,14 +35,20 @@ Expected result:
 - no MongoDB URI, API key, OAuth token, raw note, or raw product document is
   printed.
 
-## Future Published Smoke
+## Published npx Smoke
 
-After npm/PyPI publication, the user-facing smoke should be:
+The user-facing smoke is:
 
 ```bash
 npx deal-intel-mcp setup
 npx deal-intel-mcp smoke --profile-only
 npx deal-intel-mcp mcp-config
+```
+
+If Python is installed but not discoverable, pass it explicitly:
+
+```bash
+npx deal-intel-mcp setup --python /path/to/python
 ```
 
 Then, after MongoDB/API values are configured:
@@ -83,8 +89,16 @@ Windows local-wheel smoke passed on 2026-06-18:
 - `mcp-config --json` returned the managed Python path and Claude Desktop
   snippet.
 
-Not yet complete:
+Public registry smoke passed on 2026-06-18 for `0.2.1`:
 
-- public `npx` install from npm;
-- PyPI/TestPyPI install source smoke;
+- PyPI fresh install of `deal-intel-mcp[embedding]==0.2.1` succeeded.
+- `npx deal-intel-mcp@0.2.1 setup --python <python-3.11>` created a managed
+  runtime and ran sample profile smoke successfully.
+- `npx deal-intel-mcp@0.2.1 where --json` returned managed runtime paths.
+- `npx deal-intel-mcp@0.2.1 smoke --profile-only` passed.
+- `npx deal-intel-mcp@0.2.1 mcp-config --json` returned the MCPB/manual host
+  Python interpreter path and Claude Desktop snippet.
+
+Still worth checking on a separate machine:
+
 - macOS fresh-machine smoke.

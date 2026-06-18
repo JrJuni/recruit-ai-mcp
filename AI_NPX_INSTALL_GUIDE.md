@@ -1,12 +1,11 @@
 # AI npx Install Guide
 
-This guide is for an AI assistant helping a user test the future no-git-clone
-`npx deal-intel-mcp` bootstrapper.
+This guide is for an AI assistant helping a user install Deal Intelligence MCP
+through the no-git-clone `npx deal-intel-mcp` bootstrapper.
 
-Use this only after the npm package and the Python package source are published
-or otherwise made reachable. Until then, use `AI_FULL_INSTALL_GUIDE.md` for the
-git-clone path or `docs/bootstrapper-fresh-smoke.md` for maintainer-only local
-wheel smoke.
+Use this when the user wants the quickest install path and has Node.js plus a
+usable Python 3.11+ interpreter. For manual git-clone setup, use
+`AI_FULL_INSTALL_GUIDE.md`.
 
 ## What This Path Should Do
 
@@ -49,11 +48,18 @@ Expected result:
 - runs `smoke-profile --profile sample`;
 - prints the next action.
 
-If setup says Python is missing, install Python 3.11+ or point the bootstrapper
-at an existing interpreter:
+On Windows, Python is often installed but not on `PATH`. If setup says Python is
+missing or reports `detected unknown`, point the bootstrapper at an existing
+interpreter:
 
 ```bash
 npx deal-intel-mcp setup --python /path/to/python
+```
+
+PowerShell example:
+
+```powershell
+npx.cmd deal-intel-mcp setup --python "$HOME\miniconda3\envs\deal-intel\python.exe"
 ```
 
 ## Verify The Runtime
@@ -118,8 +124,8 @@ What are customers most often concerned about?
 
 | Symptom | First Check |
 |---|---|
-| `npx` cannot find the package | Confirm the npm package has been published. |
-| setup cannot find Python | Install Python 3.11+ or rerun with `--python`. |
+| `npx` cannot find the package | Check network access to the public npm registry. |
+| setup cannot find Python | Install Python 3.11+ or rerun with `--python`. On Windows, this often means Python is installed but not on `PATH`. |
 | setup fails during package install | Check network access to PyPI or the configured wheel source. |
 | sample smoke passes but Mongo fails | Configure `MONGODB_URI`, Atlas user, password, and IP allowlist. |
 | MCPB starts sample mode | Check Storage backend and run `config_doctor`. |

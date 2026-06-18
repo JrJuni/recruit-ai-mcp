@@ -16,7 +16,7 @@ Read these first for normal work:
    - AI setup guide: full-by-default for humans, optional sample path for
      zero-config evaluation.
 4. `../AI_NPX_INSTALL_GUIDE.md`
-   - Future no-git-clone bootstrapper install path after npm/PyPI publication.
+   - No-git-clone npx bootstrapper install path.
 5. `../AI_USER_TEST_GUIDE.md`
    - First external tester handoff flow after an install path is available.
 6. `status.md`

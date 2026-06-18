@@ -12,6 +12,35 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-18
 
+### Public npm/PyPI bootstrapper release
+
+Completed:
+
+- Published `deal-intel-mcp==0.2.1` to PyPI:
+  <https://pypi.org/project/deal-intel-mcp/0.2.1/>.
+- Published `deal-intel-mcp@0.2.1` to npm with the `latest` tag.
+- Confirmed npm registry visibility:
+  `npm view deal-intel-mcp version` -> `0.2.1`.
+- Confirmed PyPI fresh install in a disposable venv:
+  `pip install "deal-intel-mcp[embedding]==0.2.1"` -> success.
+- Confirmed public npx bootstrapper smoke from a disposable
+  `DEAL_INTEL_HOME`:
+  - `npx deal-intel-mcp@0.2.1 setup --python <python-3.11>` -> success;
+  - `npx deal-intel-mcp@0.2.1 where --json` -> returned managed runtime paths;
+  - `npx deal-intel-mcp@0.2.1 smoke --profile-only` -> pass;
+  - `npx deal-intel-mcp@0.2.1 mcp-config --json` -> returned the managed
+    Python interpreter path and host config snippet.
+
+Observed install UX note:
+
+- On Windows, `npx deal-intel-mcp setup` may report Python as `unknown` when
+  Python is installed but not on `PATH`. Rerun with
+  `npx deal-intel-mcp setup --python <path-to-python-3.11+>`.
+
+Remaining non-blocking follow-up:
+
+- macOS fresh-machine smoke is still useful before wider announcement.
+
 ### Final local readiness gate before registry publish
 
 Completed:
@@ -54,12 +83,11 @@ Validated:
 - Whitespace:
   `git diff --check` -> pass.
 
-Remaining maintainer decision:
+Superseded by the public release section above:
 
-- Actual npm/PyPI/TestPyPI publication has not been run. It requires maintainer
-  registry credentials and an explicit publish decision.
-- Public `npx deal-intel-mcp setup` smoke remains pending until both npm and
-  Python package sources are reachable.
+- npm and PyPI publication have now been completed for `0.2.1`.
+- Public `npx deal-intel-mcp@0.2.1` smoke has now passed with an explicit
+  Python 3.11+ interpreter path on Windows.
 - Host-app `export_report` should be checked during user testing because report
   export is an MCP tool surface rather than a standalone CLI command.
 
@@ -284,12 +312,10 @@ Validated:
   `AI_USER_TEST_GUIDE.md`, `docs/release-publish-checklist.md`, and
   `npm pack .\npm --dry-run --cache .tmp\npm-cache`.
 
-Remaining:
+Superseded by the public release section above:
 
-- Public npm publication has not been run.
-- PyPI/TestPyPI publication has not been run.
-- Public `npx deal-intel-mcp setup` smoke remains pending until both package
-  sources are reachable.
+- Public npm and PyPI publication have now been completed for `0.2.1`.
+- Public `npx deal-intel-mcp@0.2.1` smoke has now passed.
 
 ### D2.2 clean wheel install smoke
 

@@ -6,15 +6,15 @@ Intelligence MCP.
 Use this after the maintainer has provided one usable install path:
 
 - a Claude Desktop MCPB artifact; or
-- the future `npx deal-intel-mcp` bootstrapper after npm/PyPI publication.
+- the `npx deal-intel-mcp` bootstrapper.
 
-Current pre-registry handoff path:
+Current handoff paths:
 
 - use `release/latest/deal-intel-mcp-0.2.1.mcpb`;
-- install the Python package locally first;
+- or use `npx deal-intel-mcp setup` to create a managed Python runtime;
 - paste the local Python interpreter path into the MCPB form;
-- treat `npx deal-intel-mcp` as unavailable until npm/PyPI publication is
-  complete.
+- for npx installs, use the interpreter path printed by
+  `npx deal-intel-mcp mcp-config`.
 
 Do not ask the tester to paste MongoDB URIs, API keys, OAuth tokens, or raw
 private files into chat. Ask them to enter secrets only in the local MCPB form,
@@ -42,8 +42,9 @@ Ask the tester to prepare:
 - MongoDB Atlas account and an M0/free cluster for `full` mode;
 - Claude Desktop, Codex/ChatGPT with MCP support, or another MCP host;
 - one LLM path: ChatGPT OAuth, Anthropic API key, or OpenAI API key;
-- Python 3.11+ if using the git-clone or MCPB Python-interpreter path;
-- Node.js 18+ only if using the future `npx` bootstrapper path.
+- Python 3.11+ if using the git-clone path, MCPB Python-interpreter path, or
+  the npx bootstrapper's `--python` option;
+- Node.js 18+ if using the `npx` bootstrapper path.
 
 If the tester does not have MongoDB ready, start with `sample` mode and clearly
 say that it is a trial profile.
@@ -76,9 +77,7 @@ Then ask the host app:
 Run config_doctor and summarize whether Deal Intelligence MCP is ready.
 ```
 
-## Install Path B: Future npx Bootstrapper
-
-Use this only after npm and Python package publication is complete.
+## Install Path B: npx Bootstrapper
 
 Ask the tester to run:
 
@@ -86,6 +85,13 @@ Ask the tester to run:
 npx deal-intel-mcp setup
 npx deal-intel-mcp smoke --profile-only
 npx deal-intel-mcp mcp-config
+```
+
+If setup cannot find Python, rerun it with an explicit Python 3.11+
+interpreter:
+
+```bash
+npx deal-intel-mcp setup --python /path/to/python
 ```
 
 Then use the Python interpreter path printed by `mcp-config` in MCPB or manual
