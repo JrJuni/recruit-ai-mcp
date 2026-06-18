@@ -63,6 +63,10 @@ Current v2 state:
   smoke passed across tests, config/profile flow, natural questions,
   deal-review audit, product context, Mongo/Atlas chart-ready data,
   export/report, and distribution surfaces.
+- The v2 polish close-out gate found no release blocker. Report readability,
+  runtime diagnostics, storage hints, product-context cold-start messaging, and
+  chart-ready dry-run UX are now good enough for public trial. Deal-review
+  quality is intentionally moved to usage-driven post-v2 improvement.
 
 Immediate post-v2 quality order:
 
@@ -124,6 +128,9 @@ V2 readiness UX polish queue:
   chart-ready dry-run passed. Current live `mongo doctor` can still surface
   local DNS timeout as `dns_or_network`; this is actionable and not a release
   blocker.
+- Chart-ready dry-run polish: done on 2026-06-18. `mongo refresh-chart-ready`
+  now accepts explicit `--dry-run`, rejects `--apply --dry-run`, and returns
+  secret-safe storage hints for DNS/network/auth style failures.
 - Keep the corrected MCPB packing rule: run pack from `mcpb/` with
   `mcpb pack . deal-intel-mcp-<version>.mcpb`; do not pack from the repo root
   with `mcpb` as the source directory.

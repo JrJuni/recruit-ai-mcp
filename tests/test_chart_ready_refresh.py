@@ -73,6 +73,13 @@ class FakeMongo:
         }
 
 
+class FakeFailingMongo:
+    def list_deals_for_metrics(self) -> list[dict]:
+        raise RuntimeError(
+            "DNS operation timed out for mongodb+srv://user:secret@example.mongodb.net"
+        )
+
+
 def _reporting() -> ReportingContext:
     return ReportingContext.from_config(
         CFG,
@@ -334,3 +341,83 @@ def test_cli_refresh_chart_ready_dry_run(monkeypatch) -> None:
     assert payload["ok"] is True
     assert payload["dry_run"] is True
     assert payload["targets"][0]["collection"] == "dashboard_weekly_pipeline"
+
+
+def test_cli_refresh_chart_ready_accepts_explicit_dry_run(monkeypatch) -> None:
+    monkeypatch.setattr(_context, "config", lambda: CFG)
+    monkeypatch.setattr(_context, "mongo", lambda: FakeMongo())
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "mongo",
+            "refresh-chart-ready",
+            "--target",
+            "weekly_pipeline",
+            "--as-of",
+            "2026-06-10",
+            "--dry-run",
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert payload["ok"] is True
+    assert payload["dry_run"] is True
+    assert payload["targets"][0]["collection"] == "dashboard_weekly_pipeline"
+
+
+def test_cli_refresh_chart_ready_rejects_apply_with_dry_run(monkeypatch) -> None:
+    monkeypatch.setattr(_context, "config", lambda: CFG)
+    monkeypatch.setattr(_context, "mongo", lambda: FakeMongo())
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "mongo",
+            "refresh-chart-ready",
+            "--target",
+            "weekly_pipeline",
+            "--as-of",
+            "2026-06-10",
+            "--apply",
+            "--dry-run",
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 1
+    payload = json.loads(result.stdout)
+    assert payload["ok"] is False
+    assert payload["dry_run"] is True
+    assert "cannot be combined" in payload["error"]
+    assert "remove --dry-run" in payload["hint"]
+
+
+def test_cli_refresh_chart_ready_storage_error_includes_hint(monkeypatch) -> None:
+    monkeypatch.setattr(_context, "config", lambda: CFG)
+    monkeypatch.setattr(_context, "mongo", lambda: FakeFailingMongo())
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "mongo",
+            "refresh-chart-ready",
+            "--target",
+            "weekly_pipeline",
+            "--as-of",
+            "2026-06-10",
+            "--dry-run",
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 1
+    payload = json.loads(result.stdout)
+    assert payload["ok"] is False
+    assert payload["dry_run"] is True
+    assert payload["hint"]["operation"] == "mongo.refresh_chart_ready"
+    assert payload["hint"]["likely_issue"] == "dns_or_network"
+    assert payload["hint"]["diagnostic_command"] == "deal-intel config doctor"
+    assert "secret" not in json.dumps(payload["hint"])

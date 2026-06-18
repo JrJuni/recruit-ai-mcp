@@ -22,6 +22,9 @@ Current position: **v2 public-trial ready, full-by-default with optional zero-co
 
 Green:
 
+- V2 polish close-out has passed with no release blocker. Remaining deal-review
+  and report-quality improvements are usage-driven post-v2 work, not install
+  or first-answer blockers.
 - `full` profile is the default real-data operating path.
 - Zero-config sample/local mode works without MongoDB.
 - MCP tool surfaces are filtered by profile.

@@ -1068,6 +1068,11 @@ def mongo_refresh_chart_ready(
         "--apply",
         help="Write materialized chart-ready rows. Without this flag, dry-run only.",
     ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Preview chart-ready rows without writing. This is the default.",
+    ),
     json_output: bool = typer.Option(
         False,
         "--json",
@@ -1079,6 +1084,20 @@ def mongo_refresh_chart_ready(
     from deal_intel import _context
     from deal_intel.chart_ready_refresh import refresh_chart_ready_collections
 
+    if apply and dry_run:
+        payload = {
+            "ok": False,
+            "dry_run": True,
+            "target": target,
+            "error": "--dry-run cannot be combined with --apply.",
+            "hint": "Run without --apply to preview, or remove --dry-run to write.",
+        }
+        if json_output:
+            typer.echo(json.dumps(payload, ensure_ascii=False, indent=2, default=str))
+        else:
+            typer.echo(_format_mongo_refresh_chart_ready(payload))
+        raise typer.Exit(code=1)
+
     try:
         payload = refresh_chart_ready_collections(
             _context.mongo(),
@@ -1089,11 +1108,17 @@ def mongo_refresh_chart_ready(
             apply=apply,
         )
     except Exception as exc:
+        from deal_intel.storage.diagnostics import storage_error_hint
+
         payload = {
             "ok": False,
             "dry_run": not apply,
             "target": target,
             "error": _redact_cli_error(exc),
+            "hint": storage_error_hint(
+                exc,
+                operation="mongo.refresh_chart_ready",
+            ),
         }
         if json_output:
             typer.echo(json.dumps(payload, ensure_ascii=False, indent=2, default=str))

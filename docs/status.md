@@ -12,6 +12,60 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-18
 
+### V2 polish close-out gate
+
+Completed:
+
+- Treated deal-review quality as usage-driven follow-up instead of continuing
+  to tune it without real user traces.
+- Closed the current v2 polish queue around release friction, diagnostics, and
+  report/export readability.
+- Added an explicit `--dry-run` compatibility option to
+  `deal-intel mongo refresh-chart-ready`. The command already defaulted to
+  dry-run without `--apply`, but explicit `--dry-run` now works for scripts and
+  readiness plans.
+- Extended chart-ready refresh failures with the same secret-safe storage
+  diagnostic hint used by export paths. DNS/network failures now return
+  actionable next steps instead of only a raw storage exception.
+
+Validated:
+
+- `ruff check .` -> passed.
+- `pytest -q -p no:cacheprovider --basetemp .tmp\pytest-v2-polish-closeout-final`
+  -> 757 passed, 1 environment warning.
+- `config doctor --offline --json` -> `ok: true`, full profile, zero failed
+  checks; runtime diagnostics still correctly report local editable-install
+  version drift (`0.1.0` package metadata vs `0.2.1` source tree).
+- `smoke-profile --profile full --offline` -> passed.
+- `smoke-profile --profile sample` -> passed.
+- `smoke-natural-questions --as-of 2026-06-10` -> `OK: True`; output:
+  `~/.deal-intel/smoke/natural-question-pack-20260618_155953`.
+- `smoke-deal-review-audit --as-of 2026-06-10 --limit 20` -> sensitive field
+  check passed; quality rules passed.
+- `crosscheck-weekly-dashboard --as-of 2026-06-10` -> `ok: true`; generated
+  weekly report artifacts under `~/.deal-intel/reports`.
+- `mongo refresh-chart-ready --target all --as-of 2026-06-10 --dry-run --json`
+  now accepts the explicit `--dry-run` option. The live run on this machine
+  currently hits transient DNS timeout, but returns `likely_issue:
+  dns_or_network` plus next actions; this is an environment/UX observation, not
+  a release blocker.
+- Local-sample report/export smoke generated:
+  - weekly pipeline Markdown/CSV,
+  - pipeline trend Markdown/CSV,
+  - open-deals ledger CSV.
+- `pytest tests\test_product_context.py tests\test_analyze_deal.py tests\test_add_interaction.py -q -p no:cacheprovider --basetemp .tmp\pytest-v2-polish-product-context-final`
+  -> 37 passed, 1 environment warning.
+
+Remaining after close-out:
+
+- Deal-review quality should now improve through real usage traces and the
+  planned corner-case synthetic dataset, not through more blind pre-release
+  tuning.
+- Runtime version drift repair can be made more automatic post-v2; the current
+  diagnostic already exposes the mismatch and next action.
+- Mongo DNS/network instability is handled with actionable hints; live Atlas
+  reliability remains environment-dependent.
+
 ### Report Quality v2 - pipeline trend readability polish
 
 Completed:
