@@ -12,6 +12,53 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-18
 
+### 0.2.3 npx bootstrapper + MCPB handoff prep
+
+Completed:
+
+- Bumped version alignment to `0.2.3` across the Python package, npm
+  bootstrapper, and MCPB manifest.
+- Updated `npx deal-intel-mcp setup` to install the matching pinned Python
+  runtime package (`deal-intel-mcp[embedding]==0.2.3`) instead of a moving
+  latest install.
+- Bundled `mcpb/deal-intel-mcp-0.2.3.mcpb` into the npm package and added
+  handoff metadata so `setup`, `where --json`, `mcp-config --json`, and
+  `mcpb --json` all expose:
+  - the managed Python interpreter path;
+  - the bundled MCPB path;
+  - the persistent local MCPB path under `~/.deal-intel/runtime/mcpb/`;
+  - Claude Desktop next steps.
+- Updated MCPB installer wording to tell users to run
+  `npx deal-intel-mcp setup` and paste the printed Python path, rather than
+  assuming a git clone or editable install.
+- `release/latest/` was intentionally not updated; this patch keeps latest
+  handoff artifacts manually curated.
+- `.gitignore` keeps ordinary MCPB build artifacts ignored, with an explicit
+  exception for `mcpb/deal-intel-mcp-0.2.3.mcpb` so the current handoff artifact
+  is visible in the repository.
+
+Validation:
+
+- `node npm\bin\deal-intel-mcp.js setup --dry-run --json --python <python>`
+  -> passed; output includes the pinned install spec and MCPB copy plan.
+- `node --check npm\bin\deal-intel-mcp.js` -> passed.
+- `pytest tests\test_bootstrapper_skeleton.py tests\test_mcpb_manifest.py -q
+  -p no:cacheprovider --basetemp .tmp\pytest-bootstrapper-023` -> 19 passed.
+- `pytest -q -p no:cacheprovider --basetemp .tmp\pytest-full-023` -> 760
+  passed, 1 third-party deprecation warning.
+- `ruff check .` -> passed.
+- `git diff --check` -> passed; Windows line-ending warnings only.
+- `mcpb validate mcpb\manifest.json` -> passed.
+- `mcpb pack . deal-intel-mcp-0.2.3.mcpb` from `mcpb/` -> passed.
+- `mcpb info mcpb\deal-intel-mcp-0.2.3.mcpb` -> passed with the expected
+  unsigned-package warning.
+- Root `mcpb/deal-intel-mcp-0.2.3.mcpb` and npm-bundled
+  `npm/mcpb/deal-intel-mcp-0.2.3.mcpb` have matching SHA256 hashes.
+- `npm pack --dry-run` from `npm/` -> passed and confirmed the tarball includes
+  the bundled `mcpb/deal-intel-mcp-0.2.3.mcpb`.
+- Stale version scan found no `0.2.1`/`0.2.2` references in current release
+  entrypoint docs and package metadata.
+
 ### npm publish auth note
 
 Recorded:

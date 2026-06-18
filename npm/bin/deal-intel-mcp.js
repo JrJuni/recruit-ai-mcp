@@ -18,6 +18,15 @@ function readPackageVersion() {
 }
 
 const VERSION = readPackageVersion();
+const REPOSITORY_URL = "https://github.com/JrJuni/deal-intel-mcp";
+
+function mcpbFilename() {
+  return `deal-intel-mcp-${VERSION}.mcpb`;
+}
+
+function mcpbDownloadUrl() {
+  return `${REPOSITORY_URL}/raw/main/mcpb/${mcpbFilename()}`;
+}
 
 function usage() {
   return [
@@ -31,6 +40,7 @@ function usage() {
     "  deal-intel-mcp smoke [--profile-only]",
     "  deal-intel-mcp mcp",
     "  deal-intel-mcp mcp-config [--json] [--server-name NAME]",
+    "  deal-intel-mcp mcpb [--json]",
     "  deal-intel-mcp where [--json]",
     "  deal-intel-mcp --help",
     "",
@@ -47,6 +57,7 @@ function paths() {
   const home = homeDir();
   const dealIntelRoot = path.join(home, ".deal-intel");
   const runtimeRoot = process.env.DEAL_INTEL_RUNTIME_DIR || path.join(dealIntelRoot, "runtime");
+  const mcpbDir = path.join(runtimeRoot, "mcpb");
   const managedPython = process.platform === "win32"
     ? path.join(runtimeRoot, "venv", "Scripts", "python.exe")
     : path.join(runtimeRoot, "venv", "bin", "python");
@@ -55,6 +66,8 @@ function paths() {
     home,
     config_path: process.env.DEAL_INTEL_CONFIG_PATH || path.join(dealIntelRoot, "config.yaml"),
     runtime_root: runtimeRoot,
+    mcpb_dir: mcpbDir,
+    mcpb_path: path.join(mcpbDir, mcpbFilename()),
     install_state_path: path.join(runtimeRoot, "install-state.json"),
     managed_python_path: managedPython,
     effective_python_path: effectivePython,
@@ -65,6 +78,72 @@ function paths() {
     product_context_cache: process.env.DEAL_INTEL_PRODUCT_CONTEXT_CACHE_DIR
       || path.join(dealIntelRoot, "product-context", "cache"),
   };
+}
+
+function bundledMcpbPath() {
+  if (process.env.DEAL_INTEL_BUNDLED_MCPB_PATH) {
+    return process.env.DEAL_INTEL_BUNDLED_MCPB_PATH;
+  }
+  return path.join(__dirname, "..", "mcpb", mcpbFilename());
+}
+
+function mcpbState() {
+  const p = paths();
+  const bundledPath = bundledMcpbPath();
+  return {
+    filename: mcpbFilename(),
+    bundled_path: bundledPath,
+    bundled_exists: fs.existsSync(bundledPath),
+    local_path: p.mcpb_path,
+    local_exists: fs.existsSync(p.mcpb_path),
+    fallback_download_url: mcpbDownloadUrl(),
+  };
+}
+
+function mcpbHandoff() {
+  const state = mcpbState();
+  return {
+    ...state,
+    install_summary: "Install the local MCPB file in Claude Desktop Extensions.",
+    claude_steps: [
+      "Run `deal-intel-mcp setup` first if local_exists is false.",
+      "Open Claude Desktop -> Settings -> Extensions.",
+      "Install the local MCPB file shown in local_path.",
+      "Paste mcpb_python_interpreter_path into the Python interpreter path field.",
+      "Choose storage backend: mongo for real data, local_sample for a quick trial.",
+      "Restart Claude Desktop and ask: Run config_doctor.",
+    ],
+  };
+}
+
+function copyBundledMcpbToRuntime() {
+  const before = mcpbState();
+  if (!before.bundled_exists) {
+    return {
+      ok: false,
+      error: "bundled_mcpb_missing",
+      message: "The npm package is missing the bundled MCPB file.",
+      mcpb: before,
+      next_action:
+        "Reinstall deal-intel-mcp from npm, or download the matching MCPB artifact from the GitHub repository.",
+    };
+  }
+  try {
+    ensureDir(path.dirname(before.local_path));
+    fs.copyFileSync(before.bundled_path, before.local_path);
+    return {
+      ok: true,
+      mcpb: mcpbState(),
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: "mcpb_copy_failed",
+      message: `Could not copy the bundled MCPB file: ${error.message}`,
+      mcpb: before,
+      next_action: "Check write permissions for the Deal Intelligence runtime directory.",
+    };
+  }
 }
 
 function printJson(payload) {
@@ -183,9 +262,10 @@ function installSpec(args) {
   if (!["pypi", "testpypi"].includes(source)) {
     return { error: `source must be pypi or testpypi, got: ${source}` };
   }
+  const basePackage = `deal-intel-mcp==${VERSION}`;
   const packageName = hasFlag(args, "--lightweight")
-    ? "deal-intel-mcp"
-    : "deal-intel-mcp[embedding]";
+    ? basePackage
+    : `deal-intel-mcp[embedding]==${VERSION}`;
   const indexUrlArgs = source === "testpypi"
     ? ["--index-url", "https://test.pypi.org/simple/", "--extra-index-url", "https://pypi.org/simple/"]
     : [];
@@ -238,6 +318,7 @@ function cmdWhere(args) {
     ok: true,
     bootstrapper_version: VERSION,
     paths: paths(),
+    mcpb: mcpbHandoff(),
   };
   if (hasFlag(args, "--json")) {
     printJson(payload);
@@ -269,11 +350,13 @@ function mcpHandoffPayload(args) {
     ok: true,
     bootstrapper_version: VERSION,
     server_name: serverName,
+    mcpb: mcpbHandoff(),
     mcpb_python_interpreter_path: p.effective_python_path,
     managed_python_path: p.managed_python_path,
     config_path: p.config_path,
     claude_desktop_config_snippet: config,
     notes: [
+      "The npm setup command installs the Python runtime and places a local MCPB file for Claude Desktop.",
       "For MCPB, paste mcpb_python_interpreter_path into the Python interpreter path field.",
       "For manual Claude Desktop setup, merge claude_desktop_config_snippet into claude_desktop_config.json.",
       "Secrets are not included; keep MongoDB/API keys in MCPB sensitive fields, .env, or shell environment.",
@@ -288,11 +371,55 @@ function cmdMcpConfig(args) {
     return 0;
   }
   process.stdout.write("Deal Intelligence MCP handoff\n");
+  process.stdout.write(`Local MCPB file:\n${payload.mcpb.local_path}\n`);
+  process.stdout.write(`Local MCPB exists: ${payload.mcpb.local_exists}\n`);
+  process.stdout.write(`Bundled MCPB exists: ${payload.mcpb.bundled_exists}\n`);
+  process.stdout.write(`Fallback download URL:\n${payload.mcpb.fallback_download_url}\n\n`);
   process.stdout.write(`MCPB Python interpreter path:\n${payload.mcpb_python_interpreter_path}\n\n`);
+  process.stdout.write("Claude Desktop MCPB install steps:\n");
+  for (const [index, step] of payload.mcpb.claude_steps.entries()) {
+    process.stdout.write(`${index + 1}. ${step}\n`);
+  }
+  process.stdout.write("\n");
   process.stdout.write("Claude Desktop config snippet:\n");
   process.stdout.write(`${JSON.stringify(payload.claude_desktop_config_snippet, null, 2)}\n\n`);
   for (const note of payload.notes) {
     process.stdout.write(`- ${note}\n`);
+  }
+  return 0;
+}
+
+function cmdMcpb(args) {
+  const mcpb = mcpbHandoff();
+  const payload = {
+    ok: mcpb.bundled_exists || mcpb.local_exists,
+    bootstrapper_version: VERSION,
+    mcpb,
+    mcpb_python_interpreter_path: paths().effective_python_path,
+  };
+  if (!payload.ok) {
+    payload.error = "bundled_mcpb_missing";
+    payload.message = "The npm package is missing the bundled MCPB file.";
+    payload.next_action =
+      "Reinstall deal-intel-mcp from npm, or download the matching MCPB artifact from the GitHub repository.";
+  }
+  if (hasFlag(args, "--json")) {
+    printJson(payload);
+    return payload.ok ? 0 : 1;
+  }
+  if (!payload.ok) {
+    process.stderr.write(`${payload.message}\n${payload.next_action}\n`);
+    return 1;
+  }
+  process.stdout.write("Deal Intelligence MCPB install handoff\n");
+  process.stdout.write(`Local MCPB file:\n${payload.mcpb.local_path}\n`);
+  process.stdout.write(`Local MCPB exists: ${payload.mcpb.local_exists}\n`);
+  process.stdout.write(`Bundled MCPB exists: ${payload.mcpb.bundled_exists}\n`);
+  process.stdout.write(`Fallback download URL:\n${payload.mcpb.fallback_download_url}\n\n`);
+  process.stdout.write(`Python interpreter path for the MCPB form:\n${payload.mcpb_python_interpreter_path}\n\n`);
+  process.stdout.write("Next steps:\n");
+  for (const [index, step] of payload.mcpb.claude_steps.entries()) {
+    process.stdout.write(`${index + 1}. ${step}\n`);
   }
   return 0;
 }
@@ -327,6 +454,7 @@ function cmdSetup(args) {
     runtime_root: p.runtime_root,
     venv_path: venvPath,
     managed_python_path: p.managed_python_path,
+    mcpb: mcpbHandoff(),
     detected_python: detected,
     detected_python_version: version.version || null,
     install_source: spec.source,
@@ -341,6 +469,10 @@ function cmdSetup(args) {
       install_package: {
         command: p.managed_python_path,
         args: ["-m", "pip", "install", ...spec.index_url_args, spec.spec],
+      },
+      copy_mcpb: {
+        from: bundledMcpbPath(),
+        to: p.mcpb_path,
       },
       post_install_check: {
         command: p.managed_python_path,
@@ -428,6 +560,30 @@ function cmdSetup(args) {
     return 1;
   }
 
+  const copyResult = copyBundledMcpbToRuntime();
+  steps.push({
+    step: "copy_mcpb",
+    status: copyResult.ok ? 0 : 1,
+    error: copyResult.ok ? null : copyResult.error,
+    from: copyResult.mcpb?.bundled_path || bundledMcpbPath(),
+    to: copyResult.mcpb?.local_path || p.mcpb_path,
+  });
+  payload.mcpb = mcpbHandoff();
+  if (!copyResult.ok) {
+    payload.ok = false;
+    payload.status = "failed";
+    payload.error = copyResult.error;
+    payload.message = copyResult.message;
+    payload.next_action = copyResult.next_action;
+    payload.steps = steps;
+    if (json) {
+      printJson(payload);
+    } else {
+      process.stderr.write(`${payload.message}\n${payload.next_action}\n`);
+    }
+    return 1;
+  }
+
   const checkResult = spawnSync(p.managed_python_path, [
     "-m",
     "deal_intel.cli",
@@ -453,6 +609,7 @@ function cmdSetup(args) {
     package_version: null,
     package_spec: spec.spec,
     extras: spec.extras,
+    mcpb_path: payload.mcpb.local_path,
     last_post_install_check_status: checkResult.status === 0 ? "pass" : "fail",
   };
   writeInstallState(state);
@@ -460,14 +617,22 @@ function cmdSetup(args) {
   payload.status = payload.ok ? "installed" : "installed_with_post_install_check_failure";
   payload.steps = steps;
   payload.install_state_path = p.install_state_path;
+  payload.mcpb = mcpbHandoff();
   payload.next_action = payload.ok
-    ? "Run `deal-intel-mcp doctor --live` after configuring Mongo/API values, or configure MCPB with the managed Python path."
+    ? "Install the local MCPB file in Claude Desktop, paste the Python path, then run config_doctor."
     : "Inspect the post-install smoke output, then rerun `deal-intel-mcp smoke --profile-only`.";
   if (json) {
     printJson(payload);
   } else {
-    process.stdout.write(`Runtime Python: ${p.managed_python_path}\n`);
-    process.stdout.write(`Install state: ${p.install_state_path}\n`);
+    process.stdout.write(`Installed Deal Intelligence MCP ${VERSION}\n\n`);
+    process.stdout.write(`Installed runtime:\n${p.runtime_root}\n\n`);
+    process.stdout.write(`Python interpreter path for Claude MCPB:\n${p.managed_python_path}\n\n`);
+    process.stdout.write(`MCPB file to install in Claude Desktop:\n${payload.mcpb.local_path}\n\n`);
+    process.stdout.write("Next steps:\n");
+    for (const [index, step] of payload.mcpb.claude_steps.entries()) {
+      process.stdout.write(`${index + 1}. ${step}\n`);
+    }
+    process.stdout.write(`\nInstall state:\n${p.install_state_path}\n\n`);
     process.stdout.write(`${payload.next_action}\n`);
   }
   return payload.ok ? 0 : 1;
@@ -538,6 +703,9 @@ function main(argv) {
   }
   if (command === "mcp-config") {
     return cmdMcpConfig(args);
+  }
+  if (command === "mcpb") {
+    return cmdMcpb(args);
   }
   process.stderr.write(`Unknown command: ${command}\n\n${usage()}\n`);
   return 2;

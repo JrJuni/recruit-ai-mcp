@@ -18,9 +18,8 @@ def main() -> None:
         sys.stderr.write(
             "deal-intel-mcp launcher: cannot import deal_intel.mcp_server.\n"
             f"  ImportError: {exc}\n"
-            "  Set the MCPB user_config 'python_path' to a Python interpreter that has run\n"
-            "  `pip install -e .` against this repo (the editable install makes deal_intel\n"
-            "  importable without PYTHONPATH).\n"
+            "  Run `npx deal-intel-mcp setup`, then set the MCPB user_config\n"
+            "  'python_path' to the Python interpreter path printed by setup.\n"
         )
         raise SystemExit(1)
     _main()

@@ -1,6 +1,6 @@
 {
   "name": "deal-intel-mcp",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "private": false,
   "description": "Dependency-inclusive bootstrapper for the deal-intel-mcp Python MCP server.",
   "license": "MIT",
@@ -35,6 +35,7 @@
   },
   "files": [
     "bin/",
+    "mcpb/",
     "README.md"
   ]
 }

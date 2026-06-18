@@ -25,7 +25,15 @@ def test_npm_package_exposes_expected_bin() -> None:
     assert package["publishConfig"] == {"access": "public"}
     assert package["bin"] == {"deal-intel-mcp": "bin/deal-intel-mcp.js"}
     assert package["engines"]["node"] == ">=18"
+    assert "mcpb/" in package["files"]
     assert "dependencies" not in package
+
+
+def test_npm_bundled_mcpb_matches_package_version() -> None:
+    package = json.loads((ROOT / "npm" / "package.json").read_text(encoding="utf-8"))
+    expected = ROOT / "npm" / "mcpb" / f"deal-intel-mcp-{package['version']}.mcpb"
+
+    assert expected.exists()
 
 
 def test_bootstrapper_where_uses_deal_intel_home(tmp_path: Path) -> None:
@@ -47,9 +55,15 @@ def test_bootstrapper_where_uses_deal_intel_home(tmp_path: Path) -> None:
     assert payload["paths"]["runtime_root"] == str(runtime_root)
     assert payload["paths"]["config_path"] == str(tmp_path / ".deal-intel" / "config.yaml")
     assert payload["paths"]["install_state_path"] == str(runtime_root / "install-state.json")
+    assert payload["mcpb"]["filename"] == f"deal-intel-mcp-{package['version']}.mcpb"
+    assert payload["mcpb"]["local_path"] == str(
+        runtime_root / "mcpb" / f"deal-intel-mcp-{package['version']}.mcpb"
+    )
+    assert payload["mcpb"]["bundled_exists"] is True
 
 
 def test_bootstrapper_mcp_config_outputs_claude_snippet(tmp_path: Path) -> None:
+    package = json.loads((ROOT / "npm" / "package.json").read_text(encoding="utf-8"))
     result = subprocess.run(
         ["node", str(BOOTSTRAPPER), "mcp-config", "--json"],
         check=True,
@@ -66,6 +80,10 @@ def test_bootstrapper_mcp_config_outputs_claude_snippet(tmp_path: Path) -> None:
     server_config = payload["claude_desktop_config_snippet"]["mcpServers"]["deal-intel-mcp"]
 
     assert payload["ok"] is True
+    assert payload["mcpb"]["filename"] == f"deal-intel-mcp-{package['version']}.mcpb"
+    assert payload["mcpb"]["local_path"] == str(
+        tmp_path / ".deal-intel" / "runtime" / "mcpb" / f"deal-intel-mcp-{package['version']}.mcpb"
+    )
     assert payload["mcpb_python_interpreter_path"] == python_path
     assert server_config["command"] == python_path
     assert server_config["args"] == ["-m", "deal_intel.mcp_server"]
@@ -111,6 +129,7 @@ def test_bootstrapper_missing_runtime_is_actionable(tmp_path: Path) -> None:
 
 
 def test_bootstrapper_setup_dry_run_plans_runtime_install(tmp_path: Path) -> None:
+    package = json.loads((ROOT / "npm" / "package.json").read_text(encoding="utf-8"))
     result = subprocess.run(
         [
             "node",
@@ -134,10 +153,16 @@ def test_bootstrapper_setup_dry_run_plans_runtime_install(tmp_path: Path) -> Non
     assert payload["ok"] is True
     assert payload["status"] == "planned"
     assert payload["runtime_root"] == str(runtime_root)
-    assert payload["install_spec"] == "deal-intel-mcp[embedding]"
+    assert payload["install_spec"] == "deal-intel-mcp[embedding]==0.2.3"
     assert payload["extras"] == ["embedding"]
     assert payload["commands"]["create_venv"]["args"][-1] == str(runtime_root / "venv")
-    assert payload["commands"]["install_package"]["args"][-1] == "deal-intel-mcp[embedding]"
+    assert payload["commands"]["install_package"]["args"][-1] == "deal-intel-mcp[embedding]==0.2.3"
+    assert payload["commands"]["copy_mcpb"]["to"] == str(
+        runtime_root / "mcpb" / f"deal-intel-mcp-{package['version']}.mcpb"
+    )
+    assert payload["mcpb"]["local_path"] == str(
+        runtime_root / "mcpb" / f"deal-intel-mcp-{package['version']}.mcpb"
+    )
     assert payload["commands"]["post_install_check"]["args"] == [
         "-m",
         "deal_intel.cli",
@@ -168,7 +193,7 @@ def test_bootstrapper_setup_lightweight_uses_base_package(tmp_path: Path) -> Non
     )
 
     payload = json.loads(result.stdout)
-    assert payload["install_spec"] == "deal-intel-mcp"
+    assert payload["install_spec"] == "deal-intel-mcp==0.2.3"
     assert payload["extras"] == []
 
 
@@ -196,3 +221,45 @@ def test_bootstrapper_setup_rejects_unknown_source(tmp_path: Path) -> None:
     assert result.returncode == 2
     assert payload["ok"] is False
     assert payload["error"] == "invalid_setup_option"
+
+
+def test_bootstrapper_mcpb_command_outputs_local_handoff(tmp_path: Path) -> None:
+    package = json.loads((ROOT / "npm" / "package.json").read_text(encoding="utf-8"))
+    result = subprocess.run(
+        ["node", str(BOOTSTRAPPER), "mcpb", "--json"],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        env=_env_with_home(tmp_path),
+    )
+
+    payload = json.loads(result.stdout)
+
+    assert payload["ok"] is True
+    assert payload["mcpb"]["filename"] == f"deal-intel-mcp-{package['version']}.mcpb"
+    assert payload["mcpb"]["bundled_exists"] is True
+    assert payload["mcpb"]["local_path"] == str(
+        tmp_path / ".deal-intel" / "runtime" / "mcpb" / f"deal-intel-mcp-{package['version']}.mcpb"
+    )
+    assert "Install the local MCPB file" in payload["mcpb"]["install_summary"]
+
+
+def test_bootstrapper_mcpb_command_reports_missing_bundle(tmp_path: Path) -> None:
+    env = _env_with_home(tmp_path)
+    env["DEAL_INTEL_BUNDLED_MCPB_PATH"] = str(tmp_path / "missing.mcpb")
+    result = subprocess.run(
+        ["node", str(BOOTSTRAPPER), "mcpb", "--json"],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        env=env,
+    )
+
+    payload = json.loads(result.stdout)
+
+    assert result.returncode == 1
+    assert payload["ok"] is False
+    assert payload["error"] == "bundled_mcpb_missing"
+    assert "Reinstall deal-intel-mcp" in payload["next_action"]

@@ -7,10 +7,11 @@ The bootstrapper is the published `npx` front door for users who should not
 need to clone the repository or run editable installs before the first doctor
 check.
 
-As of package version `0.2.1`, the public npm package is available and installs
-the Python package from PyPI by default. It still requires Node.js 18+ and a
-usable Python 3.11+ interpreter on the user's machine; it does not bundle
-Python, PyTorch, or embedding models inside the npm tarball.
+As of package version `0.2.3`, the public npm package is available, installs
+the Python package from PyPI by default, and copies a bundled MCPB file into
+`~/.deal-intel/runtime/mcpb/`. It still requires Node.js 18+ and a usable Python
+3.11+ interpreter on the user's machine; it does not bundle Python, PyTorch, or
+embedding models inside the npm tarball.
 
 It must not become a second implementation of the MCP server. Its job is to
 install, locate, and run the Python package safely.
@@ -32,6 +33,7 @@ npx deal-intel-mcp doctor
 npx deal-intel-mcp smoke
 npx deal-intel-mcp mcp
 npx deal-intel-mcp mcp-config
+npx deal-intel-mcp mcpb
 ```
 
 ## Non-Goals
@@ -59,6 +61,7 @@ Use the user-owned Deal Intelligence runtime directory:
   product-context/
   runtime/
     install-state.json
+    mcpb/
     venv/
     logs/
 ```
@@ -87,7 +90,8 @@ Do not write mutable runtime state under:
 
 Current release path:
 
-1. Install `deal-intel-mcp[embedding]` from PyPI by default.
+1. Install the matching `deal-intel-mcp[embedding]==<bootstrapper-version>`
+   from PyPI by default.
 2. Use TestPyPI only for pre-release validation.
 3. Allow a GitHub release wheel URL as an explicit fallback or development
    override.
@@ -105,11 +109,13 @@ npx deal-intel-mcp setup --wheel-url https://...
 Default dependency profile:
 
 ```text
-deal-intel-mcp[embedding]
+deal-intel-mcp[embedding]==0.2.3
 ```
 
 Reason: product context, semantic search, and most realistic local demos need
-embeddings. A lightweight mode may exist, but it should be explicit:
+embeddings. The version is pinned to the npm bootstrapper version so `npx`
+and the Python runtime do not drift. A lightweight mode may exist, but it
+should be explicit:
 
 ```bash
 npx deal-intel-mcp setup --lightweight
@@ -129,8 +135,10 @@ Required behavior:
 - keep `uv` as an optional future optimization, not a required dependency;
 - create or reuse `~/.deal-intel/runtime/venv`;
 - install the selected Python package source;
+- copy the bundled MCPB file into `~/.deal-intel/runtime/mcpb/`;
 - write `~/.deal-intel/runtime/install-state.json`;
 - print the resolved Python interpreter path;
+- print the local MCPB file path to install in Claude Desktop;
 - run `deal-intel smoke-profile --profile sample` after install to prove the
   runtime works without MongoDB or API keys.
 
@@ -254,7 +262,7 @@ Suggested fields:
   "python_path": "...",
   "python_version": "3.11.x",
   "package_source": "pypi",
-  "package_version": "0.2.1",
+  "package_version": "0.2.3",
   "extras": ["embedding"],
   "last_post_install_check_status": "pass"
 }

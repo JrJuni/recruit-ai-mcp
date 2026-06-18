@@ -35,6 +35,7 @@ scripts/tmp/
 
 # mcpb build artifacts
 mcpb/*.mcpb
+!mcpb/deal-intel-mcp-0.2.3.mcpb
 
 # Testing
 .tmp/

@@ -63,8 +63,8 @@ these should duplicate product logic.
 
 | Surface | Current role | Primary files | Notes |
 |---|---|---|---|
-| PyPI package | Immutable Python package source for runtime installs | `pyproject.toml`, packaged resources under `src/deal_intel/resources` | Published as `deal-intel-mcp==0.2.1`; base install excludes embedding dependencies unless the `embedding` extra is selected. |
-| npm/npx bootstrapper | No-git-clone setup, runtime creation, smoke, and MCP handoff | `npm/package.json`, `npm/bin/deal-intel-mcp.js`, `docs/bootstrapper-contract.md` | Published as `deal-intel-mcp@0.2.1`; still requires Node.js 18+ and Python 3.11+. It creates `~/.deal-intel/runtime/venv` and installs the PyPI package. |
+| PyPI package | Immutable Python package source for runtime installs | `pyproject.toml`, packaged resources under `src/deal_intel/resources` | Published as `deal-intel-mcp==0.2.3`; base install excludes embedding dependencies unless the `embedding` extra is selected. |
+| npm/npx bootstrapper | No-git-clone setup, runtime creation, smoke, and MCP handoff | `npm/package.json`, `npm/bin/deal-intel-mcp.js`, `docs/bootstrapper-contract.md` | Published as `deal-intel-mcp@0.2.3`; still requires Node.js 18+ and Python 3.11+. It creates `~/.deal-intel/runtime/venv`, installs the matching PyPI package, and places the bundled MCPB under `~/.deal-intel/runtime/mcpb/`. |
 | MCPB bundle | Claude Desktop installer/config surface | `mcpb/manifest.json`, `mcpb/server/launcher.py`, `mcpb/README.md` | It launches an already installed Python runtime. It should not install Python dependencies or store secrets in repo files. |
 | Git clone/editable install | Contributor and customizer path | repo root, `pyproject.toml`, docs | Best for developers who want to inspect or modify prompts, reports, storage, or framework logic. |
 

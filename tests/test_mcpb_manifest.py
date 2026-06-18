@@ -63,7 +63,7 @@ def test_mcpb_manifest_user_config_defaults_to_full_and_is_secret_safe() -> None
     manifest = _manifest()
     user_config = manifest["user_config"]
 
-    assert manifest["version"] == "0.2.2"
+    assert manifest["version"] == "0.2.3"
     assert user_config["python_path"]["required"] is True
     assert user_config["storage_backend"]["default"] == "mongo"
     assert user_config["storage_backend"]["required"] is False
@@ -135,7 +135,7 @@ def test_mcpb_launcher_delegates_to_installed_mcp_server(monkeypatch) -> None:
     assert called == [True]
 
 
-def test_mcpb_launcher_failure_message_points_to_editable_install(
+def test_mcpb_launcher_failure_message_points_to_npx_setup(
     monkeypatch,
     capsys,
 ) -> None:
@@ -156,4 +156,4 @@ def test_mcpb_launcher_failure_message_points_to_editable_install(
     stderr = capsys.readouterr().err
     assert exc_info.value.code == 1
     assert "cannot import deal_intel.mcp_server" in stderr
-    assert "pip install -e ." in stderr
+    assert "npx deal-intel-mcp setup" in stderr

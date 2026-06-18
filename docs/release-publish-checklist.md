@@ -14,7 +14,7 @@ may use security-key/WebAuthn authentication that does not expose a CLI OTP.
 
 - Python package: `deal-intel-mcp`
 - Node bootstrapper package: `deal-intel-mcp`
-- Current version: `0.2.2`
+- Current version: `0.2.3`
 - License: MIT
 - Source repository: `https://github.com/JrJuni/deal-intel-mcp`
 
@@ -75,8 +75,8 @@ npm trusted publisher values:
 Then publish by pushing a version tag:
 
 ```powershell
-git tag v0.2.2
-git push origin v0.2.2
+git tag v0.2.3
+git push origin v0.2.3
 ```
 
 If the Python package published successfully but the npm job failed, fix the
@@ -113,7 +113,7 @@ dependencies, so include PyPI as an extra index:
 ```powershell
 python -m venv .tmp\testpypi-install
 .\.tmp\testpypi-install\Scripts\python.exe -m pip install --upgrade pip
-.\.tmp\testpypi-install\Scripts\python.exe -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ "deal-intel-mcp[embedding]==0.2.2"
+.\.tmp\testpypi-install\Scripts\python.exe -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ "deal-intel-mcp[embedding]==0.2.3"
 .\.tmp\testpypi-install\Scripts\python.exe -m deal_intel.cli smoke-profile --profile sample
 ```
 
@@ -130,7 +130,7 @@ After publishing, verify:
 ```powershell
 python -m venv .tmp\pypi-install
 .\.tmp\pypi-install\Scripts\python.exe -m pip install --upgrade pip
-.\.tmp\pypi-install\Scripts\python.exe -m pip install "deal-intel-mcp[embedding]==0.2.2"
+.\.tmp\pypi-install\Scripts\python.exe -m pip install "deal-intel-mcp[embedding]==0.2.3"
 .\.tmp\pypi-install\Scripts\python.exe -m deal_intel.cli smoke-profile --profile sample
 ```
 
@@ -163,9 +163,10 @@ Then run a fresh public `npx` smoke from a disposable home:
 
 ```powershell
 $env:DEAL_INTEL_HOME = (Resolve-Path "..\.tmp\npx-public-home").Path
-npx --yes deal-intel-mcp@0.2.2 setup
-npx --yes deal-intel-mcp@0.2.2 smoke --profile-only
-npx --yes deal-intel-mcp@0.2.2 mcp-config --json
+npx --yes deal-intel-mcp@0.2.3 setup
+npx --yes deal-intel-mcp@0.2.3 smoke --profile-only
+npx --yes deal-intel-mcp@0.2.3 mcpb --json
+npx --yes deal-intel-mcp@0.2.3 mcp-config --json
 ```
 
 Pass criteria:
@@ -173,7 +174,8 @@ Pass criteria:
 - setup creates a managed runtime;
 - setup post-install sample profile check passes;
 - `smoke --profile-only` passes;
-- `mcp-config --json` prints a usable Python interpreter path;
+- `mcpb --json` prints a local MCPB file path and usable Python interpreter path;
+- `mcp-config --json` prints a usable manual fallback config;
 - no secrets are printed.
 
 ## MCPB Release Artifact
@@ -183,8 +185,8 @@ If refreshing the MCPB bundle:
 ```powershell
 mcpb validate mcpb\manifest.json
 Push-Location mcpb
-mcpb pack . deal-intel-mcp-0.2.2.mcpb
-mcpb info deal-intel-mcp-0.2.2.mcpb
+mcpb pack . deal-intel-mcp-0.2.3.mcpb
+mcpb info deal-intel-mcp-0.2.3.mcpb
 Pop-Location
 ```
 
