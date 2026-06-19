@@ -106,6 +106,19 @@ Immediate post-v2 quality order:
      backfills.
    - Keep cost numbers explicitly labeled as estimates unless pulled from a
      provider billing API.
+5. Tool-call audit trail and workflow trace.
+   - Add a secret-safe local audit trail for MCP tool calls so successful host
+     workflows can be debugged and repeated.
+   - Primary use case: capture high-quality answer paths such as
+     `get_product_context` -> `search_deals` -> `get_deal` -> host synthesis.
+   - Store only safe metadata: timestamp, tool name, duration, success/error
+     category, redacted argument summary, and compact result summary.
+   - Never store raw interaction content, raw notes, raw product documents,
+     contacts, embeddings, API keys, OAuth tokens, MongoDB URIs, or full tool
+     responses.
+   - Treat this as an observability and support feature, not a replacement for
+     `get_usage`. Consider opt-in/local-only retention, bounded log size, and
+     developer-surface inspection first.
 
 V2 readiness UX polish queue:
 
@@ -166,6 +179,58 @@ Deferred after v2 closure:
      mix deal records, charts, reports, embeddings, or tuning preferences.
    - Treat this as post-v2 because the qualification framework and tool surface
      need to stabilize first.
+5. Dockerized self-hosted remote kit.
+   - Provide a deployment path for users who want mobile or remote access
+     without turning this project into a managed SaaS operated by the
+     maintainer.
+   - Package the MCP server as a Docker/container deployment that can run on
+     user-owned infrastructure such as Cloud Run, Fly.io, Railway, Render,
+     ECS/Fargate, a VM, or an internal Kubernetes cluster.
+   - Keep the product promise: user-owned MongoDB, user-owned LLM/API keys,
+     user-owned product-context storage, and explicit operator control over
+     costs and data retention.
+   - Minimum deliverables:
+     - Dockerfile or equivalent container image build;
+     - environment-variable based config for MongoDB, LLM provider, reporting,
+       tool surface, and product-context paths;
+     - health/readiness endpoint or command;
+     - example deploy guides for one low-friction platform;
+     - security notes for TLS, auth, rate limiting, secret storage, and network
+       access;
+     - clear warning that exposed remote MCP endpoints need authentication and
+       must not be published unauthenticated.
+   - Do not build a maintainer-operated cloud service until real usage justifies
+     tenant isolation, billing, JWT/OAuth lifecycle, support, incident response,
+     and data protection responsibilities.
+6. MongoDB Atlas Terraform PoC template.
+   - Add a small, repeatable Infrastructure-as-Code template for the `full` and
+     `pro` Atlas setup path.
+   - Suggested location:
+     `infra/mongodb-atlas/versions.tf`, `provider.tf`, `variables.tf`,
+     `main.tf`, `outputs.tf`, and `README.md`.
+   - Initial scope:
+     - Atlas project;
+     - M0/Flex/dev cluster by default;
+     - database user;
+     - IP access list;
+     - connection string output;
+     - optional variables for backup/search/vector-search and dev/stage/prod
+       separation.
+   - Keep Terraform responsible for infrastructure only. Deal records, sample
+     data, app-level migrations, chart-ready refreshes, schema application, and
+     product-context indexing remain CLI/app responsibilities.
+   - Safety requirements:
+     - do not commit `.tfvars`, local state, Atlas API keys, DB passwords, or
+       generated connection strings;
+     - document that Terraform state may contain sensitive values and should be
+       kept out of git, ideally in encrypted remote state for real use;
+     - start with a new dev project/cluster before importing existing Atlas
+       resources;
+     - avoid broad `0.0.0.0/0` access outside short-lived PoC usage;
+     - consider `prevent_destroy` or explicit warnings before managing any
+       environment containing real deal data;
+     - keep paid/pro capabilities behind explicit variables so PoC defaults
+       stay cost-safe.
 
 V2 closure validation gate:
 
