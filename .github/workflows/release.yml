@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - "v*"
+      - "v[0-9]+.[0-9]+.[0-9]+"
   workflow_dispatch:
     inputs:
       target:
@@ -21,9 +21,64 @@ permissions:
   id-token: write
 
 jobs:
+  validate-release:
+    name: Validate release version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate stable release tag and package versions
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(python - <<'PY'
+          import json
+          import tomllib
+          from pathlib import Path
+
+          root = Path.cwd()
+          pyproject = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+          package = json.loads((root / "npm" / "package.json").read_text(encoding="utf-8"))
+          python_version = pyproject["project"]["version"]
+          npm_version = package["version"]
+          if python_version != npm_version:
+              raise SystemExit(
+                  f"Python package version {python_version} does not match npm {npm_version}"
+              )
+          print(python_version)
+          PY
+          )"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Production release version must be X.Y.Z, got ${version}"
+            exit 1
+          fi
+
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::Production release tags must be vX.Y.Z, got ${GITHUB_REF_NAME}"
+              exit 1
+            fi
+            if [[ "$GITHUB_REF_NAME" != "v${version}" ]]; then
+              echo "::error::Tag ${GITHUB_REF_NAME} does not match package version ${version}"
+              exit 1
+            fi
+          fi
+
   test:
     name: Test release candidate
     runs-on: ubuntu-latest
+    needs: validate-release
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -68,7 +123,9 @@ jobs:
   publish-python:
     name: Publish Python package to PyPI
     runs-on: ubuntu-latest
-    needs: test
+    needs:
+      - validate-release
+      - test
     if: github.event_name == 'push' || inputs.target == 'all' || inputs.target == 'python'
     environment: pypi
     permissions:
@@ -96,10 +153,12 @@ jobs:
     name: Publish npm bootstrapper
     runs-on: ubuntu-latest
     needs:
+      - validate-release
       - test
       - publish-python
     if: >
       always() &&
+      needs.validate-release.result == 'success' &&
       needs.test.result == 'success' &&
       (needs.publish-python.result == 'success' || needs.publish-python.result == 'skipped') &&
       (github.event_name == 'push' || inputs.target == 'all' || inputs.target == 'npm')
@@ -124,6 +183,26 @@ jobs:
           node --version
           npm --version
 
-      - name: Publish npm package
+      - name: Publish or promote npm package
         working-directory: npm
-        run: npm publish --access public
+        env:
+          PACKAGE_VERSION: ${{ needs.validate-release.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          view_output="$(npm view "deal-intel-mcp@${PACKAGE_VERSION}" version 2>&1)"
+          view_status=$?
+          set -e
+
+          if [[ "$view_status" -eq 0 ]]; then
+            echo "npm deal-intel-mcp@${PACKAGE_VERSION} already exists as ${view_output}."
+            echo "Promoting existing package with latest dist-tag; skipping npm publish."
+            npm dist-tag add "deal-intel-mcp@${PACKAGE_VERSION}" latest
+          elif echo "$view_output" | grep -Eq "E404|404"; then
+            echo "npm deal-intel-mcp@${PACKAGE_VERSION} does not exist yet; publishing."
+            npm publish --access public
+          else
+            echo "$view_output"
+            exit "$view_status"
+          fi

@@ -1,0 +1,128 @@
+name: Staging Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Published package version to install, without a leading v"
+        required: true
+        type: string
+      source:
+        description: "Package registry source"
+        required: true
+        default: "testpypi"
+        type: choice
+        options:
+          - testpypi
+          - pypi
+
+permissions:
+  contents: read
+
+jobs:
+  installed-package-smoke:
+    name: Installed package smoke
+    runs-on: ubuntu-latest
+    env:
+      DEAL_INTEL_STORAGE_BACKEND: local_sample
+      DEAL_INTEL_TOOLS_SURFACE: sample
+      PACKAGE_SOURCE: ${{ inputs.source }}
+      PACKAGE_VERSION: ${{ inputs.version }}
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install package from selected registry
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p smoke-evidence
+
+          if [[ -z "$PACKAGE_VERSION" || "$PACKAGE_VERSION" == v* ]]; then
+            echo "::error::version must be a package version like 0.2.3, without a leading v"
+            exit 1
+          fi
+
+          python -m venv .venv-smoke
+          . .venv-smoke/bin/activate
+          python -m pip install --upgrade pip
+
+          package_spec="deal-intel-mcp[embedding]==${PACKAGE_VERSION}"
+          if [[ "$PACKAGE_SOURCE" == "testpypi" ]]; then
+            python -m pip install \
+              --index-url https://test.pypi.org/simple/ \
+              --extra-index-url https://pypi.org/simple/ \
+              "$package_spec"
+          else
+            python -m pip install "$package_spec"
+          fi
+
+      - name: Run sample profile and MCP tool smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          . .venv-smoke/bin/activate
+
+          python - <<'PY' | tee smoke-evidence/package.json
+          import importlib.metadata as metadata
+          import json
+          import os
+          import sys
+
+          requested = os.environ["PACKAGE_VERSION"]
+          installed = metadata.version("deal-intel-mcp")
+          payload = {
+              "ok": installed == requested,
+              "source": os.environ["PACKAGE_SOURCE"],
+              "requested_version": requested,
+              "installed_version": installed,
+          }
+          print(json.dumps(payload, indent=2, sort_keys=True))
+          if installed != requested:
+              sys.exit(1)
+          PY
+
+          python -m deal_intel.cli smoke-profile --profile sample --json \
+            | tee smoke-evidence/profile-smoke.json
+
+          python - <<'PY' | tee smoke-evidence/mcp-tools.json
+          import asyncio
+          import json
+          import sys
+
+          from deal_intel import mcp_server
+
+          REQUIRED_TOOLS = {
+              "config_doctor",
+              "get_tool_catalog",
+              "create_deal",
+              "add_interaction",
+              "get_deal_review",
+          }
+
+          async def main() -> int:
+              tools = await mcp_server.app.list_tools()
+              names = sorted(tool.name for tool in tools)
+              missing = sorted(REQUIRED_TOOLS.difference(names))
+              payload = {
+                  "ok": not missing,
+                  "tool_count": len(names),
+                  "required_tools": sorted(REQUIRED_TOOLS),
+                  "missing_tools": missing,
+                  "tools": names,
+              }
+              print(json.dumps(payload, indent=2, sort_keys=True))
+              return 1 if missing else 0
+
+          raise SystemExit(asyncio.run(main()))
+          PY
+
+      - name: Upload smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-evidence-${{ inputs.source }}-${{ inputs.version }}
+          path: smoke-evidence/
+          if-no-files-found: warn

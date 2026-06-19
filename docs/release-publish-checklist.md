@@ -51,9 +51,10 @@ published first but Python is not reachable, the no-git-clone path will fail.
 
 The release workflow in `.github/workflows/release.yml` enforces this order:
 
-1. Run release-targeted tests and package smoke.
-2. Publish the Python package to PyPI.
-3. Publish the npm bootstrapper package.
+1. Validate that the release is a stable `vX.Y.Z` tag and package versions match.
+2. Run release-targeted tests and package smoke.
+3. Publish the Python package to PyPI.
+4. Publish or promote the npm bootstrapper package.
 
 Before using it, configure trusted publishers on both registries.
 
@@ -79,12 +80,25 @@ git tag v0.2.3
 git push origin v0.2.3
 ```
 
+Only stable `vX.Y.Z` tags are production release tags. Do not use `v*` as the
+release trigger pattern, because it can also match release-candidate tags such
+as `v0.2.4-rc.1`.
+
 If the Python package published successfully but the npm job failed, fix the
 workflow and rerun only the npm target instead of republishing the same Python
 version:
 
 ```powershell
 gh workflow run release.yml -f target=npm
+```
+
+The npm job checks the registry before publishing. If
+`deal-intel-mcp@0.2.3` already exists, do not run `npm publish` again; promote
+the existing package with the `latest` dist-tag instead:
+
+```powershell
+npm view deal-intel-mcp@0.2.3 version
+npm dist-tag add deal-intel-mcp@0.2.3 latest
 ```
 
 The npm trusted publishing job must use Node 22.14+ and npm 11.5.1+.
@@ -114,8 +128,26 @@ dependencies, so include PyPI as an extra index:
 python -m venv .tmp\testpypi-install
 .\.tmp\testpypi-install\Scripts\python.exe -m pip install --upgrade pip
 .\.tmp\testpypi-install\Scripts\python.exe -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ "deal-intel-mcp[embedding]==0.2.3"
-.\.tmp\testpypi-install\Scripts\python.exe -m deal_intel.cli smoke-profile --profile sample
+.\.tmp\testpypi-install\Scripts\python.exe -m deal_intel.cli smoke-profile --profile sample --json
 ```
+
+The repeatable installed-package smoke is also available as a manual GitHub
+Actions workflow:
+
+```powershell
+gh workflow run staging-smoke.yml -f version=0.2.3 -f source=testpypi
+gh workflow run staging-smoke.yml -f version=0.2.3 -f source=pypi
+```
+
+Installed-package smoke passes when:
+
+- the requested package version installs in a fresh virtual environment;
+- `smoke-profile --profile sample --json` exits successfully;
+- `deal_intel.mcp_server.app.list_tools()` returns the sample MCP surface;
+- the core tools `config_doctor`, `get_tool_catalog`, `create_deal`,
+  `add_interaction`, and `get_deal_review` are present;
+- the workflow uploads a `smoke-evidence` artifact with the package,
+  profile-smoke, and MCP tool-list JSON.
 
 ## PyPI Publish
 
@@ -131,7 +163,7 @@ After publishing, verify:
 python -m venv .tmp\pypi-install
 .\.tmp\pypi-install\Scripts\python.exe -m pip install --upgrade pip
 .\.tmp\pypi-install\Scripts\python.exe -m pip install "deal-intel-mcp[embedding]==0.2.3"
-.\.tmp\pypi-install\Scripts\python.exe -m deal_intel.cli smoke-profile --profile sample
+.\.tmp\pypi-install\Scripts\python.exe -m deal_intel.cli smoke-profile --profile sample --json
 ```
 
 ## npm Publish
@@ -210,3 +242,9 @@ publication. If a bad artifact is published, prefer:
 1. document the issue;
 2. publish a patch version;
 3. mark the broken version as not recommended where the registry supports it.
+
+## CD Automation MVP Exclusions
+
+The current automation intentionally does not include live MongoDB/LLM smoke,
+release-candidate staging publication, or automated rollback. Add those only
+after they become repeated work worth automating.
