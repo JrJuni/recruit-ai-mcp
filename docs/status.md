@@ -12,6 +12,59 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-19
 
+### CI workflow baseline
+
+Completed:
+
+- Added `.github/workflows/ci.yml` for PRs, `main` pushes, `codex/**` branch
+  pushes, and manual runs.
+- CI now installs the package on Python 3.11 and 3.12, runs `ruff check src
+  tests`, full pytest with `-p no:cacheprovider`, sample profile smoke, and
+  explicit Node 24 setup for bootstrapper tests.
+- CI also runs npm bootstrapper checks: `node --check`, `npm pack --dry-run`,
+  and `npm run smoke`.
+- Updated stale developer tool-count assertions/docs from 41 to 42 after the
+  `get_deal_raw` addition.
+
+Validation:
+
+- `pytest -q -p no:cacheprovider --basetemp .tmp\pytest-ci-local` -> 775
+  passed, 1 third-party deprecation warning.
+- `ruff check src tests` -> passed.
+- `node --check npm\bin\deal-intel-mcp.js` -> passed.
+- `npm.cmd pack --dry-run` -> passed.
+- `npm.cmd run smoke` -> passed.
+
+## Previous Update - 2026-06-19
+
+### Post-v2 MCP safety and cost guardrails
+
+Completed:
+
+- Made `get_deal` a safe read path that excludes raw notes, raw interaction
+  content, contacts, and embeddings.
+- Added developer-only `get_deal_raw` with explicit confirmation, reason, and
+  raw include flag; embeddings remain excluded.
+- Added `add_interaction` guardrails: 20,000-character content cap, exact
+  duplicate skip before LLM calls, untrusted-source prompt boundaries, and
+  non-retryable LLM failures.
+- Changed `analyze_deal` to preview by default, require explicit confirmation
+  for `bd_strategy` persistence, use a 10-minute process cache for repeated
+  same deal/prompt/product-context calls, and mark LLM failures non-retryable.
+- Updated MCP tool contracts, MCPB manifest metadata, architecture/tool-surface
+  docs, and onboarding guidance.
+
+Validation:
+
+- `pytest tests\test_add_interaction.py tests\test_analyze_deal.py
+  tests\test_deal_lifecycle.py tests\test_tool_surfaces.py tests\test_usage.py
+  tests\test_mcpb_manifest.py -q -p no:cacheprovider --basetemp
+  .tmp\pytest-p0-guardrails` -> 91 passed, 1 third-party deprecation warning.
+- `ruff check src tests` -> passed.
+- `mcpb validate mcpb\manifest.json` -> passed.
+
+## Previous Update - 2026-06-19
+
 ### First evidence onboarding after config doctor
 
 Completed:

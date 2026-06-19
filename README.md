@@ -609,6 +609,15 @@ end of June.
 | `participants` | optional | Names/emails/roles if known |
 | `subject` | optional | Email/call/meeting subject |
 | `source_confidence` | optional | Override source confidence when needed |
+| `allow_duplicate` | optional | Defaults to `false`; set to `true` only when repeating identical content is intentional |
+
+Safety and cost guardrails:
+
+- `content` is capped at 20,000 characters before any LLM call.
+- Identical same-day, same-type, same-direction content is skipped before any
+  LLM call unless `allow_duplicate=true`.
+- Interaction content and seller-side product context are treated as untrusted
+  source text; embedded instructions inside those sources are ignored.
 
 **What the result includes**:
 - `qualification` - active-framework scores + evidence extracted from this interaction
@@ -634,7 +643,7 @@ Source-aware scoring is deliberately conservative:
 
 ### 3. `get_deal` - view deal details
 
-**When to use**: To check a specific deal's full history, qualification scores, and interaction records.
+**When to use**: To check a specific deal's safe history, qualification scores, and interaction records.
 
 **Example**:
 ```
@@ -644,6 +653,13 @@ Show me the full Hyundai Precision deal. deal_id is a3f9...
 You get stored interactions, any legacy meeting records, per-interaction
 qualification extraction, and the cumulative health_pct. Legacy
 `meddpicc_latest` fields are still returned for compatibility when present.
+Raw meeting notes, raw interaction content, contacts, and embeddings are
+excluded from this normal read path.
+
+Developer surface only: `get_deal_raw` can intentionally return raw notes,
+raw interaction content, and contacts for admin/debug inspection, but it
+requires `confirmed_by_user=true`, a non-empty `reason`, and
+`include_raw_content=true`. Embeddings are still excluded.
 
 ---
 
@@ -729,7 +745,7 @@ Specify `as_of="YYYY-MM-DD"` to re-run date-based calculations against the same 
 
 ### 7. `analyze_deal` - optional generated BD strategy
 
-**When to use**: Only when you explicitly want the server-side LLM to write a BD strategy memo or persist `bd_strategy` back onto the deal.
+**When to use**: Only when you explicitly want the server-side LLM to draft a BD strategy memo. By default, this is preview-only and does not persist `bd_strategy` back onto the deal.
 
 For routine deal status, risk, uncertainty, and next-question review, prefer
 `get_deal_review`. For "what information are we missing?" use
@@ -746,10 +762,13 @@ The result includes:
 - a recommended agenda for the next meeting
 
 When product context has been indexed, `analyze_deal` may use bounded
-seller-side snippets to improve product-fit and positioning advice. It stores
-only product-context reference metadata with the generated strategy, not raw
-product documents.
-- persisted `bd_strategy` when the tool succeeds
+seller-side snippets to improve product-fit and positioning advice. Same
+deal/prompt/product-context calls are cached for 10 minutes to avoid repeated
+LLM spend; `force=true` bypasses the cache. To persist the generated strategy,
+call with `persist_strategy=true` and `confirmed_by_user=true`. Confirmed
+persistence stores product-context reference metadata with the generated
+strategy, not raw product documents. Preview usage is returned in the response
+only and is not counted by persisted usage reports.
 
 ---
 

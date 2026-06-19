@@ -101,6 +101,7 @@ def test_save_report_csv_uses_utc_timestamp_for_filename(tmp_path) -> None:
 
 
 def test_save_report_csv_expands_user_home(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("USERPROFILE", str(tmp_path))
 
     result = save_report_csv(

@@ -29,5 +29,6 @@ def handle(
         source_confidence="customer_stated",
         source_tool="add_meeting",
     )
-    result["meeting_id"] = result["interaction_id"]
+    if "interaction_id" in result:
+        result["meeting_id"] = result["interaction_id"]
     return result

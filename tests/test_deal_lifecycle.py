@@ -8,7 +8,7 @@ import pytest
 
 from deal_intel import _context, mcp_server
 from deal_intel.errors import ErrorCode, MCPError
-from deal_intel.tools import archive_deal, delete_deal, restore_deal
+from deal_intel.tools import archive_deal, delete_deal, get_deal_raw, restore_deal
 
 
 class FakeMongo:
@@ -252,10 +252,66 @@ def test_get_deal_warns_when_archived(monkeypatch) -> None:
     monkeypatch.setattr(_context, "mongo", lambda: mongo)
 
     result = mcp_server.get_deal("deal-1")
+    serialized = json.dumps(result, ensure_ascii=False)
 
     assert result["ok"] is True
     assert result["warnings"] == ["deal_archived"]
     assert result["archive"]["archived_reason"] == "duplicate"
+    assert "secret raw notes" not in serialized
+    assert "secret raw interaction" not in serialized
+    assert "private contact" not in serialized
+    assert "summary_embedding" not in serialized
+
+
+def test_get_deal_raw_requires_explicit_confirmation() -> None:
+    mongo = FakeMongo(_deal())
+
+    with pytest.raises(MCPError) as missing_confirmation:
+        get_deal_raw.handle(
+            mongo=mongo,
+            deal_id="deal-1",
+            reason="debug user-approved issue",
+            include_raw_content=True,
+        )
+    with pytest.raises(MCPError) as missing_reason:
+        get_deal_raw.handle(
+            mongo=mongo,
+            deal_id="deal-1",
+            confirmed_by_user=True,
+            include_raw_content=True,
+        )
+    with pytest.raises(MCPError) as missing_raw_flag:
+        get_deal_raw.handle(
+            mongo=mongo,
+            deal_id="deal-1",
+            confirmed_by_user=True,
+            reason="debug user-approved issue",
+        )
+
+    assert missing_confirmation.value.error_code == ErrorCode.INVALID_INPUT
+    assert missing_reason.value.error_code == ErrorCode.INVALID_INPUT
+    assert missing_raw_flag.value.error_code == ErrorCode.INVALID_INPUT
+
+
+def test_get_deal_raw_returns_raw_content_but_excludes_embeddings() -> None:
+    mongo = FakeMongo(_deal())
+
+    result = get_deal_raw.handle(
+        mongo=mongo,
+        deal_id="deal-1",
+        confirmed_by_user=True,
+        reason="debug user-approved issue",
+        include_raw_content=True,
+    )
+
+    assert result["ok"] is True
+    assert result["raw_access"]["embeddings_excluded"] is True
+    assert result["deal"]["contacts"] == [{"name": "private contact"}]
+    assert result["deal"]["meetings"][0]["raw_notes"] == "secret raw notes"
+    assert result["deal"]["interactions"][0]["raw_content"] == (
+        "secret raw interaction"
+    )
+    assert "summary_embedding" not in result["deal"]
 
 
 def test_mcp_lifecycle_wrappers_and_registration(monkeypatch) -> None:

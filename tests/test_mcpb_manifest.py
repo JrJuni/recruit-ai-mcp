@@ -38,7 +38,7 @@ def test_mcpb_manifest_tools_match_registered_surface_contracts() -> None:
     contract_tool_names = [contract.name for contract in list_tool_surface_contracts()]
 
     assert manifest_tool_names == contract_tool_names
-    assert len(manifest_tool_names) == 41
+    assert len(manifest_tool_names) == 42
 
 
 def test_mcpb_manifest_describes_meddpicc_as_default_framework() -> None:

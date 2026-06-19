@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import json
 from copy import deepcopy
 from types import SimpleNamespace
+
+import pytest
 
 from deal_intel.product_context import index_product_context
 from deal_intel.tools import analyze_deal
@@ -63,6 +64,10 @@ class LoadingEmbedding:
 
     def embed(self, text: str) -> list[float]:
         raise AssertionError("loading embedding must not be used")
+
+
+def setup_function() -> None:
+    analyze_deal.clear_analysis_cache()
 
 
 def _cfg(tmp_path) -> dict:
@@ -142,10 +147,10 @@ def test_analyze_deal_uses_product_context_without_storing_raw_context(
     assert "Seller/product context:" in prompt
     assert "Do not treat it as customer-stated evidence." in prompt
     assert "HIPAA security evidence exports" in prompt
-    assert mongo.saved is not None
-    assert mongo.saved["bd_strategy_product_context_refs"] == result["product_context_refs"]
-    saved_text = json.dumps(mongo.saved, ensure_ascii=False)
-    assert "HIPAA security evidence exports" not in saved_text
+    assert result["persist_strategy"] is False
+    assert result["storage_written"] is False
+    assert result["cache_hit"] is False
+    assert mongo.saved is None
 
 
 def test_analyze_deal_without_product_context_keeps_existing_prompt(tmp_path) -> None:
@@ -165,6 +170,7 @@ def test_analyze_deal_without_product_context_keeps_existing_prompt(tmp_path) ->
     assert result["product_context_used"] is False
     assert result["product_context_ref_count"] == 0
     assert "Seller/product context:" not in llm.calls[0]["user"]
+    assert mongo.saved is None
 
 
 def test_analyze_deal_skips_product_context_when_embedding_is_loading(
@@ -189,3 +195,149 @@ def test_analyze_deal_skips_product_context_when_embedding_is_loading(
     assert result["product_context_status"]["state"] == "embedding_loading"
     assert result["warnings"][0]["code"] == "product_context_embedding_not_ready"
     assert "Seller/product context:" not in llm.calls[0]["user"]
+    assert mongo.saved is None
+
+
+def test_analyze_deal_confirmed_persist_writes_strategy(tmp_path) -> None:
+    cfg = _cfg(tmp_path)
+    mongo = FakeMongo(_deal())
+    llm = FakeLLM()
+
+    result = analyze_deal.handle(
+        mongo=mongo,
+        llm=llm,
+        cfg=cfg,
+        embedding_provider=None,
+        deal_id="deal-1",
+        persist_strategy=True,
+        confirmed_by_user=True,
+    )
+
+    assert result["ok"] is True
+    assert result["persist_strategy"] is True
+    assert result["storage_written"] is True
+    assert result["cache_hit"] is False
+    assert mongo.saved is not None
+    assert mongo.saved["bd_strategy"] == "Generated BD strategy."
+    assert mongo.saved["bd_strategy_usage"]["source_tool"] == "analyze_deal"
+
+
+def test_analyze_deal_requires_confirmation_before_persist(tmp_path) -> None:
+    cfg = _cfg(tmp_path)
+    mongo = FakeMongo(_deal())
+    llm = FakeLLM()
+
+    with pytest.raises(Exception) as exc_info:
+        analyze_deal.handle(
+            mongo=mongo,
+            llm=llm,
+            cfg=cfg,
+            embedding_provider=None,
+            deal_id="deal-1",
+            persist_strategy=True,
+        )
+
+    assert getattr(exc_info.value, "error_code") == "INVALID_INPUT"
+    assert llm.calls == []
+    assert mongo.saved is None
+
+
+def test_analyze_deal_cache_avoids_repeated_llm_calls(tmp_path) -> None:
+    cfg = _cfg(tmp_path)
+    mongo = FakeMongo(_deal())
+    llm = FakeLLM()
+
+    first = analyze_deal.handle(
+        mongo=mongo,
+        llm=llm,
+        cfg=cfg,
+        embedding_provider=None,
+        deal_id="deal-1",
+    )
+    second = analyze_deal.handle(
+        mongo=mongo,
+        llm=llm,
+        cfg=cfg,
+        embedding_provider=None,
+        deal_id="deal-1",
+    )
+
+    assert first["cache_hit"] is False
+    assert second["cache_hit"] is True
+    assert second["usage_summary"]["totals"]["total_tokens"] == 0
+    assert len(llm.calls) == 1
+    assert mongo.saved is None
+
+
+def test_analyze_deal_force_bypasses_cache(tmp_path) -> None:
+    cfg = _cfg(tmp_path)
+    mongo = FakeMongo(_deal())
+    llm = FakeLLM()
+
+    analyze_deal.handle(
+        mongo=mongo,
+        llm=llm,
+        cfg=cfg,
+        embedding_provider=None,
+        deal_id="deal-1",
+    )
+    result = analyze_deal.handle(
+        mongo=mongo,
+        llm=llm,
+        cfg=cfg,
+        embedding_provider=None,
+        deal_id="deal-1",
+        force=True,
+    )
+
+    assert result["cache_hit"] is False
+    assert result["force"] is True
+    assert len(llm.calls) == 2
+
+
+def test_analyze_deal_can_persist_from_cache_without_second_llm_call(tmp_path) -> None:
+    cfg = _cfg(tmp_path)
+    mongo = FakeMongo(_deal())
+    llm = FakeLLM()
+
+    analyze_deal.handle(
+        mongo=mongo,
+        llm=llm,
+        cfg=cfg,
+        embedding_provider=None,
+        deal_id="deal-1",
+    )
+    result = analyze_deal.handle(
+        mongo=mongo,
+        llm=llm,
+        cfg=cfg,
+        embedding_provider=None,
+        deal_id="deal-1",
+        persist_strategy=True,
+        confirmed_by_user=True,
+    )
+
+    assert result["cache_hit"] is True
+    assert result["storage_written"] is True
+    assert len(llm.calls) == 1
+    assert mongo.saved is not None
+    assert mongo.saved["bd_strategy"] == "Generated BD strategy."
+    assert mongo.saved["bd_strategy_usage"]["source_tool"] == "analyze_deal"
+
+
+def test_analyze_deal_llm_errors_are_not_retryable(tmp_path) -> None:
+    class FailingLLM:
+        def chat_once(self, **_kwargs):
+            raise RuntimeError("provider unavailable")
+
+    with pytest.raises(Exception) as exc_info:
+        analyze_deal.handle(
+            mongo=FakeMongo(_deal()),
+            llm=FailingLLM(),
+            cfg=_cfg(tmp_path),
+            embedding_provider=None,
+            deal_id="deal-1",
+        )
+
+    assert getattr(exc_info.value, "error_code") == "LLM_ERROR"
+    assert getattr(exc_info.value, "retryable") is False

@@ -31,7 +31,7 @@ def test_tool_surface_contract_covers_registered_mcp_tools(monkeypatch) -> None:
     contracted = {contract.name for contract in list_tool_surface_contracts()}
 
     assert registered == contracted
-    assert len(contracted) == 41
+    assert len(contracted) == 42
 
 
 def test_tool_intent_aliases_cover_every_registered_tool() -> None:
@@ -136,6 +136,7 @@ def test_sample_surface_is_zero_config_safe_local_personal() -> None:
         "delete_qualification_framework",
         "backfill_qualification",
         "backfill_qualification_reextract",
+        "get_deal_raw",
     ],
 )
 def test_sample_surface_hides_tools_that_break_first_run_expectations(
@@ -175,6 +176,7 @@ def test_sample_local_personal_target_promotes_safe_non_llm_writes() -> None:
         "delete_qualification_framework",
         "backfill_qualification",
         "backfill_qualification_reextract",
+        "get_deal_raw",
     }.isdisjoint(target_tools)
 
 
@@ -208,6 +210,7 @@ def test_standard_surface_keeps_real_operator_admin_tools() -> None:
         "get_product_context",
     }.issubset(standard_tools)
     assert "add_meeting" not in standard_tools
+    assert "get_deal_raw" not in standard_tools
     assert "create_sample_data" not in standard_tools
     assert "delete_sample_data" not in standard_tools
 
@@ -220,10 +223,14 @@ def test_developer_surface_contains_everything() -> None:
     contracted = {contract.name for contract in list_tool_surface_contracts()}
 
     assert developer_tools == contracted
-    assert {"add_meeting", "create_sample_data", "delete_sample_data"}.issubset(
-        developer_tools
-    )
+    assert {
+        "add_meeting",
+        "create_sample_data",
+        "delete_sample_data",
+        "get_deal_raw",
+    }.issubset(developer_tools)
     assert get_tool_surface_contract("add_meeting").user_facing is False
+    assert get_tool_surface_contract("get_deal_raw").user_facing is False
 
 
 @pytest.mark.parametrize(
@@ -341,7 +348,8 @@ def test_high_traffic_tool_descriptions_guide_tool_selection(monkeypatch) -> Non
             "meddpicc is the default",
             "get_deal_review",
         ],
-        "get_deal": ["qualification scores", "get_deal_review"],
+        "get_deal": ["safe read", "qualification scores", "get_deal_review"],
+        "get_deal_raw": ["developer-only", "confirmed_by_user", "embeddings"],
         "update_stage": ["user confirms", "add_interaction"],
         "update_deal": ["confirmed corrections", "update_stage"],
         "get_qualification_templates": [

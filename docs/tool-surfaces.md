@@ -72,10 +72,11 @@ Why this matters:
   interviews, call summaries, internal notes, meeting notes
   (`interaction_type: meeting`), and config-registered custom types. It writes
   canonical `deal.interactions` records and keeps outbound/internal-only
-  content out of MEDDPICC scoring by default. Local sample mode skips
-  embedding storage, stores canonical interaction content for user-created
-  local personal deals, and keeps list/BI/report paths free of raw content,
-  contacts, and vectors.
+  content out of MEDDPICC scoring by default. It caps content and skips exact
+  duplicate content before LLM calls unless explicitly overridden. Local sample
+  mode skips embedding storage, stores canonical interaction content for
+  user-created local personal deals, and keeps list/BI/report paths free of raw
+  content, contacts, and vectors.
 - `migrate_local_data` is visible in `sample` so a user can graduate local
   personal deals to MongoDB after connecting a URI. It is dry-run-first and
   never migrates bundled fixture records.
@@ -83,7 +84,11 @@ Why this matters:
   notes under `user_docs/` or configured `user_memory.dir`; writes are
   constrained to safe Markdown slugs and reject secret-shaped content.
 - `search_deals` currently needs Mongo-backed embeddings or Atlas Vector Search.
-- `analyze_deal` calls an LLM and may persist strategy output.
+- `get_deal` is a safe detail read; raw notes, raw interaction content,
+  contacts, and vectors are excluded from normal surfaces.
+- `analyze_deal` calls an LLM for optional strategy preview by default, caches
+  repeated calls briefly, and persists strategy output only after explicit
+  confirmation.
 - `create_sample_data` and `delete_sample_data` manage an Atlas demo database,
   not the bundled zero-config local sample dataset. The current demo dataset
   contains 22 fictional generated deals and is never auto-seeded into the
@@ -129,6 +134,8 @@ explicit config such as `tools.surface: developer`.
 
 `add_meeting` remains registered only on this surface as a deprecated
 compatibility alias for `add_interaction` with `interaction_type: meeting`.
+`get_deal_raw` is also developer-only and requires explicit raw-access
+confirmation, a reason, and the raw include flag; embeddings remain excluded.
 New documentation, examples, and integrations should not depend on it.
 
 ## Runtime Filtering
@@ -154,7 +161,7 @@ Current exposed counts:
 
 - `sample`: 24 tools
 - `standard`: 38 tools
-- `developer`: 41 tools
+- `developer`: 42 tools
 
 Implementation notes:
 
