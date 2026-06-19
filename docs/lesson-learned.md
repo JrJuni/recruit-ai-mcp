@@ -20,6 +20,33 @@ Related: files or docs
 
 ---
 
+## [2026-06-19] Avoid full CI log ingestion during PR merge loops
+
+Tried: During a `commit -> push -> PR -> merge` loop, inspect failing GitHub
+Actions jobs with full `gh run view --job ... --log` output and long
+`gh pr checks --watch` waits.
+
+Result: The PR was merged successfully, but the loop took about 65 minutes and
+used about 155k tokens. Most token usage came from unfiltered CI logs, not from
+implementation reasoning. Long watch calls also waited on stale or slow check
+state after the underlying run had already reported enough structured status.
+
+Lesson:
+
+- Do not start CI failure triage by ingesting full job logs.
+- First inspect structured status with `gh pr checks <pr>` and
+  `gh run view <run-id> --json status,conclusion,jobs`.
+- Fetch only failed-step snippets with a narrow filter such as
+  `Select-String -Pattern "ERROR|FAILED|FileNotFoundError|Process completed"`.
+- Avoid long `--watch` calls as the primary wait strategy; poll shorter windows
+  and verify run status directly when checks appear stale.
+- Expected improvement for similar loops: roughly 60-80% lower token use and
+  40-65% less elapsed time when CI failures require diagnosis.
+
+Related: `.github/workflows/ci.yml`, GitHub Actions PR merge workflow.
+
+---
+
 ## [2026-06-18] npm publish may require browser/device-key authentication
 
 Tried: Publish `deal-intel-mcp@0.2.1` with `npm publish --access public`.

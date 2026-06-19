@@ -94,6 +94,26 @@ Preferred maintainer loop:
    responsibility, output contract, side effects, and verification command.
 8. Update docs and commit only the intended scope. Push when requested.
 
+## CI Failure Triage Protocol
+
+When debugging GitHub Actions or PR checks, optimize for signal before logs:
+
+1. Start with `gh pr checks <pr>` and structured PR state such as
+   `gh pr view <pr> --json mergeStateStatus,mergeable,statusCheckRollup`.
+2. Inspect run/job state with
+   `gh run view <run-id> --json status,conclusion,jobs`.
+3. Fetch only failed-job or failed-step snippets, filtered with
+   `Select-String -Pattern "ERROR|FAILED|FileNotFoundError|Process completed"`.
+   Avoid full job-log ingestion unless filtered evidence is insufficient.
+4. Avoid long `gh pr checks --watch` waits as the primary strategy; poll in
+   short windows or inspect run status directly.
+5. Treat a pending check as stale only after structured run data shows success,
+   the PR is `MERGEABLE`/`CLEAN`, and no required check is failed or truly
+   in progress.
+
+Do not add third-party AI failure-analysis Actions or new LLM/API cost surfaces
+unless the maintainer explicitly asks for that automation.
+
 ## Current MCP Tool Surface
 
 Source of truth: `src/deal_intel/mcp_server.py`.
