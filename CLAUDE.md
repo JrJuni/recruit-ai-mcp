@@ -98,7 +98,7 @@ Preferred maintainer loop:
 
 Source of truth: `src/deal_intel/mcp_server.py`.
 
-Current tool count: 41 registered tools (test-enforced by the tool-surface
+Current tool count: 42 registered tools (test-enforced by the tool-surface
 tests; see `src/deal_intel/mcp_server.py`). The categories below are a curated
 subset for orientation, not the full enumeration.
 

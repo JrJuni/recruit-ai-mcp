@@ -161,7 +161,7 @@ Current exposed counts:
 
 - `sample`: 24 tools
 - `standard`: 38 tools
-- `developer`: 41 tools
+- `developer`: 42 tools
 
 Implementation notes:
 

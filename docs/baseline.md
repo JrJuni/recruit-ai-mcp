@@ -57,13 +57,13 @@ available.
 
 ### MCP Tool Contracts
 
-The Python server keeps all 41 handler functions available internally, but MCP
+The Python server keeps all 42 handler functions available internally, but MCP
 clients see a config-filtered tool surface:
 
 - `tools.surface: auto` resolves from the effective profile.
 - `sample` exposes 24 tools for bundled/local personal sample mode.
 - `standard` exposes 38 tools for normal MongoDB-backed operation.
-- `developer` exposes all 41 tools, including demo database seed/cleanup.
+- `developer` exposes all 42 tools, including demo database seed/cleanup.
 - Invalid `tools.surface` config exposes only `config_doctor` and
   `update_config` so setup can be diagnosed and repaired.
 
@@ -358,7 +358,7 @@ pytest -> 128 passed
 ruff check . -> All checks passed
 wheel build -> passed
 FastMCP runtime surface exposure -> sample 24 tools, standard 38 tools,
-developer 41 tools
+developer 42 tools
 MongoDB Atlas read smoke -> passed
 ```
 

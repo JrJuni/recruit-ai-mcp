@@ -12,6 +12,31 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-19
 
+### CI workflow baseline
+
+Completed:
+
+- Added `.github/workflows/ci.yml` for PRs, `main` pushes, `codex/**` branch
+  pushes, and manual runs.
+- CI now installs the package on Python 3.11 and 3.12, runs `ruff check src
+  tests`, full pytest with `-p no:cacheprovider`, sample profile smoke, and
+  explicit Node 24 setup for bootstrapper tests.
+- CI also runs npm bootstrapper checks: `node --check`, `npm pack --dry-run`,
+  and `npm run smoke`.
+- Updated stale developer tool-count assertions/docs from 41 to 42 after the
+  `get_deal_raw` addition.
+
+Validation:
+
+- `pytest -q -p no:cacheprovider --basetemp .tmp\pytest-ci-local` -> 775
+  passed, 1 third-party deprecation warning.
+- `ruff check src tests` -> passed.
+- `node --check npm\bin\deal-intel-mcp.js` -> passed.
+- `npm.cmd pack --dry-run` -> passed.
+- `npm.cmd run smoke` -> passed.
+
+## Previous Update - 2026-06-19
+
 ### Post-v2 MCP safety and cost guardrails
 
 Completed:
