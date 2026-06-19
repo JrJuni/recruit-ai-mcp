@@ -35,6 +35,8 @@ Supported datasets:
 - `all_deals`: full safe deal ledger for recordkeeping and spreadsheet
   filtering.
 - `closed_deals`: won/lost postmortem ledger with close metadata.
+- `hubspot_deals`: manual HubSpot Deal create/import CSV from current
+  deal-level state.
 
 `export_data` reads through the restricted metrics projection
 (`list_deals_for_metrics()`), writes UTF-8 BOM CSV with formula-injection
@@ -47,6 +49,19 @@ protection, and excludes:
 
 The MCP response includes absolute CSV path, row count, column list, warnings,
 and a small safe preview. It does not write to MongoDB and does not call an LLM.
+
+`hubspot_deals` is a CSV template, not live CRM integration. It writes one
+HubSpot Deal row per current non-archived deal, using the existing deal state
+for fields such as company, stage, amount, close date, health, pain, decision
+criteria, and qualification gaps. It does not call HubSpot APIs, update
+existing HubSpot records, export contacts, create company/contact association
+rows, or add an account/person storage layer. Multiple deals for the same
+company are allowed and reported with a review warning.
+
+Customer-side people such as champions, economic buyers, decision makers,
+blockers, procurement, security, and legal remain a later Account People Graph
+design. That future layer should be keyed by normalized account/company
+identity and link back to deal ids with source/confidence metadata.
 
 ## Milestone 2.1 - Weekly Pipeline Rows
 

@@ -52,7 +52,7 @@
     {"name": "get_deal_review", "description": "Return evidence-aware deal review output for one deal without raw notes, contacts, or embeddings."},
     {"name": "get_usage", "description": "Summarize persisted server-side LLM token usage and safe cost estimates without exposing prompts or secrets."},
     {"name": "export_report", "description": "Export human-facing weekly_pipeline or pipeline_trend report artifacts."},
-    {"name": "export_data", "description": "Export spreadsheet-ready CSV datasets such as open_deals, all_deals, or closed_deals without raw notes or LLM calls."},
+    {"name": "export_data", "description": "Export spreadsheet-ready CSV datasets such as open_deals, all_deals, closed_deals, or hubspot_deals without raw notes or LLM calls."},
     {"name": "get_user_memory", "description": "Read constrained user-memory Markdown files for assistant context loading."},
     {"name": "record_user_memory", "description": "Append durable user feedback to safe user-memory Markdown files after secret/path checks."},
     {"name": "get_customer_themes", "description": "Rank recurring customer concerns by unique deal count; the first step in the customer-theme workflow."},

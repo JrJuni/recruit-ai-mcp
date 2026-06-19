@@ -654,11 +654,14 @@ records, all-deal records, or won/lost postmortem rows.
    - writes only local CSV artifacts and returns absolute paths plus a small
      safe preview.
 2. `deal_intel.reports.data_export.build_data_export`
-   - owns CSV-oriented row shaping for `open_deals`, `all_deals`, and
-     `closed_deals`;
+   - owns CSV-oriented row shaping for `open_deals`, `all_deals`,
+     `closed_deals`, and the manual HubSpot Deal import template
+     `hubspot_deals`;
    - reuses `weekly_pipeline.build_weekly_pipeline_rows` for open-deal timing,
      health, and attention fields;
-   - excludes raw notes, raw interaction content, contacts, and embeddings.
+   - excludes raw notes, raw interaction content, contacts, and embeddings;
+   - keeps HubSpot export as local CSV artifact generation, not API sync,
+     account/company storage, or customer-side people graph management.
 3. `deal_intel.reports.csv_export.save_report_csv`
    - writes UTF-8 BOM CSV with spreadsheet formula-injection protection.
 

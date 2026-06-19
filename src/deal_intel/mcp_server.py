@@ -1431,6 +1431,7 @@ def export_data(
     - open_deals: active/stalled pipeline ledger with health, timing, gaps
     - all_deals: full safe deal ledger without raw notes/emails/contacts/vectors
     - closed_deals: won/lost postmortem ledger with close metadata
+    - hubspot_deals: manual HubSpot Deal import CSV from current deal state
 
     Optional filters:
     - stage: exact pipeline stage match

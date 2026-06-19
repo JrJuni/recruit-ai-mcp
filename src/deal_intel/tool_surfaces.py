@@ -684,8 +684,9 @@ MCP_TOOL_SURFACE_CONTRACTS: tuple[MCPToolSurfaceContract, ...] = (
         llm_calls=False,
         local_file_writes=True,
         notes=(
-            "Writes spreadsheet-ready CSV datasets without raw notes, emails, "
-            "contacts, vectors, database writes, or LLM calls."
+            "Writes spreadsheet-ready CSV datasets and manual HubSpot import "
+            "templates without raw notes, emails, contacts, vectors, database "
+            "writes, or LLM calls."
         ),
     ),
     MCPToolSurfaceContract(

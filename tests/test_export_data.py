@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 from datetime import date
 from pathlib import Path
 
@@ -130,6 +131,118 @@ def test_build_data_export_open_deals_uses_safe_rows() -> None:
     assert "summary_embedding" not in serialized
 
 
+def test_build_data_export_hubspot_deals_uses_import_columns_and_stage_mapping() -> None:
+    stages = [
+        "discovery",
+        "qualification",
+        "proposal",
+        "negotiation",
+        "stalled",
+        "won",
+        "lost",
+    ]
+    deals = [
+        _deal(f"d-{stage}", f"{stage.title()}Co", stage)
+        for stage in stages
+    ]
+    archived = _deal("d-archived", "ArchivedCo", "proposal")
+    archived["archived"] = True
+
+    result = build_data_export(
+        [*deals, archived],
+        dataset="hubspot_deals",
+        as_of=date(2026, 6, 10),
+    )
+
+    assert result["columns"] == [
+        "dealname",
+        "pipeline",
+        "dealstage",
+        "amount",
+        "closedate",
+        "deal_currency_code",
+        "description",
+    ]
+    assert result["row_count"] == len(stages)
+    rows_by_name = {row["dealname"]: row for row in result["rows"]}
+    assert rows_by_name["DiscoveryCo"]["dealstage"] == "appointmentscheduled"
+    assert rows_by_name["QualificationCo"]["dealstage"] == "qualifiedtobuy"
+    assert rows_by_name["ProposalCo"]["dealstage"] == "presentationscheduled"
+    assert rows_by_name["NegotiationCo"]["dealstage"] == "contractsent"
+    assert rows_by_name["StalledCo"]["dealstage"] == "qualifiedtobuy"
+    assert rows_by_name["WonCo"]["dealstage"] == "closedwon"
+    assert rows_by_name["LostCo"]["dealstage"] == "closedlost"
+    assert rows_by_name["ProposalCo"]["pipeline"] == "default"
+    assert rows_by_name["ProposalCo"]["closedate"] == "2026-06-20"
+    assert rows_by_name["WonCo"]["closedate"] == "2026-06-21"
+    assert "ArchivedCo" not in rows_by_name
+    assert "hubspot_default_pipeline_mapping_review_required" in result["warnings"]
+    assert "hubspot_stalled_stage_mapped_to_qualifiedtobuy" in result["warnings"]
+
+
+def test_build_data_export_hubspot_deals_builds_capped_one_line_description() -> None:
+    deal = _deal("d1", "DescCo", "proposal", health_pct=65.0)
+    deal["customer_themes"][0]["evidence"] = "manual report " * 100
+
+    result = build_data_export(
+        [deal],
+        dataset="hubspot_deals",
+        as_of=date(2026, 6, 10),
+    )
+
+    description = result["rows"][0]["description"]
+    assert len(description) <= 500
+    assert "\n" not in description
+    assert "deal_id=d1" in description
+    assert "source_stage=proposal" in description
+    assert "updated=2026-06-10" in description
+    assert "health=watch (65.0%)" in description
+    assert "primary_pain=Manual reporting" in description
+    assert "primary_decision_criteria=Fast rollout" in description
+    assert "top_gaps=competition" in description
+
+
+def test_build_data_export_hubspot_deals_warns_for_duplicate_company_and_skip() -> None:
+    missing_identity = {
+        "deal_id": "",
+        "company": "",
+        "industry": "Software",
+        "deal_stage": "proposal",
+    }
+
+    result = build_data_export(
+        [
+            _deal("d1", "DupCo", "proposal"),
+            _deal("d2", "DupCo", "qualification"),
+            missing_identity,
+        ],
+        dataset="hubspot_deals",
+        as_of=date(2026, 6, 10),
+    )
+
+    assert result["row_count"] == 2
+    assert "hubspot_multiple_deals_same_company_review_required" in result["warnings"]
+    assert "hubspot_skipped_missing_dealname" in result["warnings"]
+
+
+def test_build_data_export_hubspot_deals_uses_filters() -> None:
+    result = build_data_export(
+        [
+            _deal("d1", "SoftwareCo", "proposal", industry="Software"),
+            _deal("d2", "HealthCo", "proposal", industry="Healthcare"),
+            _deal("d3", "DiscoveryCo", "discovery", industry="Software"),
+        ],
+        dataset="hubspot_deals",
+        as_of=date(2026, 6, 10),
+        stage="proposal",
+        industry="Software",
+    )
+
+    assert result["row_count"] == 1
+    assert result["rows"][0]["dealname"] == "SoftwareCo"
+    assert result["filters"] == {"stage": "proposal", "industry": "Software"}
+
+
 def test_build_data_export_uses_active_qualification_snapshot() -> None:
     deal = _deal("d1", "CustomCo", "proposal", health_pct=95.0)
     deal["qualification_latest"] = _simple_b2b_latest(score=1, stage="proposal")
@@ -187,6 +300,44 @@ def test_export_data_writes_csv_and_preview(tmp_path: Path) -> None:
     assert result["preview_rows"]
 
 
+def test_export_data_hubspot_deals_writes_safe_csv_and_preview(tmp_path: Path) -> None:
+    store = FakeMetricsStore([
+        _deal("d1", "OpenCo", "proposal"),
+        _deal("d2", "LostCo", "lost"),
+    ])
+
+    result = export_data.handle(
+        store,  # type: ignore[arg-type]
+        {},
+        dataset="hubspot_deals",
+        output_dir=str(tmp_path),
+        as_of="2026-06-10",
+    )
+
+    assert result["ok"] is True
+    assert result["dataset"] == "hubspot_deals"
+    assert result["columns"] == [
+        "dealname",
+        "pipeline",
+        "dealstage",
+        "amount",
+        "closedate",
+        "deal_currency_code",
+        "description",
+    ]
+    assert result["preview_rows"]
+    text = Path(result["csv_path"]).read_text(encoding="utf-8-sig")
+    assert "raw_notes" not in text
+    assert "raw_content" not in text
+    assert "summary_embedding" not in text
+    assert "secret contact" not in text
+
+    with Path(result["csv_path"]).open(encoding="utf-8-sig", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    assert {row["dealname"] for row in rows} == {"OpenCo", "LostCo"}
+    assert rows[0]["description"]
+
+
 def test_export_data_closed_deals_filters_terminal_rows(tmp_path: Path) -> None:
     store = FakeMetricsStore([
         _deal("d1", "OpenCo", "proposal"),
@@ -222,6 +373,18 @@ def test_export_data_rejects_invalid_inputs_before_storage(kwargs: dict) -> None
             output_dir="reports",
             **kwargs,
         )
+
+
+def test_export_data_invalid_dataset_hint_includes_hubspot_deals() -> None:
+    with pytest.raises(MCPError) as exc_info:
+        export_data.handle(
+            ExplodingStore(),  # type: ignore[arg-type]
+            {},
+            dataset="missing",
+            output_dir="reports",
+        )
+
+    assert "hubspot_deals" in exc_info.value.hint["valid_datasets"]
 
 
 def test_export_data_storage_error_includes_actionable_secret_safe_hint(

@@ -12,6 +12,30 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-19
 
+### V3 Step 1 HubSpot Deal import CSV
+
+Completed:
+
+- Added `export_data(dataset="hubspot_deals")` as a deterministic manual
+  HubSpot Deal import template.
+- The export writes HubSpot-oriented Deal columns from current deal-level state
+  and includes review warnings for default pipeline mapping, stalled-stage
+  mapping, duplicate company names, and skipped missing deal names.
+- Kept Step 1 scoped to local CSV artifact generation: no HubSpot API calls, no
+  CRM update matching, no Contact/Company export, and no account/person storage
+  layer.
+- Updated MCP/tool-surface docs, MCPB manifest text, report contracts, baseline,
+  and architecture notes to describe the HubSpot CSV template and deferred
+  Account People Graph.
+
+Validation:
+
+- `pytest tests\test_export_data.py -q -p no:cacheprovider --basetemp=.tmp\pytest-hubspot-export`
+  -> 14 passed.
+- `pytest tests\test_export_data.py tests\test_tool_surfaces.py tests\test_mcpb_manifest.py -q -p no:cacheprovider --basetemp=.tmp\pytest-hubspot-targeted`
+  -> 59 passed, 1 third-party deprecation warning.
+- `ruff check src tests` -> passed.
+
 ### CI workflow baseline
 
 Completed:

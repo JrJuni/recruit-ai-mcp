@@ -23,10 +23,12 @@ from deal_intel.schema.qualification_read import select_qualification_snapshot
 DATASET_OPEN_DEALS = "open_deals"
 DATASET_ALL_DEALS = "all_deals"
 DATASET_CLOSED_DEALS = "closed_deals"
+DATASET_HUBSPOT_DEALS = "hubspot_deals"
 VALID_DATASETS = frozenset({
     DATASET_OPEN_DEALS,
     DATASET_ALL_DEALS,
     DATASET_CLOSED_DEALS,
+    DATASET_HUBSPOT_DEALS,
 })
 
 OPEN_DEALS_COLUMNS = [
@@ -121,6 +123,28 @@ CLOSED_DEALS_COLUMNS = [
     "updated_at",
 ]
 
+HUBSPOT_DEALS_COLUMNS = [
+    "dealname",
+    "pipeline",
+    "dealstage",
+    "amount",
+    "closedate",
+    "deal_currency_code",
+    "description",
+]
+
+HUBSPOT_DEFAULT_PIPELINE = "default"
+HUBSPOT_STAGE_BY_DEAL_INTEL_STAGE = {
+    "discovery": "appointmentscheduled",
+    "qualification": "qualifiedtobuy",
+    "proposal": "presentationscheduled",
+    "negotiation": "contractsent",
+    "stalled": "qualifiedtobuy",
+    "won": "closedwon",
+    "lost": "closedlost",
+}
+HUBSPOT_DESCRIPTION_MAX_CHARS = 500
+
 
 def build_data_export(
     deals: Iterable[dict],
@@ -151,6 +175,14 @@ def build_data_export(
             as_of=as_of,
             health_thresholds=health_thresholds,
             timing_settings=timing_settings,
+            stage=clean_stage,
+            industry=clean_industry,
+        )
+
+    if dataset == DATASET_HUBSPOT_DEALS:
+        return _build_hubspot_deals_export(
+            deals,
+            health_thresholds=health_thresholds,
             stage=clean_stage,
             industry=clean_industry,
         )
@@ -220,6 +252,56 @@ def _build_open_deals_export(
     }
 
 
+def _build_hubspot_deals_export(
+    deals: Iterable[dict],
+    *,
+    health_thresholds: HealthBandThresholds,
+    stage: str | None,
+    industry: str | None,
+) -> dict:
+    skipped_missing_dealname = 0
+    source_rows = [
+        _build_ledger_row(deal, health_thresholds=health_thresholds)
+        for deal in _filter_deals(
+            deals,
+            dataset=DATASET_HUBSPOT_DEALS,
+            stage=stage,
+            industry=industry,
+        )
+    ]
+    source_rows.sort(key=_ledger_sort_key)
+
+    rows = []
+    source_company_names = []
+    has_stalled_source = False
+    for row in source_rows:
+        hubspot_row = _hubspot_deal_row(row)
+        if hubspot_row is None:
+            skipped_missing_dealname += 1
+            continue
+        rows.append(hubspot_row)
+        if row.get("deal_stage") == "stalled":
+            has_stalled_source = True
+        company = _clean_export_text(row.get("company"))
+        if company:
+            source_company_names.append(company.lower())
+
+    return {
+        "report_type": f"data_{DATASET_HUBSPOT_DEALS}",
+        "dataset": DATASET_HUBSPOT_DEALS,
+        "filters": {"stage": stage, "industry": industry},
+        "columns": HUBSPOT_DEALS_COLUMNS,
+        "rows": rows,
+        "row_count": len(rows),
+        "warnings": _hubspot_warnings(
+            rows,
+            source_company_names=source_company_names,
+            has_stalled_source=has_stalled_source,
+            skipped_missing_dealname=skipped_missing_dealname,
+        ),
+    }
+
+
 def _filter_deals(
     deals: Iterable[dict],
     *,
@@ -233,6 +315,8 @@ def _filter_deals(
         if stage is not None and deal_stage != stage:
             continue
         if industry is not None and deal.get("industry") != industry:
+            continue
+        if dataset == DATASET_HUBSPOT_DEALS and deal.get("archived"):
             continue
         if dataset == DATASET_OPEN_DEALS and deal_stage not in OPEN_STAGES:
             continue
@@ -361,6 +445,54 @@ def _closed_row(row: dict) -> dict:
     }
 
 
+def _hubspot_deal_row(row: dict) -> dict | None:
+    dealname = _clean_export_text(row.get("company")) or _clean_export_text(
+        row.get("deal_id")
+    )
+    if not dealname:
+        return None
+    deal_stage = _clean_export_text(row.get("deal_stage"))
+    hubspot_stage = HUBSPOT_STAGE_BY_DEAL_INTEL_STAGE.get(
+        deal_stage,
+        HUBSPOT_STAGE_BY_DEAL_INTEL_STAGE["discovery"],
+    )
+    close_date = (
+        row.get("actual_close_date")
+        if deal_stage in TERMINAL_STAGES
+        else row.get("expected_close_date")
+    )
+    return {
+        "dealname": dealname,
+        "pipeline": HUBSPOT_DEFAULT_PIPELINE,
+        "dealstage": hubspot_stage,
+        "amount": row.get("deal_size_amount"),
+        "closedate": _clean_export_text(close_date),
+        "deal_currency_code": _clean_export_text(row.get("deal_size_currency")),
+        "description": _hubspot_description(row),
+    }
+
+
+def _hubspot_description(row: dict) -> str:
+    parts = []
+    _append_description_part(parts, "deal_id", row.get("deal_id"))
+    _append_description_part(parts, "source_stage", row.get("deal_stage"))
+    _append_description_part(parts, "updated", _date_prefix(row.get("updated_at")))
+    health = _health_summary(row)
+    if health:
+        parts.append(health)
+    _append_description_part(parts, "primary_pain", row.get("_primary_pain"))
+    _append_description_part(
+        parts,
+        "primary_decision_criteria",
+        row.get("_primary_decision_criteria"),
+    )
+    gaps = row.get("qualification_gaps") or []
+    if isinstance(gaps, list) and gaps:
+        parts.append("top_gaps=" + ", ".join(str(gap) for gap in gaps[:3]))
+    description = " | ".join(parts)
+    return description[:HUBSPOT_DESCRIPTION_MAX_CHARS]
+
+
 def _data_quality_flags(data_quality: dict) -> list[str]:
     statuses = data_quality.get("field_statuses")
     if not isinstance(statuses, dict):
@@ -370,6 +502,70 @@ def _data_quality_flags(data_quality: dict) -> list[str]:
         if status in {"missing", "invalid"}:
             flags.append(f"{field}:{status}")
     return flags
+
+
+def _hubspot_warnings(
+    rows: list[dict],
+    *,
+    source_company_names: list[str],
+    has_stalled_source: bool,
+    skipped_missing_dealname: int,
+) -> list[str]:
+    warnings = []
+    if rows:
+        warnings.append("hubspot_default_pipeline_mapping_review_required")
+    if has_stalled_source:
+        warnings.append("hubspot_stalled_stage_mapped_to_qualifiedtobuy")
+    if _has_duplicate_company(source_company_names):
+        warnings.append("hubspot_multiple_deals_same_company_review_required")
+    if skipped_missing_dealname:
+        warnings.append("hubspot_skipped_missing_dealname")
+    if not rows:
+        warnings.append(f"no_{DATASET_HUBSPOT_DEALS}")
+    return warnings
+
+
+def _has_duplicate_company(company_names: list[str]) -> bool:
+    seen: set[str] = set()
+    for company in company_names:
+        if company in seen:
+            return True
+        seen.add(company)
+    return False
+
+
+def _append_description_part(
+    parts: list[str],
+    label: str,
+    value: Any,
+    *,
+    max_chars: int = 120,
+) -> None:
+    text = _clean_export_text(value)
+    if text:
+        text = text[:max_chars]
+        parts.append(f"{label}={text}")
+
+
+def _health_summary(row: dict) -> str:
+    health_band = _clean_export_text(row.get("health_band"))
+    health_pct = row.get("health_pct")
+    if health_band and health_pct is not None:
+        return f"health={health_band} ({health_pct}%)"
+    if health_band:
+        return f"health={health_band}"
+    return ""
+
+
+def _date_prefix(value: Any) -> str | None:
+    parsed = _parse_date(value)
+    return parsed.isoformat() if parsed else None
+
+
+def _clean_export_text(value: Any) -> str:
+    if value is None:
+        return ""
+    return " ".join(str(value).split())
 
 
 def _select_theme(deal: dict, dimension: str) -> dict | None:

@@ -102,7 +102,7 @@ clients see a config-filtered tool surface:
 | `get_deal_review` | `deal_id` | `as_of` | `ok`, `as_of`, `timezone`, `generated_at`, `review` | Read only; uses the restricted metric projection, separates health quality from evidence coverage, returns v2 `assessment`, `actionable_gaps`, and `gap_observations`, suppresses uncalibrated win probability numbers, and excludes raw notes, raw interaction content, contacts, and embeddings |
 | `get_usage` | None | `since`, `until` | `ok`, `generated_at`, `filters`, `summary`, `by_provider`, `by_tool`, `by_operation`, `entries`, `pricing_policy`, `warnings` | Read only; summarizes persisted server-side LLM usage metadata without prompts, raw notes, raw interaction content, contacts, API keys, OAuth tokens, MongoDB URIs, or embeddings. ChatGPT OAuth is reported as zero incremental API estimate; API-provider cost is estimated only when `usage.pricing` is configured |
 | `export_report` | None | `report_type`, `output_dir`, `stage`, `industry`, `as_of`, `lookback_days` | `ok`, `report_type`, `as_of`, `timezone`, `generated_at`, `language`, `filters`, `row_count`, `warnings`, `metrics`, `briefing`, `briefing_sections`, `host_report_prompt`, `output_dir`, `artifacts`, `csv_path`, `markdown_path` | Reads through the report-specific restricted projection and writes local CSV/Markdown report artifacts. Markdown language follows `reporting.language` (`en` or `ko`). Weekly reports also return a compact briefing and safe host-app polish prompt so Claude/Codex/ChatGPT can turn the deterministic pack into a more natural manager/team report without changing numbers |
-| `export_data` | None | `dataset`, `output_dir`, `stage`, `industry`, `as_of` | `ok`, `tool`, `dataset`, `as_of`, `timezone`, `generated_at`, `filters`, `row_count`, `columns`, `warnings`, `output_dir`, `artifacts`, `csv_path`, `preview_rows` | Reads through the restricted metrics projection and writes spreadsheet-ready UTF-8 BOM CSV datasets (`open_deals`, `all_deals`, `closed_deals`). It is deterministic, LLM-free, excludes raw notes, raw interaction content, contacts, and embeddings, and is the preferred CSV/Excel export layer |
+| `export_data` | None | `dataset`, `output_dir`, `stage`, `industry`, `as_of` | `ok`, `tool`, `dataset`, `as_of`, `timezone`, `generated_at`, `filters`, `row_count`, `columns`, `warnings`, `output_dir`, `artifacts`, `csv_path`, `preview_rows` | Reads through the restricted metrics projection and writes spreadsheet-ready UTF-8 BOM CSV datasets (`open_deals`, `all_deals`, `closed_deals`, `hubspot_deals`). It is deterministic, LLM-free, excludes raw notes, raw interaction content, contacts, and embeddings, and is the preferred CSV/Excel export layer. `hubspot_deals` is a manual HubSpot Deal import template only; it does not call HubSpot APIs, update existing CRM records, export contacts/companies, or create an account/person storage layer |
 | `get_user_memory` | None | `category`, `custom_doc_slug`, `limit` | `ok`, `memory_dir`, `filters`, `documents`, `summary`, `warnings` | Read only; reads safe Markdown files from `user_docs/` or configured `user_memory.dir` for assistant context loading. Excludes sample templates from broad reads |
 | `record_user_memory` | `content` | `category`, `custom_doc_slug`, `title`, `source`, `importance`, `tags` | `ok`, `entry_id`, `memory_dir`, `path`, `category`, `document`, `is_custom_document`, `bytes_written`, `secret_scan` | Appends durable user feedback to safe Markdown files under `user_docs/` or configured `user_memory.dir`; rejects unsafe paths, non-Markdown custom slugs, and secret-shaped content before writing |
 | `get_insights` | `query_type` | `as_of` | `ok`, `query_type`, `as_of`, `timezone`, `generated_at`, query-specific aggregate fields, optional `framework_scope`, `compatibility_note`, `warnings` | Read only over the current collection snapshot. `pipeline_overview` is framework-aware; legacy MEDDPICC aggregate modes self-label with `framework_scope: meddpicc_legacy` |
@@ -229,11 +229,20 @@ access. `weekly_pipeline` reads through `list_deals_for_metrics()`;
 - `open_deals`
 - `all_deals`
 - `closed_deals`
+- `hubspot_deals`
 
 `export_data` accepts exact-match `stage` and primary `industry` filters.
 Invalid datasets, invalid stages, invalid `as_of`, and invalid report/metric
-config fail before storage access. The output CSV is for spreadsheet work and
-should not be treated as the human weekly pipeline report.
+config fail before storage access. The output CSV is for spreadsheet work,
+manual HubSpot Deal import, and downstream analysis; it should not be treated
+as the human weekly pipeline report.
+
+`hubspot_deals` exports one row per current non-archived deal using HubSpot
+Deal import columns: `dealname`, `pipeline`, `dealstage`, `amount`,
+`closedate`, `deal_currency_code`, and `description`. It uses the current
+deal-level state only, warns when default HubSpot pipeline mapping needs
+review, and warns when multiple exported deals share the same company. Account
+latest-state modeling and customer-side people storage remain deferred.
 
 `get_insights.query_type` currently supports:
 
