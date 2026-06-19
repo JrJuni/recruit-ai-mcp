@@ -266,7 +266,8 @@ Use LLM/write tools only when the user intent requires them:
 - Optional generated BD strategy memo -> `analyze_deal`
 
 Do not use `analyze_deal` as the default deal-review tool. It calls the
-configured server-side LLM and may persist `bd_strategy`. For routine review,
+configured server-side LLM, previews by default, and persists `bd_strategy`
+only when called with explicit persistence confirmation. For routine review,
 use `get_deal_review` first.
 If product context has been indexed, `analyze_deal` may use bounded seller-side
 snippets for strategy/positioning context, while storing only refs metadata.

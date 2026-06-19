@@ -113,6 +113,8 @@ subset for orientation, not the full enumeration.
 - Migration: `migrate_local_data`
 - Read/review: `get_deal`, `list_deals`, `get_deal_gaps`,
   `get_deal_review`
+- Developer-only raw read: `get_deal_raw` (requires explicit confirmation,
+  reason, and raw include flag; embeddings remain excluded)
 - BI/reporting: `get_insights`, `get_metrics`, `get_usage`, `export_report`
 - User memory: `get_user_memory`, `record_user_memory`
 - Customer themes: `get_customer_themes`, `get_customer_theme_breakdown`,

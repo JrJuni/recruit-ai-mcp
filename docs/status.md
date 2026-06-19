@@ -12,6 +12,34 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-19
 
+### Post-v2 MCP safety and cost guardrails
+
+Completed:
+
+- Made `get_deal` a safe read path that excludes raw notes, raw interaction
+  content, contacts, and embeddings.
+- Added developer-only `get_deal_raw` with explicit confirmation, reason, and
+  raw include flag; embeddings remain excluded.
+- Added `add_interaction` guardrails: 20,000-character content cap, exact
+  duplicate skip before LLM calls, untrusted-source prompt boundaries, and
+  non-retryable LLM failures.
+- Changed `analyze_deal` to preview by default, require explicit confirmation
+  for `bd_strategy` persistence, use a 10-minute process cache for repeated
+  same deal/prompt/product-context calls, and mark LLM failures non-retryable.
+- Updated MCP tool contracts, MCPB manifest metadata, architecture/tool-surface
+  docs, and onboarding guidance.
+
+Validation:
+
+- `pytest tests\test_add_interaction.py tests\test_analyze_deal.py
+  tests\test_deal_lifecycle.py tests\test_tool_surfaces.py tests\test_usage.py
+  tests\test_mcpb_manifest.py -q -p no:cacheprovider --basetemp
+  .tmp\pytest-p0-guardrails` -> 91 passed, 1 third-party deprecation warning.
+- `ruff check src tests` -> passed.
+- `mcpb validate mcpb\manifest.json` -> passed.
+
+## Previous Update - 2026-06-19
+
 ### First evidence onboarding after config doctor
 
 Completed:

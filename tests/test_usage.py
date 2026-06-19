@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from deal_intel.tools import add_interaction, get_usage
+from deal_intel.tools import add_interaction, analyze_deal, get_usage
 from deal_intel.usage import (
     build_llm_usage_metadata,
     build_usage_report,
@@ -212,3 +212,34 @@ def test_add_interaction_persists_llm_usage_metadata() -> None:
         "extract_signals",
         "summarize_interaction",
     ]
+
+
+def test_analyze_deal_preview_usage_is_not_persisted() -> None:
+    analyze_deal.clear_analysis_cache()
+    mongo = FakeMongo([
+        {
+            "deal_id": "deal-1",
+            "company": "Acme",
+            "deal_stage": "discovery",
+            "industry": "Software",
+            "customer_segment": "mid_market",
+            "interactions": [],
+            "meetings": [],
+            "customer_themes": [],
+        }
+    ])
+
+    result = analyze_deal.handle(
+        mongo=mongo,
+        llm=FakeLLM(),
+        cfg={"llm": {"provider": "chatgpt_oauth"}},
+        embedding_provider=None,
+        deal_id="deal-1",
+    )
+    usage = get_usage.handle(mongo=mongo, cfg={})
+
+    assert result["ok"] is True
+    assert result["storage_written"] is False
+    assert mongo.saved is None
+    assert usage["summary"]["usage_entries"] == 0
+    assert "no_persisted_usage_metadata_found" in usage["warnings"]

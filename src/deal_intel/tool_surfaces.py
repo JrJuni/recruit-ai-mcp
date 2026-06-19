@@ -148,9 +148,9 @@ TOOL_INTENT_GROUPS: dict[str, dict] = {
         "label": "Developer compatibility",
         "purpose": (
             "Temporary compatibility aliases kept for old integrations and "
-            "regression tests."
+            "developer-only raw inspection paths."
         ),
-        "tools": ("add_meeting",),
+        "tools": ("add_meeting", "get_deal_raw"),
     },
 }
 
@@ -166,7 +166,7 @@ TOOL_SELECTION_GUIDE: tuple[dict, ...] = (
         "when_user_asks": "What is happening with this deal? What is risky or uncertain?",
         "primary_tool": "get_deal_review",
         "then": [
-            "get_deal for raw structured fields",
+            "get_deal for safe structured fields",
             "analyze_deal only for optional LLM strategy",
         ],
     },
@@ -258,6 +258,7 @@ TOOL_INTENT_ALIASES: dict[str, tuple[str, str]] = {
     "create_sample_data": ("sample", "sample.create"),
     "delete_sample_data": ("sample", "sample.delete"),
     "get_deal": ("deal", "deal.get"),
+    "get_deal_raw": ("deal", "deal.raw.get"),
     "list_deals": ("deal", "deal.list"),
     "get_insights": ("pipeline", "pipeline.insights"),
     "get_metrics": ("pipeline", "pipeline.metrics"),
@@ -591,7 +592,22 @@ MCP_TOOL_SURFACE_CONTRACTS: tuple[MCPToolSurfaceContract, ...] = (
         user_facing=True,
         db_writes=False,
         llm_calls=False,
-        notes="Sample mode reads bundled fictional data.",
+        notes=(
+            "Safe single-deal read; excludes raw notes, raw interaction content, "
+            "contacts, and embeddings."
+        ),
+    ),
+    MCPToolSurfaceContract(
+        name="get_deal_raw",
+        category="core_read",
+        surfaces=_DEVELOPER,
+        user_facing=False,
+        db_writes=False,
+        llm_calls=False,
+        notes=(
+            "Developer-only raw single-deal read. Requires explicit user "
+            "confirmation, reason, and raw include flag; embeddings remain excluded."
+        ),
     ),
     MCPToolSurfaceContract(
         name="list_deals",
@@ -738,7 +754,10 @@ MCP_TOOL_SURFACE_CONTRACTS: tuple[MCPToolSurfaceContract, ...] = (
         user_facing=True,
         db_writes=True,
         llm_calls=True,
-        notes="LLM analysis may persist bd_strategy.",
+        notes=(
+            "LLM strategy preview by default; bd_strategy persistence requires "
+            "explicit confirmation."
+        ),
     ),
 )
 

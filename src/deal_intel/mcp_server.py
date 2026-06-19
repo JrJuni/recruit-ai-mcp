@@ -761,6 +761,7 @@ def add_interaction(
     subject: str = "",
     source_confidence: str = "",
     custom_fields_json: str = "",
+    allow_duplicate: bool = False,
 ) -> dict:
     """Add a customer interaction and extract qualification signals.
 
@@ -768,8 +769,8 @@ def add_interaction(
     customer email reply, user interview, call summary, or internal note. This
     is the interaction.add intent and one of the few write tools that calls the
     configured server-side LLM because active-framework qualification scoring
-    and customer themes are
-    persisted as deal data. MEDDPICC is the default built-in framework.
+    and customer themes are persisted as deal data. MEDDPICC is the default
+    built-in framework.
 
     interaction_type: meeting, email_thread, user_interview, call_summary,
     internal_note, or a configured custom interaction type. direction:
@@ -780,6 +781,10 @@ def add_interaction(
     only and still require update_stage after user confirmation. For chat-only
     review or advice based on existing data, use get_deal_review or
     get_deal_gaps instead.
+
+    Content is capped at 20,000 characters before LLM calls. Duplicate
+    same-day, same-type, same-direction content is skipped before LLM calls
+    unless allow_duplicate=true.
     """
     try:
         from deal_intel import _context
@@ -804,6 +809,7 @@ def add_interaction(
             subject=subject or None,
             source_confidence=source_confidence or None,
             custom_fields_json=custom_fields_json or None,
+            allow_duplicate=allow_duplicate,
         )
     except Exception as exc:
         return envelope_from_exception(exc, stage=Stage.LLM)
@@ -1102,18 +1108,49 @@ def migrate_local_data(
 
 @app.tool()
 def get_deal(deal_id: str) -> dict:
-    """Retrieve one deal's stored details, interactions, and qualification scores.
+    """Retrieve one deal's safe stored details and qualification scores.
 
-    Use this when the user asks to inspect the raw stored deal record or history.
-    For synthesized risk/action review, prefer get_deal_review. For missing
-    information across one or many deals, use get_deal_gaps. Intent alias:
-    deal.get.
+    Use this when the user asks to inspect one stored deal record or history.
+    This safe read excludes raw notes, raw interaction content, contacts, and
+    embeddings. For synthesized risk/action review, prefer get_deal_review. For
+    missing information across one or many deals, use get_deal_gaps. Intent
+    alias: deal.get.
     """
     try:
         from deal_intel import _context
         from deal_intel.tools import get_deal as _t
 
         return _t.handle(mongo=_context.mongo(), deal_id=deal_id)
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.STORAGE)
+
+
+@app.tool()
+def get_deal_raw(
+    deal_id: str,
+    confirmed_by_user: bool = False,
+    reason: str = "",
+    include_raw_content: bool = False,
+) -> dict:
+    """Developer-only raw deal read with explicit confirmation.
+
+    Use only for debugging, migration, or admin inspection when the user has
+    explicitly approved raw access. Requires confirmed_by_user=true, a non-empty
+    reason, and include_raw_content=true. Returns raw notes, raw interaction
+    content, and contacts, but still excludes embeddings. For normal one-deal
+    reads, use get_deal or get_deal_review. Intent alias: deal.raw.get.
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.tools import get_deal_raw as _t
+
+        return _t.handle(
+            mongo=_context.mongo(),
+            deal_id=deal_id,
+            confirmed_by_user=confirmed_by_user,
+            reason=reason,
+            include_raw_content=include_raw_content,
+        )
     except Exception as exc:
         return envelope_from_exception(exc, stage=Stage.STORAGE)
 
@@ -1704,17 +1741,26 @@ def search_deals(query: str, limit: int = 5) -> dict:
 
 
 @app.tool()
-def analyze_deal(deal_id: str) -> dict:
+def analyze_deal(
+    deal_id: str,
+    persist_strategy: bool = False,
+    confirmed_by_user: bool = False,
+    force: bool = False,
+) -> dict:
     """Generate optional LLM-written BD strategy for one deal.
 
     Use this only when the user explicitly asks for generated strategy prose,
-    next-meeting strategy, or wants bd_strategy persisted. It calls the
-    configured server-side LLM and may write the generated strategy back to the
-    deal. If product context is indexed, it may use bounded seller-side snippets
-    for positioning context and stores only refs metadata. For routine
-    status/risk/uncertainty review, use get_deal_review. For missing-info
-    prioritization, use get_deal_gaps. Do not call this just because the user
-    asks "how is this deal going?"; start with get_deal_review.
+    next-meeting strategy, or wants bd_strategy persisted. By default this is a
+    preview-only server-side LLM call and does not write to the deal. Persisting
+    bd_strategy requires persist_strategy=true and confirmed_by_user=true. Same
+    deal/prompt/product-context calls are cached briefly to avoid repeated LLM
+    spend; force=true bypasses that cache.
+
+    If product context is indexed, it may use bounded seller-side snippets for
+    positioning context and stores only refs metadata when persistence is
+    confirmed. For routine status/risk/uncertainty review, use get_deal_review.
+    For missing-info prioritization, use get_deal_gaps. Do not call this just
+    because the user asks "how is this deal going?"; start with get_deal_review.
     Intent alias: strategy.analyze.
     """
     try:
@@ -1727,6 +1773,9 @@ def analyze_deal(deal_id: str) -> dict:
             cfg=_context.config(),
             embedding_provider=_context.embedding_provider(),
             deal_id=deal_id,
+            persist_strategy=persist_strategy,
+            confirmed_by_user=confirmed_by_user,
+            force=force,
         )
     except Exception as exc:
         return envelope_from_exception(exc, stage=Stage.ANALYSIS)

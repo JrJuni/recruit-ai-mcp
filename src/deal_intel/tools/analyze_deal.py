@@ -1,7 +1,12 @@
 ﻿from __future__ import annotations
 
+import hashlib
+import json
+import time
 from collections import defaultdict
+from copy import deepcopy
 from datetime import UTC, datetime
+from threading import RLock
 
 from deal_intel.errors import ErrorCode, MCPError, Stage
 from deal_intel.product_context import (
@@ -13,9 +18,17 @@ from deal_intel.product_context import (
 from deal_intel.providers.llm import LLMProvider
 from deal_intel.schema.interactions import scoring_interactions
 from deal_intel.storage.mongodb import MongoDBClient
-from deal_intel.usage import build_llm_usage_metadata
+from deal_intel.usage import (
+    build_llm_usage_metadata,
+    normalize_usage,
+    provider_model_from_config,
+)
 
 _SYSTEM = "You are a senior B2B sales strategist. Be direct, specific, and actionable."
+_CACHE_TTL_SECONDS = 600
+_CACHE_MAX_ENTRIES = 128
+_ANALYZE_CACHE: dict[str, dict] = {}
+_ANALYZE_CACHE_LOCK = RLock()
 
 _PROMPT = """\
 Analyze this deal's MEDDPICC qualification status and provide a concrete BD strategy.
@@ -194,6 +207,138 @@ def _retrieve_product_context_for_strategy(
     return payload
 
 
+def clear_analysis_cache() -> None:
+    with _ANALYZE_CACHE_LOCK:
+        _ANALYZE_CACHE.clear()
+
+
+def _analysis_cache_key(
+    *,
+    deal_id: str,
+    prompt: str,
+    product_context_references: list[dict],
+    llm_provider: str,
+    llm_model: str,
+) -> str:
+    payload = {
+        "version": 1,
+        "deal_id": deal_id,
+        "llm_provider": llm_provider,
+        "llm_model": llm_model,
+        "prompt": prompt,
+        "product_context_refs": product_context_references,
+    }
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def _cache_get(cache_key: str) -> tuple[dict | None, float]:
+    now = time.monotonic()
+    with _ANALYZE_CACHE_LOCK:
+        entry = _ANALYZE_CACHE.get(cache_key)
+        if not entry:
+            return None, 0.0
+        age = now - float(entry.get("created_monotonic") or 0.0)
+        if age > _CACHE_TTL_SECONDS:
+            _ANALYZE_CACHE.pop(cache_key, None)
+            return None, 0.0
+        return deepcopy(entry), age
+
+
+def _cache_set(cache_key: str, entry: dict) -> None:
+    with _ANALYZE_CACHE_LOCK:
+        _ANALYZE_CACHE[cache_key] = deepcopy(entry)
+        if len(_ANALYZE_CACHE) <= _CACHE_MAX_ENTRIES:
+            return
+        oldest_key = min(
+            _ANALYZE_CACHE,
+            key=lambda key: float(
+                _ANALYZE_CACHE[key].get("created_monotonic") or 0.0
+            ),
+        )
+        _ANALYZE_CACHE.pop(oldest_key, None)
+
+
+def _usage_summary(llm_usage: dict) -> dict:
+    return {
+        "calls": llm_usage["calls"],
+        "totals": llm_usage["totals"],
+        "estimated_cost_usd": llm_usage["estimated_cost_usd"],
+        "cost_basis": llm_usage["cost_basis"],
+    }
+
+
+def _zero_usage_summary(cfg: dict) -> dict:
+    llm_usage = build_llm_usage_metadata(
+        cfg,
+        source_tool="analyze_deal",
+        calls=[],
+    )
+    return _usage_summary(llm_usage)
+
+
+def _persist_strategy(
+    *,
+    mongo: MongoDBClient,
+    deal: dict,
+    analysis: str,
+    llm_usage: dict,
+    product_context_references: list[dict],
+) -> tuple[bool, dict | None]:
+    deal["bd_strategy"] = analysis
+    deal["bd_strategy_usage"] = llm_usage
+    deal["bd_strategy_product_context_refs"] = product_context_references
+    deal["updated_at"] = datetime.now(UTC).isoformat()
+    try:
+        mongo.upsert_deal(deal)
+    except Exception as exc:
+        return False, {
+            "code": "bd_strategy_persist_failed",
+            "message": str(exc),
+        }
+    return True, None
+
+
+def _base_result(
+    *,
+    deal_id: str,
+    analysis: str,
+    product_context_references: list[dict],
+    product_context_payload: dict,
+    warnings: list[dict],
+    persist_strategy: bool,
+    storage_written: bool,
+    cache_hit: bool,
+    force: bool,
+    usage: dict,
+    usage_summary: dict,
+) -> dict:
+    return {
+        "ok": True,
+        "deal_id": deal_id,
+        "analysis": analysis,
+        "persist_strategy": persist_strategy,
+        "storage_written": storage_written,
+        "cache_hit": cache_hit,
+        "force": force,
+        "product_context_used": bool(product_context_references),
+        "product_context_ref_count": len(product_context_references),
+        "product_context_refs": product_context_references,
+        "product_context_status": product_context_payload.get(
+            "product_context_status"
+        ),
+        "embedding_status": product_context_payload.get("embedding_status"),
+        "warnings": warnings,
+        "usage": usage,
+        "usage_summary": usage_summary,
+    }
+
+
 def handle(
     mongo: MongoDBClient,
     llm: LLMProvider,
@@ -201,7 +346,21 @@ def handle(
     embedding_provider=None,
     *,
     deal_id: str,
+    persist_strategy: bool = False,
+    confirmed_by_user: bool = False,
+    force: bool = False,
 ) -> dict:
+    if persist_strategy and not confirmed_by_user:
+        raise MCPError(
+            error_code=ErrorCode.INVALID_INPUT,
+            stage=Stage.PREFLIGHT,
+            message=(
+                "persist_strategy=true requires confirmed_by_user=true so "
+                "analyze_deal does not write bd_strategy accidentally"
+            ),
+            retryable=False,
+        )
+
     deal = mongo.get_deal(deal_id)
     if deal is None:
         raise MCPError(
@@ -241,6 +400,50 @@ def handle(
         ),
         meddpicc_summary=_meddpicc_summary(interactions),
     )
+    llm_provider_name, llm_model_name = provider_model_from_config(cfg)
+    cache_key = _analysis_cache_key(
+        deal_id=deal_id,
+        prompt=prompt,
+        product_context_references=product_context_references,
+        llm_provider=llm_provider_name,
+        llm_model=llm_model_name,
+    )
+
+    if not force:
+        cached, cache_age_seconds = _cache_get(cache_key)
+        if cached is not None:
+            warnings = deepcopy(cached.get("warnings") or [])
+            storage_written = False
+            if persist_strategy:
+                storage_written, persist_warning = _persist_strategy(
+                    mongo=mongo,
+                    deal=deal,
+                    analysis=str(cached["analysis"]),
+                    llm_usage=deepcopy(cached["llm_usage"]),
+                    product_context_references=deepcopy(
+                        cached["product_context_refs"]
+                    ),
+                )
+                if persist_warning is not None:
+                    warnings.append(persist_warning)
+            result = _base_result(
+                deal_id=deal_id,
+                analysis=str(cached["analysis"]),
+                product_context_references=deepcopy(
+                    cached["product_context_refs"]
+                ),
+                product_context_payload=product_context_payload,
+                warnings=warnings,
+                persist_strategy=persist_strategy,
+                storage_written=storage_written,
+                cache_hit=True,
+                force=force,
+                usage=normalize_usage({}),
+                usage_summary=_zero_usage_summary(cfg),
+            )
+            result["cache_age_seconds"] = round(cache_age_seconds, 3)
+            result["cooldown_seconds"] = _CACHE_TTL_SECONDS
+            return result
 
     try:
         resp = llm.chat_once(system=_SYSTEM, user=prompt, max_tokens=2048)
@@ -249,7 +452,7 @@ def handle(
             error_code=ErrorCode.LLM_ERROR,
             stage=Stage.ANALYSIS,
             message=str(exc),
-            retryable=True,
+            retryable=False,
         ) from exc
 
     llm_usage = build_llm_usage_metadata(
@@ -257,32 +460,41 @@ def handle(
         source_tool="analyze_deal",
         calls=[{"operation": "generate_bd_strategy", "usage": resp.usage}],
     )
-    deal["bd_strategy"] = resp.text
-    deal["bd_strategy_usage"] = llm_usage
-    deal["bd_strategy_product_context_refs"] = product_context_references
-    deal["updated_at"] = datetime.now(UTC).isoformat()
-    try:
-        mongo.upsert_deal(deal)
-    except Exception:
-        pass  # analysis still returned even if save fails
+    storage_written = False
+    warnings = deepcopy(product_context_warnings)
+    if persist_strategy:
+        storage_written, persist_warning = _persist_strategy(
+            mongo=mongo,
+            deal=deal,
+            analysis=resp.text,
+            llm_usage=llm_usage,
+            product_context_references=product_context_references,
+        )
+        if persist_warning is not None:
+            warnings.append(persist_warning)
 
-    return {
-        "ok": True,
-        "deal_id": deal_id,
-        "analysis": resp.text,
-        "product_context_used": bool(product_context_references),
-        "product_context_ref_count": len(product_context_references),
-        "product_context_refs": product_context_references,
-        "product_context_status": product_context_payload.get(
-            "product_context_status"
-        ),
-        "embedding_status": product_context_payload.get("embedding_status"),
-        "warnings": product_context_warnings,
-        "usage": resp.usage,
-        "usage_summary": {
-            "calls": llm_usage["calls"],
-            "totals": llm_usage["totals"],
-            "estimated_cost_usd": llm_usage["estimated_cost_usd"],
-            "cost_basis": llm_usage["cost_basis"],
+    _cache_set(
+        cache_key,
+        {
+            "created_monotonic": time.monotonic(),
+            "analysis": resp.text,
+            "product_context_refs": product_context_references,
+            "warnings": product_context_warnings,
+            "usage": resp.usage,
+            "llm_usage": llm_usage,
         },
-    }
+    )
+
+    return _base_result(
+        deal_id=deal_id,
+        analysis=resp.text,
+        product_context_references=product_context_references,
+        product_context_payload=product_context_payload,
+        warnings=warnings,
+        persist_strategy=persist_strategy,
+        storage_written=storage_written,
+        cache_hit=False,
+        force=force,
+        usage=resp.usage,
+        usage_summary=_usage_summary(llm_usage),
+    )
