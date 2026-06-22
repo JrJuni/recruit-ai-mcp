@@ -3884,7 +3884,9 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
                     "rank": result.rank,
                     "overall_score": result.fit_snapshot.overall_score,
                     "risk_flag_count": len(result.risk_flags),
+                    "risk_flags": result.risk_flags[:10],
                     "next_question_count": len(result.next_questions),
+                    "next_questions": result.next_questions[:10],
                     "rejected": bool(result.rejected_reason),
                 }
                 for result in run.results

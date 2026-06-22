@@ -17,6 +17,10 @@ EXPECTED_CONTRACT = {
     "candidate_position_excluded_count": 1,
     "open_position_count": 2,
     "positions_with_shortlist": 2,
+    "positions_with_review_risks": 2,
+    "positions_with_next_questions": 2,
+    "shortlist_risk_row_count": 4,
+    "shortlist_next_question_row_count": 5,
 }
 _REQUIRED_QUESTIONS = (
     "rq01_recruiting_pipeline_metrics",
@@ -33,7 +37,11 @@ def validate_payload(payload: dict[str, Any]) -> dict[str, Any]:
     candidate_positions = _summary(questions, "rq03_positions_for_avery")
     persistence = _summary(questions, "rq11_local_recruiting_persistence")
     guardrails = _summary(questions, "rq12_recommendation_guardrails")
-    shortlist = _summary(questions, "rq13_client_shortlist_readiness")
+    shortlist_payload = _question_payload(questions, "rq13_client_shortlist_readiness")
+    shortlist = _summary_from_payload(
+        shortlist_payload,
+        question_id="rq13_client_shortlist_readiness",
+    )
     actual = {
         "ok": _required_key(payload, "ok", scope="top-level payload"),
         "question_count": _required_key(
@@ -81,6 +89,24 @@ def validate_payload(payload: dict[str, Any]) -> dict[str, Any]:
             "positions_with_shortlist",
             scope="rq13_client_shortlist_readiness summary",
         ),
+        "positions_with_review_risks": _required_key(
+            shortlist,
+            "positions_with_review_risks",
+            scope="rq13_client_shortlist_readiness summary",
+        ),
+        "positions_with_next_questions": _required_key(
+            shortlist,
+            "positions_with_next_questions",
+            scope="rq13_client_shortlist_readiness summary",
+        ),
+        "shortlist_risk_row_count": _shortlist_row_count(
+            shortlist_payload,
+            field="risk_flags",
+        ),
+        "shortlist_next_question_row_count": _shortlist_row_count(
+            shortlist_payload,
+            field="next_questions",
+        ),
     }
     if actual != EXPECTED_CONTRACT:
         raise ValueError(
@@ -109,13 +135,71 @@ def _questions_by_id(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
 
 
 def _summary(questions: dict[str, dict[str, Any]], question_id: str) -> dict[str, Any]:
+    payload = _question_payload(questions, question_id)
+    return _summary_from_payload(payload, question_id=question_id)
+
+
+def _question_payload(
+    questions: dict[str, dict[str, Any]],
+    question_id: str,
+) -> dict[str, Any]:
     payload = _required_key(questions[question_id], "payload", scope=question_id)
     if not isinstance(payload, dict):
         raise ValueError(f"Recruiting smoke question {question_id} payload must be a mapping.")
+    return payload
+
+
+def _summary_from_payload(payload: dict[str, Any], *, question_id: str) -> dict[str, Any]:
     summary = _required_key(payload, "summary", scope=f"{question_id} payload")
     if not isinstance(summary, dict):
         raise ValueError(f"Recruiting smoke question {question_id} summary must be a mapping.")
     return summary
+
+
+def _shortlist_row_count(payload: dict[str, Any], *, field: str) -> int:
+    shortlists = _required_key(
+        payload,
+        "shortlists",
+        scope="rq13_client_shortlist_readiness payload",
+    )
+    if not isinstance(shortlists, list):
+        raise ValueError("Recruiting smoke rq13 shortlists must be a list.")
+    count = 0
+    for shortlist_index, shortlist in enumerate(shortlists):
+        if not isinstance(shortlist, dict):
+            raise ValueError(
+                "Recruiting smoke rq13 shortlist rows must be mappings."
+            )
+        candidates = _required_key(
+            shortlist,
+            "candidates",
+            scope=f"rq13_client_shortlist_readiness shortlist {shortlist_index}",
+        )
+        if not isinstance(candidates, list):
+            raise ValueError(
+                "Recruiting smoke rq13 shortlist candidates must be a list."
+            )
+        for candidate_index, candidate in enumerate(candidates):
+            if not isinstance(candidate, dict):
+                raise ValueError(
+                    "Recruiting smoke rq13 candidate rows must be mappings."
+                )
+            values = _required_key(
+                candidate,
+                field,
+                scope=(
+                    "rq13_client_shortlist_readiness "
+                    f"candidate {candidate_index}"
+                ),
+            )
+            if not isinstance(values, list):
+                raise ValueError(
+                    "Recruiting smoke rq13 candidate "
+                    f"field {field!r} must be a list."
+                )
+            if values:
+                count += 1
+    return count
 
 
 def _required_key(mapping: dict[str, Any], key: str, *, scope: str) -> Any:

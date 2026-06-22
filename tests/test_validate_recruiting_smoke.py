@@ -69,7 +69,69 @@ def _payload(
                         "positions_with_shortlist": EXPECTED_CONTRACT[
                             "positions_with_shortlist"
                         ],
-                    }
+                        "positions_with_review_risks": EXPECTED_CONTRACT[
+                            "positions_with_review_risks"
+                        ],
+                        "positions_with_next_questions": EXPECTED_CONTRACT[
+                            "positions_with_next_questions"
+                        ],
+                    },
+                    "shortlists": [
+                        {
+                            "position_id": "pos_northstar_backend_lead",
+                            "candidates": [
+                                {
+                                    "candidate_id": "cand_avery_chen",
+                                    "risk_flags": [],
+                                    "next_questions": [],
+                                },
+                                {
+                                    "candidate_id": "cand_jordan_lee",
+                                    "risk_flags": [
+                                        "missing production Python evidence"
+                                    ],
+                                    "next_questions": [
+                                        "Confirm required skill: Python"
+                                    ],
+                                },
+                                {
+                                    "candidate_id": "cand_eli_brooks",
+                                    "risk_flags": ["requires manager scope"],
+                                    "next_questions": [
+                                        "Confirm compensation flexibility."
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            "position_id": "pos_orbitpay_payments_lead",
+                            "candidates": [
+                                {
+                                    "candidate_id": "cand_mateo_rivera",
+                                    "risk_flags": [],
+                                    "next_questions": [
+                                        "Confirm whether timing fits the search plan."
+                                    ],
+                                },
+                                {
+                                    "candidate_id": "cand_iris_kim",
+                                    "risk_flags": [
+                                        "needs senior mentorship for platform lead scope"
+                                    ],
+                                    "next_questions": [
+                                        "Improve evidence for seniority_fit."
+                                    ],
+                                },
+                                {
+                                    "candidate_id": "cand_sam_taylor",
+                                    "risk_flags": ["needs heavy role shaping"],
+                                    "next_questions": [
+                                        "Review client preference conflict before shortlisting."
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
                 },
             },
         ],
@@ -144,3 +206,29 @@ def test_validate_recruiting_smoke_cli_names_missing_summary_field(tmp_path) -> 
     assert result.returncode == 1
     assert "rq11_local_recruiting_persistence summary" in result.stderr
     assert "reloaded_record_count" in result.stderr
+
+
+def test_validate_recruiting_smoke_cli_fails_without_shortlist_evidence(tmp_path) -> None:
+    payload = _payload()
+    shortlist = next(
+        question
+        for question in payload["questions"]
+        if question["id"] == "rq13_client_shortlist_readiness"
+    )
+    for row in shortlist["payload"]["shortlists"][0]["candidates"]:
+        row["risk_flags"] = []
+        row["next_questions"] = []
+    payload_path = tmp_path / "recruiting-natural-questions.json"
+    payload_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = subprocess.run(
+        [sys.executable, str(VALIDATOR), str(payload_path)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    assert "Recruiting natural-question smoke contract mismatch" in result.stderr
+    assert "'shortlist_risk_row_count': 4" in result.stderr
+    assert "'shortlist_next_question_row_count': 5" in result.stderr

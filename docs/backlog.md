@@ -84,7 +84,8 @@ Immediate quality order:
      sample role excluded from first-pass recommendations, including a compact
      quick-read summary in CLI smoke output.
    - Client shortlist readiness now checks that each open sample position has
-     a ranked candidate shortlist with visible review risks and next questions.
+     a ranked candidate shortlist with visible review risk flags and next
+     questions.
    - Keep the inherited deal-intelligence natural-question pack as a
      compatibility smoke, not the primary Recruit AI user journey.
 3. Tighten release/package verification.

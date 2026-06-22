@@ -647,6 +647,26 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
         "cand_avery_chen",
         "cand_mateo_rivera",
     ]
+    northstar_candidates = shortlist["shortlists"][0]["candidates"]
+    jordan_shortlist = next(
+        row for row in northstar_candidates if row["candidate_id"] == "cand_jordan_lee"
+    )
+    assert jordan_shortlist["risk_flags"] == [
+        "missing production Python evidence",
+        "review_match_risk",
+    ]
+    assert "Confirm required skill: Python" in jordan_shortlist["next_questions"]
+    orbitpay_candidates = shortlist["shortlists"][1]["candidates"]
+    sam_shortlist = next(
+        row for row in orbitpay_candidates if row["candidate_id"] == "cand_sam_taylor"
+    )
+    assert sam_shortlist["risk_flags"] == [
+        "needs heavy role shaping",
+        "review_match_risk",
+    ]
+    assert "Review client preference conflict before shortlisting." in (
+        sam_shortlist["next_questions"]
+    )
     encoded = json.dumps(summary, ensure_ascii=False)
     assert "raw_content" not in encoded
     assert "contacts" not in encoded
