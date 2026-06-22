@@ -136,6 +136,13 @@ with reasons, low-fit rejection notes, risk flags, and next questions. Search,
 RAG retrieval, persistence, and MCP exposure remain deferred to Work 4 and Work
 5.
 
+Work 4A adds internal recommendation services in
+`src/deal_intel/tools/recruiting_recommendations.py`. These services bridge
+storage read wrappers to the deterministic recommendation builders for both
+`position_to_candidates` and `candidate_to_positions`. Run persistence is
+explicit through `save_run`; preview mode is default. Public MCP registration,
+semantic retrieval, and Atlas Vector Search remain deferred.
+
 ## Product Profiles
 
 The project uses one repository and one package with three profiles:

@@ -341,6 +341,30 @@ Builder policy:
   warnings.
 - Candidate risk flags and high raw risk scores are surfaced on the result.
 
+## Work 4A Internal Recommendation Services
+
+Work 4A connects the deterministic recommendation builders to recruiting
+storage read wrappers. It still does not register public MCP tools and does not
+use embeddings, LLMs, or Atlas Vector Search.
+
+Service entry points:
+
+- `recommend_candidates_for_position`
+- `recommend_positions_for_candidate`
+
+Service policy:
+
+- Position-to-candidates reads one position, candidate rows, and position
+  feedback, then returns a ranked `RecommendationRun`.
+- Candidate-to-positions reads one candidate, position rows, and candidate
+  feedback, then returns a ranked `RecommendationRun`.
+- Recommendation run persistence is opt-in through `save_run`; preview mode is
+  the default.
+- Missing anchors raise non-retryable `NOT_FOUND` errors.
+- Storage failures are wrapped as retryable `STORAGE_ERROR` errors.
+- Responses include `storage_written`, result count, the full safe run record,
+  and warnings for empty candidate or position pools.
+
 ## Collections For Work 2
 
 Recommended Mongo collections:

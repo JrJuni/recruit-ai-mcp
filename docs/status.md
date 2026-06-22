@@ -68,6 +68,12 @@ Completed:
   validated `RecommendationRun` / `RecommendationResult` models with reasons,
   low-fit rejection notes, risk flags, and next questions. Search/RAG, storage,
   and MCP registration remain deferred.
+- Added Work 4A internal recommendation services. Position-to-candidates and
+  candidate-to-positions service functions now read anchors, candidate/position
+  pools, and feedback through storage wrappers, build deterministic
+  `RecommendationRun` records, and optionally persist runs when `save_run=True`.
+  Public MCP registration, embeddings, LLMs, and Atlas Vector Search remain
+  deferred.
 
 Validation:
 
@@ -94,6 +100,8 @@ Validation:
   -> 88 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-3d-final tests\test_recruiting_recommendation.py tests\test_recruiting_match.py tests\test_recruiting_fit.py tests\test_recruiting_schema.py tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_mongo_contracts.py tests\test_mcpb_manifest.py tests\test_storage_backend_selection.py`
   -> 93 passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-4a-final tests\test_recruiting_recommendations_service.py tests\test_recruiting_recommendation.py tests\test_recruiting_match.py tests\test_recruiting_fit.py tests\test_recruiting_schema.py tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_mongo_contracts.py tests\test_mcpb_manifest.py tests\test_storage_backend_selection.py`
+  -> 98 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2c tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py`

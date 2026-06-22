@@ -1,0 +1,242 @@
+from __future__ import annotations
+
+from copy import deepcopy
+
+import pytest
+
+from deal_intel.errors import ErrorCode, MCPError, Stage
+from deal_intel.schema.recruiting import (
+    CandidateProfile,
+    CompensationExpectation,
+    Position,
+)
+from deal_intel.tools import recruiting_recommendations
+
+
+class FakeRecommendationStorage:
+    def __init__(self, *, fail: bool = False) -> None:
+        self.fail = fail
+        self.candidates: dict[str, dict] = {}
+        self.positions: dict[str, dict] = {}
+        self.feedback: list[dict] = []
+        self.recommendation_runs: dict[str, dict] = {}
+
+    def get_candidate(self, candidate_id: str) -> dict | None:
+        if self.fail:
+            raise RuntimeError("database unavailable")
+        return deepcopy(self.candidates.get(candidate_id))
+
+    def list_candidates(self, *, query: dict | None = None, limit: int = 50) -> list[dict]:
+        if self.fail:
+            raise RuntimeError("database unavailable")
+        rows = [
+            deepcopy(row)
+            for row in self.candidates.values()
+            if all(row.get(key) == value for key, value in (query or {}).items())
+        ]
+        return rows[:limit]
+
+    def get_position(self, position_id: str) -> dict | None:
+        if self.fail:
+            raise RuntimeError("database unavailable")
+        return deepcopy(self.positions.get(position_id))
+
+    def list_positions(
+        self,
+        *,
+        client_company_id: str | None = None,
+        status: str | None = None,
+        limit: int = 50,
+    ) -> list[dict]:
+        if self.fail:
+            raise RuntimeError("database unavailable")
+        rows = []
+        for row in self.positions.values():
+            if client_company_id is not None and row.get("client_company_id") != client_company_id:
+                continue
+            if status is not None and row.get("status") != status:
+                continue
+            rows.append(deepcopy(row))
+        return rows[:limit]
+
+    def list_feedback(
+        self,
+        *,
+        position_id: str | None = None,
+        candidate_id: str | None = None,
+        limit: int = 50,
+    ) -> list[dict]:
+        if self.fail:
+            raise RuntimeError("database unavailable")
+        rows = []
+        for row in self.feedback:
+            if position_id is not None and row.get("position_id") != position_id:
+                continue
+            if candidate_id is not None and row.get("candidate_id") != candidate_id:
+                continue
+            rows.append(deepcopy(row))
+        return rows[:limit]
+
+    def save_recommendation_run(self, recommendation_run: object) -> bool:
+        if self.fail:
+            raise RuntimeError("database unavailable")
+        record = recommendation_run.model_dump(mode="json")
+        self.recommendation_runs[record["recommendation_run_id"]] = record
+        return True
+
+
+def _candidate(candidate_id: str, **updates: object) -> dict:
+    payload = {
+        "candidate_id": candidate_id,
+        "name": "Avery Chen" if candidate_id == "cand_avery" else "Blake Rivera",
+        "headline": "Backend platform lead",
+        "current_title": "Lead Backend Engineer",
+        "skills": ["Python", "MongoDB", "distributed systems"],
+        "domains": ["B2B SaaS"],
+        "seniority": "lead",
+        "compensation_expectation": CompensationExpectation(
+            currency="USD",
+            minimum=160000,
+            target=175000,
+            period="annual",
+        ).model_dump(mode="json"),
+        "locations": ["Remote"],
+        "availability": "30 days",
+        "risk_flags": [],
+    }
+    payload.update(updates)
+    return CandidateProfile.model_validate(payload).model_dump(mode="json")
+
+
+def _position(position_id: str = "pos_backend_lead", **updates: object) -> dict:
+    payload = {
+        "position_id": position_id,
+        "client_company_id": "client_acme",
+        "title": "Backend Engineering Lead",
+        "status": "open",
+        "seniority": "lead",
+        "must_have": ["Python", "MongoDB"],
+        "nice_to_have": ["distributed systems", "B2B SaaS"],
+        "target_compensation": CompensationExpectation(
+            currency="USD",
+            minimum=150000,
+            maximum=200000,
+            period="annual",
+        ).model_dump(mode="json"),
+        "locations": ["Remote"],
+        "remote_policy": "remote",
+    }
+    payload.update(updates)
+    return Position.model_validate(payload).model_dump(mode="json")
+
+
+def _storage() -> FakeRecommendationStorage:
+    storage = FakeRecommendationStorage()
+    storage.positions["pos_backend_lead"] = _position(ideal_candidate_examples=["cand_avery"])
+    storage.positions["pos_sales_manager"] = _position(
+        "pos_sales_manager",
+        title="Sales Manager",
+        seniority="manager",
+        must_have=["Salesforce"],
+        nice_to_have=[],
+        locations=["New York"],
+        remote_policy="onsite",
+    )
+    storage.candidates["cand_avery"] = _candidate("cand_avery")
+    storage.candidates["cand_blake"] = _candidate(
+        "cand_blake",
+        skills=["Excel"],
+        domains=["Retail"],
+        seniority="junior",
+    )
+    return storage
+
+
+def test_recommend_candidates_for_position_ranks_and_optionally_saves() -> None:
+    storage = _storage()
+
+    result = recruiting_recommendations.recommend_candidates_for_position(
+        storage,
+        position_id="pos_backend_lead",
+        save_run=True,
+    )
+
+    assert result["ok"] is True
+    assert result["mode"] == "position_to_candidates"
+    assert result["anchor_id"] == "pos_backend_lead"
+    assert result["storage_written"] is True
+    assert result["record"]["results"][0]["target_id"] == "cand_avery"
+    assert result["recommendation_run_id"] in storage.recommendation_runs
+
+
+def test_recommend_positions_for_candidate_filters_open_positions() -> None:
+    storage = _storage()
+    storage.positions["pos_sales_manager"]["status"] = "paused"
+
+    result = recruiting_recommendations.recommend_positions_for_candidate(
+        storage,
+        candidate_id="cand_avery",
+        position_status="open",
+    )
+
+    assert result["mode"] == "candidate_to_positions"
+    assert result["storage_written"] is False
+    assert [row["target_id"] for row in result["record"]["results"]] == [
+        "pos_backend_lead"
+    ]
+
+
+def test_recommendation_service_applies_feedback_deltas() -> None:
+    storage = _storage()
+    storage.feedback.append(
+        {
+            "feedback_id": "fb_blake_skill",
+            "subject_type": "submission",
+            "subject_id": "sub_blake_backend",
+            "candidate_id": "cand_blake",
+            "position_id": "pos_backend_lead",
+            "sentiment": "positive",
+            "decision_signal": "advance",
+            "rubric_deltas": {"skill_fit": 2},
+        }
+    )
+
+    result = recruiting_recommendations.recommend_candidates_for_position(
+        storage,
+        position_id="pos_backend_lead",
+    )
+
+    blake = next(
+        row for row in result["record"]["results"] if row["target_id"] == "cand_blake"
+    )
+    assert blake["fit_snapshot"]["dimensions"]["skill_fit"]["score"] == 3
+
+
+def test_recommendation_service_raises_not_found_for_missing_anchor() -> None:
+    storage = _storage()
+
+    with pytest.raises(MCPError) as exc_info:
+        recruiting_recommendations.recommend_candidates_for_position(
+            storage,
+            position_id="pos_missing",
+        )
+
+    exc = exc_info.value
+    assert exc.error_code == ErrorCode.NOT_FOUND
+    assert exc.stage == Stage.STORAGE
+    assert exc.retryable is False
+
+
+def test_recommendation_service_wraps_storage_failure() -> None:
+    storage = FakeRecommendationStorage(fail=True)
+
+    with pytest.raises(MCPError) as exc_info:
+        recruiting_recommendations.recommend_positions_for_candidate(
+            storage,
+            candidate_id="cand_avery",
+        )
+
+    exc = exc_info.value
+    assert exc.error_code == ErrorCode.STORAGE_ERROR
+    assert exc.stage == Stage.STORAGE
+    assert exc.retryable is True
