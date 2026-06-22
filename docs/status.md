@@ -181,6 +181,10 @@ Completed:
   chart-ready, and Atlas Vector Search resource specs now use the `recruit_ai`
   database default while retaining inherited deal/dashboard collection names
   where those compatibility surfaces still exist.
+- Added Work 7U config env diagnostics cleanup. `config show` now reports the
+  full set of `RECRUIT_AI_*` product-context limit overrides it already accepts,
+  and tests pin that primary recruit-ai env values take precedence over legacy
+  `DEAL_INTEL_*` fallbacks.
 
 Validation:
 
@@ -292,6 +296,11 @@ Validation:
   -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-resource-db tests\test_atlas_charts.py tests\test_chart_ready_contracts.py tests\test_atlas_vector_indexes.py tests\test_mongo_contracts.py`
   -> 60 passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-env-status tests\test_cli_config_profiles.py tests\test_env_config.py tests\test_storage_backend_selection.py tests\test_config_doctor.py`
+  -> 41 passed, 1 third-party warning.
+- `ruff check src\deal_intel\cli.py tests\test_cli_config_profiles.py tests\test_env_config.py`
+  -> passed.
+- `git diff --check` -> passed; Windows line-ending warnings only.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2c tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py`

@@ -27,6 +27,26 @@ def test_load_config_accepts_explicit_llm_provider_env(monkeypatch, tmp_path) ->
     assert config["llm"]["provider"] == "openai_api"
 
 
+def test_load_config_prefers_recruit_ai_env_over_legacy(monkeypatch, tmp_path) -> None:
+    root = tmp_path
+    config_dir = root / "config"
+    config_dir.mkdir()
+    (config_dir / "defaults.yaml").write_text(
+        "storage:\n"
+        "  backend: local_sample\n",
+        encoding="utf-8",
+    )
+    missing_user_config = tmp_path / "missing" / "config.yaml"
+    monkeypatch.setattr(_env, "_ROOT", root)
+    monkeypatch.setattr(_env, "_USER_CONFIG_PATH", missing_user_config)
+    monkeypatch.setenv("RECRUIT_AI_STORAGE_BACKEND", "mongo")
+    monkeypatch.setenv("DEAL_INTEL_STORAGE_BACKEND", "local_sample")
+
+    config = _env.load_config()
+
+    assert config["storage"]["backend"] == "mongo"
+
+
 def test_load_config_preserves_legacy_oauth_env_override(monkeypatch, tmp_path) -> None:
     root = tmp_path
     config_dir = root / "config"

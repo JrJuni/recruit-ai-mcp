@@ -109,6 +109,70 @@ def test_config_show_cli_uses_env_storage_override(monkeypatch, tmp_path) -> Non
     assert payload["environment"]["DEAL_INTEL_STORAGE_BACKEND"]["configured"] is True
 
 
+def test_config_show_cli_prefers_recruit_ai_env_over_legacy(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    user_config = tmp_path / "config.yaml"
+    user_config.write_text(
+        "storage:\n"
+        "  backend: local_sample\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(_env, "_USER_CONFIG_PATH", user_config)
+    monkeypatch.setenv("RECRUIT_AI_STORAGE_BACKEND", "mongo")
+    monkeypatch.setenv("DEAL_INTEL_STORAGE_BACKEND", "local_sample")
+
+    result = CliRunner().invoke(app, ["config", "show", "--json"])
+
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert payload["profile"] == "full"
+    assert payload["effective_config"]["storage"]["backend"] == "mongo"
+    assert payload["environment"]["RECRUIT_AI_STORAGE_BACKEND"]["configured"] is True
+    assert payload["environment"]["DEAL_INTEL_STORAGE_BACKEND"]["configured"] is True
+
+
+def test_config_show_cli_reports_recruit_ai_product_context_limit_env(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    monkeypatch.setattr(_env, "_USER_CONFIG_PATH", tmp_path / "missing.yaml")
+    monkeypatch.setenv("RECRUIT_AI_PRODUCT_CONTEXT_MAX_SOURCE_FILE_MB", "250")
+    monkeypatch.setenv("RECRUIT_AI_PRODUCT_CONTEXT_MAX_NOTE_MB", "10")
+    monkeypatch.setenv("RECRUIT_AI_PRODUCT_CONTEXT_MAX_CHUNKS_PER_FILE", "5000")
+    monkeypatch.setenv("RECRUIT_AI_PRODUCT_CONTEXT_MAX_CHUNKS_PER_RUN", "12000")
+
+    result = CliRunner().invoke(app, ["config", "show", "--json"])
+
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert (
+        payload["environment"]["RECRUIT_AI_PRODUCT_CONTEXT_MAX_SOURCE_FILE_MB"][
+            "configured"
+        ]
+        is True
+    )
+    assert (
+        payload["environment"]["RECRUIT_AI_PRODUCT_CONTEXT_MAX_NOTE_MB"][
+            "configured"
+        ]
+        is True
+    )
+    assert (
+        payload["environment"]["RECRUIT_AI_PRODUCT_CONTEXT_MAX_CHUNKS_PER_FILE"][
+            "configured"
+        ]
+        is True
+    )
+    assert (
+        payload["environment"]["RECRUIT_AI_PRODUCT_CONTEXT_MAX_CHUNKS_PER_RUN"][
+            "configured"
+        ]
+        is True
+    )
+
+
 def test_config_show_cli_text_does_not_print_secret_values(monkeypatch, tmp_path) -> None:
     monkeypatch.setattr(_env, "_USER_CONFIG_PATH", tmp_path / "missing.yaml")
     monkeypatch.setenv("MONGODB_URI", "configured-mongodb-uri-sentinel")
