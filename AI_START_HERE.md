@@ -288,12 +288,17 @@ database.
 
 ## First Useful Questions
 
-After at least one recruiting or deal evidence item exists, ask:
+After at least one recruiting evidence item exists, ask:
 
 ```text
 Who are the strongest candidates for this position?
 Which open positions fit this candidate?
 Show recruiting pipeline metrics.
+```
+
+If the user intentionally uses the inherited deal workflow, ask:
+
+```text
 How healthy is the current pipeline?
 Show me the current deal list.
 Which deal needs attention first?
@@ -308,6 +313,14 @@ Prefer deterministic read tools for normal questions:
 - Open-position recommendations for a candidate -> `recommend_positions_for_candidate`
 - Recruiting KPI / funnel / feedback metrics -> `get_recruiting_metrics`
 - Recruiting Markdown/CSV pipeline report -> `export_recruiting_report`
+- Server-side LLM usage / rough cost check -> `get_usage`
+- Product/solution docs folder setup -> `update_config(product_context_source_dirs=...)`
+- Pasted product/solution note -> `add_product_context_note`
+- Product context indexing -> `index_product_context`
+- Product context lookup/verification -> `get_product_context`
+
+Inherited deal-intelligence compatibility read tools:
+
 - Pipeline health / KPI / trend -> `get_metrics`
 - Pipeline table / stuck deals at a glance -> `list_deals`
 - One deal's stored history -> `get_deal`
@@ -315,18 +328,17 @@ Prefer deterministic read tools for normal questions:
 - Missing customer or forecast information -> `get_deal_gaps`
 - Manager/team meeting report -> `export_report`
 - Excel/CSV-ready deal ledger -> `export_data`
-- Server-side LLM usage / rough cost check -> `get_usage`
-- Product/solution docs folder setup -> `update_config(product_context_source_dirs=...)`
-- Pasted product/solution note -> `add_product_context_note`
-- Product context indexing -> `index_product_context`
-- Product context lookup/verification -> `get_product_context`
 - Customer concern or decision-criteria ranking -> start with `get_customer_themes`
 - Stage/industry/tag theme comparison -> then use `get_customer_theme_breakdown`
 - Evidence snippets for one known theme -> then use `get_customer_theme_evidence`
 
 Use LLM/write tools only when the user intent requires them:
 
-- New evidence to store and score -> `add_interaction`
+- New recruiting interaction evidence -> `add_recruiting_interaction`
+- New client feedback or preference signal -> `add_client_feedback`
+- New recruiting records -> `create_client_company`, `create_position`,
+  `create_candidate`
+- New inherited deal evidence to store and score -> `add_interaction`
 - Confirmed stage transition -> `update_stage`
 - Confirmed metadata/value correction -> `update_deal`
 - Optional generated BD strategy memo -> `analyze_deal`

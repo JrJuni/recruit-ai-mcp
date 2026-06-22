@@ -190,6 +190,10 @@ Completed:
   the first viewport, updates the architecture overview around recruiting
   records/recommendations, and labels inherited deal-health guidance as
   compatibility behavior.
+- Added Work 7W AI onboarding tool-routing cleanup. `AI_START_HERE.md` now
+  separates first recruiting questions and tool defaults from inherited
+  deal-intelligence compatibility flows, including recruiting write tools for
+  records, interactions, and client feedback.
 
 Validation:
 
@@ -308,6 +312,10 @@ Validation:
 - `git diff --check` -> passed; Windows line-ending warnings only.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-readme-positioning tests\test_mcpb_manifest.py tests\test_tool_surfaces.py tests\test_config_profiles.py`
   -> 67 passed, 1 third-party warning.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed; Windows line-ending warnings only.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-ai-start-routing tests\test_mcpb_manifest.py tests\test_tool_surfaces.py tests\test_config_doctor.py tests\test_recruiting_mcp_tools.py`
+  -> 75 passed, 1 third-party warning.
 - `ruff check src tests` -> passed.
 - `git diff --check` -> passed; Windows line-ending warnings only.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
