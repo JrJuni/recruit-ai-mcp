@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import fnmatch
 import hashlib
 import json
 import os
@@ -90,6 +91,40 @@ def test_release_latest_artifact_matches_recruit_ai_version() -> None:
     assert (latest_dir / "checksums.txt").read_text(encoding="utf-8").strip() == (
         f"SHA256  recruit-ai-mcp-{version}.mcpb  {checksum}"
     )
+
+
+def test_python_package_data_covers_runtime_resources() -> None:
+    pyproject = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))
+    package_data = pyproject["tool"]["setuptools"]["package-data"]
+    resource_root = ROOT / "src" / "deal_intel" / "resources"
+
+    patterns_by_root = []
+    for package, patterns in package_data.items():
+        package_root = ROOT / "src" / Path(*package.split("."))
+        patterns_by_root.extend((package_root, pattern) for pattern in patterns)
+
+    resource_files = [
+        path
+        for path in resource_root.rglob("*")
+        if path.is_file() and path.suffix in {".json", ".yaml", ".yml"}
+    ]
+    missing = [
+        path.relative_to(resource_root).as_posix()
+        for path in resource_files
+        if not any(
+            path.is_relative_to(package_root)
+            and fnmatch.fnmatch(
+                path.relative_to(package_root).as_posix(),
+                pattern,
+            )
+            for package_root, pattern in patterns_by_root
+        )
+    ]
+
+    assert missing == []
+    assert "defaults.yaml" in package_data["deal_intel.resources"]
+    assert "mongo/*.json" in package_data["deal_intel.resources"]
+    assert "*.json" in package_data["deal_intel.resources.sample_datasets"]
 
 
 def test_bootstrapper_where_uses_recruit_ai_home(tmp_path: Path) -> None:

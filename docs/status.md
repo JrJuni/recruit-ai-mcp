@@ -307,9 +307,21 @@ Completed:
   yet visible on PyPI, so local package/MCPB gates can pass but public
   `npx recruit-ai-mcp@0.1.0` readiness must remain pending until maintainer
   publication and post-publish smoke evidence exist.
+- Added Work 7AT Python package-data release gate.
+  Bootstrapper release tests now verify that every JSON/YAML runtime resource
+  under `src/deal_intel/resources` is covered by `pyproject.toml` package-data
+  patterns, including defaults, Mongo validators, Atlas specs, and bundled
+  sample datasets before a wheel/sdist is treated as release-ready.
 
 Validation:
 
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-package-data-gate tests\test_bootstrapper_skeleton.py tests\test_env_config.py tests\test_sample_data.py tests\test_atlas_charts.py tests\test_atlas_vector_indexes.py tests\test_mongo_contracts.py`
+  -> 93 passed, 1 warning.
+- `python -m build --no-isolation --outdir .tmp\release-build-gate`
+  -> built `recruit_ai_mcp-0.1.0.tar.gz` and
+  `recruit_ai_mcp-0.1.0-py3-none-any.whl`.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `npm view recruit-ai-mcp@0.1.0 version` -> npm `E404`.
 - `python -m pip index versions recruit-ai-mcp` -> `No matching distribution found for recruit-ai-mcp`.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-registry-readiness-docs tests\test_docs_recruit_ai_current.py tests\test_bootstrapper_skeleton.py`
