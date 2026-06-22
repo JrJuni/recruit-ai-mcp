@@ -173,6 +173,10 @@ Completed:
 - Added Work 7R full-mode copy cleanup. Active onboarding/profile docs now
   describe `full` as MongoDB-backed real recruiting/team data rather than only
   real deal data.
+- Added Work 7S tool-catalog wording cleanup. The qualification-framework
+  intent group now labels the inherited deal-intelligence surface explicitly
+  and no longer uses "candidate qualification framework" language that could
+  be confused with recruiting candidates.
 
 Validation:
 
@@ -278,6 +282,10 @@ Validation:
   -> 45 passed, 1 third-party warning.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-full-copy tests\test_config_profiles.py tests\test_profile_smoke_cli.py tests\test_profile_smoke_matrix.py tests\test_cli_config_profiles.py`
   -> 31 passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-tool-wording tests\test_tool_surfaces.py tests\test_mcpb_manifest.py`
+  -> 55 passed, 1 third-party warning.
+- `ruff check src\deal_intel\tool_surfaces.py tests\test_tool_surfaces.py`
+  -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2c tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py`

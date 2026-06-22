@@ -129,7 +129,10 @@ TOOL_INTENT_GROUPS: dict[str, dict] = {
     },
     "qualification_framework_admin": {
         "label": "Qualification framework admin",
-        "purpose": "Inspect, validate, switch, and backfill custom deal-qualification frameworks.",
+        "purpose": (
+            "Inspect, validate, switch, and backfill qualification frameworks "
+            "for the inherited deal-intelligence surface."
+        ),
         "tools": (
             "get_qualification_templates",
             "validate_qualification_framework",

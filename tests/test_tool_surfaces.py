@@ -396,7 +396,7 @@ def test_high_traffic_tool_descriptions_guide_tool_selection(monkeypatch) -> Non
             "qualification framework",
             "validate_qualification_framework",
         ],
-        "validate_qualification_framework": ["candidate qualification framework", "no file writes"],
+        "validate_qualification_framework": ["qualification framework", "no file writes"],
         "update_qualification_framework": [
             "dry_run=true",
             "confirmed_by_user=true",
