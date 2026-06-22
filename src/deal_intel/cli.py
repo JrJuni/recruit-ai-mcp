@@ -3827,7 +3827,12 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
                     "guardrail_rank": guardrail.rank,
                     "aligned_score": aligned.fit_snapshot.overall_score,
                     "guardrail_score": guardrail.fit_snapshot.overall_score,
+                    "guardrail_dimension_scores": {
+                        key: signal.score
+                        for key, signal in guardrail.fit_snapshot.dimensions.items()
+                    },
                     "guardrail_risk_flags": guardrail.risk_flags,
+                    "guardrail_next_questions": guardrail.next_questions,
                 }
             )
         return {

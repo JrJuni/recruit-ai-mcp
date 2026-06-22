@@ -128,6 +128,9 @@ Completed:
   scoring. US-bound roles now lower `location_fit`, raise match risk, and ask
   for sponsorship/authorization confirmation when a candidate is not
   US-authorized.
+- Expanded the recruiting natural-question recommendation guardrail artifact
+  with per-dimension guardrail scores and next questions, so authorization,
+  risk, and preference penalties remain visible in release smoke evidence.
 - Added a realistic Northstar recommendation stress fixture for a healthcare
   platform manager-only candidate. The sample recommendation tests and natural
   question guardrails now ensure this keyword-strong but constraint-heavy
