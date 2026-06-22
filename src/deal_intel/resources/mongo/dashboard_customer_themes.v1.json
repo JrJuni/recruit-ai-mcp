@@ -1,7 +1,7 @@
 {
   "id": "dashboard_customer_themes",
   "version": 1,
-  "database": "deal_intel",
+  "database": "recruit_ai",
   "collection": "dashboard_customer_themes",
   "dashboard_id": "customer_themes",
   "dashboard_title": "Customer Themes Review",

@@ -39,7 +39,7 @@ def test_chart_ready_specs_have_common_identity_contract() -> None:
     for collection, spec in specs.items():
         assert spec["id"] == collection
         assert spec["collection"] == collection
-        assert spec["database"] == "deal_intel"
+        assert spec["database"] == "recruit_ai"
         assert spec["version"] == 1
         assert spec["refresh_mode"] == "materialized_collection"
         assert spec["common_required_fields"]

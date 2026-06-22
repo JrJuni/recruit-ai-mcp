@@ -1,7 +1,7 @@
 {
   "id": "deal_summary_vector",
   "version": 1,
-  "database": "deal_intel",
+  "database": "recruit_ai",
   "collection": "deals",
   "minimum_cluster_tier": "M10",
   "description": "Atlas Vector Search index for semantic deal-summary search in the pro profile.",

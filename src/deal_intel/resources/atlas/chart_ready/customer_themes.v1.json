@@ -2,7 +2,7 @@
   "dashboard_title": "Customer Themes Review",
   "version": 1,
   "source_mode": "chart_ready",
-  "database": "deal_intel",
+  "database": "recruit_ai",
   "collection": "dashboard_customer_themes",
   "description": "Atlas Charts specs for materialized customer theme rows. Run `recruit-ai mongo refresh-chart-ready --target customer_themes --apply` before using these charts.",
   "parameters": {

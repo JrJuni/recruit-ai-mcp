@@ -273,7 +273,7 @@ def test_check_chart_ready_collections_reports_latest_scope_and_counts() -> None
 
 class FakeDoctorClient:
     def ping(self) -> dict:
-        return {"status": "ok", "database": "deal_intel"}
+        return {"status": "ok", "database": "recruit_ai"}
 
     def check_indexes(self) -> dict:
         return {

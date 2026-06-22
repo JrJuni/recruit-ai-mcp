@@ -1,7 +1,7 @@
 {
   "dashboard_title": "Pipeline Trend Review",
   "version": 1,
-  "database": "deal_intel",
+  "database": "recruit_ai",
   "collection": "analytics_snapshots",
   "description": "Atlas Charts aggregation pipelines for pipeline trend review. Render placeholders before running in Atlas.",
   "parameters": {

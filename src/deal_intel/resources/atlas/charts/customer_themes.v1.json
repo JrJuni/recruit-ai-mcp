@@ -1,7 +1,7 @@
 {
   "dashboard_title": "Customer Themes Review",
   "version": 1,
-  "database": "deal_intel",
+  "database": "recruit_ai",
   "collection": "deals",
   "description": "Atlas Charts aggregation pipelines for customer pain, decision criteria, metrics, and curated evidence. Active scope excludes won/lost deals.",
   "parameters": {},

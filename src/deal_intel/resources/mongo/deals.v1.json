@@ -1,7 +1,7 @@
 {
   "id": "deals_collection_validator",
   "version": 1,
-  "database": "deal_intel",
+  "database": "recruit_ai",
   "collection": "deals",
   "validation_action": "warn",
   "validation_level": "moderate",

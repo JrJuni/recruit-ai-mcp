@@ -1,7 +1,7 @@
 {
   "id": "dashboard_weekly_pipeline",
   "version": 1,
-  "database": "deal_intel",
+  "database": "recruit_ai",
   "collection": "dashboard_weekly_pipeline",
   "dashboard_id": "weekly_pipeline_review",
   "dashboard_title": "Weekly Pipeline Review",

@@ -1,7 +1,7 @@
 {
   "dashboard_title": "Weekly Pipeline Review",
   "version": 1,
-  "database": "deal_intel",
+  "database": "recruit_ai",
   "collection": "deals",
   "description": "Atlas Charts aggregation pipelines for the weekly pipeline review dashboard. Render placeholders before running in Atlas.",
   "parameters": {

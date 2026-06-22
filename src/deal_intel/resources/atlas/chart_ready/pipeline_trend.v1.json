@@ -2,7 +2,7 @@
   "dashboard_title": "Pipeline Trend Review",
   "version": 1,
   "source_mode": "chart_ready",
-  "database": "deal_intel",
+  "database": "recruit_ai",
   "collection": "dashboard_pipeline_trend",
   "description": "Atlas Charts specs for materialized pipeline trend rows. Run `recruit-ai mongo refresh-chart-ready --target pipeline_trend --apply` before using these charts.",
   "parameters": {

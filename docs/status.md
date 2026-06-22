@@ -177,6 +177,10 @@ Completed:
   intent group now labels the inherited deal-intelligence surface explicitly
   and no longer uses "candidate qualification framework" language that could
   be confused with recruiting candidates.
+- Added Work 7T Atlas/resource database cleanup. Versioned Mongo, Atlas Charts,
+  chart-ready, and Atlas Vector Search resource specs now use the `recruit_ai`
+  database default while retaining inherited deal/dashboard collection names
+  where those compatibility surfaces still exist.
 
 Validation:
 
@@ -286,6 +290,8 @@ Validation:
   -> 55 passed, 1 third-party warning.
 - `ruff check src\deal_intel\tool_surfaces.py tests\test_tool_surfaces.py`
   -> passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-resource-db tests\test_atlas_charts.py tests\test_chart_ready_contracts.py tests\test_atlas_vector_indexes.py tests\test_mongo_contracts.py`
+  -> 60 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2c tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py`

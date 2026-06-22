@@ -47,7 +47,7 @@ def test_weekly_pipeline_dashboard_spec_is_versioned_and_complete() -> None:
 
     assert spec["dashboard_title"] == "Weekly Pipeline Review"
     assert spec["version"] == 1
-    assert spec["database"] == "deal_intel"
+    assert spec["database"] == "recruit_ai"
     assert spec["collection"] == "deals"
     assert {chart["id"] for chart in spec["charts"]} == REQUIRED_CHART_IDS
     assert all(isinstance(chart["pipeline"], list) for chart in spec["charts"])
@@ -59,7 +59,7 @@ def test_pipeline_trend_dashboard_spec_is_versioned_and_complete() -> None:
 
     assert spec["dashboard_title"] == "Pipeline Trend Review"
     assert spec["version"] == 1
-    assert spec["database"] == "deal_intel"
+    assert spec["database"] == "recruit_ai"
     assert spec["collection"] == "analytics_snapshots"
     assert {chart["id"] for chart in spec["charts"]} == TREND_CHART_IDS
     assert all(isinstance(chart["pipeline"], list) for chart in spec["charts"])
@@ -71,7 +71,7 @@ def test_customer_themes_dashboard_spec_is_versioned_and_complete() -> None:
 
     assert spec["dashboard_title"] == "Customer Themes Review"
     assert spec["version"] == 1
-    assert spec["database"] == "deal_intel"
+    assert spec["database"] == "recruit_ai"
     assert spec["collection"] == "deals"
     assert {chart["id"] for chart in spec["charts"]} == CUSTOMER_THEME_CHART_IDS
     assert all(isinstance(chart["pipeline"], list) for chart in spec["charts"])
