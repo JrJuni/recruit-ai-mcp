@@ -35,6 +35,7 @@ from deal_intel.storage.recruiting_collections import (
     recruiting_id_field,
     recruiting_safe_projection,
 )
+from deal_intel.storage.recruiting_records import normalize_recruiting_record
 
 
 def unarchived_deal_filter() -> dict[str, Any]:
@@ -55,6 +56,10 @@ def _get_collection(db: Any, name: str) -> Any:
     if hasattr(db, name):
         return getattr(db, name)
     return db[name]
+
+
+def _without_none(values: dict[str, Any]) -> dict[str, Any]:
+    return {key: value for key, value in values.items() if value is not None}
 
 
 def _latest_chart_ready_row(
@@ -345,14 +350,12 @@ class MongoDBClient:
 
     # --- recruiting collections ---
 
-    def upsert_recruiting_record(self, collection: str, record: dict) -> bool:
+    def upsert_recruiting_record(self, collection: str, record: object) -> bool:
+        normalized = normalize_recruiting_record(collection, record)
         id_field = recruiting_id_field(collection)
-        record_id = record.get(id_field)
-        if not record_id:
-            raise ValueError(f"{collection} record must include {id_field}")
         result = _get_collection(self._get_db(), collection).replace_one(
-            {id_field: record_id},
-            record,
+            {id_field: normalized[id_field]},
+            normalized,
             upsert=True,
         )
         return bool(getattr(result, "upserted_id", None) or getattr(result, "matched_count", 0))
@@ -391,7 +394,7 @@ class MongoDBClient:
             cursor = cursor.limit(limit)
         return list(cursor)
 
-    def upsert_candidate(self, candidate: dict) -> bool:
+    def upsert_candidate(self, candidate: object) -> bool:
         return self.upsert_recruiting_record(CANDIDATES, candidate)
 
     def get_candidate(self, candidate_id: str, *, include_raw: bool = False) -> dict | None:
@@ -409,23 +412,201 @@ class MongoDBClient:
             sort=[("updated_at", -1)],
         )
 
-    def upsert_client_company(self, client_company: dict) -> bool:
+    def upsert_client_company(self, client_company: object) -> bool:
         return self.upsert_recruiting_record(CLIENT_COMPANIES, client_company)
 
-    def upsert_position(self, position: dict) -> bool:
+    def get_client_company(
+        self,
+        client_company_id: str,
+        *,
+        include_raw: bool = False,
+    ) -> dict | None:
+        return self.get_recruiting_record(
+            CLIENT_COMPANIES,
+            client_company_id,
+            include_raw=include_raw,
+        )
+
+    def list_client_companies(
+        self,
+        *,
+        query: dict | None = None,
+        limit: int = 50,
+    ) -> list[dict]:
+        return self.list_recruiting_records(
+            CLIENT_COMPANIES,
+            query=query,
+            limit=limit,
+            sort=[("updated_at", -1)],
+        )
+
+    def upsert_position(self, position: object) -> bool:
         return self.upsert_recruiting_record(POSITIONS, position)
 
-    def upsert_submission(self, submission: dict) -> bool:
+    def get_position(self, position_id: str, *, include_raw: bool = False) -> dict | None:
+        return self.get_recruiting_record(
+            POSITIONS,
+            position_id,
+            include_raw=include_raw,
+        )
+
+    def list_positions(
+        self,
+        *,
+        client_company_id: str | None = None,
+        status: str | None = None,
+        limit: int = 50,
+    ) -> list[dict]:
+        query = _without_none(
+            {
+                "client_company_id": client_company_id,
+                "status": status,
+            }
+        )
+        return self.list_recruiting_records(
+            POSITIONS,
+            query=query,
+            limit=limit,
+            sort=[("updated_at", -1)],
+        )
+
+    def upsert_submission(self, submission: object) -> bool:
         return self.upsert_recruiting_record(SUBMISSIONS, submission)
 
-    def add_client_feedback(self, feedback: dict) -> bool:
+    def get_submission(self, submission_id: str, *, include_raw: bool = False) -> dict | None:
+        return self.get_recruiting_record(
+            SUBMISSIONS,
+            submission_id,
+            include_raw=include_raw,
+        )
+
+    def list_submissions(
+        self,
+        *,
+        candidate_id: str | None = None,
+        position_id: str | None = None,
+        status: str | None = None,
+        limit: int = 50,
+    ) -> list[dict]:
+        query = _without_none(
+            {
+                "candidate_id": candidate_id,
+                "position_id": position_id,
+                "status": status,
+            }
+        )
+        return self.list_recruiting_records(
+            SUBMISSIONS,
+            query=query,
+            limit=limit,
+            sort=[("updated_at", -1)],
+        )
+
+    def add_client_feedback(self, feedback: object) -> bool:
         return self.upsert_recruiting_record(FEEDBACK, feedback)
 
-    def append_recruiting_interaction(self, interaction: dict) -> bool:
+    def get_feedback(self, feedback_id: str, *, include_raw: bool = False) -> dict | None:
+        return self.get_recruiting_record(
+            FEEDBACK,
+            feedback_id,
+            include_raw=include_raw,
+        )
+
+    def list_feedback(
+        self,
+        *,
+        subject_type: str | None = None,
+        subject_id: str | None = None,
+        position_id: str | None = None,
+        candidate_id: str | None = None,
+        limit: int = 50,
+    ) -> list[dict]:
+        query = _without_none(
+            {
+                "subject_type": subject_type,
+                "subject_id": subject_id,
+                "position_id": position_id,
+                "candidate_id": candidate_id,
+            }
+        )
+        return self.list_recruiting_records(
+            FEEDBACK,
+            query=query,
+            limit=limit,
+            sort=[("created_at", -1)],
+        )
+
+    def append_recruiting_interaction(self, interaction: object) -> bool:
         return self.upsert_recruiting_record(INTERACTIONS, interaction)
 
-    def save_recommendation_run(self, recommendation_run: dict) -> bool:
+    def get_recruiting_interaction(
+        self,
+        interaction_id: str,
+        *,
+        include_raw: bool = False,
+    ) -> dict | None:
+        return self.get_recruiting_record(
+            INTERACTIONS,
+            interaction_id,
+            include_raw=include_raw,
+        )
+
+    def list_recruiting_interactions(
+        self,
+        *,
+        subject_type: str | None = None,
+        subject_id: str | None = None,
+        limit: int = 50,
+        include_raw: bool = False,
+    ) -> list[dict]:
+        query = _without_none(
+            {
+                "subject_type": subject_type,
+                "subject_id": subject_id,
+            }
+        )
+        return self.list_recruiting_records(
+            INTERACTIONS,
+            query=query,
+            limit=limit,
+            include_raw=include_raw,
+            sort=[("occurred_at", -1), ("created_at", -1)],
+        )
+
+    def save_recommendation_run(self, recommendation_run: object) -> bool:
         return self.upsert_recruiting_record(RECOMMENDATION_RUNS, recommendation_run)
+
+    def get_recommendation_run(
+        self,
+        recommendation_run_id: str,
+        *,
+        include_raw: bool = False,
+    ) -> dict | None:
+        return self.get_recruiting_record(
+            RECOMMENDATION_RUNS,
+            recommendation_run_id,
+            include_raw=include_raw,
+        )
+
+    def list_recommendation_runs(
+        self,
+        *,
+        anchor_type: str | None = None,
+        anchor_id: str | None = None,
+        limit: int = 50,
+    ) -> list[dict]:
+        query = _without_none(
+            {
+                "anchor_type": anchor_type,
+                "anchor_id": anchor_id,
+            }
+        )
+        return self.list_recruiting_records(
+            RECOMMENDATION_RUNS,
+            query=query,
+            limit=limit,
+            sort=[("created_at", -1)],
+        )
 
     def replace_chart_ready_rows(
         self,

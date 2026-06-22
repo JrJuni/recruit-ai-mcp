@@ -294,6 +294,32 @@ Storage read policy:
 - Atlas Vector Search remains out of scope for M0; regular indexes only are
   managed in this step.
 
+## Work 2B Storage Normalization
+
+Work 2B adds the storage payload normalization layer used before Mongo writes.
+It keeps the storage boundary ready for future MCP tools without exposing those
+tools yet.
+
+Write policy:
+
+- `MongoDBClient` recruiting upsert wrappers accept either plain mappings or
+  Pydantic recruiting models.
+- Pydantic models are serialized with JSON-safe nested values before storage.
+- Mongo `_id` is stripped before replacement writes.
+- `created_at` is filled when missing or blank and preserved when already set.
+- `updated_at` is refreshed on every recruiting replacement write.
+- The collection primary ID remains required before any write.
+
+Read wrapper policy:
+
+- Typed storage wrappers exist for common future tool paths:
+  candidates, client companies, positions, submissions, feedback,
+  interactions, and recommendation runs.
+- List wrappers build the common filters for client/status, candidate/position,
+  subject, and recommendation anchor lookups.
+- Interaction list/get wrappers keep `raw_content` hidden unless
+  `include_raw=True` is passed internally.
+
 ## Out Of Scope For Work 1
 
 - No storage migration.

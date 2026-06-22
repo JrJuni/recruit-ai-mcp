@@ -30,6 +30,13 @@ Completed:
   exclude `raw_content`.
 - Kept MCP tool registration, recommendation ranking, migration, and Atlas
   Vector Search out of scope for this step. M0 remains on `python_cosine`.
+- Added Work 2B recruiting storage normalization. Recruiting Mongo upserts now
+  accept Pydantic models or plain mappings, serialize nested model values,
+  strip Mongo `_id`, fill missing `created_at`, refresh `updated_at`, and keep
+  primary IDs required before writes.
+- Added typed internal read wrappers for recruiting positions, submissions,
+  feedback, interactions, and recommendation runs. Interaction raw content
+  remains hidden unless an internal caller explicitly passes `include_raw=True`.
 
 Validation:
 
@@ -44,6 +51,8 @@ Validation:
   -> dry-run passed for `recruit_ai`, including recruiting schemas.
 - `PYTHONPATH=src python -m deal_intel.cli mongo doctor --offline --json`
   -> passed with `recruit_ai` and `python_cosine`.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
+  -> 45 passed.
 
 ## Previous Update - 2026-06-21
 
