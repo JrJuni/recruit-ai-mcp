@@ -62,6 +62,19 @@ def test_release_docs_and_workflows_use_recruit_ai_package_name() -> None:
     ) in release_workflow
     assert "smoke-evidence/recruiting-natural-questions.json" in staging_workflow
     assert "current 13-question recruiting pack" in release_docs
+    assert "`candidate_count=8`" in release_docs
+    assert "`written_record_count=27`" in release_docs
+    assert "`guardrail_candidate_count=4`" in release_docs
+    assert '"question_count": 13' in release_workflow
+    assert '"question_count": 13' in staging_workflow
+    assert '"candidate_count": 8' in release_workflow
+    assert '"candidate_count": 8' in staging_workflow
+    assert '"guardrail_candidate_count": 4' in release_workflow
+    assert '"guardrail_candidate_count": 4' in staging_workflow
+    assert '"written_record_count": 27' in release_workflow
+    assert '"reloaded_record_count": 27' in staging_workflow
+    assert "Recruiting natural-question smoke contract mismatch" in release_workflow
+    assert "Recruiting natural-question smoke contract mismatch" in staging_workflow
     assert "create_candidate" in combined
     assert "add_recruiting_interaction" in combined
     assert "recommend_candidates_for_position" in combined
