@@ -1,118 +1,117 @@
 # Public Demo Script
 
-Use this when showing Deal Intelligence MCP to a new user or posting a short
-demo in a community such as r/mcp.
+Use this when showing Recruit AI MCP to a new user or posting a short demo in a
+community such as r/mcp.
 
-The goal is not to demonstrate every tool. The goal is to show that a small
-team can ask normal sales questions and get useful answers from structured deal
-memory.
+The goal is not to demonstrate every tool. The goal is to show that a recruiter
+or search-firm team can ask normal recruiting questions and get useful answers
+from structured candidate, client, position, submission, feedback, and
+interaction memory.
 
 ## Setup Assumption
 
 Run the demo after `config_doctor` is green.
 
 For a real workspace, use `full`/MongoDB-backed mode. For a zero-config trial,
-sample mode is acceptable, but say clearly that the companies and numbers are
-fictional.
+sample mode is acceptable, but say clearly that the candidates, companies,
+positions, submissions, and feedback are fictional.
+
+If the demo workspace has no recruiting data yet, seed fictional data with
+`create_sample_data` using the `recruiting_pipeline_demo` dataset.
 
 ## Five-Question Demo
 
 Ask these in order:
 
 ```text
-How healthy is the current pipeline?
+Which candidates best match this open position?
 ```
 
-Expected tool path: `get_metrics`.
+Expected tool path: `recommend_candidates_for_position`.
 
 What this should show:
 
-- open pipeline value;
-- active deal count;
-- average health;
-- attention deal count;
-- health band distribution.
+- ranked candidates for one position;
+- deterministic fit scores across skills, domain, seniority, compensation,
+  location, availability, client preference, and risk;
+- plain reasons, risk flags, and next questions;
+- no Atlas Vector Search requirement on M0.
 
 ```text
-Which deal needs attention first?
+Which open positions best fit this candidate?
 ```
 
-Expected tool path: `list_deals`, `get_deal_gaps`, or `get_deal_review`.
+Expected tool path: `recommend_positions_for_candidate`.
 
 What this should show:
 
-- deterministic risk signals such as overdue, stuck, stalled, or at-risk health;
-- no raw notes or contacts;
-- practical next questions rather than overconfident win probability.
+- candidate-to-position matching from the other direction;
+- why each role is or is not a fit;
+- compensation, location, availability, and seniority constraints that prevent
+  naive keyword matching from over-ranking a role.
 
 ```text
-Tell me the status of PayBridge.
+How healthy is the recruiting pipeline?
 ```
 
-Expected tool path: `get_deal_review`.
+Expected tool path: `get_recruiting_metrics`.
 
 What this should show:
 
-- stage, value, close date, health, evidence coverage, risks, and next questions;
-- no server-side LLM call required for ordinary status review.
-
-If the sample dataset is active and PayBridge is unavailable in the current
-fixture, ask for one company from `list_deals` instead.
+- candidate, company, position, submission, feedback, and interaction counts;
+- open position status mix;
+- submission funnel rates;
+- feedback sentiment and data-quality counters.
 
 ```text
-Make this week's pipeline report.
+Generate a recruiting pipeline report.
 ```
 
-Expected tool path: `export_report`.
+Expected tool path: `export_recruiting_report`.
 
 What this should show:
 
-- generated Markdown and compatibility CSV paths;
-- `briefing` / `briefing_sections`;
-- `host_report_prompt` that the host app can use to polish the deterministic
-  data pack into a more natural manager/team report.
-
-Use `export_data` instead only when the user asks for Excel/CSV-ready deal
-records, all-deal ledgers, or won/lost tables.
+- generated Markdown and CSV artifact paths;
+- deterministic KPI sections and rows;
+- no raw recruiting interaction content, contacts, embeddings, or secrets.
 
 ```text
-What decision criteria do customers mention most often?
+What client feedback changed the recommendation?
 ```
 
-Expected tool path: `get_customer_themes`.
+Expected tool path: `add_client_feedback` first if new feedback needs to be
+captured, then `recommend_candidates_for_position`.
 
 What this should show:
 
-- ranked recurring decision criteria or customer concerns;
-- unique-deal counts rather than raw mention spam;
-- representative evidence.
-
-Follow-up options:
-
-- "Break that down by stage" -> `get_customer_theme_breakdown`.
-- "Show evidence for the top theme" -> `get_customer_theme_evidence`.
+- structured feedback linked to a candidate, position, submission, or client;
+- rubric deltas applied transparently to the recommendation run;
+- inspectable reasons instead of hidden model scoring.
 
 ## Demo Boundaries
 
 Do not start with admin or maintenance tools.
 
-- Do not use `backfill-customer-themes` in a live demo unless you are explaining
-  migration. It may call the configured server-side LLM for historical records.
-- Do not use `analyze_deal` for routine deal status. Use `get_deal_review`
-  first. `analyze_deal` is for optional generated strategy prose and may persist
-  `bd_strategy`.
-- Do not use `export_report` when the user wants spreadsheet data. Use
-  `export_data`.
+- Do not use Atlas Vector Search on Free/M0. The current Recruit AI path uses
+  M0-safe lexical retrieval and deterministic scoring.
+- Do not paste real resumes, client notes, MongoDB URIs, API keys, OAuth tokens,
+  or passwords into chat.
+- Do not use inherited deal-intelligence tools as the primary demo path. They
+  remain compatibility tools during the staged cutover.
+- Do not use destructive tools in a public demo unless you are explaining
+  dry-run and confirmation gates.
 
 ## One-Minute Positioning
 
-Deal Intelligence MCP is for solo founders, small AI teams, and lightweight BD
-teams that need structured sales memory before adopting a heavyweight CRM.
+Recruit AI MCP is for recruiters and search-firm operators who want a
+self-owned recruiting intelligence layer before adopting or customizing a
+larger ATS/CRM stack.
 
-It turns meetings, customer emails, interviews, and call summaries into deal
-health, customer themes, follow-up gaps, and weekly review artifacts. MongoDB is
-the recommended full backend; local sample mode exists so an AI host can try the
-flow quickly before a real setup.
+It turns candidate profiles, client companies, open roles, submissions,
+feedback, interviews, emails, and call summaries into fit scoring,
+recommendations, recruiting pipeline metrics, and report artifacts. MongoDB is
+the recommended full backend; local sample mode exists so an AI host can try
+the flow quickly before a real setup.
 
 The project is MIT-licensed, so forks and workflow-specific customization are
 welcome as long as license and attribution notices are preserved.
@@ -122,26 +121,28 @@ welcome as long as license and attribution notices are preserved.
 Use or adapt this for a short public post:
 
 ```text
-I built Deal Intelligence MCP, a lightweight deal-memory MCP server for solo
-founders and small AI/BD teams.
+I built Recruit AI MCP, a lightweight recruiting-memory MCP server for
+recruiters and search-firm teams.
 
-The idea is simple: paste meeting notes, customer email replies, interviews, or
-call summaries, and the MCP turns them into structured deal health, customer
-themes, follow-up gaps, and weekly pipeline reports.
+The idea is simple: capture candidate profiles, client companies, open roles,
+submissions, feedback, interviews, emails, and call summaries, and the MCP turns
+them into structured fit scoring, recommendations, recruiting metrics, and
+pipeline reports.
 
-It is not a mature Salesforce replacement, but it can act as a first
-CRM-like deal memory layer if your current system is notes, spreadsheets,
+It is not a mature ATS replacement, but it can act as a first self-owned
+recruiting intelligence layer if your current system is notes, spreadsheets,
 email threads, and memory. It is for teams that already work inside
 Claude/Codex/ChatGPT and want to ask questions like:
 
-- How healthy is the current pipeline?
-- Which deal needs attention first?
-- What is the status of this specific account?
-- What decision criteria do customers mention most often?
-- Make this week's pipeline report.
+- Which candidates best match this open position?
+- Which open positions best fit this candidate?
+- How healthy is the recruiting pipeline?
+- What client feedback changed the recommendation?
+- Generate a recruiting pipeline report.
 
 The default backend is MongoDB Atlas full mode, and the free/M0 tier is enough
-for the current MVP. There is also a zero-config sample mode with fictional data
+for the current MVP because matching stays on deterministic local retrieval and
+scoring. There is also a zero-config sample mode with fictional recruiting data
 so an AI host can try the workflow before any real setup.
 
 It is MIT-licensed, so you can fork and adapt it to your own workflow. Please

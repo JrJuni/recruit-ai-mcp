@@ -97,6 +97,12 @@ Completed:
 - Cleaned storage diagnostic copy so Atlas setup hints describe real
   recruiting/team data, and local sample hints describe local recruiting
   records plus compatibility deal records instead of deal-only storage.
+- Rewrote current public demo and extension docs for Recruit AI. The public
+  demo script now leads with candidate/position recommendations, recruiting
+  metrics, report export, client feedback adjustments, and M0-safe matching.
+  `docs/extending.md` now describes recruiting schemas, fit scoring,
+  recommendation services, reports, storage, and inherited deal workflows as
+  compatibility surfaces.
 - Added Work 6A recruiting pipeline metrics calculator. It computes summary
   counts, position status rates, submission funnel rates, feedback signal
   rates, and data-quality counters from safe recruiting records without

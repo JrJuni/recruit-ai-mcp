@@ -1,25 +1,33 @@
-# Extending deal-intel-mcp
+# Extending recruit-ai-mcp
 
-`deal-intel-mcp` is meant to be forked when your deal process is too specific
-for a generic CRM, but too important to live only in notes, spreadsheets, and
-memory.
+`recruit-ai-mcp` is meant to be forked when your recruiting or search process
+is too specific for a generic ATS/CRM, but too important to live only in notes,
+spreadsheets, email threads, and memory.
 
-The default product path is `full`: MongoDB Atlas-backed real deal data, an MCP
-host such as Claude Desktop or Codex, and one LLM path for extraction. `sample`
-is an optional zero-config trial, not the default architecture for real use.
+The default product path is `full`: MongoDB Atlas-backed real recruiting/team
+data, an MCP host such as Claude Desktop or Codex, and one optional LLM path for
+extraction or narrative work. `sample` is an optional zero-config trial, not the
+default architecture for real use.
+
+This bootstrap fork still keeps the Python package internals under
+`deal_intel`. Public package names, CLI guidance, env prefixes, config paths,
+and current workflows should present Recruit AI while code references keep the
+inherited module path until the full package rename is planned.
 
 This guide is the first stop for developers who want to customize the server
-for their own sales motion.
+for their own recruiting workflow.
 
 ## Extension Principles
 
-- Prefer existing extension seams before changing core logic: qualification
-  frameworks, tool surfaces, config profiles, product context, reports, and
-  storage adapters.
-- Keep customer evidence, seller-side product context, user memory, and BI
-  metrics separate. Mixing these layers makes later analysis unreliable.
-- Keep read-only BI/report paths deterministic and LLM-free. Let the host app
-  narrate deterministic outputs unless a server-side LLM result must be stored.
+- Prefer existing extension seams before changing core logic: recruiting
+  schemas, fit scoring, recommendation services, tool surfaces, config
+  profiles, reports, storage adapters, and provider factories.
+- Keep candidate evidence, client feedback, recruiting interactions,
+  compatibility deal records, product context, user memory, and metrics
+  separate. Mixing these layers makes later analysis unreliable.
+- Keep read-only metrics/report paths deterministic and LLM-free. Let the host
+  app narrate deterministic outputs unless a server-side LLM result must be
+  stored.
 - Use dry-run and confirmation patterns for writes, migrations, destructive
   actions, and expensive LLM backfills.
 - Keep secrets out of docs, user memory, tool responses, and test fixtures.
@@ -28,27 +36,31 @@ for their own sales motion.
 
 | Goal | Start Here | Main Contracts | Validation |
 |---|---|---|---|
-| Add or change a qualification framework | `docs/qualification-framework-v2.md`, `src/deal_intel/schema/qualification_framework.py` | Built-in frameworks are immutable; copy a preset before customizing | `tests/test_qualification_framework.py`, `tests/test_qualification_config.py` |
-| Change deal stages | `src/deal_intel/schema/stage.py`, stage-dependent metric/review logic | Stage names affect timing, reports, charts, and lifecycle rules | stage, timing, report, and chart tests |
-| Add custom deal metadata | storage adapters, schema/read projections, report/data export rows | Restricted BI projections must not expose raw notes, contacts, or vectors | storage contract tests, report/export tests |
-| Add a new MCP tool | `src/deal_intel/mcp_server.py`, `src/deal_intel/tool_surfaces.py` | Tool names remain the public API; classify by profile and intent group | `tests/test_tool_surfaces.py`, `tests/test_mcpb_manifest.py` |
-| Add a storage backend | `src/deal_intel/storage/backend.py` | Match the storage contract used by tools and reports | `tests/test_storage_backend_contract.py` |
+| Change the recruiting fit rubric | `src/deal_intel/schema/recruiting_fit.py`, `src/deal_intel/schema/recruiting_match.py`, `docs/recruiting-domain-model.md` | Fit dimensions stay inspectable on the 0-5 scale; `risk` is inverted in aggregate scoring | `tests/test_recruiting_fit.py`, `tests/test_recruiting_match.py` |
+| Change candidate, client, position, submission, or feedback fields | `src/deal_intel/schema/recruiting.py`, `src/deal_intel/storage/recruiting_collections.py` | Mongo validators remain permissive enough for staged rollout; safe reads exclude raw content by default | `tests/test_recruiting_schema.py`, `tests/test_recruiting_storage_contract.py` |
+| Improve recommendation ranking | `src/deal_intel/schema/recruiting_recommendation.py`, `src/deal_intel/tools/recruiting_recommendations.py` | M0-safe retrieval stays deterministic; final ranking comes from fit scoring and feedback adjustments | `tests/test_recruiting_recommendation.py`, `tests/test_recruiting_recommendations_service.py` |
+| Add or change recruiting MCP tools | `src/deal_intel/mcp_server.py`, `src/deal_intel/tool_surfaces.py`, `src/deal_intel/tools/recruiting_records.py` | Tool names remain the public API; classify by profile and intent group | `tests/test_recruiting_mcp_tools.py`, `tests/test_tool_surfaces.py`, `tests/test_mcpb_manifest.py` |
+| Customize recruiting metrics or reports | `src/deal_intel/tools/recruiting_metrics.py`, `src/deal_intel/reports/recruiting_pipeline.py`, `docs/metrics.md`, `docs/reports.md` | Metrics and report rows must avoid raw interaction content, contacts, embeddings, and LLM calls | `tests/test_recruiting_metrics.py`, `tests/test_recruiting_metrics_service.py`, `tests/test_export_recruiting_report.py` |
+| Add or replace a storage backend | `src/deal_intel/storage/backend.py`, `src/deal_intel/storage/recruiting_records.py` | Match the storage contract used by tools, reports, metrics, and migration paths | `tests/test_storage_backend_contract.py`, `tests/test_local_sample_backend.py` |
 | Add an LLM provider | `src/deal_intel/providers/llm.py` | Construct through `make_llm_provider(config)`; report usage safely | LLM provider tests, usage tests |
-| Customize reports | `src/deal_intel/reports/*`, `docs/reports.md` | `export_report` is human-facing; `export_data` is spreadsheet-ledger output | report/export tests plus artifact inspection |
-| Extend product context parsers | `src/deal_intel/product_context.py` | Product context is seller-side only; never count it as customer evidence | product context tests, add-interaction tests |
-| Change tool visibility | `src/deal_intel/tool_surfaces.py` | Keep `config_doctor`, `update_config`, and `get_tool_catalog` recoverable | tool surface tests |
+| Preserve or customize inherited deal workflows | `docs/baseline.md`, `docs/qualification-framework-v2.md`, `src/deal_intel/schema/qualification_framework.py` | Treat deal-intelligence tools as compatibility surfaces during the staged cutover | qualification framework, deal review, report/export, and tool-surface tests |
+| Change tool visibility | `src/deal_intel/tool_surfaces.py` | Keep `config_doctor`, `update_config`, and `get_tool_catalog` recoverable | `tests/test_tool_surfaces.py` |
 
 ## Architecture Entry Points
 
 Use these docs in this order:
 
-1. `docs/architecture.md` for the module map and change playbooks.
-2. `docs/baseline.md` for MCP tool contracts.
-3. `docs/config-profiles.md` for `sample`, `full`, `pro`, and tool-surface
+1. `docs/recruiting-domain-model.md` for the recruiting data model, fit rubric,
+   and recommendation records.
+2. `docs/architecture.md` for the module map and change playbooks.
+3. `docs/baseline.md` for MCP tool contracts.
+4. `docs/config-profiles.md` for `sample`, `full`, `pro`, and tool-surface
    behavior.
-4. `docs/storage-backends.md` for storage contracts and restricted read paths.
-5. `docs/reports.md` for report and export contracts.
-6. `docs/customization-recipes.md` for practical examples.
+5. `docs/storage-backends.md` for Mongo/local sample storage contracts and
+   restricted read paths.
+6. `docs/metrics.md` and `docs/reports.md` for recruiting KPI and export
+   contracts.
+7. `docs/customization-recipes.md` for practical examples.
 
 If a doc conflicts with code, prefer source code and tests first.
 
@@ -61,8 +73,8 @@ When adding a tool:
 3. Use `_context` for config, storage, LLM, and embedding providers.
 4. Add the tool to `tool_surfaces.py` with the right profile visibility and
    intent group.
-5. Update `mcpb/manifest.json` only if the desktop bundle needs to expose new
-   user-facing configuration.
+5. Update `mcpb/manifest.json` when a user-facing MCPB config or visible tool
+   catalog entry changes.
 6. Add targeted tests for handler behavior and tool-surface registration.
 7. Update `docs/baseline.md` and tool-selection guidance if the user-facing
    workflow changes.
@@ -70,22 +82,18 @@ When adding a tool:
 Do not add a tool only because an internal helper exists. Add it when it maps
 to a user intent that an MCP host should be able to choose.
 
-## Qualification Framework Extension Checklist
+## Recruiting Fit And Recommendation Checklist
 
-When adding a custom framework:
+When changing fit scoring or recommendations:
 
-1. Start from a built-in template rather than mutating MEDDPICC directly.
-2. Give each dimension a stable snake_case key, label, description,
-   extraction hint, weight, gap threshold, and suggested question.
-3. Validate the framework before writing it to user config.
-4. Activate it explicitly.
-5. Decide whether existing interactions need deterministic backfill or LLM
-   re-extraction.
-6. Confirm reports, deal review, gaps, metrics, search metadata, and charts
-   still describe the active framework correctly.
-
-Missing evidence should increase uncertainty. Do not fake neutral scores just
-to make health look complete.
+1. Keep every dimension inspectable: score, evidence, missing information, and
+   warning flags should be visible in the returned fit snapshot.
+2. Keep `risk` semantics clear: higher raw risk should reduce aggregate fit.
+3. Preserve deterministic behavior before adding optional generated narrative.
+4. Add stress fixtures where keyword-strong but weak-fit candidates or roles do
+   not outrank aligned matches.
+5. Confirm feedback adjustments are visible in the adjustment ledger.
+6. Re-run recruiting natural-question smoke when the user journey changes.
 
 ## Storage Backend Extension Checklist
 
@@ -93,9 +101,10 @@ When adding or replacing storage:
 
 1. Implement the storage contract instead of calling the database directly from
    tools.
-2. Provide restricted read paths for BI, reports, exports, themes, and metrics.
-3. Keep raw notes, raw interaction content, contacts, and embeddings out of
-   restricted outputs.
+2. Provide restricted read paths for metrics, reports, exports, recommendations,
+   and safe review flows.
+3. Keep raw notes, raw interaction content, contacts, embeddings, API keys,
+   OAuth tokens, and MongoDB URIs out of restricted outputs.
 4. Preserve dry-run and confirmation behavior for writes and destructive
    actions.
 5. Add a diagnostic path so `config_doctor` can explain readiness and next
@@ -103,14 +112,16 @@ When adding or replacing storage:
 
 ## Report And Export Extension Checklist
 
-Use `export_report` when the user needs a human-readable meeting or manager
-artifact. Use `export_data` when the user needs an Excel/CSV ledger.
+Use `export_recruiting_report` when the user needs a human-readable recruiting
+pipeline artifact. Use inherited `export_report`/`export_data` only for
+compatibility deal workflows.
 
 When customizing reports:
 
 1. Keep KPI math in the shared metric engines.
 2. Shape report rows separately from spreadsheet ledger rows.
-3. Keep raw notes, contacts, and vectors out of outputs.
+3. Keep raw notes, contacts, raw interaction content, and vectors out of
+   outputs.
 4. Make the output directory safe and explainable.
 5. Add tests that compare report numbers against the shared metric contract.
 
@@ -118,10 +129,12 @@ When customizing reports:
 
 Good fork targets:
 
-- early B2B SaaS or AI teams that need structure before adopting a heavy CRM;
-- RevOps-minded developers who want BANT, SPICED, or a custom framework;
-- MCP workflow builders experimenting with chat-first deal operations;
-- consulting, SI, or agency teams with meeting-heavy sales processes.
+- recruiters and search firms with a repeatable client/candidate workflow;
+- talent teams that need a lightweight AI-assisted memory layer before a large
+  ATS rollout;
+- operators who want custom fit rubrics for domain, seniority, compensation,
+  location, availability, preferences, and risk;
+- MCP workflow builders experimenting with chat-first recruiting operations.
 
 This project is MIT-licensed. You may use, copy, modify, merge, publish,
 distribute, sublicense, and sell modified versions, subject to the license

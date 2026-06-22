@@ -214,6 +214,53 @@ def test_external_user_test_guide_is_recruit_ai_current() -> None:
     assert "Generate a weekly pipeline report" not in docs
 
 
+def test_public_demo_script_is_recruit_ai_first() -> None:
+    docs = (ROOT / "docs" / "public-demo-script.md").read_text(encoding="utf-8")
+
+    assert "showing Recruit AI MCP" in docs
+    assert "recruiter\nor search-firm team" in docs
+    assert "recruiting_pipeline_demo" in docs
+    assert "Which candidates best match this open position?" in docs
+    assert "Which open positions best fit this candidate?" in docs
+    assert "How healthy is the recruiting pipeline?" in docs
+    assert "Generate a recruiting pipeline report." in docs
+    assert "What client feedback changed the recommendation?" in docs
+    assert "recommend_candidates_for_position" in docs
+    assert "recommend_positions_for_candidate" in docs
+    assert "get_recruiting_metrics" in docs
+    assert "export_recruiting_report" in docs
+    assert "free/M0 tier is enough" in docs
+
+    assert "showing Deal Intelligence MCP" not in docs
+    assert "normal sales questions" not in docs
+    assert "How healthy is the current pipeline?" not in docs
+    assert "Which deal needs attention first?" not in docs
+    assert "Make this week's pipeline report." not in docs
+
+
+def test_extending_doc_is_recruit_ai_current() -> None:
+    docs = (ROOT / "docs" / "extending.md").read_text(encoding="utf-8")
+
+    assert "# Extending recruit-ai-mcp" in docs
+    assert "real recruiting/team\ndata" in docs
+    assert "still keeps the Python package internals under\n`deal_intel`" in docs
+    assert "Change the recruiting fit rubric" in docs
+    assert "src/deal_intel/schema/recruiting_fit.py" in docs
+    assert "Improve recommendation ranking" in docs
+    assert "export_recruiting_report" in docs
+    assert "Preserve or customize inherited deal workflows" in docs
+    assert "specific recruiting/search motion" in (
+        ROOT / "docs" / "README.md"
+    ).read_text(encoding="utf-8")
+
+    assert "# Extending deal-intel-mcp" not in docs
+    assert "real deal data" not in docs
+    assert "customize the server\nfor their own sales motion" not in docs
+    assert "specific sales motion" not in (ROOT / "docs" / "README.md").read_text(
+        encoding="utf-8"
+    )
+
+
 def test_full_install_guide_is_recruit_ai_current() -> None:
     docs = (ROOT / "AI_FULL_INSTALL_GUIDE.md").read_text(encoding="utf-8")
 

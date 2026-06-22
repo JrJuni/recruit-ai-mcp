@@ -31,7 +31,7 @@ These are active source-adjacent contracts.
 
 | File | Use When |
 |---|---|
-| `extending.md` | Forking or customizing the project for a specific sales motion |
+| `extending.md` | Forking or customizing the project for a specific recruiting/search motion |
 | `customization-recipes.md` | Following practical examples for common fork changes |
 | `baseline.md` | Changing MCP tools, storage behavior, or smoke expectations |
 | `metrics.md` | Changing deal BI metrics or recruiting pipeline KPI/data-quality metrics |
@@ -55,7 +55,7 @@ These are active source-adjacent contracts.
 ## Developer Customization And Forking
 
 Use these docs when a developer or AI coding agent wants to adapt the server to
-another sales process:
+another recruiting or search process:
 
 1. `extending.md`
    - first stop for extension seams, guardrails, and validation habits.
