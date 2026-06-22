@@ -71,7 +71,7 @@ def test_load_config_accepts_product_context_source_dirs_env(monkeypatch, tmp_pa
     (config_dir / "defaults.yaml").write_text(
         "product_context:\n"
         "  source_dirs:\n"
-        "    - ~/.deal-intel/product-context/sources\n",
+        "    - ~/.recruit-ai/product-context/sources\n",
         encoding="utf-8",
     )
     missing_user_config = tmp_path / "missing" / "config.yaml"
@@ -100,7 +100,7 @@ def test_load_config_ignores_secret_like_product_context_source_dirs_env(
     (config_dir / "defaults.yaml").write_text(
         "product_context:\n"
         "  source_dirs:\n"
-        "    - ~/.deal-intel/product-context/sources\n",
+        "    - ~/.recruit-ai/product-context/sources\n",
         encoding="utf-8",
     )
     missing_user_config = tmp_path / "missing" / "config.yaml"
@@ -190,4 +190,4 @@ def test_load_config_falls_back_to_packaged_defaults(monkeypatch, tmp_path) -> N
 
     assert config["llm"]["provider"] == "chatgpt_oauth"
     assert config["storage"]["backend"] == "mongo"
-    assert config["mongodb"]["database"] == "deal_intel"
+    assert config["mongodb"]["database"] == "recruit_ai"

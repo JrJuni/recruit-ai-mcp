@@ -127,6 +127,10 @@ Completed:
   instead of the inherited deal-first workflow. README and baseline docs now
   match that recruit-first contract while retaining the legacy deal path as
   compatibility guidance.
+- Added Work 7F public path and CLI hint cleanup. Current docs, package
+  resource descriptions, and tests now use `~/.recruit-ai/...` and
+  `recruit-ai ...` as the primary path/command guidance, while compatibility
+  aliases and inherited file names remain documented only where intentional.
 
 Validation:
 
@@ -201,6 +205,9 @@ Validation:
   -> 32 passed, 1 third-party warning.
 - `ruff check src\deal_intel\config_doctor.py tests\test_config_doctor.py`
   -> passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-path-cleanup tests\test_config_profiles.py tests\test_config_writer.py tests\test_env_config.py tests\test_export_report.py tests\test_export_data.py tests\test_chart_ready_refresh.py tests\test_cli_deal_review_smoke.py tests\test_local_sample_backend.py tests\test_llm_providers.py tests\test_profile_smoke_cli.py tests\test_profile_smoke_matrix.py`
+  -> 134 passed, 1 third-party warning.
+- `ruff check src tests` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2c tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py`

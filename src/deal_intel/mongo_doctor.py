@@ -49,7 +49,7 @@ def build_mongo_doctor_report(
             else "Mongo doctor is intended for mongo storage; current backend is not mongo."
         ),
         details={"storage_backend": backend},
-        hint="Use `deal-intel config switch full` before checking Atlas-backed storage."
+        hint="Use `recruit-ai config switch full` before checking Atlas-backed storage."
         if backend != "mongo"
         else None,
     )
@@ -169,7 +169,7 @@ def _add_index_check(checks: list[dict[str, Any]], client: Any) -> None:
             status="fail",
             message=f"Could not read MongoDB indexes: {type(exc).__name__}",
             details={"error": _redact_text(str(exc))},
-            hint="Run `deal-intel mongo apply-indexes --apply` after confirming Atlas access.",
+            hint="Run `recruit-ai mongo apply-indexes --apply` after confirming Atlas access.",
         )
         return
 
@@ -217,7 +217,7 @@ def _add_schema_check(checks: list[dict[str, Any]], client: Any) -> None:
                 ),
                 details={"error": _redact_text(str(exc))},
                 hint=(
-                    "Run `deal-intel mongo apply-schema --collection "
+                    "Run `recruit-ai mongo apply-schema --collection "
                     f"{collection}` to inspect the intended validator."
                 ),
             )
@@ -239,7 +239,7 @@ def _add_schema_check(checks: list[dict[str, Any]], client: Any) -> None:
             ),
             details=report,
             hint=(
-                "Run `deal-intel mongo apply-schema --collection "
+                "Run `recruit-ai mongo apply-schema --collection "
                 f"{collection}`, then `--apply` if the command looks correct."
             )
             if not report.get("ok")
@@ -259,7 +259,7 @@ def _add_chart_ready_check(checks: list[dict[str, Any]], client: Any) -> None:
             message=f"Could not read chart-ready collections: {type(exc).__name__}",
             details={"error": _redact_text(str(exc))},
             hint=(
-                "Run `deal-intel mongo refresh-chart-ready --target all` as a "
+                "Run `recruit-ai mongo refresh-chart-ready --target all` as a "
                 "dry-run after confirming Atlas access."
             ),
         )
@@ -428,7 +428,7 @@ def _chart_ready_hint(collection: str) -> str:
         "dashboard_pipeline_trend": "pipeline_trend",
     }.get(collection, "all")
     return (
-        "Run `deal-intel mongo refresh-chart-ready "
+        "Run `recruit-ai mongo refresh-chart-ready "
         f"--target {target} --as-of YYYY-MM-DD` first, then add `--apply` "
         "after reviewing row counts."
     )

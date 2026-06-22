@@ -33,7 +33,7 @@ def test_init_config_profile_dry_run_does_not_write(tmp_path) -> None:
     assert user_config.exists() is False
     assert result["target_profile_values"] == {
         "storage.backend": "local_sample",
-        "storage.local_data_dir": "~/.deal-intel/local-data",
+        "storage.local_data_dir": "~/.recruit-ai/local-data",
         "mongodb.vector_search": "python_cosine",
         "llm.provider": "chatgpt_oauth",
     }
@@ -100,7 +100,7 @@ def test_init_config_profile_force_backs_up_and_overwrites(tmp_path) -> None:
     assert _load(user_config) == {
         "storage": {
             "backend": "local_sample",
-            "local_data_dir": "~/.deal-intel/local-data",
+            "local_data_dir": "~/.recruit-ai/local-data",
         },
         "mongodb": {"vector_search": "python_cosine"},
         "llm": {"provider": "chatgpt_oauth"},
@@ -215,7 +215,7 @@ def test_update_config_settings_dry_run_does_not_write(tmp_path) -> None:
         dry_run=True,
         llm_provider="openai_api",
         openai_api_model="gpt-5.4-mini",
-        reporting_output_dir="~/.deal-intel/reports",
+        reporting_output_dir="~/.recruit-ai/reports",
         reporting_language="ko",
         product_context_source_dirs="~/company-docs;~/solution-docs",
         product_context_max_source_file_mb="250",

@@ -254,9 +254,9 @@ def test_local_personal_store_rejects_duplicate_deal_ids(tmp_path) -> None:
 
 
 def test_resolve_local_data_dir_default_and_custom(tmp_path) -> None:
-    assert str(resolve_local_data_dir()).endswith(".deal-intel\\local-data") or str(
+    assert str(resolve_local_data_dir()).endswith(".recruit-ai\\local-data") or str(
         resolve_local_data_dir()
-    ).endswith(".deal-intel/local-data")
+    ).endswith(".recruit-ai/local-data")
     assert resolve_local_data_dir(tmp_path) == tmp_path
 
 

@@ -45,7 +45,7 @@ Notes:
 - `sample` stays safe by default, but it is not permanently read-only. Local
   personal `deals.json` supports small user datasets without MongoDB, and
   `local-data reset/export` gives users a recovery path for messy testing.
-- The default local personal data directory is `~/.deal-intel/local-data`, and
+- The default local personal data directory is `~/.recruit-ai/local-data`, and
   users should be able to override it through config as `storage.local_data_dir`.
 - `full` should remain the operational default for real customer data and the
   default human-facing install path.
@@ -76,8 +76,8 @@ Implemented now:
   `atlas/vector_indexes/deal_summary_vector.v1.json`.
 - No-silent-fallback policy for `search_deals` in `atlas` mode.
 - Dry-run/apply CLI for the versioned Atlas Vector Search index:
-  `deal-intel mongo apply-vector-index --json` and
-  `deal-intel mongo apply-vector-index --apply`.
+  `recruit-ai mongo apply-vector-index --json` and
+  `recruit-ai mongo apply-vector-index --apply`.
 
 Deferred until disposable paid infra is available:
 
@@ -101,8 +101,8 @@ Done when:
 Implemented commands:
 
 ```bash
-deal-intel config profiles
-deal-intel config show
+recruit-ai config profiles
+recruit-ai config show
 ```
 
 Done when:
@@ -127,7 +127,7 @@ MCPB user-config secrets are runtime inputs, not repo-file updates.
   `openai_api_key` are mapped to process environment variables when Claude
   Desktop starts the MCP server.
 - They are not written back to the repo `.env` file or to
-  `~/.deal-intel/config.yaml`.
+  `~/.recruit-ai/config.yaml`.
 - Local CLI commands do not automatically receive Claude/MCPB secret values.
   For CLI smoke tests, configure `.env` or shell environment variables
   separately.
@@ -143,18 +143,18 @@ reports missing `MONGODB_URI`. In that case, either run the check through
 Implemented commands:
 
 ```bash
-deal-intel config init --profile sample
-deal-intel config init --profile full
-deal-intel config init --profile pro
-deal-intel config switch sample
-deal-intel config init --profile sample --dry-run
-deal-intel config switch sample --dry-run
-deal-intel config switch sample --force
+recruit-ai config init --profile sample
+recruit-ai config init --profile full
+recruit-ai config init --profile pro
+recruit-ai config switch sample
+recruit-ai config init --profile sample --dry-run
+recruit-ai config switch sample --dry-run
+recruit-ai config switch sample --force
 ```
 
 Implemented behavior:
 
-- `init` creates `~/.deal-intel/config.yaml` when it does not exist.
+- `init` creates `~/.recruit-ai/config.yaml` when it does not exist.
 - `init` refuses to replace an existing config unless `--force` is provided.
 - `switch` updates only profile-managed keys:
   `storage.backend`, `storage.local_data_dir` when present in the target
@@ -174,9 +174,9 @@ Implemented behavior:
 Implemented command:
 
 ```bash
-deal-intel config doctor
-deal-intel config doctor --json
-deal-intel config doctor --offline
+recruit-ai config doctor
+recruit-ai config doctor --json
+recruit-ai config doctor --offline
 ```
 
 Implemented behavior:
@@ -194,18 +194,18 @@ Implemented behavior:
 Implemented commands:
 
 ```bash
-deal-intel mongo doctor
-deal-intel mongo doctor --json
-deal-intel mongo doctor --offline
-deal-intel mongo apply-indexes --json
-deal-intel mongo apply-indexes --apply
-deal-intel mongo apply-schema --json
-deal-intel mongo apply-schema --collection analytics_snapshots --json
-deal-intel mongo apply-schema --collection delete_audit_logs --json
-deal-intel mongo apply-schema --collection all --json
-deal-intel mongo apply-schema --apply
-deal-intel mongo apply-vector-index --json
-deal-intel mongo apply-vector-index --apply
+recruit-ai mongo doctor
+recruit-ai mongo doctor --json
+recruit-ai mongo doctor --offline
+recruit-ai mongo apply-indexes --json
+recruit-ai mongo apply-indexes --apply
+recruit-ai mongo apply-schema --json
+recruit-ai mongo apply-schema --collection analytics_snapshots --json
+recruit-ai mongo apply-schema --collection delete_audit_logs --json
+recruit-ai mongo apply-schema --collection all --json
+recruit-ai mongo apply-schema --apply
+recruit-ai mongo apply-vector-index --json
+recruit-ai mongo apply-vector-index --apply
 ```
 
 Implemented behavior:
@@ -291,7 +291,7 @@ Result:
 - `build_profile_smoke_matrix()` returns a serializable profile matrix.
 - Targeted tests verify the matrix against profile patches, config init
   dry-run output, and config doctor pass/warn/fail behavior.
-- `deal-intel smoke-profile --profile sample|full|pro` builds a no-write smoke
+- `recruit-ai smoke-profile --profile sample|full|pro` builds a no-write smoke
   report from the matrix and shared config doctor.
 - `--offline` skips storage ping.
 - `--json` returns the same structured report shape for agents.

@@ -4,7 +4,7 @@
   "source_mode": "chart_ready",
   "database": "deal_intel",
   "collection": "dashboard_weekly_pipeline",
-  "description": "Atlas Charts specs for materialized Weekly Pipeline Review rows. Run `deal-intel mongo refresh-chart-ready --target weekly_pipeline --apply` before using these charts.",
+  "description": "Atlas Charts specs for materialized Weekly Pipeline Review rows. Run `recruit-ai mongo refresh-chart-ready --target weekly_pipeline --apply` before using these charts.",
   "parameters": {
     "as_of": "{{AS_OF_DATE}}",
     "source_collection": "dashboard_weekly_pipeline"

@@ -2,7 +2,7 @@
 
 This plan keeps distribution priorities straight:
 
-1. The public `0.2.1` line ships through PyPI, npm/npx, and MCPB artifacts.
+1. The public `0.2.3` line ships through PyPI, npm/npx, and MCPB artifacts.
 2. The main human setup path remains `full` with MongoDB Atlas; `sample` is an
    optional no-MongoDB trial.
 3. The npm package is a bootstrapper, not a second implementation of the MCP
@@ -12,7 +12,7 @@ This plan keeps distribution priorities straight:
 
 ## Current Decision
 
-The dependency-inclusive bootstrapper is available as `npx deal-intel-mcp`.
+The dependency-inclusive bootstrapper is available as `npx recruit-ai-mcp`.
 It is the preferred no-git-clone path when the user has Node.js 18+ and a
 usable Python 3.11+ interpreter.
 
@@ -29,7 +29,7 @@ The recommended path is:
 1. Publish or otherwise install the Python package from an immutable source.
 2. Use a Node `npx` bootstrapper as the user-friendly front door.
 3. Let that bootstrapper manage a Python runtime environment under
-   `~/.deal-intel/runtime`.
+   `~/.recruit-ai/runtime`.
 4. Keep MCPB as the Claude Desktop installer/config surface, but stop making it
    responsible for Python dependency installation.
 
@@ -37,8 +37,8 @@ The recommended path is:
 
 Supported today:
 
-- PyPI: `pip install "deal-intel-mcp[embedding]==0.2.1"`.
-- npm/npx: `npx deal-intel-mcp@0.2.1 setup --python <python-3.11+>`.
+- PyPI: `pip install "recruit-ai-mcp[embedding]==0.2.3"`.
+- npm/npx: `npx recruit-ai-mcp@0.2.3 setup --python <python-3.11+>`.
 - Git clone plus editable install for contributors and customizers.
 - Claude Desktop MCPB bundle that points at either the npx-managed Python
   runtime or a user-selected Python interpreter.
@@ -71,7 +71,7 @@ Current contract:
 
 Implication:
 
-- A plain wheel or `uvx deal-intel-mcp` install has the config/dashboard
+- A plain wheel or `uvx recruit-ai-mcp` install has the config/dashboard
   resources it needs.
 - A Node `npx` bridge can work around this by copying the npm package into a
   stable runtime directory and installing that copy in editable mode, but that
@@ -96,7 +96,7 @@ Tasks:
 - Add a wheel smoke:
   `python -m pip wheel . --no-deps --wheel-dir .tmp/wheelhouse`.
 - Install that wheel into an isolated env or temp target and run
-  `deal-intel config doctor --offline`.
+  `recruit-ai config doctor --offline`.
 
 Why first:
 
@@ -155,7 +155,7 @@ Current status:
 
 - D2.1 local artifact smoke is complete.
 - D2.2 clean wheel install smoke is complete.
-- PyPI `deal-intel-mcp==0.2.1` is published.
+- PyPI `recruit-ai-mcp==0.2.3` is published.
 - Local `--no-isolation` build produced both wheel and sdist artifacts.
 - The wheel installs into a temp target and can load packaged defaults, sample
   data, Atlas chart specs, chart-ready specs, Mongo validators, and vector-index
@@ -173,7 +173,7 @@ Current status:
   Windows build-isolation attempt hit a pip-output decoding issue while
   creating the isolated environment.
 - Fresh-install guidance and the npx bootstrapper should make smoke output
-  directories explicit, because a local Windows run found `~/.deal-intel/smoke`
+  directories explicit, because a local Windows run found `~/.recruit-ai/smoke`
   can be permission-sensitive on an already-used machine.
 - Locally built artifacts under `.tmp\d2_*_dist` can inherit restrictive
   Windows sandbox ACLs. Release automation should build/copy artifacts from a
@@ -183,9 +183,9 @@ Current status:
 Optional uvx-style target for future validation:
 
 ```bash
-uvx deal-intel-mcp config doctor --offline
-uvx deal-intel-mcp smoke-profile --profile sample
-uvx deal-intel-mcp smoke-natural-questions --as-of 2026-06-10
+uvx recruit-ai-mcp config doctor --offline
+uvx recruit-ai-mcp smoke-profile --profile sample
+uvx recruit-ai-mcp smoke-natural-questions --as-of 2026-06-10
 ```
 
 Implementation tasks:
@@ -200,9 +200,9 @@ Implementation tasks:
   - Mongo validators;
   - vector-index specs.
 - Add a clean wheel install smoke in a temporary environment. Done for D2.2:
-  - `deal-intel config doctor --offline`
-  - `deal-intel smoke-profile --profile sample`
-  - `deal-intel smoke-natural-questions --as-of 2026-06-10`
+  - `recruit-ai config doctor --offline`
+  - `recruit-ai smoke-profile --profile sample`
+  - `recruit-ai smoke-natural-questions --as-of 2026-06-10`
 - Keep dependency profile split explicit:
   - base install for config/read-only/sample features;
   - `embedding` extra for semantic search and product context.
@@ -224,7 +224,7 @@ Remaining risks:
 
 ### D3. Full npx bootstrapper
 
-Status: implemented and published for `0.2.1`.
+Status: implemented and published for `0.2.3`.
 
 Goal: provide a true no-git-clone command path for non-developer and
 AI-assisted setup.
@@ -232,17 +232,17 @@ AI-assisted setup.
 Current public UX:
 
 ```bash
-npx deal-intel-mcp setup
-npx deal-intel-mcp doctor
-npx deal-intel-mcp smoke
-npx deal-intel-mcp mcp
+npx recruit-ai-mcp setup
+npx recruit-ai-mcp doctor
+npx recruit-ai-mcp smoke
+npx recruit-ai-mcp mcp
 ```
 
 On machines where Python is installed but not discoverable, pass the
 interpreter explicitly:
 
 ```bash
-npx deal-intel-mcp setup --python /path/to/python
+npx recruit-ai-mcp setup --python /path/to/python
 ```
 
 Bootstrapper behavior:
@@ -252,21 +252,21 @@ Bootstrapper behavior:
 - Use Python `venv` plus `pip` as the portable baseline.
 - Future versions may optionally prefer `uv`, but `uv` is not required today.
 - Create or reuse:
-  - `~/.deal-intel/runtime/venv`
-  - `~/.deal-intel/runtime/bin` or Windows launcher scripts
-  - `~/.deal-intel/config.yaml`
+  - `~/.recruit-ai/runtime/venv`
+  - `~/.recruit-ai/runtime/bin` or Windows launcher scripts
+  - `~/.recruit-ai/config.yaml`
 - Install the Python package with the intended extras:
-  - default: `deal-intel-mcp[embedding]`
-  - lightweight option: `deal-intel-mcp`
+  - default: `recruit-ai-mcp[embedding]`
+  - lightweight option: `recruit-ai-mcp`
 - Run first checks:
-  - `deal-intel smoke-profile --profile sample`
-  - optional `deal-intel config doctor` after Mongo/API values are configured.
+  - `recruit-ai smoke-profile --profile sample`
+  - optional `recruit-ai config doctor` after Mongo/API values are configured.
 - Do not fail `setup` only because MongoDB or API values are not configured yet.
   Those are readiness/configuration issues for `doctor`, not installation
   failures.
 - Print the exact Python path for MCPB/Claude Desktop:
-  - Windows: `~/.deal-intel/runtime/venv/Scripts/python.exe`
-  - macOS/Linux: `~/.deal-intel/runtime/venv/bin/python`
+  - Windows: `~/.recruit-ai/runtime/venv/Scripts/python.exe`
+  - macOS/Linux: `~/.recruit-ai/runtime/venv/bin/python`
 - Optionally generate a Claude Desktop MCP config snippet for users who do not
   install via MCPB.
 - Never store secrets inside the npm package directory.
@@ -317,15 +317,15 @@ Recommended implementation split:
   - `mcp`
   - `where`
 - All commands should shell out to the installed Python package after setup.
-  `doctor`, `smoke`, and `mcp` already delegate when `DEAL_INTEL_PYTHON` or a
+  `doctor`, `smoke`, and `mcp` already delegate when `RECRUIT_AI_PYTHON` or a
   managed runtime Python exists. Full runtime installation is D3.3.
 
 #### D3.3 Runtime environment installer
 
 - Detect Python 3.11+. Initial implementation done.
 - Create the venv. Initial implementation done.
-- Install `deal-intel-mcp[embedding]`. Initial implementation done.
-- Cache installation state in `~/.deal-intel/runtime/install-state.json`.
+- Install `recruit-ai-mcp[embedding]`. Initial implementation done.
+- Cache installation state in `~/.recruit-ai/runtime/install-state.json`.
   Initial implementation done.
 - `uv` preference is still deferred; current implementation uses Python venv
   plus pip as the portable baseline.
@@ -333,9 +333,9 @@ Recommended implementation split:
 #### D3.4 MCP/Claude handoff
 
 - Print MCPB-ready Python path. Initial implementation done with
-  `deal-intel-mcp mcp-config`.
+  `recruit-ai-mcp mcp-config`.
 - Generate a copy-paste Claude Desktop config snippet. Initial implementation
-  done with `deal-intel-mcp mcp-config --json`.
+  done with `recruit-ai-mcp mcp-config --json`.
 - Keep MCPB as the nicer UI path when users already have the `.mcpb` artifact.
 
 #### D3.5 Fresh-machine smoke
@@ -352,9 +352,9 @@ Recommended implementation split:
 Current status:
 
 - Windows local-wheel fresh-runtime smoke passed with an isolated
-  `DEAL_INTEL_HOME`.
-- Python and npm package metadata are version-aligned at `0.2.1`.
-- PyPI and npm registry publication are complete for `0.2.1`.
+  `RECRUIT_AI_HOME`.
+- Python and npm package metadata are version-aligned at `0.2.3`.
+- PyPI and npm registry publication are complete for `0.2.3`.
 - `setup` now runs `smoke-profile --profile sample` as the post-install check
   so missing MongoDB/API values do not make the first install look broken.
 - `smoke --profile-only` and `mcp-config --json` passed from the managed

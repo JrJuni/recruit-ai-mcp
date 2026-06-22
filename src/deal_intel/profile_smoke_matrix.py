@@ -14,7 +14,7 @@ class ProfileSmokeContract:
 
     The matrix is intentionally diagnostic-only. It documents what should pass,
     warn, fail, or be deferred before future commands such as
-    `deal-intel smoke-profile` automate the checks.
+    `recruit-ai smoke-profile` automate the checks.
     """
 
     profile: ConfigProfileName

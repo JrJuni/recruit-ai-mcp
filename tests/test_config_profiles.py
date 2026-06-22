@@ -26,7 +26,7 @@ def test_sample_profile_is_zero_config_local_personal_default() -> None:
 
     assert profile.config_patch["storage"]["backend"] == "local_sample"
     assert profile.config_patch["storage"]["local_data_dir"] == (
-        "~/.deal-intel/local-data"
+        "~/.recruit-ai/local-data"
     )
     assert profile.config_patch["mongodb"]["vector_search"] == "python_cosine"
     assert "feature-test" in profile.description

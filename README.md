@@ -232,7 +232,7 @@ Presentation and spreadsheet files (`pptx`, `xlsx`) currently return warnings
 and are planned for a later parser pass.
 
 Product context is stored and cached locally under
-`~/.deal-intel/product-context` by default. Tool responses return snippets and
+`~/.recruit-ai/product-context` by default. Tool responses return snippets and
 source metadata, not full raw documents. Large catalog PDFs are supported through
 configurable source-file and chunk limits; check `index_product_context`
 warnings for `partial_indexed` when a very large file was only partly indexed.
@@ -1052,7 +1052,7 @@ spreadsheet-ready CSV ledgers, use `export_data` instead.
 | Parameter | Required | Description |
 |---|---|---|
 | `report_type` | optional | `weekly_pipeline` or `pipeline_trend`; defaults to `weekly_pipeline` |
-| `output_dir` | optional | Save path. Omitted -> `reporting.output_dir` or `~/.deal-intel/reports`; relative paths are scoped under `~/.deal-intel/` |
+| `output_dir` | optional | Save path. Omitted -> `reporting.output_dir` or `~/.recruit-ai/reports`; relative paths are scoped under `~/.recruit-ai/` |
 | `stage` | optional | Exact match against the stored stage |
 | `industry` | optional | Exact match against the stored industry |
 | `as_of` | optional | Base date for stuck/overdue calculation, `YYYY-MM-DD` |
@@ -1097,7 +1097,7 @@ Use `export_data` for spreadsheet work. It is not a narrative report tool.
 | Parameter | Required | Description |
 |---|---|---|
 | `dataset` | optional | `open_deals`, `all_deals`, or `closed_deals`; defaults to `open_deals` |
-| `output_dir` | optional | Save path. Omitted -> `reporting.data_output_dir`, `reporting.output_dir`, or `~/.deal-intel/reports`; relative paths are scoped under `~/.deal-intel/` |
+| `output_dir` | optional | Save path. Omitted -> `reporting.data_output_dir`, `reporting.output_dir`, or `~/.recruit-ai/reports`; relative paths are scoped under `~/.recruit-ai/` |
 | `stage` | optional | Exact match against the stored stage |
 | `industry` | optional | Exact match against the stored primary industry |
 | `as_of` | optional | Base date for stuck/overdue calculation, `YYYY-MM-DD` |
@@ -1482,7 +1482,7 @@ Weights (tunable in `config/defaults.yaml`):
 
 **Health-band configuration**:
 
-Defaults are Healthy >=70, Watch >=40, At Risk <40. These classify the level of qualification validation, not win probability, and can be changed in `~/.deal-intel/config.yaml` once you've accumulated operational data.
+Defaults are Healthy >=70, Watch >=40, At Risk <40. These classify the level of qualification validation, not win probability, and can be changed in `~/.recruit-ai/config.yaml` once you've accumulated operational data.
 
 ```yaml
 metrics:

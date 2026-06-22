@@ -34,7 +34,7 @@ The server exposes a profile-filtered MCP tool surface. The source of truth is:
 - profile/tool-surface contract: `src/deal_intel/tool_surfaces.py`
 
 Avoid hardcoding tool counts in docs. Use `get_tool_catalog`,
-`config_doctor`, or `deal-intel config show` to inspect the current visible
+`config_doctor`, or `recruit-ai config show` to inspect the current visible
 surface.
 
 ## Recruiting Fork Model
@@ -219,8 +219,8 @@ these should duplicate product logic.
 
 | Surface | Current role | Primary files | Notes |
 |---|---|---|---|
-| PyPI package | Immutable Python package source for runtime installs | `pyproject.toml`, packaged resources under `src/deal_intel/resources` | Published as `deal-intel-mcp==0.2.3`; base install excludes embedding dependencies unless the `embedding` extra is selected. |
-| npm/npx bootstrapper | No-git-clone setup, runtime creation, smoke, and MCP handoff | `npm/package.json`, `npm/bin/deal-intel-mcp.js`, `docs/bootstrapper-contract.md` | Published as `deal-intel-mcp@0.2.3`; still requires Node.js 18+ and Python 3.11+. It creates `~/.deal-intel/runtime/venv`, installs the matching PyPI package, and places the bundled MCPB under `~/.deal-intel/runtime/mcpb/`. |
+| PyPI package | Immutable Python package source for runtime installs | `pyproject.toml`, packaged resources under `src/deal_intel/resources` | Published as `recruit-ai-mcp==0.2.3`; base install excludes embedding dependencies unless the `embedding` extra is selected. |
+| npm/npx bootstrapper | No-git-clone setup, runtime creation, smoke, and MCP handoff | `npm/package.json`, `npm/bin/deal-intel-mcp.js`, `docs/bootstrapper-contract.md` | Published as `recruit-ai-mcp@0.2.3`; still requires Node.js 18+ and Python 3.11+. It creates `~/.recruit-ai/runtime/venv`, installs the matching PyPI package, and places the bundled MCPB under `~/.recruit-ai/runtime/mcpb/`. |
 | MCPB bundle | Claude Desktop installer/config surface | `mcpb/manifest.json`, `mcpb/server/launcher.py`, `mcpb/README.md` | It launches an already installed Python runtime. It should not install Python dependencies or store secrets in repo files. |
 | Git clone/editable install | Contributor and customizer path | repo root, `pyproject.toml`, docs | Best for developers who want to inspect or modify prompts, reports, storage, or framework logic. |
 
@@ -355,8 +355,8 @@ Default config:
 product_context:
   enabled: true
   source_dirs:
-    - ~/.deal-intel/product-context/sources
-  cache_dir: ~/.deal-intel/product-context/cache
+    - ~/.recruit-ai/product-context/sources
+  cache_dir: ~/.recruit-ai/product-context/cache
   max_source_file_mb: 100
   max_note_mb: 5
   max_chunks_per_file: 2000
@@ -616,13 +616,13 @@ In practice:
 Product context flows separately from deal evidence:
 
 1. User places seller-side docs under
-   `~/.deal-intel/product-context/sources`, passes a source directory to
+   `~/.recruit-ai/product-context/sources`, passes a source directory to
    `index_product_context`, or saves pasted host-app text through
    `add_product_context_note`.
 2. User runs `index_product_context`.
 3. `product_context.index_product_context(...)` scans supported files, skips
    secret-shaped content, chunks text, embeds chunks, and writes a local
-   manifest/chunk cache under `~/.deal-intel/product-context/cache`.
+   manifest/chunk cache under `~/.recruit-ai/product-context/cache`.
 4. `get_product_context` embeds the query and returns only bounded snippets
    plus `doc_id`, `chunk_id`, source name, file type, and score metadata.
 5. `add_interaction` uses the interaction content as a retrieval query before
@@ -803,7 +803,7 @@ records, all-deal records, or won/lost postmortem rows.
 
 1. `deal_intel.tools.export_data.handle`
    - validates `dataset`, filters, `as_of`, and output path;
-   - resolves output paths under `~/.deal-intel/reports` unless the caller
+   - resolves output paths under `~/.recruit-ai/reports` unless the caller
      passes an explicit absolute path;
    - reads deals through `MongoDBClient.list_deals_for_metrics()` or the active
      storage backend's equivalent restricted projection;
@@ -836,7 +836,7 @@ against the deterministic data pack before returning.
 1. `deal_intel.tools.export_report.handle`
    - validates `report_type`, filters, `as_of`, output path, and
      `reporting.language`;
-   - resolves output paths under `~/.deal-intel/reports` unless the caller
+   - resolves output paths under `~/.recruit-ai/reports` unless the caller
      passes an explicit absolute path;
    - reads deals through `MongoDBClient.list_deals_for_metrics()` or the active
      storage backend's equivalent restricted projection;

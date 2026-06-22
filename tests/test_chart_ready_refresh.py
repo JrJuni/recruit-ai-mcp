@@ -419,5 +419,5 @@ def test_cli_refresh_chart_ready_storage_error_includes_hint(monkeypatch) -> Non
     assert payload["dry_run"] is True
     assert payload["hint"]["operation"] == "mongo.refresh_chart_ready"
     assert payload["hint"]["likely_issue"] == "dns_or_network"
-    assert payload["hint"]["diagnostic_command"] == "deal-intel config doctor"
+    assert payload["hint"]["diagnostic_command"] == "recruit-ai config doctor"
     assert "secret" not in json.dumps(payload["hint"])

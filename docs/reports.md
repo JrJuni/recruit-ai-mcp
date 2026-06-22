@@ -453,7 +453,7 @@ For spreadsheet-first CSV ledgers, use `export_data` instead of
 | Parameter | Required | Contract |
 |---|---|---|
 | `report_type` | optional | Defaults to `weekly_pipeline`; other values fail preflight |
-| `output_dir` | optional | Explicit local directory. Defaults to `reporting.output_dir` or `~/.deal-intel/reports`; relative paths are scoped under `~/.deal-intel/` |
+| `output_dir` | optional | Explicit local directory. Defaults to `reporting.output_dir` or `~/.recruit-ai/reports`; relative paths are scoped under `~/.recruit-ai/` |
 | `stage` | optional | Exact valid stage match |
 | `industry` | optional | Exact stored industry match |
 | `as_of` | optional | `YYYY-MM-DD` business date for stuck/overdue calculations |
@@ -491,7 +491,7 @@ section text are localized.
     "priority_deals": []
   },
   "host_report_prompt": "## Host-App Report Polish Prompt\n...",
-  "output_dir": "<user-home>/.deal-intel/reports",
+  "output_dir": "<user-home>/.recruit-ai/reports",
   "artifacts": {
     "csv": {
       "path": "C:/absolute/path/weekly_pipeline_20260609_123456.csv",
@@ -603,7 +603,7 @@ CSV and Markdown artifacts.
 | Parameter | Required | Contract |
 |---|---|---|
 | `report_type` | optional | `pipeline_trend` for this report |
-| `output_dir` | optional | Explicit local directory. Defaults to `reporting.output_dir` or `~/.deal-intel/reports`; relative paths are scoped under `~/.deal-intel/` |
+| `output_dir` | optional | Explicit local directory. Defaults to `reporting.output_dir` or `~/.recruit-ai/reports`; relative paths are scoped under `~/.recruit-ai/` |
 | `stage` | optional | Exact valid snapshot `deal_stage` match |
 | `industry` | optional | Exact stored snapshot industry match |
 | `as_of` | optional | `YYYY-MM-DD` business end date |

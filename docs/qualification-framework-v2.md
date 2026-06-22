@@ -198,7 +198,7 @@ Contract:
     `restart_required`.
   - Side effects: dry-run by default. Actual writes require
     `confirmed_by_user=true` and only update non-secret user config under
-    `~/.deal-intel/config.yaml`.
+    `~/.recruit-ai/config.yaml`.
   - Out of scope: recomputing historical deals, rewriting existing
     interactions, changing extraction prompts, calling LLMs, touching MongoDB,
     and updating embeddings.

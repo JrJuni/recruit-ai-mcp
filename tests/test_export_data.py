@@ -408,7 +408,7 @@ def test_export_data_storage_error_includes_actionable_secret_safe_hint(
     assert isinstance(hint, dict)
     assert hint["operation"] == "export_data.read_deals"
     assert hint["likely_issue"] == "missing_mongodb_uri"
-    assert hint["diagnostic_command"] == "deal-intel config doctor"
+    assert hint["diagnostic_command"] == "recruit-ai config doctor"
     assert hint["next_actions"]
     serialized_hint = str(hint)
     assert "mongodb+srv" not in serialized_hint

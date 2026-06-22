@@ -50,7 +50,7 @@ metrics:
     watch_min: 40
 ```
 
-Override them in `~/.deal-intel/config.yaml`. Valid configuration must satisfy:
+Override them in `~/.recruit-ai/config.yaml`. Valid configuration must satisfy:
 
 ```text
 0 <= watch_min < healthy_min <= 100

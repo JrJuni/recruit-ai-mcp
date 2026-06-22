@@ -169,7 +169,7 @@ Required behavior:
 
 Optional:
 
-- `--live` may call `deal-intel config doctor` without `--offline`.
+- `--live` may call `recruit-ai config doctor` without `--offline`.
 
 ### `smoke`
 

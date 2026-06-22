@@ -37,7 +37,7 @@ Local personal storage should default to:
 
 ```yaml
 storage:
-  local_data_dir: ~/.deal-intel/local-data
+  local_data_dir: ~/.recruit-ai/local-data
 ```
 
 Users can override this directory through config tools before mutable local

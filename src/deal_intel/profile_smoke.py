@@ -42,7 +42,7 @@ def build_profile_smoke_report(
             {
                 "check_id": "profile_switch",
                 "action": (
-                    "Preview `deal-intel config switch "
+                    "Preview `recruit-ai config switch "
                     f"{contract.profile} --dry-run` before changing user config."
                 ),
             }

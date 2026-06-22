@@ -366,9 +366,9 @@ def test_export_report_uses_configured_pipeline_trend_language(tmp_path) -> None
 
 
 def test_export_report_default_output_dir_uses_user_home() -> None:
-    assert export_report.DEFAULT_OUTPUT_DIR == Path("~/.deal-intel/reports")
+    assert export_report.DEFAULT_OUTPUT_DIR == Path("~/.recruit-ai/reports")
     assert export_report._resolve_output_dir({}, None) == Path(
-        "~/.deal-intel/reports"
+        "~/.recruit-ai/reports"
     ).expanduser()
 
 
@@ -376,9 +376,9 @@ def test_export_report_legacy_relative_reports_dir_uses_user_home() -> None:
     assert export_report._resolve_output_dir(
         {"reporting": {"output_dir": "outputs/reports"}},
         None,
-    ) == Path("~/.deal-intel/reports").expanduser()
+    ) == Path("~/.recruit-ai/reports").expanduser()
     assert export_report._resolve_output_dir({}, "outputs/reports") == Path(
-        "~/.deal-intel/reports"
+        "~/.recruit-ai/reports"
     ).expanduser()
 
 
@@ -391,9 +391,9 @@ def test_export_report_relative_output_dir_is_user_home_scoped(
     assert export_report._resolve_output_dir(
         {"reporting": {"output_dir": "custom_reports"}},
         None,
-    ) == tmp_path / ".deal-intel" / "custom_reports"
+    ) == tmp_path / ".recruit-ai" / "custom_reports"
     assert export_report._resolve_output_dir({}, "nested/reports") == (
-        tmp_path / ".deal-intel" / "nested" / "reports"
+        tmp_path / ".recruit-ai" / "nested" / "reports"
     )
 
 
@@ -534,7 +534,7 @@ def test_export_report_storage_error_includes_actionable_secret_safe_hint(
     assert isinstance(hint, dict)
     assert hint["operation"] == "export_report.weekly_pipeline.read_deals"
     assert hint["likely_issue"] == "dns_or_network"
-    assert hint["diagnostic_command"] == "deal-intel config doctor"
+    assert hint["diagnostic_command"] == "recruit-ai config doctor"
     assert hint["next_actions"]
     serialized_hint = str(hint)
     assert "mongodb+srv" not in serialized_hint

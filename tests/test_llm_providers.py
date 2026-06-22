@@ -28,7 +28,7 @@ def test_openai_api_provider_ping_reports_missing_key(monkeypatch) -> None:
     assert provider.ping() == {
         "status": "missing_key",
         "message": "OPENAI_API_KEY not set",
-        "fix": "Set OPENAI_API_KEY in .env or ~/.deal-intel/config.yaml.",
+        "fix": "Set OPENAI_API_KEY in .env or ~/.recruit-ai/config.yaml.",
     }
 
 
