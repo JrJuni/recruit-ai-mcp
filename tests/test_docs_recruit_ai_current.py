@@ -1,5 +1,7 @@
 ﻿from pathlib import Path
 
+from scripts.validate_recruiting_smoke import EXPECTED_CONTRACT
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -63,9 +65,15 @@ def test_release_docs_and_workflows_use_recruit_ai_package_name() -> None:
     ) in release_workflow
     assert "smoke-evidence/recruiting-natural-questions.json" in staging_workflow
     assert "current 13-question recruiting pack" in release_docs
-    assert "`candidate_count=8`" in release_docs
-    assert "`written_record_count=27`" in release_docs
-    assert "`guardrail_candidate_count=4`" in release_docs
+    assert f"`candidate_count={EXPECTED_CONTRACT['candidate_count']}`" in release_docs
+    assert (
+        f"`written_record_count={EXPECTED_CONTRACT['written_record_count']}`"
+        in release_docs
+    )
+    assert (
+        f"`guardrail_candidate_count={EXPECTED_CONTRACT['guardrail_candidate_count']}`"
+        in release_docs
+    )
     assert (
         "python scripts/validate_recruiting_smoke.py "
         "smoke-evidence/recruiting-natural-questions.json"

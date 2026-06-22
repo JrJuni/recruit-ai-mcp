@@ -10,6 +10,7 @@ from typer.testing import CliRunner
 
 from deal_intel import _context
 from deal_intel.cli import _audit_deal_review_quality, _contains_sensitive_result_key, app
+from scripts.validate_recruiting_smoke import EXPECTED_CONTRACT
 
 MEDDPICC_DIMS = (
     "metrics",
@@ -542,8 +543,7 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
         text=True,
     )
     contract_payload = json.loads(contract.stdout)
-    assert contract_payload["contract"]["candidate_count"] == 8
-    assert contract_payload["contract"]["guardrail_candidate_count"] == 4
+    assert contract_payload["contract"] == EXPECTED_CONTRACT
     assert (output_dir / "rq01_recruiting_pipeline_metrics.json").exists()
     assert (output_dir / "rq02_candidates_for_northstar_backend.json").exists()
     assert (output_dir / "rq08_local_recruiting_data_safety.json").exists()
