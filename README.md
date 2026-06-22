@@ -385,7 +385,8 @@ Python install.
 
 ### npx install path
 
-For most users, start here:
+After the `recruit-ai-mcp@0.1.0` npm/PyPI packages are published and public
+fresh-smoke evidence is recorded, most users should start here:
 
 ```bash
 npx recruit-ai-mcp setup --python /path/to/python
@@ -394,7 +395,9 @@ npx recruit-ai-mcp mcp-config
 
 Use the Python path printed by `mcp-config` in Claude Desktop MCPB. Set
 `MONGODB_URI` through the MCPB install form, `.env`, or your shell environment.
-On Windows, use `npx.cmd` if PowerShell blocks `npx`.
+On Windows, use `npx.cmd` if PowerShell blocks `npx`. Until the public registry
+publication is complete, use the git clone/customization path below or the
+maintainer local-wheel smoke path in `docs/bootstrapper-fresh-smoke.md`.
 
 Detailed install guides:
 

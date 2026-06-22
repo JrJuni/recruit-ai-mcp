@@ -384,9 +384,18 @@ Completed:
   PyPI/npm publication and post-publish fresh smoke pass, while macOS
   fresh-machine smoke is tracked as external-machine evidence outside the local
   Windows pre-publish gate.
+- Added Work 7BI first-run npx publication boundary cleanup.
+  README and `AI_START_HERE.md` now present the npx bootstrapper as the normal
+  no-git-clone path after public `recruit-ai-mcp@0.1.0` npm/PyPI publication
+  and fresh-smoke evidence, while pointing pre-publication users to editable
+  install or the maintainer local-wheel smoke path.
 
 Validation:
 
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-first-run-npx-pending tests\test_docs_recruit_ai_current.py`
+  -> 13 passed.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-mvp-readiness-public-gate tests\test_docs_recruit_ai_current.py`
   -> 12 passed.
 - `ruff check src tests` -> passed.

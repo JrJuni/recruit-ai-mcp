@@ -43,9 +43,10 @@ First classify the user's setup and choose one route. Keep the human product
 default as `full`; the route only decides how the package gets installed.
 
 - Non-developer: use the npx bootstrapper after installing Node.js 18+ and
-  Python 3.11+.
-- Python/VS Code/Warp already exists: use npx for fast usage, or git clone /
-  editable install for customization.
+  Python 3.11+, once the public `recruit-ai-mcp@0.1.0` npm/PyPI packages are
+  published and smoke evidence exists.
+- Python/VS Code/Warp already exists: use npx for fast usage after publication,
+  or git clone / editable install for customization before publication.
 - Developer/infra engineer: let them use their own Python environment,
   editable install, PyPI install, or npx by preference.
 
@@ -131,8 +132,8 @@ new local setup, the recommended environment name is `deal-intel`:
 & "$HOME\miniconda3\envs\deal-intel\python.exe" -c "import sys; print(sys.executable)"
 ```
 
-If the user wants the no-git-clone install path, run the npx bootstrapper with
-the Python path you just found:
+If the user wants the no-git-clone install path after public registry
+publication, run the npx bootstrapper with the Python path you just found:
 
 ```powershell
 npx.cmd recruit-ai-mcp setup --python "$HOME\miniconda3\envs\deal-intel\python.exe"
@@ -143,6 +144,9 @@ The bootstrapper creates a managed runtime under `~/.recruit-ai/runtime`,
 installs the Python package, runs a sample smoke check, and prints the Python
 interpreter path to use in MCPB or manual MCP config. It still requires Node.js
 and Python to be installed first.
+
+Until public registry smoke passes, use the editable install below or the
+maintainer local-wheel smoke path in `docs/bootstrapper-fresh-smoke.md`.
 
 If the user wants to inspect or customize source code, have them clone or
 download the repo, open a terminal in the repo root, and run:

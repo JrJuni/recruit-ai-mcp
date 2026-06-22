@@ -179,6 +179,20 @@ def test_ai_start_here_matches_current_tool_counts() -> None:
     assert "`developer`: 42 tools" not in docs
 
 
+def test_first_run_docs_gate_npx_until_publication() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    ai_start = (ROOT / "AI_START_HERE.md").read_text(encoding="utf-8")
+
+    assert "After the `recruit-ai-mcp@0.1.0` npm/PyPI packages are published" in readme
+    assert "Until the public registry\npublication is complete" in readme
+    assert "docs/bootstrapper-fresh-smoke.md" in readme
+
+    assert "once the public `recruit-ai-mcp@0.1.0` npm/PyPI packages are" in ai_start
+    assert "use npx for fast usage after publication" in ai_start
+    assert "If the user wants the no-git-clone install path after public registry" in ai_start
+    assert "Until public registry smoke passes" in ai_start
+
+
 def test_tool_surface_docs_match_current_counts_and_env_prefix() -> None:
     docs = (ROOT / "docs" / "tool-surfaces.md").read_text(encoding="utf-8")
     normalized = " ".join(docs.split())
