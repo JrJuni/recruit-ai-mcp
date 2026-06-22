@@ -42,6 +42,11 @@ Completed:
   deterministic prefixed IDs when omitted, return stored safe records, and wrap
   validation/storage failures in MCP-style errors. Public MCP registration is
   still deferred.
+- Added Work 2D internal lifecycle services for interactions, submissions, and
+  feedback. Interaction responses hide `raw_content` by default, submissions
+  can store fit snapshots, and feedback can link itself to
+  `submission.client_feedback_ids` while still preserving feedback capture when
+  the submission is missing.
 
 Validation:
 
@@ -56,6 +61,10 @@ Validation:
   -> dry-run passed for `recruit_ai`, including recruiting schemas.
 - `PYTHONPATH=src python -m deal_intel.cli mongo doctor --offline --json`
   -> passed with `recruit_ai` and `python_cosine`.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2d tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py`
+  -> 35 passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2d-final tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py tests\test_mcpb_manifest.py tests\test_storage_backend_selection.py`
+  -> 74 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2c tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py`

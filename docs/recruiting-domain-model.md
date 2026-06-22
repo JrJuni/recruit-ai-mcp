@@ -345,6 +345,33 @@ Service policy:
 - The service calls the typed storage wrappers from Work 2B, so timestamps and
   raw-content projection policy remain centralized.
 
+## Work 2D Internal Lifecycle Services
+
+Work 2D extends the same internal service module to recruiting lifecycle
+records. It still does not register public MCP tools.
+
+Service entry points:
+
+- `add_recruiting_interaction`
+- `create_submission`
+- `add_client_feedback`
+
+Lifecycle policy:
+
+- Interactions are validated through `RecruitingInteraction` and stored through
+  the typed storage wrapper.
+- Interaction `raw_content` may be stored, but service responses use the safe
+  read wrapper and do not return raw content by default.
+- Submissions are validated through `Submission` and may store a fit snapshot
+  from the recommendation/scoring layer.
+- Feedback is validated through `ClientFeedback`.
+- Feedback against `subject_type="submission"` attempts to append the feedback
+  ID to `submission.client_feedback_ids`.
+- Missing submissions do not block feedback capture; the service returns a
+  warning and leaves the feedback stored.
+- Validation and storage errors use the same secret-safe MCP-style error
+  envelope policy as Work 2C.
+
 ## Out Of Scope For Work 1
 
 - No storage migration.

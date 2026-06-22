@@ -8,8 +8,11 @@ from deal_intel.errors import ErrorCode, MCPError, Stage
 from deal_intel.schema.recruiting import (
     CandidateProfile,
     ClientCompany,
+    ClientFeedback,
     CompensationExpectation,
     Position,
+    RecruitingInteraction,
+    Submission,
 )
 from deal_intel.storage.identifiers import suggest_slug
 
@@ -139,6 +142,154 @@ def create_position(
     )
 
 
+def add_recruiting_interaction(
+    mongo: Any,
+    *,
+    subject_type: str,
+    subject_id: str,
+    interaction_type: str,
+    interaction_id: str | None = None,
+    direction: str = "mixed",
+    source_confidence: str = "unknown",
+    participants: list[str] | None = None,
+    occurred_at: str = "",
+    summary: str = "",
+    raw_content: str = "",
+) -> dict[str, Any]:
+    interaction = _validate_model(
+        RecruitingInteraction,
+        {
+            "interaction_id": interaction_id
+            or _generated_id("int", f"{subject_type}_{subject_id}_{interaction_type}"),
+            "subject_type": subject_type,
+            "subject_id": subject_id,
+            "interaction_type": interaction_type,
+            "direction": direction,
+            "source_confidence": source_confidence,
+            "participants": participants or [],
+            "occurred_at": occurred_at,
+            "summary": summary,
+            "raw_content": raw_content,
+        },
+        entity="interaction",
+    )
+    _store_or_raise(
+        mongo.append_recruiting_interaction,
+        interaction,
+        entity="interaction",
+    )
+    record = (
+        mongo.get_recruiting_interaction(interaction.interaction_id)
+        or _safe_interaction_record(interaction.model_dump(mode="json"))
+    )
+    return _create_response(
+        entity="interaction",
+        id_field="interaction_id",
+        record=record,
+        warnings=[],
+    )
+
+
+def create_submission(
+    mongo: Any,
+    *,
+    candidate_id: str,
+    position_id: str,
+    submission_id: str | None = None,
+    status: str = "draft",
+    submitted_at: str = "",
+    fit_snapshot: dict[str, Any] | None = None,
+    client_feedback_ids: list[str] | None = None,
+    next_step: str = "",
+) -> dict[str, Any]:
+    submission = _validate_model(
+        Submission,
+        {
+            "submission_id": submission_id
+            or _generated_id("sub", f"{candidate_id}_{position_id}"),
+            "candidate_id": candidate_id,
+            "position_id": position_id,
+            "status": status,
+            "submitted_at": submitted_at,
+            "fit_snapshot": fit_snapshot,
+            "client_feedback_ids": client_feedback_ids or [],
+            "next_step": next_step,
+        },
+        entity="submission",
+    )
+    _store_or_raise(mongo.upsert_submission, submission, entity="submission")
+    record = (
+        mongo.get_submission(submission.submission_id)
+        or submission.model_dump(mode="json")
+    )
+    return _create_response(
+        entity="submission",
+        id_field="submission_id",
+        record=record,
+        warnings=[],
+    )
+
+
+def add_client_feedback(
+    mongo: Any,
+    *,
+    subject_type: str,
+    subject_id: str,
+    feedback_id: str | None = None,
+    position_id: str | None = None,
+    candidate_id: str | None = None,
+    sentiment: str = "neutral",
+    decision_signal: str = "needs_more_info",
+    rubric_deltas: dict[str, int] | None = None,
+    preference_learning: list[str] | None = None,
+    summary: str = "",
+    link_submission: bool = True,
+) -> dict[str, Any]:
+    feedback = _validate_model(
+        ClientFeedback,
+        {
+            "feedback_id": feedback_id or _generated_id("fb", f"{subject_type}_{subject_id}"),
+            "subject_type": subject_type,
+            "subject_id": subject_id,
+            "position_id": position_id,
+            "candidate_id": candidate_id,
+            "sentiment": sentiment,
+            "decision_signal": decision_signal,
+            "rubric_deltas": rubric_deltas or {},
+            "preference_learning": preference_learning or [],
+            "summary": summary,
+        },
+        entity="feedback",
+    )
+    _store_or_raise(mongo.add_client_feedback, feedback, entity="feedback")
+    link_result = _link_feedback_to_submission(
+        mongo,
+        feedback_id=feedback.feedback_id,
+        subject_type=feedback.subject_type,
+        subject_id=feedback.subject_id,
+        enabled=link_submission,
+    )
+    record = mongo.get_feedback(feedback.feedback_id) or feedback.model_dump(mode="json")
+    warnings = []
+    if link_result["status"] == "missing_submission":
+        warnings.append(
+            {
+                "code": "submission_not_found",
+                "message": "Feedback was stored, but the referenced submission was not found.",
+                "submission_id": feedback.subject_id,
+            }
+        )
+    return {
+        **_create_response(
+            entity="feedback",
+            id_field="feedback_id",
+            record=record,
+            warnings=warnings,
+        ),
+        "submission_link": link_result,
+    }
+
+
 def _generated_id(prefix: str, source: str) -> str:
     base = suggest_slug(source).lower().replace("-", "_")
     base = base.strip("_") or prefix
@@ -179,6 +330,43 @@ def _store_or_raise(store_fn: Any, model: Any, *, entity: str) -> None:
             hint="Check MongoDB connectivity and the recruiting collection contract.",
             retryable=True,
         ) from exc
+
+
+def _link_feedback_to_submission(
+    mongo: Any,
+    *,
+    feedback_id: str,
+    subject_type: str,
+    subject_id: str,
+    enabled: bool,
+) -> dict[str, Any]:
+    if not enabled or subject_type != "submission":
+        return {"status": "skipped"}
+    try:
+        submission = mongo.get_submission(subject_id)
+    except Exception as exc:
+        raise MCPError(
+            error_code=ErrorCode.STORAGE_ERROR,
+            stage=Stage.STORAGE,
+            message=f"failed to read submission for feedback link: {type(exc).__name__}",
+            hint="Check MongoDB connectivity and the recruiting collection contract.",
+            retryable=True,
+        ) from exc
+    if submission is None:
+        return {"status": "missing_submission", "submission_id": subject_id}
+    feedback_ids = list(submission.get("client_feedback_ids") or [])
+    if feedback_id in feedback_ids:
+        return {"status": "already_linked", "submission_id": subject_id}
+    feedback_ids.append(feedback_id)
+    submission["client_feedback_ids"] = feedback_ids
+    _store_or_raise(mongo.upsert_submission, submission, entity="submission")
+    return {"status": "linked", "submission_id": subject_id}
+
+
+def _safe_interaction_record(record: dict[str, Any]) -> dict[str, Any]:
+    safe = dict(record)
+    safe.pop("raw_content", None)
+    return safe
 
 
 def _create_response(

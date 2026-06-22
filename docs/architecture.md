@@ -43,8 +43,9 @@ surface.
 intelligence codebase. Work 0 isolated public package/config/runtime defaults;
 Work 1 added the recruiting domain contract; Work 2A added Mongo-managed
 recruiting collections beside the inherited deal collections; Work 2B added
-storage payload normalization and typed internal read wrappers; Work 2C adds
-internal create services without changing MCP tool registration.
+storage payload normalization and typed internal read wrappers; Work 2C added
+internal create services; Work 2D adds internal lifecycle services without
+changing MCP tool registration.
 
 The recruiting schema source is:
 
@@ -98,6 +99,12 @@ positions: input dicts are validated with the recruiting Pydantic models,
 missing IDs are generated with entity prefixes, storage failures become
 retryable `STORAGE_ERROR` responses, and validation failures become secret-safe
 `INVALID_INPUT` responses. Public MCP registration remains deferred.
+
+Work 2D extends that module for interactions, submissions, and feedback.
+Interaction responses keep raw content hidden by default. Feedback can be
+captured even when the referenced submission is missing; when the submission is
+present, the service links `feedback_id` into `submission.client_feedback_ids`.
+Public MCP registration remains deferred.
 
 ## Product Profiles
 
