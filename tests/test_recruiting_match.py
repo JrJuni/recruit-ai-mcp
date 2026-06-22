@@ -182,6 +182,39 @@ def test_candidate_position_fit_inverts_candidate_risk_flags() -> None:
     }
 
 
+def test_candidate_position_fit_penalizes_learned_negative_client_preference() -> None:
+    result = build_candidate_position_fit(
+        candidate=_candidate(
+            preferences={
+                "notes": "Needs heavy role shaping before client interviews.",
+            },
+            risk_flags=["needs heavy role shaping"],
+        ),
+        position=_position(ideal_candidate_examples=[]),
+        client_feedback=[
+            {
+                "feedback_id": "fb_orbitpay_preference",
+                "subject_type": "client_company",
+                "subject_id": "client_orbitpay",
+                "position_id": "pos_backend_lead",
+                "sentiment": "neutral",
+                "decision_signal": "preference_update",
+                "preference_learning": [
+                    "Rejects candidates who need heavy role-shaping before interviews.",
+                ],
+            }
+        ],
+    )
+
+    assert result.signals["client_preference_fit"].score == 1
+    assert result.signals["client_preference_fit"].rationale == (
+        "Candidate profile overlaps learned negative client preference text."
+    )
+    assert "Review client preference conflict before shortlisting." in (
+        result.signals["client_preference_fit"].missing_info
+    )
+
+
 def test_candidate_position_fit_ignores_unrelated_feedback_for_risk() -> None:
     result = build_candidate_position_fit(
         candidate=_candidate(),

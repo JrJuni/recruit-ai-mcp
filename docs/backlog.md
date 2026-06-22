@@ -99,6 +99,9 @@ Immediate quality order:
    - Additional stress coverage now includes a Northstar healthcare platform
      keyword match whose manager-only scope, passive availability, and
      compensation constraints should not outrank the aligned staff IC match.
+   - Additional stress coverage now includes an OrbitPay payments candidate
+     whose strong stack match is outweighed by a learned negative client
+     preference for candidates who need heavy role shaping before interviews.
    - Continue adding synthetic client/candidate examples that stress skills,
      domain, seniority, compensation, location, availability, client
      preferences, and risk.

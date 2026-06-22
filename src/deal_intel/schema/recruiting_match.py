@@ -17,6 +17,44 @@ from deal_intel.schema.recruiting import (
 from deal_intel.schema.recruiting_fit import build_fit_snapshot
 
 _WORD_RE = re.compile(r"[a-z0-9]+")
+_NEGATIVE_PREFERENCE_TERMS = (
+    "reject",
+    "rejects",
+    "rejected",
+    "avoid",
+    "avoids",
+    "without",
+    "not enough",
+    "heavy role",
+    "role-shaping",
+    "role shaping",
+)
+_LOW_SIGNAL_WORDS = frozenset(
+    {
+        "a",
+        "an",
+        "and",
+        "are",
+        "before",
+        "candidate",
+        "candidates",
+        "for",
+        "heavy",
+        "need",
+        "needs",
+        "not",
+        "or",
+        "profiles",
+        "reject",
+        "rejects",
+        "rejected",
+        "the",
+        "this",
+        "to",
+        "who",
+        "with",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -393,6 +431,27 @@ def _client_preference_signal(
             evidence_refs=[*evidence, *feedback_evidence],
         )
 
+    preference_text = _feedback_preference_text(feedback)
+    candidate_text = [
+        candidate.headline,
+        candidate.current_title,
+        *candidate.skills,
+        *candidate.domains,
+        *candidate.preferences.desired_titles,
+        *candidate.preferences.preferred_domains,
+        candidate.preferences.notes,
+        *candidate.risk_flags,
+    ]
+    if _matches_negative_preference(
+        _feedback_preference_learning_text(applicable_feedback),
+        candidate_text,
+    ):
+        return FitSignal(
+            score=1,
+            rationale="Candidate profile overlaps learned negative client preference text.",
+            evidence_refs=[*evidence, *feedback_evidence],
+            missing_info=["Review client preference conflict before shortlisting."],
+        )
     if applicable_feedback:
         preference_score = 3
         for item in applicable_feedback:
@@ -407,16 +466,6 @@ def _client_preference_signal(
             rationale="Client feedback provides explicit preference signal for this match.",
             evidence_refs=[*evidence, *feedback_evidence],
         )
-
-    preference_text = _feedback_preference_text(feedback)
-    candidate_text = [
-        candidate.headline,
-        candidate.current_title,
-        *candidate.skills,
-        *candidate.domains,
-        *candidate.preferences.desired_titles,
-        *candidate.preferences.preferred_domains,
-    ]
     if preference_text and _matched_items(preference_text, candidate_text):
         return FitSignal(
             score=4,
@@ -514,6 +563,39 @@ def _matched_items(required: Iterable[str], observed: Iterable[str]) -> list[str
     return matched
 
 
+def _matches_negative_preference(
+    preference_text: Iterable[str],
+    candidate_text: Iterable[str],
+) -> bool:
+    candidate_token_sets = []
+    for item in candidate_text:
+        tokens = _content_tokens(item)
+        if len(tokens) >= 2:
+            candidate_token_sets.append(tokens)
+    for item in preference_text:
+        normalized = _normalize_phrase(item)
+        if not normalized:
+            continue
+        if not any(term in normalized for term in _NEGATIVE_PREFERENCE_TERMS):
+            continue
+        preference_tokens = _content_tokens(item)
+        if len(preference_tokens) < 2:
+            continue
+        for candidate_tokens in candidate_token_sets:
+            overlap = preference_tokens & candidate_tokens
+            if len(overlap) >= 2:
+                return True
+    return False
+
+
+def _content_tokens(value: str) -> set[str]:
+    return {
+        token
+        for token in _tokens(value)
+        if token not in _LOW_SIGNAL_WORDS and len(token) > 2
+    }
+
+
 def _has_exact_match(left: Iterable[str], right: Iterable[str]) -> bool:
     right_phrases = {_normalize_phrase(item) for item in right if _normalize_phrase(item)}
     return any(_normalize_phrase(item) in right_phrases for item in left if _normalize_phrase(item))
@@ -585,6 +667,15 @@ def _feedback_preference_text(feedback: list[ClientFeedback]) -> list[str]:
         text
         for item in feedback
         for text in [*item.preference_learning, item.summary]
+        if text
+    ]
+
+
+def _feedback_preference_learning_text(feedback: list[ClientFeedback]) -> list[str]:
+    return [
+        text
+        for item in feedback
+        for text in item.preference_learning
         if text
     ]
 

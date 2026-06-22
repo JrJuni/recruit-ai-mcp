@@ -250,3 +250,33 @@ def test_recruiting_sample_junior_keyword_match_does_not_outrank_senior_fit() ->
         "needs senior mentorship for platform lead scope",
         "review_match_risk",
     ]
+
+
+def test_recruiting_sample_client_preference_conflict_does_not_outrank_match() -> None:
+    records = build_sample_recruiting_records(loaded_at="2026-06-22T00:00:00+00:00")
+    positions = {row["position_id"]: row for row in records[POSITIONS]}
+
+    run = build_position_candidate_recommendation_run(
+        position=positions["pos_orbitpay_payments_lead"],
+        candidates=records[CANDIDATES],
+        client_feedback=records[FEEDBACK],
+        limit=8,
+    )
+
+    results = {result.target_id: result for result in run.results}
+
+    assert run.results[0].target_id == "cand_mateo_rivera"
+    assert results["cand_sam_taylor"].rank > results["cand_mateo_rivera"].rank
+    assert results["cand_sam_taylor"].fit_snapshot.overall_score < (
+        results["cand_mateo_rivera"].fit_snapshot.overall_score
+    )
+    assert (
+        results["cand_sam_taylor"]
+        .fit_snapshot.dimensions["client_preference_fit"]
+        .score
+        == 1
+    )
+    assert results["cand_sam_taylor"].risk_flags == [
+        "needs heavy role shaping",
+        "review_match_risk",
+    ]

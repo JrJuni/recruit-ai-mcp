@@ -18,7 +18,7 @@ from deal_intel.storage.recruiting_collections import (
 DATASET_WEEKLY_PIPELINE = "weekly_pipeline_demo"
 DATASET_RECRUITING_PIPELINE = "recruiting_pipeline_demo"
 DEAL_DATASET_VERSION = "2026-06-14.v2"
-RECRUITING_DATASET_VERSION = "2026-06-22.v3"
+RECRUITING_DATASET_VERSION = "2026-06-22.v4"
 SAMPLE_BATCH_ID = f"{DATASET_WEEKLY_PIPELINE}:{DEAL_DATASET_VERSION}"
 RECRUITING_SAMPLE_BATCH_ID = (
     f"{DATASET_RECRUITING_PIPELINE}:{RECRUITING_DATASET_VERSION}"
@@ -499,6 +499,50 @@ def _base_recruiting_records(*, loaded_at: str) -> dict[str, list[dict]]:
             "created_at": loaded_at,
             "updated_at": loaded_at,
         },
+        {
+            "candidate_id": "cand_sam_taylor",
+            "name": "Sam Taylor",
+            "headline": "Payments platform engineer who needs role shaping",
+            "current_company": "RiskRail",
+            "current_title": "Senior Payments Engineer",
+            "skills": ["Payments", "Kafka", "Risk", "Java", "Kotlin"],
+            "domains": ["fintech", "payments", "risk operations"],
+            "seniority": "senior",
+            "compensation_expectation": {
+                "currency": "USD",
+                "minimum": 175000,
+                "target": 195000,
+                "maximum": 215000,
+                "period": "annual",
+                "note": "Aligned with OrbitPay's current range.",
+            },
+            "locations": ["New York", "Remote US"],
+            "work_authorization": "US authorized",
+            "availability": "30 days",
+            "preferences": {
+                "desired_titles": ["Payments Platform Lead", "Senior Payments Engineer"],
+                "preferred_domains": ["fintech", "payments"],
+                "preferred_locations": ["New York", "Remote US"],
+                "remote_preference": "remote-first",
+                "excluded_companies": [],
+                "notes": "Needs heavy role shaping before client interviews.",
+            },
+            "risk_flags": ["needs heavy role shaping"],
+            "evidence": [
+                {
+                    "evidence_id": "ev_sam_profile",
+                    "source_type": "profile",
+                    "source_id": "cand_sam_taylor",
+                    "summary": (
+                        "Sam has strong payments stack coverage but needs a "
+                        "carefully shaped mandate before client interviews."
+                    ),
+                    "confidence": "candidate_stated",
+                }
+            ],
+            "created_at": loaded_at,
+            "updated_at": loaded_at,
+        },
     ]
     positions = [
         {
@@ -652,6 +696,23 @@ def _base_recruiting_records(*, loaded_at: str) -> dict[str, list[dict]]:
             "summary": "Strong analytics profile, but not enough backend platform depth.",
             "created_at": "2026-06-18T12:30:00+00:00",
         },
+        {
+            "feedback_id": "fb_orbitpay_role_shaping_preference",
+            "subject_type": "client_company",
+            "subject_id": "client_orbitpay",
+            "position_id": "pos_orbitpay_payments_lead",
+            "sentiment": "neutral",
+            "decision_signal": "preference_update",
+            "rubric_deltas": {},
+            "preference_learning": [
+                "Rejects candidates who need heavy role-shaping before interviews.",
+            ],
+            "summary": (
+                "OrbitPay wants candidates who can enter the process without "
+                "heavy role shaping."
+            ),
+            "created_at": "2026-06-18T16:45:00+00:00",
+        },
     ]
     interactions = [
         {
@@ -721,6 +782,22 @@ def _base_recruiting_records(*, loaded_at: str) -> dict[str, list[dict]]:
             "summary": (
                 "Iris matches OrbitPay's payments stack but is early-career "
                 "for a platform lead mandate."
+            ),
+            "raw_content": "",
+            "evidence_refs": [],
+        },
+        {
+            "interaction_id": "int_sam_screen",
+            "subject_type": "candidate",
+            "subject_id": "cand_sam_taylor",
+            "interaction_type": "candidate_screen",
+            "direction": "inbound",
+            "source_confidence": "candidate_stated",
+            "participants": ["Sam Taylor", "Recruiter"],
+            "occurred_at": "2026-06-21T17:00:00+00:00",
+            "summary": (
+                "Sam matches OrbitPay's stack but needs heavy role shaping "
+                "before client interviews."
             ),
             "raw_content": "",
             "evidence_refs": [],
