@@ -86,3 +86,21 @@ def test_backlog_current_stream_is_recruit_ai_first() -> None:
     assert "deal-intel-mcp==0.2.1" not in current
     assert "deal-intel-mcp@0.2.1" not in current
     assert "mcpb pack . deal-intel-mcp" not in current
+
+
+def test_agent_entry_docs_are_recruit_ai_first() -> None:
+    for relative in ("AGENTS.md", "CLAUDE.md"):
+        docs = (ROOT / relative).read_text(encoding="utf-8")
+
+        assert "`recruit-ai-mcp` is a bootstrap fork" in docs
+        assert "recruit_ai" in docs
+        assert "RECRUIT_AI_STORAGE_BACKEND" in docs
+        assert "create_candidate" in docs
+        assert "add_recruiting_interaction" in docs
+        assert "recommend_candidates_for_position" in docs
+        assert "get_recruiting_metrics" in docs
+        assert "Avoid hardcoding current tool counts" in docs
+
+        assert "`deal-intel-mcp` is an MCP server for B2B deal intelligence" not in docs
+        assert "Current tool count: 42" not in docs
+        assert "DEAL_INTEL_STORAGE_BACKEND='local_sample'" not in docs

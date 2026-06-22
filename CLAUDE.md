@@ -6,9 +6,15 @@ working with this repository. Keep it current and compact. Put long history in
 
 ## Project North Star
 
-`deal-intel-mcp` is an MCP server for B2B deal intelligence. It turns meeting
-notes into MEDDPICC signals, stores deal state, and exposes BI/reporting tools
-that Claude, Codex, ChatGPT, CSV exports, and Atlas Charts can use.
+`recruit-ai-mcp` is a bootstrap fork of `deal-intel-mcp` for recruiter and
+search-firm intelligence. Work 0 isolates public metadata, CLI alias, config
+paths, env prefix, local paths, and MongoDB defaults while the Python package
+still uses `deal_intel` internals. The first recruiting MCP tools now coexist
+with inherited deal-intelligence compatibility tools during the staged cutover.
+
+Default MongoDB databases are `recruit_ai` and `recruit_ai_demo`. Atlas M0 uses
+the existing Python cosine search path; do not apply Atlas Vector Search unless
+the user intentionally moves to paid M10+ infrastructure.
 
 The product direction is one repository / one package with three profiles:
 
@@ -27,7 +33,8 @@ Do not read every doc by default. Start here:
 4. `docs/status.md` for the latest completed work.
 5. `docs/baseline.md` for MCP tool contracts.
 6. `docs/metrics.md`, `docs/reports.md`, `docs/storage-backends.md`, or
-   `docs/config-profiles.md` only when the task touches that area.
+   `docs/config-profiles.md` only when the task touches that area, including
+   recruiting pipeline metrics or recruiting report exports.
 
 Append-only or historical docs such as `docs/lesson-learned.md` and old
 sections of `docs/backlog.md` are archive material. Search them for a specific
@@ -72,7 +79,7 @@ Useful CLI checks:
 For temporary zero-config sample mode:
 
 ```powershell
-$env:DEAL_INTEL_STORAGE_BACKEND='local_sample'
+$env:RECRUIT_AI_STORAGE_BACKEND='local_sample'
 ```
 
 ## Working Loop
@@ -116,16 +123,25 @@ unless the maintainer explicitly asks for that automation.
 
 ## Current MCP Tool Surface
 
-Source of truth: `src/deal_intel/mcp_server.py`.
+Source of truth:
 
-Current tool count: 42 registered tools (test-enforced by the tool-surface
-tests; see `src/deal_intel/mcp_server.py`). The categories below are a curated
-subset for orientation, not the full enumeration.
+- registration: `src/deal_intel/mcp_server.py`
+- profile filtering and user-intent grouping: `src/deal_intel/tool_surfaces.py`
+- runtime escape hatch: call `get_tool_catalog`
+
+Avoid hardcoding current tool counts in agent-facing docs unless a test updates
+the number in the same change.
 
 - Config/readiness: `config_doctor`, `update_config`
+- Discovery: `get_tool_catalog`
 - Product context (seller-side RAG, runtime-configured): `add_product_context_note`,
   `index_product_context`, `get_product_context`
-- Write/lifecycle: `create_deal`, `add_interaction`, `update_stage`,
+- Recruiting write/recommendation: `create_candidate`,
+  `create_client_company`, `create_position`, `add_recruiting_interaction`,
+  `create_submission`, `add_client_feedback`, `recommend_candidates_for_position`,
+  `recommend_positions_for_candidate`, `get_recruiting_metrics`,
+  `export_recruiting_report`
+- Deal write/lifecycle compatibility: `create_deal`, `add_interaction`, `update_stage`,
   `update_deal`, `archive_deal`, `restore_deal`, `delete_deal`
 - Deprecated compatibility: `add_meeting` (developer surface only; use
   `add_interaction` with `interaction_type: meeting` for new work)
@@ -136,6 +152,12 @@ subset for orientation, not the full enumeration.
 - Developer-only raw read: `get_deal_raw` (requires explicit confirmation,
   reason, and raw include flag; embeddings remain excluded)
 - BI/reporting: `get_insights`, `get_metrics`, `get_usage`, `export_report`
+- Data export: `export_data`
+- Qualification framework admin: `get_qualification_templates`,
+  `validate_qualification_framework`, `update_qualification_framework`,
+  `list_qualification_frameworks`, `set_active_qualification_framework`,
+  `delete_qualification_framework`, `backfill_qualification`,
+  `backfill_qualification_reextract`
 - User memory: `get_user_memory`, `record_user_memory`
 - Customer themes: `get_customer_themes`, `get_customer_theme_breakdown`,
   `get_customer_theme_evidence`
@@ -171,8 +193,9 @@ subset for orientation, not the full enumeration.
   archive.
 - `docs/backlog.md`: current backlog index first, historical roadmap below.
 - `docs/baseline.md`: MCP tool contracts and verification baseline.
-- `docs/metrics.md`: BI metric definitions and boundary contracts.
-- `docs/reports.md`: CSV/Markdown report contracts.
+- `docs/metrics.md`: deal BI and recruiting pipeline metric definitions and
+  boundary contracts.
+- `docs/reports.md`: deal and recruiting CSV/Markdown report contracts.
 - `docs/storage-backends.md`: Mongo vs local sample storage contract.
 - `docs/config-profiles.md`: `sample/full/pro` profile plan.
 - `docs/lesson-learned.md`: append-only failure log; search it when debugging.

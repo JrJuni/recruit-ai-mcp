@@ -225,6 +225,10 @@ Completed:
   with the active Recruit AI bootstrap roadmap, current completed baseline,
   immediate quality order, and deferrals, while the inherited Deal Intelligence
   v1/v2 roadmap is explicitly marked as historical archive material.
+- Added Work 7AE Claude agent guide cleanup. `CLAUDE.md` now matches the
+  Recruit AI north star, `RECRUIT_AI_*` sample-mode guidance, recruiting-first
+  MCP surface orientation, and no-hardcoded-tool-count rule already used by
+  `AGENTS.md`.
 
 Validation:
 
@@ -379,6 +383,9 @@ Validation:
 - `ruff check src tests` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-backlog-docs tests\test_docs_recruit_ai_current.py`
   -> 4 passed.
+- `ruff check src tests` -> passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-agent-docs tests\test_docs_recruit_ai_current.py`
+  -> 5 passed.
 - `ruff check src tests` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
