@@ -158,6 +158,21 @@ def test_tool_surface_docs_match_current_counts_and_env_prefix() -> None:
     assert "`developer`: 42 tools" not in docs
 
 
+def test_mongodb_atlas_pro_docs_use_recruit_ai_cli() -> None:
+    docs = (ROOT / "docs" / "mongodb-atlas-pro.md").read_text(encoding="utf-8")
+
+    assert "`recruit-ai render-atlas-dashboard`" in docs
+    assert "`recruit-ai mongo refresh-chart-ready`" in docs
+    assert "`recruit-ai mongo doctor`" in docs
+    assert "`recruit-ai mongo apply-vector-index`" in docs
+    assert "`src/deal_intel/cli.py`" in docs
+
+    assert "deal-intel render-atlas-dashboard" not in docs
+    assert "deal-intel mongo refresh-chart-ready" not in docs
+    assert "deal-intel mongo doctor" not in docs
+    assert "deal-intel mongo apply-vector-index" not in docs
+
+
 def test_baseline_distinguishes_historical_smoke_from_current_surface() -> None:
     docs = (ROOT / "docs" / "baseline.md").read_text(encoding="utf-8")
     normalized = " ".join(docs.split())

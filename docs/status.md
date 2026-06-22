@@ -324,9 +324,19 @@ Completed:
   `docs/distribution-plan.md` now lists the current first-run bootstrapper
   handoff commands, including `smoke --profile-only`, `mcpb`, and
   `mcp-config`, before the lower-level `mcp` server command.
+- Added Work 7AX Atlas/pro CLI doc cleanup.
+  `docs/mongodb-atlas-pro.md` now uses the current `recruit-ai` CLI alias for
+  Atlas dashboard rendering, chart-ready refresh, Mongo doctor, ordinary index
+  and schema maintenance, and guarded pro-only vector index commands while
+  retaining inherited `deal_intel` internal module paths during the staged
+  package cutover.
 
 Validation:
 
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-mongodb-atlas-pro-docs tests\test_docs_recruit_ai_current.py tests\test_atlas_charts.py`
+  -> 37 passed.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-bootstrapper-handoff-docs tests\test_docs_recruit_ai_current.py tests\test_bootstrapper_skeleton.py`
   -> 25 passed.
 - `ruff check src tests` -> passed.

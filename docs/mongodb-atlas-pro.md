@@ -55,12 +55,12 @@ Customer Themes chart ids:
 
 | Surface | Owner | Classification | Notes |
 |---|---|---|---|
-| `deal-intel render-atlas-dashboard` | `src/deal_intel/cli.py`, `reports/atlas_charts.py` | `full` compatible | Renders dashboard JSON or one chart pipeline for Atlas UI copy/paste. No DB writes. |
-| `deal-intel crosscheck-weekly-dashboard` | `src/deal_intel/cli.py`, `reports/dashboard_crosscheck.py` | `full` compatible | Compares `get_metrics`, report output, and Atlas aggregation output. Requires Mongo reads and local report writes. |
-| `deal-intel mongo doctor` | `src/deal_intel/mongo_doctor.py` | `full` compatible | Read-only check for URI, ping, ordinary indexes, collection validators, and vector mode. |
-| `deal-intel mongo apply-indexes` | `src/deal_intel/cli.py`, `mongo_contracts.py` | `full` compatible | Dry-run by default; applies ordinary indexes only with `--apply`. |
-| `deal-intel mongo apply-schema` | `src/deal_intel/cli.py`, `mongo_contracts.py` | `full` compatible | Dry-run by default; applies permissive validators only with `--apply`. |
-| `deal-intel mongo apply-vector-index` | `src/deal_intel/cli.py`, `atlas_vector_indexes.py` | `pro` only | Dry-run by default; apply requires Atlas Vector Search support on M10+. |
+| `recruit-ai render-atlas-dashboard` | `src/deal_intel/cli.py`, `reports/atlas_charts.py` | `full` compatible | Renders dashboard JSON or one chart pipeline for Atlas UI copy/paste. No DB writes. |
+| `recruit-ai crosscheck-weekly-dashboard` | `src/deal_intel/cli.py`, `reports/dashboard_crosscheck.py` | `full` compatible | Compares `get_metrics`, report output, and Atlas aggregation output. Requires Mongo reads and local report writes. |
+| `recruit-ai mongo doctor` | `src/deal_intel/mongo_doctor.py` | `full` compatible | Read-only check for URI, ping, ordinary indexes, collection validators, and vector mode. |
+| `recruit-ai mongo apply-indexes` | `src/deal_intel/cli.py`, `mongo_contracts.py` | `full` compatible | Dry-run by default; applies ordinary indexes only with `--apply`. |
+| `recruit-ai mongo apply-schema` | `src/deal_intel/cli.py`, `mongo_contracts.py` | `full` compatible | Dry-run by default; applies permissive validators only with `--apply`. |
+| `recruit-ai mongo apply-vector-index` | `src/deal_intel/cli.py`, `atlas_vector_indexes.py` | `pro` only | Dry-run by default; apply requires Atlas Vector Search support on M10+. |
 | `search_deals` with `mongodb.vector_search: python_cosine` | `tools/search_deals.py`, `storage/mongodb.py` | `full` compatible | Uses Mongo-backed embeddings plus Python cosine. |
 | `search_deals` with `mongodb.vector_search: atlas` | `tools/search_deals.py`, `storage/mongodb.py` | `pro` only | Uses `$vectorSearch`; must not silently fall back to Python cosine. |
 
@@ -134,17 +134,17 @@ cases in `docs/pro-fallback-errors.md`.
 
 - Chart-ready contracts, refresh engine, packaged chart-ready Atlas specs, and
   Mongo doctor checks are implemented.
-- `deal-intel mongo refresh-chart-ready` materializes:
+- `recruit-ai mongo refresh-chart-ready` materializes:
   - `dashboard_weekly_pipeline`
   - `dashboard_customer_themes`
   - `dashboard_pipeline_trend`
 - Chart-ready rows are deterministic and LLM-free. They must not include raw
   notes, contacts, embeddings, secrets, or full product-context documents.
-- `deal-intel render-atlas-dashboard --source chart-ready` renders simplified
+- `recruit-ai render-atlas-dashboard --source chart-ready` renders simplified
   Atlas chart specs that target the dashboard collections.
-- `deal-intel mongo doctor` reports chart-ready presence, freshness, schema
+- `recruit-ai mongo doctor` reports chart-ready presence, freshness, schema
   version, and row-count warnings.
-- `deal-intel mongo apply-vector-index` supports dry-run/apply and treats an
+- `recruit-ai mongo apply-vector-index` supports dry-run/apply and treats an
   existing vector index name as an idempotent `already_exists` result.
 - Atlas Vector Search was live-smoked once on disposable M10 infrastructure,
   then the workspace was migrated back to M0/free with `python_cosine`.
@@ -165,14 +165,14 @@ cases in `docs/pro-fallback-errors.md`.
      customer-theme, and trend engines;
    - no LLM or embedding calls;
    - command:
-     `deal-intel mongo refresh-chart-ready --target all --as-of YYYY-MM-DD`
+     `recruit-ai mongo refresh-chart-ready --target all --as-of YYYY-MM-DD`
      and add `--apply` only after reviewing dry-run output.
 3. MDB-3 simplified Atlas specs:
    - status: implemented;
    - target chart-ready collections;
    - keep old raw aggregation specs as reference;
    - render with:
-     `deal-intel render-atlas-dashboard --source chart-ready --as-of YYYY-MM-DD`;
+     `recruit-ai render-atlas-dashboard --source chart-ready --as-of YYYY-MM-DD`;
    - specs live in `atlas/chart_ready/*.v1.json` and packaged copies under
      `src/deal_intel/resources/atlas/chart_ready/*.v1.json`.
 4. MDB-4 doctor/cross-check:
@@ -201,8 +201,8 @@ After migrating back to the M0/free cluster:
 
 1. Apply current collection validators for `deals` and `analytics_snapshots`.
 2. Refresh chart-ready rows:
-   `deal-intel mongo refresh-chart-ready --target all --as-of YYYY-MM-DD --apply`
-3. Re-run `deal-intel mongo doctor --json` and confirm only expected warnings
+   `recruit-ai mongo refresh-chart-ready --target all --as-of YYYY-MM-DD --apply`
+3. Re-run `recruit-ai mongo doctor --json` and confirm only expected warnings
    remain.
 4. Smoke Atlas Charts UI from `dashboard_*` collections.
 5. Keep Atlas Vector Search in `pro` only; M0/full should remain on
