@@ -268,6 +268,34 @@ Scoring policy:
 - The output is a validated `FitSnapshot`, per-dimension normalized scores,
   and warnings.
 
+## Work 3B Candidate-Position Fit Builder
+
+Work 3B adds a deterministic candidate-position fit builder on top of the Work
+3A scoring engine. It still does not use LLMs, embeddings, storage, or MCP tool
+registration.
+
+Builder policy:
+
+- Inputs are a `CandidateProfile`, a `Position`, and optional client feedback
+  records. Plain dictionaries from storage reads are accepted and validated
+  through the same Pydantic models.
+- The builder emits all eight default fit dimensions:
+  `skill_fit`, `domain_fit`, `seniority_fit`, `compensation_fit`,
+  `location_fit`, `availability_fit`, `client_preference_fit`, and `risk`.
+- Skill fit is based on must-have and nice-to-have coverage against captured
+  candidate skills.
+- Domain fit compares candidate domain history with role context and learned
+  preference text.
+- Seniority, compensation, location, and availability use deterministic
+  field-to-field comparisons and expose missing-information questions when the
+  comparison is under-specified.
+- Client preference fit uses ideal-candidate examples first, then applicable
+  feedback and learned preference text.
+- Risk remains directionally inverted by the Work 3A rubric. Candidate risk
+  flags and negative feedback increase raw risk.
+- The output is a validated `FitSnapshot`, per-dimension normalized scores,
+  raw dimension signals, and structured warnings.
+
 ## Collections For Work 2
 
 Recommended Mongo collections:

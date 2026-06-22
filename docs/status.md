@@ -52,6 +52,11 @@ Completed:
   weights, inverts `risk`, penalizes missing dimensions, and returns structured
   warnings for missing dimensions, missing evidence, missing information, and
   low normalized scores.
+- Added Work 3B candidate-position fit builder. It validates candidate,
+  position, and optional feedback inputs, derives deterministic dimension
+  signals for the recruiting fit rubric, and delegates aggregate scoring to the
+  Work 3A scoring engine without storage, LLM, embedding, or MCP registration
+  side effects.
 
 Validation:
 
@@ -72,6 +77,8 @@ Validation:
   -> 74 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-3a-final tests\test_recruiting_fit.py tests\test_recruiting_schema.py tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_mongo_contracts.py tests\test_mcpb_manifest.py tests\test_storage_backend_selection.py`
   -> 80 passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-3b-final tests\test_recruiting_match.py tests\test_recruiting_fit.py tests\test_recruiting_schema.py tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_mongo_contracts.py tests\test_mcpb_manifest.py tests\test_storage_backend_selection.py`
+  -> 86 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2c tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py`

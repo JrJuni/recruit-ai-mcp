@@ -114,6 +114,13 @@ dimensions, and returns structured warnings for missing dimensions, missing
 evidence, open information gaps, and low normalized dimension scores. It is
 pure logic only: no LLM, storage, embeddings, or MCP registration.
 
+Work 3B adds the candidate-position fit builder in
+`src/deal_intel/schema/recruiting_match.py`. It validates candidate, position,
+and optional feedback inputs, derives all eight recruiting fit signals with
+deterministic heuristics, and delegates aggregate scoring to the Work 3A engine.
+It is the reusable pre-ranking layer for future recommendation tools; it does
+not call storage, embeddings, LLMs, or MCP registration.
+
 ## Product Profiles
 
 The project uses one repository and one package with three profiles:
