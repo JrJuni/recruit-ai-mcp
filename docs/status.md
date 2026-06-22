@@ -111,6 +111,9 @@ Completed:
   `rq13_client_shortlist_readiness`, which verifies open sample positions have
   ranked candidate shortlists plus visible review risks and next-question
   signals.
+- Updated the MVP readiness recruiting workflow smoke gate to require the
+  current 13-question pack and document recommendation guardrail plus client
+  shortlist readiness coverage.
 - Added Work 6A recruiting pipeline metrics calculator. It computes summary
   counts, position status rates, submission funnel rates, feedback signal
   rates, and data-quality counters from safe recruiting records without
