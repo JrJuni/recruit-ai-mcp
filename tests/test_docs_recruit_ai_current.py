@@ -104,3 +104,18 @@ def test_agent_entry_docs_are_recruit_ai_first() -> None:
         assert "`deal-intel-mcp` is an MCP server for B2B deal intelligence" not in docs
         assert "Current tool count: 42" not in docs
         assert "DEAL_INTEL_STORAGE_BACKEND='local_sample'" not in docs
+
+
+def test_tool_surface_docs_match_current_counts_and_env_prefix() -> None:
+    docs = (ROOT / "docs" / "tool-surfaces.md").read_text(encoding="utf-8")
+    normalized = " ".join(docs.split())
+
+    assert "`sample`: 34 tools" in docs
+    assert "`standard`: 48 tools" in docs
+    assert "`developer`: 52 tools" in docs
+    assert "RECRUIT_AI_TOOLS_SURFACE" in docs
+    assert "DEAL_INTEL_TOOLS_SURFACE` remains a compatibility fallback" in normalized
+
+    assert "`sample`: 24 tools" not in docs
+    assert "`standard`: 38 tools" not in docs
+    assert "`developer`: 42 tools" not in docs

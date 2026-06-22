@@ -229,6 +229,10 @@ Completed:
   Recruit AI north star, `RECRUIT_AI_*` sample-mode guidance, recruiting-first
   MCP surface orientation, and no-hardcoded-tool-count rule already used by
   `AGENTS.md`.
+- Added Work 7AF tool-surface docs count cleanup. `docs/tool-surfaces.md` now
+  reflects the current profile-filtered counts, `sample=34`, `standard=48`,
+  and `developer=52`, and documents `RECRUIT_AI_TOOLS_SURFACE` as the primary
+  runtime override with `DEAL_INTEL_TOOLS_SURFACE` as a compatibility fallback.
 
 Validation:
 
@@ -386,6 +390,9 @@ Validation:
 - `ruff check src tests` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-agent-docs tests\test_docs_recruit_ai_current.py`
   -> 5 passed.
+- `ruff check src tests` -> passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-tool-surface-docs tests\test_docs_recruit_ai_current.py tests\test_tool_surfaces.py tests\test_mcpb_manifest.py`
+  -> 51 passed, 1 third-party warning.
 - `ruff check src tests` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.

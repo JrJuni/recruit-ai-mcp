@@ -172,9 +172,9 @@ Behavior:
 
 Current exposed counts:
 
-- `sample`: 24 tools
-- `standard`: 38 tools
-- `developer`: 42 tools
+- `sample`: 34 tools
+- `standard`: 48 tools
+- `developer`: 52 tools
 
 Implementation notes:
 
@@ -185,5 +185,6 @@ Implementation notes:
 - Some host apps show only a few top matches from their own tool search. This
   is not necessarily a server loading failure; call `get_tool_catalog` to see
   the complete current surface.
-- `DEAL_INTEL_TOOLS_SURFACE` can override the configured surface for smoke
-  tests or packaged installs.
+- `RECRUIT_AI_TOOLS_SURFACE` can override the configured surface for smoke
+  tests or packaged installs. `DEAL_INTEL_TOOLS_SURFACE` remains a
+  compatibility fallback for older bundles.
