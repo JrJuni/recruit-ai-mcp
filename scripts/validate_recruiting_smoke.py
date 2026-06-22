@@ -17,6 +17,7 @@ EXPECTED_CONTRACT = {
     "guardrails_with_next_questions": 5,
     "guardrail_risk_row_count": 5,
     "guardrail_next_question_row_count": 5,
+    "guardrail_dimension_score_row_count": 5,
     "candidate_position_available_count": 2,
     "candidate_position_excluded_count": 1,
     "open_position_count": 2,
@@ -32,6 +33,16 @@ _REQUIRED_QUESTIONS = (
     "rq11_local_recruiting_persistence",
     "rq12_recommendation_guardrails",
     "rq13_client_shortlist_readiness",
+)
+_REQUIRED_FIT_DIMENSIONS = (
+    "skill_fit",
+    "domain_fit",
+    "seniority_fit",
+    "compensation_fit",
+    "location_fit",
+    "availability_fit",
+    "client_preference_fit",
+    "risk",
 )
 
 
@@ -94,6 +105,9 @@ def validate_payload(payload: dict[str, Any]) -> dict[str, Any]:
         "guardrail_next_question_row_count": _guardrail_row_count(
             guardrail_payload,
             field="guardrail_next_questions",
+        ),
+        "guardrail_dimension_score_row_count": _guardrail_dimension_score_row_count(
+            guardrail_payload
         ),
         "candidate_position_available_count": _required_key(
             candidate_positions,
@@ -252,6 +266,41 @@ def _guardrail_row_count(payload: dict[str, Any], *, field: str) -> int:
             )
         if values:
             count += 1
+    return count
+
+
+def _guardrail_dimension_score_row_count(payload: dict[str, Any]) -> int:
+    guardrails = _required_key(
+        payload,
+        "guardrails",
+        scope="rq12_recommendation_guardrails payload",
+    )
+    if not isinstance(guardrails, list):
+        raise ValueError("Recruiting smoke rq12 guardrails must be a list.")
+    count = 0
+    for guardrail_index, guardrail in enumerate(guardrails):
+        if not isinstance(guardrail, dict):
+            raise ValueError("Recruiting smoke rq12 guardrail rows must be mappings.")
+        scores = _required_key(
+            guardrail,
+            "guardrail_dimension_scores",
+            scope=f"rq12_recommendation_guardrails guardrail {guardrail_index}",
+        )
+        if not isinstance(scores, dict):
+            raise ValueError(
+                "Recruiting smoke rq12 guardrail_dimension_scores must be a mapping."
+            )
+        missing = [
+            dimension
+            for dimension in _REQUIRED_FIT_DIMENSIONS
+            if dimension not in scores
+        ]
+        if missing:
+            raise ValueError(
+                "Recruiting smoke rq12 guardrail_dimension_scores missing "
+                + ", ".join(missing)
+            )
+        count += 1
     return count
 
 

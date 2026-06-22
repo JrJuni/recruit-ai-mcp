@@ -134,7 +134,8 @@ Completed:
 - Tightened the recruiting smoke validator for `rq12_recommendation_guardrails`.
   The guardrail summary and quick-read now include risk-flag and next-question
   coverage counts, and validation checks that all five guardrail rows carry
-  concrete risk/question evidence.
+  concrete risk/question evidence plus all eight recruiting fit dimension
+  scores.
 - Added a specific `work_authorization_mismatch` recommendation risk flag so
   shortlist rows expose authorization conflicts directly instead of only
   generic review/high-risk labels.

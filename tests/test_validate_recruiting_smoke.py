@@ -9,6 +9,16 @@ from scripts.validate_recruiting_smoke import EXPECTED_CONTRACT, validate_payloa
 
 ROOT = Path(__file__).resolve().parents[1]
 VALIDATOR = ROOT / "scripts" / "validate_recruiting_smoke.py"
+GUARDRAIL_DIMENSION_SCORES = {
+    "skill_fit": 5,
+    "domain_fit": 5,
+    "seniority_fit": 5,
+    "compensation_fit": 5,
+    "location_fit": 5,
+    "availability_fit": 5,
+    "client_preference_fit": 1,
+    "risk": 2,
+}
 
 
 def _payload(
@@ -66,6 +76,7 @@ def _payload(
                     "guardrails": [
                         {
                             "guardrail_candidate_id": "cand_nora_weiss",
+                            "guardrail_dimension_scores": dict(GUARDRAIL_DIMENSION_SCORES),
                             "guardrail_risk_flags": ["work_authorization_mismatch"],
                             "guardrail_next_questions": [
                                 "Confirm work authorization or sponsorship feasibility."
@@ -73,6 +84,7 @@ def _payload(
                         },
                         {
                             "guardrail_candidate_id": "cand_jordan_lee",
+                            "guardrail_dimension_scores": dict(GUARDRAIL_DIMENSION_SCORES),
                             "guardrail_risk_flags": ["client_exclusion"],
                             "guardrail_next_questions": [
                                 "Confirm required skill: Python"
@@ -80,6 +92,7 @@ def _payload(
                         },
                         {
                             "guardrail_candidate_id": "cand_iris_kim",
+                            "guardrail_dimension_scores": dict(GUARDRAIL_DIMENSION_SCORES),
                             "guardrail_risk_flags": ["review_match_risk"],
                             "guardrail_next_questions": [
                                 "Improve evidence for seniority_fit."
@@ -87,6 +100,7 @@ def _payload(
                         },
                         {
                             "guardrail_candidate_id": "cand_eli_brooks",
+                            "guardrail_dimension_scores": dict(GUARDRAIL_DIMENSION_SCORES),
                             "guardrail_risk_flags": ["high_match_risk"],
                             "guardrail_next_questions": [
                                 "Confirm whether candidate is open to an IC mandate."
@@ -94,6 +108,7 @@ def _payload(
                         },
                         {
                             "guardrail_candidate_id": "cand_sam_taylor",
+                            "guardrail_dimension_scores": dict(GUARDRAIL_DIMENSION_SCORES),
                             "guardrail_risk_flags": ["client_preference_conflict"],
                             "guardrail_next_questions": [
                                 "Review client preference conflict before shortlisting."
@@ -275,6 +290,28 @@ def test_validate_recruiting_smoke_cli_fails_without_guardrail_evidence(tmp_path
     assert "Recruiting natural-question smoke contract mismatch" in result.stderr
     assert "'guardrail_risk_row_count': 5" in result.stderr
     assert "'guardrail_next_question_row_count': 5" in result.stderr
+
+
+def test_validate_recruiting_smoke_cli_fails_without_guardrail_dimensions(tmp_path) -> None:
+    payload = _payload()
+    guardrails = next(
+        question
+        for question in payload["questions"]
+        if question["id"] == "rq12_recommendation_guardrails"
+    )
+    del guardrails["payload"]["guardrails"][0]["guardrail_dimension_scores"]["risk"]
+    payload_path = tmp_path / "recruiting-natural-questions.json"
+    payload_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = subprocess.run(
+        [sys.executable, str(VALIDATOR), str(payload_path)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    assert "guardrail_dimension_scores missing risk" in result.stderr
 
 
 def test_validate_recruiting_smoke_cli_fails_without_shortlist_evidence(tmp_path) -> None:

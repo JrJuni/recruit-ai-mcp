@@ -82,7 +82,8 @@ Immediate quality order:
      availability, seniority, or scope constraints matter.
    - Recommendation guardrail smoke now records compact risk-flag and
      next-question coverage counts, and the validator checks that guardrail
-     evidence rows actually carry those fields.
+     evidence rows actually carry those fields plus all eight recruiting fit
+     dimension scores.
    - Candidate-to-position smoke now shows open-role defaults and the paused
      sample role excluded from first-pass recommendations, including a compact
      quick-read summary in CLI smoke output.
