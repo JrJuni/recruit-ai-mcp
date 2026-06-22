@@ -1309,7 +1309,7 @@ def local_data_migrate_to_mongo(
         help="Print structured JSON instead of concise text.",
     ),
 ) -> None:
-    """Migrate user-created local personal deals into MongoDB."""
+    """Migrate user-created local personal deal and recruiting records into MongoDB."""
 
     from deal_intel import _env
     from deal_intel.errors import Stage, envelope_from_exception
@@ -2604,13 +2604,14 @@ def _format_local_data_migration(payload: dict) -> str:
         f"Source data dir: {source.get('data_dir')}",
         f"Target MongoDB database: {target.get('database')}",
         f"Source deals: {counts.get('source_deals')}",
+        f"Source recruiting records: {counts.get('source_recruiting_records')}",
         f"Would create: {counts.get('would_create')}",
         f"Would overwrite: {counts.get('would_overwrite')}",
         f"Would skip existing: {counts.get('would_skip_existing')}",
         f"Storage written: {payload.get('storage_written')}",
     ]
     if payload.get("dry_run"):
-        lines.append("Run again with --apply to write these local deals to MongoDB.")
+        lines.append("Run again with --apply to write these local records to MongoDB.")
     else:
         lines.extend(
             [

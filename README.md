@@ -509,7 +509,7 @@ recruit-ai local-data export
 recruit-ai local-data reset          # dry-run
 recruit-ai local-data reset --force  # clears local deals/recruiting, preserves audit logs
 recruit-ai local-data migrate-to-mongo          # dry-run
-recruit-ai local-data migrate-to-mongo --apply  # writes local deals to MongoDB
+recruit-ai local-data migrate-to-mongo --apply  # writes local records to MongoDB
 ```
 
 The bundled fictional deal fixture is immutable. After local personal deals
@@ -517,10 +517,10 @@ exist, the fixture is hidden from active deal reads instead of being mixed with
 your data. Zero-config recruiting records are stored in local
 `recruiting.json`, so you can create a client, role, candidate, feedback, and
 first recommendation without MongoDB. The dry-run-first local-to-MongoDB
-migration command currently migrates only user-created local personal deals,
-never bundled fixture records or local recruiting records. If no local personal
-deals exist yet, the dry-run returns immediately and skips MongoDB target
-readiness checks.
+migration command migrates user-created local personal deals and recruiting
+records, never bundled fixture records or local delete audit logs. If no local
+personal records exist yet, the dry-run returns immediately and skips MongoDB
+target readiness checks.
 
 ---
 

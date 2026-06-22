@@ -702,7 +702,7 @@ MCP_TOOL_SURFACE_CONTRACTS: tuple[MCPToolSurfaceContract, ...] = (
         user_facing=True,
         db_writes=True,
         llm_calls=False,
-        notes="Dry-run-first local personal deals to MongoDB graduation path.",
+        notes="Dry-run-first local personal deal/recruiting to MongoDB path.",
     ),
     MCPToolSurfaceContract(
         name="create_sample_data",

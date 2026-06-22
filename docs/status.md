@@ -198,6 +198,10 @@ Completed:
   now persists recruiting records in local personal `recruiting.json`, exposes
   the safe non-LLM recruiting workflow on the `sample` tool surface, and keeps
   raw recruiting interaction content out of local sample storage.
+- Added Work 7Y local recruiting migration support. `migrate_local_data` and
+  `local-data migrate-to-mongo` now migrate user-created local recruiting
+  records from `recruiting.json` alongside local deals, with dry-run/apply,
+  skip-existing, and overwrite behavior preserved for all migrated records.
 
 Validation:
 
@@ -331,6 +335,12 @@ Validation:
   -> 82 passed, 1 third-party warning.
 - `ruff check src\deal_intel\storage\local_personal.py src\deal_intel\storage\local_sample.py src\deal_intel\tool_surfaces.py src\deal_intel\config_doctor.py src\deal_intel\cli.py tests\test_local_sample_backend.py tests\test_local_data_cli.py tests\test_tool_surfaces.py tests\test_cli_config_profiles.py tests\test_config_doctor.py`
   -> passed.
+- `git diff --check` -> passed; Windows line-ending warnings only.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-local-migration-final tests\test_local_data_migration.py tests\test_local_data_cli.py tests\test_local_sample_backend.py tests\test_tool_surfaces.py tests\test_mcpb_manifest.py`
+  -> 77 passed, 1 third-party warning.
+- `ruff check src\deal_intel\tools\migrate_local_data.py src\deal_intel\cli.py src\deal_intel\mcp_server.py src\deal_intel\tool_surfaces.py tests\test_local_data_migration.py tests\test_local_data_cli.py`
+  -> passed.
+- `mcpb validate mcpb\manifest.json` -> passed.
 - `git diff --check` -> passed; Windows line-ending warnings only.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.

@@ -1482,12 +1482,12 @@ def migrate_local_data(
     dry_run: bool = True,
     overwrite: bool = False,
 ) -> dict:
-    """Migrate user-created local personal deals into MongoDB.
+    """Migrate user-created local personal deal and recruiting records into MongoDB.
 
     Bundled zero-config fixture records are never migrated. Defaults to
     dry_run=true and writes nothing. Actual writes require
-    confirmed_by_user=true. Existing target deals are skipped unless overwrite
-    is true.
+    confirmed_by_user=true. Existing target records are skipped unless
+    overwrite is true.
     """
     try:
         from deal_intel import _context

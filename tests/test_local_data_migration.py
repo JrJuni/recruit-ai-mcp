@@ -19,11 +19,14 @@ class FakeMongo:
         *,
         database: str = "deal_intel",
         existing: dict[str, dict] | None = None,
+        existing_recruiting: dict[str, dict[str, dict]] | None = None,
         ping_status: str = "ok",
     ) -> None:
         self.database_name = database
         self.existing = deepcopy(existing or {})
+        self.existing_recruiting = deepcopy(existing_recruiting or {})
         self.upserted: list[dict] = []
+        self.upserted_recruiting: list[tuple[str, dict]] = []
         self.ping_status = ping_status
         self.ping_count = 0
 
@@ -38,6 +41,19 @@ class FakeMongo:
     def upsert_deal(self, deal: dict) -> None:
         self.upserted.append(deepcopy(deal))
         self.existing[deal["deal_id"]] = deepcopy(deal)
+
+    def get_recruiting_record(self, collection: str, record_id: str) -> dict | None:
+        record = self.existing_recruiting.get(collection, {}).get(record_id)
+        return deepcopy(record) if record is not None else None
+
+    def upsert_recruiting_record(self, collection: str, record: dict) -> None:
+        from deal_intel.storage.recruiting_collections import recruiting_id_field
+
+        id_field = recruiting_id_field(collection)
+        self.upserted_recruiting.append((collection, deepcopy(record)))
+        self.existing_recruiting.setdefault(collection, {})[record[id_field]] = deepcopy(
+            record
+        )
 
 
 def _write_sample_config(monkeypatch, tmp_path) -> None:
@@ -72,6 +88,22 @@ def _seed_store(tmp_path) -> LocalPersonalStore:
             "summary_embedding": [0.1, 0.2],
         }
     )
+    store.upsert_recruiting_record(
+        "candidates",
+        {
+            "candidate_id": "cand_local_migrate",
+            "name": "Local Migration Candidate",
+        },
+    )
+    store.upsert_recruiting_record(
+        "positions",
+        {
+            "position_id": "pos_local_migrate",
+            "client_company_id": "client_local_migrate",
+            "title": "Local Migration Role",
+            "status": "open",
+        },
+    )
     return store
 
 
@@ -85,16 +117,24 @@ def test_migration_dry_run_classifies_creates_without_writing(tmp_path) -> None:
     assert result["ok"] is True
     assert result["dry_run"] is True
     assert result["storage_written"] is False
-    assert result["counts"]["would_create"] == 1
-    assert result["counts"]["would_write"] == 1
+    assert result["counts"]["would_create"] == 3
+    assert result["counts"]["source_deals"] == 1
+    assert result["counts"]["source_recruiting_records"] == 2
+    assert result["counts"]["source_records"] == 3
+    assert result["counts"]["would_write"] == 3
     assert result["deals"][0]["action"] == "create"
+    assert {row["collection"] for row in result["recruiting"]} == {
+        "candidates",
+        "positions",
+    }
     assert mongo.upserted == []
+    assert mongo.upserted_recruiting == []
     assert "private raw note sentinel" not in payload
     assert "private@example.com" not in payload
     assert "summary_embedding" not in payload
 
 
-def test_migration_dry_run_without_local_deals_skips_target_ping(tmp_path) -> None:
+def test_migration_dry_run_without_local_records_skips_target_ping(tmp_path) -> None:
     store = LocalPersonalStore(tmp_path / "local-data")
     mongo = FakeMongo(ping_status="error")
 
@@ -102,12 +142,12 @@ def test_migration_dry_run_without_local_deals_skips_target_ping(tmp_path) -> No
 
     assert result["ok"] is True
     assert result["dry_run"] is True
-    assert result["counts"]["source_deals"] == 0
-    assert result["target"]["readiness"] == "not_checked_no_source_deals"
+    assert result["counts"]["source_records"] == 0
+    assert result["target"]["readiness"] == "not_checked_no_source_records"
     assert mongo.ping_count == 0
     assert {warning["code"] for warning in result["warnings"]} == {
-        "no_local_personal_deals",
-        "target_not_checked_no_source_deals",
+        "no_local_personal_records",
+        "target_not_checked_no_source_records",
     }
 
 
@@ -136,10 +176,17 @@ def test_migration_apply_writes_local_deals_to_mongo(tmp_path) -> None:
     )
 
     assert result["storage_written"] is True
-    assert result["counts"]["migrated"] == 1
+    assert result["counts"]["migrated"] == 3
     assert result["counts"]["overwritten"] == 0
     assert mongo.upserted[0]["deal_id"] == "local-migrate-1"
     assert mongo.upserted[0]["company"] == "Local Migration Co"
+    assert {
+        (collection, row.get("candidate_id") or row.get("position_id"))
+        for collection, row in mongo.upserted_recruiting
+    } == {
+        ("candidates", "cand_local_migrate"),
+        ("positions", "pos_local_migrate"),
+    }
 
 
 def test_migration_skips_existing_by_default_and_overwrites_when_enabled(
@@ -165,9 +212,11 @@ def test_migration_skips_existing_by_default_and_overwrites_when_enabled(
     )
 
     assert skipped["counts"]["skipped_existing"] == 1
-    assert skipped["storage_written"] is False
+    assert skipped["counts"]["migrated"] == 2
+    assert skipped["storage_written"] is True
     assert skip_mongo.existing["local-migrate-1"]["company"] == "Old"
     assert overwritten["counts"]["overwritten"] == 1
+    assert overwritten["counts"]["migrated"] == 2
     assert overwritten["storage_written"] is True
     assert overwrite_mongo.existing["local-migrate-1"]["company"] == (
         "Local Migration Co"
@@ -213,7 +262,7 @@ def test_local_data_migrate_to_mongo_cli_dry_run_json(
     assert result.exit_code == 0
     assert payload["ok"] is True
     assert payload["dry_run"] is True
-    assert payload["counts"]["would_create"] == 1
+    assert payload["counts"]["would_create"] == 3
     assert created_clients[0].database_name == "recruit_ai"
 
 
@@ -245,5 +294,5 @@ def test_mcp_migrate_local_data_uses_configured_local_data_dir_and_target_databa
 
     assert result["ok"] is True
     assert result["dry_run"] is True
-    assert result["counts"]["would_create"] == 1
+    assert result["counts"]["would_create"] == 3
     assert created_clients[0].database_name == "target_db"

@@ -417,7 +417,8 @@ Non-goals for Z5.9:
 Implemented:
 
 - Read the local personal data directory.
-- Migrates only user-created local personal deals, never bundled fixture data.
+- Migrates only user-created local personal deals and recruiting records, never
+  bundled fixture data.
 - Dry-run by default.
 - Requires target MongoDB readiness before classifying rows.
 - Upserts into the configured or requested MongoDB database only after explicit

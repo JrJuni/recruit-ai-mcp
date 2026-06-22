@@ -113,7 +113,7 @@ Reset/export behavior must be explicit before local personal writes ship:
 - `recruit-ai local-data reset --force` clears local personal deals and
   recruiting records.
 - Local delete audit logs are retained after reset.
-- Local personal data to MongoDB migration is available through
+- Local personal deal and recruiting data to MongoDB migration is available through
   `migrate_local_data` and `recruit-ai local-data migrate-to-mongo`.
 
 Active read policy:
@@ -185,19 +185,20 @@ Those paths are not required for lightweight personal use.
 
 ## Local To Mongo Migration
 
-Local personal writes can now graduate to MongoDB-backed `full` mode through a
-dry-run-first migration path.
+Local personal deal and recruiting writes can now graduate to MongoDB-backed
+`full` mode through a dry-run-first migration path.
 
 Behavior:
 
 - Dry-run by default.
 - Never migrate bundled fictional fixture records.
-- Read only user-created records from `storage.local_data_dir`.
+- Read only user-created records from `storage.local_data_dir/deals.json` and
+  `storage.local_data_dir/recruiting.json`.
 - Require target MongoDB readiness before classifying rows.
 - Require explicit confirmation before any Mongo write.
-- Preserve `deal_id` values where possible.
-- Skip existing target `deal_id` values by default.
-- Overwrite existing target `deal_id` values only when `overwrite=true`.
+- Preserve source deal and recruiting record ids where possible.
+- Skip existing target deal and recruiting ids by default.
+- Overwrite existing target deal and recruiting ids only when `overwrite=true`.
 - Return create, overwrite, skipped, and written counts.
 - Keep local delete audit logs local; they are not migrated by this command.
 
@@ -209,11 +210,12 @@ recruit-ai local-data migrate-to-mongo --apply
 recruit-ai local-data migrate-to-mongo --apply --overwrite
 ```
 
-If the source local personal store has zero deals and the command is a dry-run,
-the migration returns an empty no-write preview without pinging MongoDB. This
-keeps the zero-config first-run path fast and avoids network timeouts before a
-user has anything to migrate. Once local deals exist, dry-run still checks the
-target so it can classify create/overwrite/skip actions.
+If the source local personal store has zero deals and zero recruiting records
+and the command is a dry-run, the migration returns an empty no-write preview
+without pinging MongoDB. This keeps the zero-config first-run path fast and
+avoids network timeouts before a user has anything to migrate. Once local
+records exist, dry-run still checks the target so it can classify
+create/overwrite/skip actions.
 
 Non-goals:
 
