@@ -193,6 +193,27 @@ def test_first_run_docs_gate_npx_until_publication() -> None:
     assert "Until public registry smoke passes" in ai_start
 
 
+def test_external_user_test_guide_is_recruit_ai_current() -> None:
+    docs = (ROOT / "AI_USER_TEST_GUIDE.md").read_text(encoding="utf-8")
+
+    assert "try Recruit\nAI MCP" in docs
+    assert "release/latest/recruit-ai-mcp-0.1.0.mcpb" in docs
+    assert "before public registry publication" in docs
+    assert "npx recruit-ai-mcp setup" in docs
+    assert "recruit-ai-mcp@0.1.0" in docs
+    assert "Which candidates best match this open position?" in docs
+    assert "Which open positions best fit this candidate?" in docs
+    assert "Generate a recruiting pipeline report" in docs
+    assert "Recommend candidates for one open position" in docs
+
+    assert "Deal\nIntelligence MCP" not in docs
+    assert "deal-intel-mcp" not in docs
+    assert "deal-intel-mcp-0.2.1" not in docs
+    assert "What is the current pipeline health?" not in docs
+    assert "Which deals need attention first?" not in docs
+    assert "Generate a weekly pipeline report" not in docs
+
+
 def test_tool_surface_docs_match_current_counts_and_env_prefix() -> None:
     docs = (ROOT / "docs" / "tool-surfaces.md").read_text(encoding="utf-8")
     normalized = " ".join(docs.split())

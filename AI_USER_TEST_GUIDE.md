@@ -1,20 +1,23 @@
 # AI User Test Guide
 
-This guide is for an AI assistant helping a first external tester try Deal
-Intelligence MCP.
+This guide is for an AI assistant helping a first external tester try Recruit
+AI MCP.
 
 Use this after the maintainer has provided one usable install path:
 
 - a Claude Desktop MCPB artifact; or
-- the `npx deal-intel-mcp` bootstrapper.
+- the `npx recruit-ai-mcp` bootstrapper after public npm/PyPI publication.
 
 Current handoff paths:
 
-- use `release/latest/deal-intel-mcp-0.2.1.mcpb`;
-- or use `npx deal-intel-mcp setup` to create a managed Python runtime;
+- use `release/latest/recruit-ai-mcp-0.1.0.mcpb`;
+- before public registry publication, use the local MCPB or an editable/local
+  wheel install path rather than public `npx`;
+- after publication and public fresh-smoke evidence, use
+  `npx recruit-ai-mcp setup` to create a managed Python runtime;
 - paste the local Python interpreter path into the MCPB form;
 - for npx installs, use the interpreter path printed by
-  `npx deal-intel-mcp mcp-config`.
+  `npx recruit-ai-mcp mcp-config`.
 
 Do not ask the tester to paste MongoDB URIs, API keys, OAuth tokens, or raw
 private files into chat. Ask them to enter secrets only in the local MCPB form,
@@ -31,7 +34,8 @@ Recommended order:
 2. Install or connect the MCP server.
 3. Run config/readiness checks.
 4. Ask five natural questions.
-5. Create one disposable test deal or use sample data.
+5. Create one disposable recruiting client, position, and candidate, or use
+   recruiting sample data.
 6. Export one report or data ledger.
 7. Record feedback.
 
@@ -56,7 +60,7 @@ Use this when the maintainer has provided a `.mcpb` file.
 For the current pre-registry user test, the repository includes:
 
 ```text
-release/latest/deal-intel-mcp-0.2.1.mcpb
+release/latest/recruit-ai-mcp-0.1.0.mcpb
 ```
 
 Ask the tester to install the MCPB bundle in the host app, then fill the MCPB
@@ -64,7 +68,7 @@ form:
 
 | Field | Guidance |
 |---|---|
-| Python interpreter path | A Python 3.11+ interpreter where `deal-intel-mcp` is installed |
+| Python interpreter path | A Python 3.11+ interpreter where `recruit-ai-mcp` is installed |
 | Storage backend | `mongo` for real evaluation, `local_sample` for quick trial |
 | MCP tool surface | `auto` |
 | MongoDB Atlas URI | Enter locally, never in chat |
@@ -74,24 +78,25 @@ form:
 Then ask the host app:
 
 ```text
-Run config_doctor and summarize whether Deal Intelligence MCP is ready.
+Run config_doctor and summarize whether Recruit AI MCP is ready.
 ```
 
 ## Install Path B: npx Bootstrapper
 
-Ask the tester to run:
+Use this only after `recruit-ai-mcp@0.1.0` is published to npm/PyPI and public
+fresh-smoke evidence exists. Ask the tester to run:
 
 ```bash
-npx deal-intel-mcp setup
-npx deal-intel-mcp smoke --profile-only
-npx deal-intel-mcp mcp-config
+npx recruit-ai-mcp setup
+npx recruit-ai-mcp smoke --profile-only
+npx recruit-ai-mcp mcp-config
 ```
 
 If setup cannot find Python, rerun it with an explicit Python 3.11+
 interpreter:
 
 ```bash
-npx deal-intel-mcp setup --python /path/to/python
+npx recruit-ai-mcp setup --python /path/to/python
 ```
 
 Then use the Python interpreter path printed by `mcp-config` in MCPB or manual
@@ -108,11 +113,11 @@ Run config_doctor and tell me what still needs setup.
 Ask these first. They are short enough for a new tester and cover the main
 workflow:
 
-1. What is the current pipeline health?
-2. Which deals need attention first?
-3. Show me the status of one specific deal.
-4. Create this week's pipeline report.
-5. What decision criteria do customers mention most often?
+1. Which candidates best match this open position?
+2. Which open positions best fit this candidate?
+3. What client feedback is changing the ranking?
+4. Create a recruiting pipeline report.
+5. What risks or missing evidence should we review before submission?
 
 Expected behavior:
 
@@ -133,19 +138,19 @@ tool surface.
 ```
 
 ```text
-List active deals and highlight overdue or at-risk deals.
+Show active recruiting submissions and highlight risky or blocked ones.
 ```
 
 ```text
-Generate a weekly pipeline report and tell me where the files were saved.
+Generate a recruiting pipeline report and tell me where the files were saved.
 ```
 
 ```text
-Search for deals related to cost reduction.
+Recommend candidates for one open position.
 ```
 
 ```text
-What customer themes or decision criteria appear most often?
+What client preferences or feedback patterns appear most often?
 ```
 
 ## Feedback To Collect

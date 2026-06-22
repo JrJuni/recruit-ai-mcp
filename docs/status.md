@@ -389,9 +389,19 @@ Completed:
   no-git-clone path after public `recruit-ai-mcp@0.1.0` npm/PyPI publication
   and fresh-smoke evidence, while pointing pre-publication users to editable
   install or the maintainer local-wheel smoke path.
+- Added Work 7BJ external tester guide recruit-ai cleanup.
+  `AI_USER_TEST_GUIDE.md` now uses the current Recruit AI handoff artifact
+  (`release/latest/recruit-ai-mcp-0.1.0.mcpb`), gates public npx usage on
+  npm/PyPI publication and fresh-smoke evidence, and starts tester questions
+  from recruiting recommendations, feedback, risk, and recruiting reports
+  instead of inherited deal-intelligence prompts.
 
 Validation:
 
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-user-test-guide-recruit-ai tests\test_docs_recruit_ai_current.py`
+  -> 14 passed.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-first-run-npx-pending tests\test_docs_recruit_ai_current.py`
   -> 13 passed.
 - `ruff check src tests` -> passed.
