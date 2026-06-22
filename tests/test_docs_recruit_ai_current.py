@@ -54,6 +54,13 @@ def test_release_docs_and_workflows_use_recruit_ai_package_name() -> None:
     assert "No matching distribution found for recruit-ai-mcp" in release_docs
     assert "public `npx` freshness cannot be claimed" in normalized_release_docs
     assert "v0.1.0-rc.1" in release_docs
+    assert "Push-Location mcpb" in release_docs
+    assert "mcpb validate manifest.json" in release_docs
+    assert "mcpb info recruit-ai-mcp-0.1.0.mcpb" in release_docs
+    assert "Pop-Location" in release_docs
+    assert "MCPB manifest validates and the release artifact is inspectable" in (
+        release_docs
+    )
 
     assert "deal-intel-mcp[embedding]" not in combined
     assert "deal-intel-mcp@${PACKAGE_VERSION}" not in combined

@@ -334,9 +334,24 @@ Completed:
   `docs/release-publish-checklist.md` now uses the current first Recruit AI
   release line in its release-candidate tag example (`v0.1.0-rc.1`) instead of
   the inherited deal-intel `0.2.x` line.
+- Added Work 7AZ MCPB pre-publish gate cleanup.
+  `docs/release-publish-checklist.md` now includes explicit `mcpb validate`
+  and `mcpb info` checks in the main pre-publish local gate, so the maintained
+  release checklist verifies both the manifest and the current
+  `recruit-ai-mcp-0.1.0.mcpb` artifact before publication.
 
 Validation:
 
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-mcpb-prepublish-docs tests\test_docs_recruit_ai_current.py tests\test_mcpb_manifest.py tests\test_bootstrapper_skeleton.py`
+  -> 34 passed.
+- From `mcpb/`, `mcpb validate manifest.json` -> passed.
+- From `mcpb/`, `mcpb info recruit-ai-mcp-0.1.0.mcpb` -> passed with the
+  expected unsigned-package warning only.
+- `npm pack .\npm --dry-run --cache .tmp\npm-cache-mcpb-prepublish`
+  -> produced `recruit-ai-mcp-0.1.0.tgz` preview containing
+  `mcpb/recruit-ai-mcp-0.1.0.mcpb`.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-release-rc-docs tests\test_docs_recruit_ai_current.py tests\test_bootstrapper_skeleton.py`
   -> 26 passed.
 - `npm pack .\npm --dry-run --cache .tmp\npm-cache-release-rc-docs`

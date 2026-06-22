@@ -40,6 +40,10 @@ git status --short
 & "$HOME\miniconda3\envs\deal-intel\python.exe" -m ruff check .
 & "$HOME\miniconda3\envs\deal-intel\python.exe" -m pytest tests\test_bootstrapper_skeleton.py tests\test_mcpb_manifest.py -q -p no:cacheprovider --basetemp .tmp\pytest-publish-checklist
 & "$HOME\miniconda3\envs\deal-intel\python.exe" -m build --no-isolation --outdir .tmp\publish-dist
+Push-Location mcpb
+mcpb validate manifest.json
+mcpb info recruit-ai-mcp-0.1.0.mcpb
+Pop-Location
 npm pack .\npm --dry-run --cache .tmp\npm-cache
 git diff --check
 ```
@@ -47,6 +51,7 @@ git diff --check
 Pass criteria:
 
 - Python wheel and sdist build successfully.
+- MCPB manifest validates and the release artifact is inspectable.
 - npm dry-run tarball contains only the bootstrapper files.
 - targeted bootstrapper/MCPB tests pass.
 - Ruff passes.
