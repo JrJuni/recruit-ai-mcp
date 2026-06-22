@@ -135,6 +135,9 @@ Completed:
   `recruit-ai`, and remaining current user-facing CLI examples were aligned to
   the `recruit-ai` command while keeping inherited compatibility names where
   intentionally documented.
+- Added Work 7H MCPB copy cleanup. The bundle manifest now describes the
+  current Recruit AI tool catalog and labels retained deal tools as
+  deal-intelligence compatibility during the staged cutover.
 
 Validation:
 
@@ -214,6 +217,9 @@ Validation:
 - `ruff check src tests` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-mcp-name tests\test_config_doctor.py tests\test_tool_surfaces.py tests\test_recruiting_mcp_tools.py tests\test_mcpb_manifest.py`
   -> 74 passed, 1 third-party warning.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-mcpb-copy tests\test_mcpb_manifest.py tests\test_tool_surfaces.py`
+  -> 55 passed, 1 third-party warning.
+- `mcpb validate mcpb\manifest.json` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2c tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py`

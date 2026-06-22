@@ -52,7 +52,9 @@ def test_mcpb_manifest_describes_recruit_ai_bootstrap_surface() -> None:
     assert manifest["display_name"] == "Recruit AI MCP"
     assert "bootstrap fork" in manifest["description"].lower()
     assert "first recruiting workflows" in manifest["description"].lower()
-    assert "inherited deal-intel tools remain" in manifest["description"].lower()
+    assert "inherited deal-intelligence compatibility tools remain" in (
+        manifest["description"].lower()
+    )
     assert "candidate, client-company, position, feedback" in manifest_text
     assert "recommend_candidates_for_position" in tool_descriptions
     assert "deterministic fit scoring" in tool_descriptions[

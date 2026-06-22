@@ -3,7 +3,7 @@
   "name": "recruit-ai-mcp",
   "display_name": "Recruit AI MCP",
   "version": "0.2.3",
-  "description": "Bootstrap fork for recruiter/search-firm intelligence. The tool surface now includes first recruiting workflows while inherited deal-intel tools remain during the staged cutover.",
+  "description": "Bootstrap fork for recruiter/search-firm intelligence. The tool surface now includes first recruiting workflows while inherited deal-intelligence compatibility tools remain during the staged cutover.",
   "long_description": "recruit-ai-mcp is a fork of deal-intel-mcp for live-testing a recruiter/search-firm second brain. This bootstrap line keeps the inherited deal_intel Python module and many deal-intel tools while adding the first candidate, client-company, position, feedback, and recommendation workflows. Config paths, runtime env variables, and MongoDB defaults are isolated for recruit-ai-mcp.",
   "author": {
     "name": "JrJuni",
@@ -19,7 +19,7 @@
   "keywords": ["mcp", "recruiting", "search-firm", "talent-intelligence", "candidate-matching"],
   "tools": [
     {"name": "config_doctor", "description": "Diagnose profile, storage, vector search, and LLM readiness without writes or LLM calls."},
-    {"name": "get_tool_catalog", "description": "List the current Deal Intelligence tool surface when host tool search shows only a truncated subset."},
+    {"name": "get_tool_catalog", "description": "List the current Recruit AI tool surface when host tool search shows only a truncated subset."},
     {"name": "update_config", "description": "Preview or apply safe non-secret user-config changes such as LLM provider/model, report output directory, timezone, and tool surface."},
     {"name": "add_product_context_note", "description": "Dry-run-first local writer for pasted seller-side product and solution notes before product-context indexing."},
     {"name": "index_product_context", "description": "Dry-run-first local RAG cache builder for seller-side product and solution documents."},
