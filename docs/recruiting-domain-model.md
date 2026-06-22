@@ -1,8 +1,10 @@
 # Recruiting Domain Model
 
-This document defines the Work 1 recruiting data model for `recruit-ai-mcp`.
-It is a planning and schema contract only. Storage cutover, MCP tool renaming,
-and recommendation execution belong to later work.
+This document defines the recruiting data, storage, scoring, recommendation,
+MCP, metrics, report, and demo-data contracts added during the staged
+`recruit-ai-mcp` cutover. The original Work 1 model remains the foundation, but
+later sections record the implemented Work 2-7 behavior now present in source
+code and tests.
 
 ## Research Inputs
 
@@ -485,9 +487,9 @@ Sample policy:
 - The dataset is fictional, deterministic, and does not call LLMs, embeddings,
   or Atlas Vector Search.
 
-## Collections For Work 2
+## Recruiting Collections
 
-Recommended Mongo collections:
+Mongo-managed recruiting collections:
 
 - `candidates`
 - `client_companies`
@@ -611,7 +613,12 @@ Lifecycle policy:
 - Validation and storage errors use the same secret-safe MCP-style error
   envelope policy as Work 2C.
 
-## Out Of Scope For Work 1
+## Historical Work 1 Out Of Scope
+
+This section records what was intentionally deferred when only the Work 1 data
+model existed. Later sections above describe the storage, MCP, scoring,
+recommendation, metrics, report, and demo-data work that has since been
+implemented.
 
 - No storage migration.
 - No MCP tool registration changes.

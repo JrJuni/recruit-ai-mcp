@@ -166,6 +166,10 @@ Completed:
 - Added Work 7P MCPB wording cleanup. The manifest now avoids using
   "candidate qualification framework" for validation copy, preventing confusion
   with recruiting candidate profiles.
+- Added Work 7Q recruiting domain doc cleanup. `docs/recruiting-domain-model.md`
+  now presents itself as the current Work 1-7 recruiting contract instead of a
+  Work 1-only planning note, while preserving the original Work 1 deferral
+  list as historical context.
 
 Validation:
 
@@ -267,6 +271,8 @@ Validation:
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-mcpb-wording tests\test_mcpb_manifest.py tests\test_tool_surfaces.py`
   -> 55 passed, 1 third-party warning.
 - `mcpb validate mcpb\manifest.json` -> passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-domain-doc tests\test_recruiting_schema.py tests\test_recruiting_storage_contract.py tests\test_recruiting_recommendation.py tests\test_recruiting_mcp_tools.py tests\test_sample_data.py`
+  -> 45 passed, 1 third-party warning.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2c tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py`
