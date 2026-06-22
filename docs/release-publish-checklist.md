@@ -231,8 +231,8 @@ Pass criteria:
 If refreshing the MCPB bundle:
 
 ```powershell
-mcpb validate mcpb\manifest.json
 Push-Location mcpb
+mcpb validate manifest.json
 mcpb pack . recruit-ai-mcp-0.1.0.mcpb
 mcpb info recruit-ai-mcp-0.1.0.mcpb
 Pop-Location

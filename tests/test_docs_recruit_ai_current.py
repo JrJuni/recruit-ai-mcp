@@ -56,6 +56,7 @@ def test_release_docs_and_workflows_use_recruit_ai_package_name() -> None:
     assert "v0.1.0-rc.1" in release_docs
     assert "Push-Location mcpb" in release_docs
     assert "mcpb validate manifest.json" in release_docs
+    assert "mcpb pack . recruit-ai-mcp-0.1.0.mcpb" in release_docs
     assert "mcpb info recruit-ai-mcp-0.1.0.mcpb" in release_docs
     assert "Pop-Location" in release_docs
     assert "MCPB manifest validates and the release artifact is inspectable" in (
@@ -67,6 +68,8 @@ def test_release_docs_and_workflows_use_recruit_ai_package_name() -> None:
     assert 'metadata.version("deal-intel-mcp")' not in combined
     assert "DEAL_INTEL_STORAGE_BACKEND" not in combined
     assert "v0.2.4-rc.1" not in release_docs
+    assert "mcpb validate mcpb\\manifest.json" not in release_docs
+    assert "mcpb info mcpb\\recruit-ai-mcp-0.1.0.mcpb" not in release_docs
 
 
 def test_bootstrapper_fresh_smoke_uses_recruit_ai_public_package() -> None:

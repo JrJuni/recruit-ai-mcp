@@ -339,9 +339,21 @@ Completed:
   and `mcpb info` checks in the main pre-publish local gate, so the maintained
   release checklist verifies both the manifest and the current
   `recruit-ai-mcp-0.1.0.mcpb` artifact before publication.
+- Added Work 7BA MCPB artifact command cleanup.
+  The MCPB release artifact refresh section now also runs `mcpb validate`,
+  `mcpb pack`, and `mcpb info` from inside `mcpb/`, matching the command shape
+  that passes in the local Windows environment and avoiding the stale
+  root-relative `mcpb validate mcpb\manifest.json` form.
 
 Validation:
 
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-mcpb-artifact-docs tests\test_docs_recruit_ai_current.py tests\test_mcpb_manifest.py`
+  -> 20 passed.
+- From `mcpb/`, `mcpb validate manifest.json` -> passed.
+- From `mcpb/`, `mcpb info recruit-ai-mcp-0.1.0.mcpb` -> passed with the
+  expected unsigned-package warning only.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-mcpb-prepublish-docs tests\test_docs_recruit_ai_current.py tests\test_mcpb_manifest.py tests\test_bootstrapper_skeleton.py`
   -> 34 passed.
 - From `mcpb/`, `mcpb validate manifest.json` -> passed.
