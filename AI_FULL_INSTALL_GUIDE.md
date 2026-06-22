@@ -1,10 +1,14 @@
 # AI Full Install Guide
 
 This guide is for an AI assistant helping a non-developer or semi-technical
-user install `deal-intel-mcp` in the normal **full** mode.
+user install `recruit-ai-mcp` in the normal **full** mode.
 
-Full mode is the default product path. It stores real deal data in MongoDB
-Atlas. Sample mode is only a zero-config trial or demo path.
+Full mode is the default product path. It stores real recruiting/team data in
+MongoDB Atlas. Sample mode is only a zero-config trial or demo path.
+
+Current release target: `recruit-ai-mcp@0.1.0` / `recruit-ai-mcp==0.1.0`.
+During the bootstrap cutover, the public package and CLI are Recruit AI while
+the Python module command still uses inherited `deal_intel` internals.
 
 ## 1. First Message To The User
 
@@ -45,7 +49,7 @@ Confirm these before running commands.
 
 - On Windows, path quoting, UTF-8 display, and write permissions under
   `Downloads`, OneDrive, or protected folders can be noisier than on macOS.
-  Prefer the exact conda Python path and the default `~/.deal-intel` output
+  Prefer the exact conda Python path and the default `~/.recruit-ai` output
   directories.
 - On macOS, UTF-8 and shell quoting are usually smoother, but the user should
   still use the exact Python interpreter from the environment where this package
@@ -87,11 +91,12 @@ Reference:
 ## 3. Python Interpreter Path
 
 The Python interpreter path is the full path to the Python executable inside the
-conda environment where `deal-intel-mcp` is installed. MCPB needs this exact
+conda environment where `recruit-ai-mcp` is installed. MCPB needs this exact
 path.
 
-A newly created `deal-intel` environment will usually resolve to an absolute
-path similar to:
+The recommended local conda environment is still named `deal-intel` for this
+bootstrap line, matching the inherited developer environment. It will usually
+resolve to an absolute path similar to:
 
 ```text
 <absolute-path-to-your-conda-env>\python.exe
@@ -142,7 +147,7 @@ Clone the repo:
 
 ```powershell
 git clone <repo-url>
-cd deal-intel-mcp
+cd recruit-ai-mcp
 ```
 
 Create a conda env if needed:
@@ -239,18 +244,19 @@ Run config_doctor and check the setup status.
 ```
 
 For full mode, the normal tool surface should expose the standard real-data
-tools. If it shows sample mode, check the storage backend and config profile.
+recruiting tools. If it shows sample mode, check the storage backend and config
+profile.
 
 ## 9. First Useful Questions
 
 After setup succeeds, ask:
 
 ```text
-Show me the current deal list.
-How healthy is the current pipeline?
-Review the riskiest deal.
-What are customers most often concerned about?
-Make this week's pipeline report.
+Create a client company for this search.
+Create the open position and the first candidate profile.
+Which candidates best match this open position?
+Which open positions best fit this candidate?
+Generate a recruiting pipeline report.
 ```
 
 ## 10. When To Use Sample Mode
@@ -274,7 +280,7 @@ that real team operation is designed around MongoDB-backed full mode.
 | Mongo ping fails | URI, password, IP allowlist, or cluster state | Check Atlas connection string and Network Access. |
 | Mongo ping fails only inside an AI host | Host sandbox/network restriction | Run `config doctor` from a normal terminal and compare with `config doctor --offline`. |
 | LLM tools fail | OAuth expired or API key missing | Run `login-chatgpt` or check selected provider key. |
-| MCP server fails to start | Wrong Python path in MCPB | Verify the interpreter path has `deal-intel-mcp` installed. |
+| MCP server fails to start | Wrong Python path in MCPB | Verify the interpreter path has `recruit-ai-mcp` installed. |
 | Korean text looks broken | Encoding/display issue | Prefer UTF-8 files and avoid copying secrets through chat. |
 
 ## 12. AI Assistant Safety Rules
@@ -289,7 +295,7 @@ that real team operation is designed around MongoDB-backed full mode.
 ## 13. Customization And License
 
 This project is MIT-licensed. Users may fork it, customize the storage, model,
-scoring, reporting, and workflow behavior, and adapt it to their own deal
+scoring, reporting, and workflow behavior, and adapt it to their own recruiting
 process. Keep license and attribution notices when redistributing modified
 versions.
 

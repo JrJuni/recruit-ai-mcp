@@ -214,6 +214,28 @@ def test_external_user_test_guide_is_recruit_ai_current() -> None:
     assert "Generate a weekly pipeline report" not in docs
 
 
+def test_full_install_guide_is_recruit_ai_current() -> None:
+    docs = (ROOT / "AI_FULL_INSTALL_GUIDE.md").read_text(encoding="utf-8")
+
+    assert "install `recruit-ai-mcp` in the normal **full** mode" in docs
+    assert "real recruiting/team data" in docs
+    assert "recruit-ai-mcp@0.1.0" in docs
+    assert "recruit-ai-mcp==0.1.0" in docs
+    assert "the Python module command still uses inherited `deal_intel` internals" in docs
+    assert "~/.recruit-ai" in docs
+    assert "cd recruit-ai-mcp" in docs
+    assert "Which candidates best match this open position?" in docs
+    assert "Which open positions best fit this candidate?" in docs
+    assert "Generate a recruiting pipeline report." in docs
+
+    assert "install `deal-intel-mcp`" not in docs
+    assert "stores real deal data" not in docs
+    assert "~/.deal-intel" not in docs
+    assert "cd deal-intel-mcp" not in docs
+    assert "Show me the current deal list." not in docs
+    assert "Review the riskiest deal." not in docs
+
+
 def test_tool_surface_docs_match_current_counts_and_env_prefix() -> None:
     docs = (ROOT / "docs" / "tool-surfaces.md").read_text(encoding="utf-8")
     normalized = " ".join(docs.split())

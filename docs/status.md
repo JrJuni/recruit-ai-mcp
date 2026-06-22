@@ -88,7 +88,12 @@ Completed:
   and `create_submission` are now registered in the MCP server, catalog, tool
   surfaces, and MCPB manifest. Recruiting interaction responses keep
   `raw_content` hidden by default, and submissions can store a fit snapshot
-  JSON object from recommendation output.
+  JSON object from recommendation output for downstream review.
+- Confirmed the Recruit AI bootstrap release line starts at `0.1.0` across
+  Python, npm, MCPB, and public install docs. `AI_FULL_INSTALL_GUIDE.md` now
+  describes `recruit-ai-mcp` full-mode setup, `~/.recruit-ai` paths, recruiting
+  first questions, and the temporary inherited `deal_intel` module command
+  boundary.
 - Added Work 6A recruiting pipeline metrics calculator. It computes summary
   counts, position status rates, submission funnel rates, feedback signal
   rates, and data-quality counters from safe recruiting records without
