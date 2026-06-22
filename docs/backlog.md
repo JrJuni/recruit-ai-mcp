@@ -74,8 +74,9 @@ Immediate quality order:
      active submissions, learned client preferences, candidate risk flags, and
      raw-content safety, plus client/candidate/position intake coverage and an
      in-memory recruiting report preview.
-   - Add local personal persistence cases when those answer paths need release
-     evidence.
+   - Local personal recruiting persistence is covered with a temp
+     `recruiting.json` save/reload case that avoids touching the user's real
+     `~/.recruit-ai` data.
    - Keep the inherited deal-intelligence natural-question pack as a
      compatibility smoke, not the primary Recruit AI user journey.
 3. Tighten release/package verification.

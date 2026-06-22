@@ -3,7 +3,9 @@
 import json
 import os
 import sys
+import tempfile
 from collections import Counter
+from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -3618,6 +3620,57 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
             "metrics": markdown["metrics"],
         }
 
+    def local_personal_persistence_summary() -> dict:
+        from deal_intel.storage.local_personal import (
+            LOCAL_PERSONAL_DATASET,
+            LOCAL_PERSONAL_RECRUITING_FILE,
+            LocalPersonalStore,
+        )
+
+        with tempfile.TemporaryDirectory(prefix="recruit-ai-smoke-") as data_dir:
+            store = LocalPersonalStore(data_dir)
+            writable_records = {
+                collection: [deepcopy(row) for row in records[collection]]
+                for collection in (
+                    CANDIDATES,
+                    CLIENT_COMPANIES,
+                    POSITIONS,
+                    SUBMISSIONS,
+                    FEEDBACK,
+                    INTERACTIONS,
+                )
+            }
+            writable_records[INTERACTIONS][0]["raw_content"] = (
+                "private recruiting note sentinel"
+            )
+            written_count = store.upsert_recruiting_records(writable_records)
+            reloaded = store.load_recruiting_records()
+            raw_payload = json.loads(store.recruiting_path.read_text(encoding="utf-8"))
+            raw_payload_text = json.dumps(raw_payload, ensure_ascii=False)
+            collection_counts = {
+                collection: len(reloaded[collection])
+                for collection in (
+                    CANDIDATES,
+                    CLIENT_COMPANIES,
+                    POSITIONS,
+                    SUBMISSIONS,
+                    FEEDBACK,
+                    INTERACTIONS,
+                )
+            }
+
+        return {
+            "summary": {
+                "dataset": LOCAL_PERSONAL_DATASET,
+                "file_name": LOCAL_PERSONAL_RECRUITING_FILE,
+                "storage_written": True,
+                "written_record_count": written_count,
+                "reloaded_record_count": sum(collection_counts.values()),
+                "restricted_content_present": "raw_content" in raw_payload_text,
+            },
+            "collection_counts": collection_counts,
+        }
+
     questions = [
         call(
             "rq01_recruiting_pipeline_metrics",
@@ -3678,6 +3731,12 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
             "Can we produce a recruiting pipeline report from the smoke data?",
             "derived",
             report_preview_summary,
+        ),
+        call(
+            "rq11_local_recruiting_persistence",
+            "Can local personal recruiting records be saved and reloaded safely?",
+            "derived",
+            local_personal_persistence_summary,
         ),
     ]
 
@@ -4092,6 +4151,13 @@ def _natural_question_quick_read(question_id: str, payload: dict) -> str:
         return (
             f"rows={summary.get('row_count')}, "
             f"title={summary.get('markdown_has_title')}"
+        )
+    if question_id == "rq11_local_recruiting_persistence":
+        summary = payload.get("summary") or {}
+        return (
+            f"written={summary.get('written_record_count')}, "
+            f"reloaded={summary.get('reloaded_record_count')}, "
+            f"restricted_content_present={summary.get('restricted_content_present')}"
         )
     if question_id == "q01_pipeline_health":
         kpis = payload.get("kpis") or {}

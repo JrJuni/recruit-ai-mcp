@@ -249,9 +249,22 @@ Completed:
   also verifies client/candidate/position intake coverage and an in-memory
   recruiting pipeline report preview without requiring MongoDB/config context
   or writing export files.
+- Added Work 7AJ recruiting local personal persistence smoke coverage.
+  `smoke-natural-questions --pack recruiting` now runs an 11-question pack that
+  also saves fictional recruiting records to a temporary local personal
+  `recruiting.json`, reloads them, and verifies restricted raw content does not
+  persist without touching the user's real `~/.recruit-ai` data directory.
 
 Validation:
 
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-natural-local-persistence tests\test_cli_deal_review_smoke.py tests\test_local_data_cli.py tests\test_local_sample_backend.py tests\test_docs_recruit_ai_current.py tests\test_sample_data.py`
+  -> 63 passed, 1 warning.
+- `PYTHONPATH=src python -m deal_intel.cli smoke-natural-questions --pack recruiting --as-of 2026-06-22 --output-dir .tmp\recruiting-natural-local-persistence-smoke --json`
+  -> passed with `ok=true`, `question_count=11`, no blocked questions, and no
+  sensitive failures; `rq11_local_recruiting_persistence` reported
+  `written=19`, `reloaded=19`, and `restricted_content_present=false`.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-natural-expand tests\test_cli_deal_review_smoke.py tests\test_docs_recruit_ai_current.py tests\test_sample_data.py tests\test_recruiting_recommendation.py tests\test_recruiting_metrics.py tests\test_export_recruiting_report.py`
   -> 53 passed, 1 warning.
 - `PYTHONPATH=src python -m deal_intel.cli smoke-natural-questions --pack recruiting --as-of 2026-06-22 --output-dir .tmp\recruiting-natural-expanded-cli-smoke --json`
