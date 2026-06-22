@@ -586,9 +586,13 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
         row["guardrail_candidate_id"]: row for row in guardrails["guardrails"]
     }
     nora_guardrail = guardrail_by_candidate["cand_nora_weiss"]
+    assert nora_guardrail["guardrail_dimension_scores"]["availability_fit"] == 2
     assert nora_guardrail["guardrail_dimension_scores"]["location_fit"] == 1
     assert nora_guardrail["guardrail_dimension_scores"]["risk"] == 5
     assert "Confirm work authorization or sponsorship feasibility." in (
+        nora_guardrail["guardrail_next_questions"]
+    )
+    assert "Confirm whether timing fits the search plan." in (
         nora_guardrail["guardrail_next_questions"]
     )
     assert (output_dir / "rq13_client_shortlist_readiness.json").exists()
