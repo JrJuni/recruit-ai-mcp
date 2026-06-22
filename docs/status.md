@@ -155,7 +155,8 @@ Completed:
 - Expanded that Northstar stress fixture with a candidate-side client
   exclusion. The smoke evidence now shows lower client-preference fit, higher
   match risk, and an explicit question about whether the exclusion can be
-  revisited before shortlisting.
+  revisited before shortlisting, plus a dedicated `client_exclusion` risk flag
+  in recommendation rows.
 - Added an inferred `compensation_mismatch` recommendation risk flag. Result
   rows now expose materially over-budget candidate expectations even when the
   candidate profile does not already include a compensation risk note; existing

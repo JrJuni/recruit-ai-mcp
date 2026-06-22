@@ -171,6 +171,8 @@ def _risk_flags(
         flags.append("work_authorization_mismatch")
     if _has_compensation_mismatch(fit) and not _has_existing_compensation_flag(flags):
         flags.append("compensation_mismatch")
+    if _has_client_exclusion(fit) and "client_exclusion" not in flags:
+        flags.append("client_exclusion")
     if _has_availability_timing_risk(fit) and not _has_existing_availability_flag(flags):
         flags.append("availability_timing_risk")
     if _has_role_scope_mismatch(fit) and not _has_existing_scope_flag(flags):
@@ -207,6 +209,16 @@ def _has_existing_compensation_flag(flags: list[str]) -> bool:
         or "salary" in flag.lower()
         or "budget" in flag.lower()
         for flag in flags
+    )
+
+
+def _has_client_exclusion(fit: CandidatePositionFitResult) -> bool:
+    preference_signal = fit.signals["client_preference_fit"]
+    return (
+        "Candidate excluded this client company from target searches."
+        in preference_signal.rationale
+        or "Confirm whether the candidate exclusion can be revisited."
+        in preference_signal.missing_info
     )
 
 

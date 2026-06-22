@@ -628,6 +628,11 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     assert jordan_guardrail["guardrail_dimension_scores"]["skill_fit"] == 2
     assert jordan_guardrail["guardrail_dimension_scores"]["client_preference_fit"] == 0
     assert jordan_guardrail["guardrail_dimension_scores"]["risk"] == 4
+    assert jordan_guardrail["guardrail_risk_flags"] == [
+        "missing production Python evidence",
+        "client_exclusion",
+        "high_match_risk",
+    ]
     assert "Confirm required skill: Python" in (
         jordan_guardrail["guardrail_next_questions"]
     )
@@ -664,6 +669,7 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     )
     assert jordan_shortlist["risk_flags"] == [
         "missing production Python evidence",
+        "client_exclusion",
         "high_match_risk",
     ]
     assert "Confirm required skill: Python" in jordan_shortlist["next_questions"]

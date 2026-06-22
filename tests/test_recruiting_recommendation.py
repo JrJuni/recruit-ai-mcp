@@ -136,7 +136,10 @@ def test_candidate_position_recommendation_respects_excluded_company() -> None:
         "pos_beta_backend",
         "pos_acme_backend",
     ]
-    assert results["pos_acme_backend"].risk_flags == ["review_match_risk"]
+    assert results["pos_acme_backend"].risk_flags == [
+        "client_exclusion",
+        "review_match_risk",
+    ]
     assert "Confirm whether the candidate exclusion can be revisited." in (
         results["pos_acme_backend"].next_questions
     )
@@ -385,6 +388,7 @@ def test_recruiting_sample_missing_must_have_does_not_outrank_match() -> None:
     assert jordan.fit_snapshot.dimensions["risk"].score == 4
     assert jordan.risk_flags == [
         "missing production Python evidence",
+        "client_exclusion",
         "high_match_risk",
     ]
 

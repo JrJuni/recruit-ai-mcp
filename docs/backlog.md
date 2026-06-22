@@ -111,7 +111,8 @@ Immediate quality order:
      candidate while required Python and data-platform evidence is missing.
    - Additional stress coverage now includes a candidate-side client exclusion
      that lowers client-preference fit, raises match risk, and asks whether
-     the exclusion can be revisited before shortlisting.
+     the exclusion can be revisited before shortlisting. Recommendation rows
+     now surface that condition with a `client_exclusion` risk flag.
    - Recommendation rows now surface inferred `compensation_mismatch` risk
      flags when a candidate expectation is materially above the role ceiling
      even if the candidate profile did not already carry a compensation risk
