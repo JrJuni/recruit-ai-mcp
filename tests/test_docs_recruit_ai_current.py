@@ -79,6 +79,20 @@ def test_bootstrapper_fresh_smoke_uses_recruit_ai_public_package() -> None:
     assert "DEAL_INTEL_HOME" not in docs
 
 
+def test_distribution_plan_lists_current_bootstrapper_handoff_commands() -> None:
+    docs = (ROOT / "docs" / "distribution-plan.md").read_text(encoding="utf-8")
+
+    assert "npx recruit-ai-mcp setup" in docs
+    assert "npx recruit-ai-mcp doctor" in docs
+    assert "npx recruit-ai-mcp smoke --profile-only" in docs
+    assert "npx recruit-ai-mcp mcpb" in docs
+    assert "npx recruit-ai-mcp mcp-config" in docs
+    assert "npx recruit-ai-mcp mcp" in docs
+    assert "public registry smoke is\npending" in docs
+
+    assert "npx recruit-ai-mcp smoke\nnpx recruit-ai-mcp mcp" not in docs
+
+
 def test_backlog_current_stream_is_recruit_ai_first() -> None:
     docs = (ROOT / "docs" / "backlog.md").read_text(encoding="utf-8")
     current = docs.split("## Historical Planning Archive", 1)[0]

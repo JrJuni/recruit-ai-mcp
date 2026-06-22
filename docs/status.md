@@ -320,9 +320,17 @@ Completed:
   `docs/baseline.md` now labels the old 9-tool Milestone 0.1 runtime smoke as
   a historical snapshot while keeping the current 52-handler, 34/48/52
   profile-filtered MCP surface contract as the active baseline.
+- Added Work 7AW bootstrapper handoff doc cleanup.
+  `docs/distribution-plan.md` now lists the current first-run bootstrapper
+  handoff commands, including `smoke --profile-only`, `mcpb`, and
+  `mcp-config`, before the lower-level `mcp` server command.
 
 Validation:
 
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-bootstrapper-handoff-docs tests\test_docs_recruit_ai_current.py tests\test_bootstrapper_skeleton.py`
+  -> 25 passed.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-baseline-current-docs tests\test_docs_recruit_ai_current.py tests\test_tool_surfaces.py`
   -> 47 passed, 1 warning.
 - `ruff check src tests` -> passed.

@@ -237,7 +237,9 @@ Current public UX:
 ```bash
 npx recruit-ai-mcp setup
 npx recruit-ai-mcp doctor
-npx recruit-ai-mcp smoke
+npx recruit-ai-mcp smoke --profile-only
+npx recruit-ai-mcp mcpb
+npx recruit-ai-mcp mcp-config
 npx recruit-ai-mcp mcp
 ```
 
