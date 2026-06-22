@@ -132,6 +132,8 @@ Completed:
 - Hardened local workflow trace observability. Trace status and reset payloads
   now report invalid JSONL trace line counts while preserving the redacted
   event-only read path.
+- Added local-data boundary coverage confirming workflow traces stay out of
+  personal data exports and are preserved by the normal local-data reset path.
 - Added Work 6A recruiting pipeline metrics calculator. It computes summary
   counts, position status rates, submission funnel rates, feedback signal
   rates, and data-quality counters from safe recruiting records without

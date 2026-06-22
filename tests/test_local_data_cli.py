@@ -97,6 +97,19 @@ def test_local_data_export_cli_writes_secret_safe_snapshot(
 ) -> None:
     _write_sample_config(monkeypatch, tmp_path)
     _seed_local_data(tmp_path)
+    trace_path = workflow_trace_path(
+        {"storage": {"local_data_dir": str(tmp_path / "local-data")}},
+        environ={},
+    )
+    write_trace_event(
+        trace_path,
+        build_workflow_trace_event(
+            tool_name="add_recruiting_interaction",
+            arguments={"raw_content": "private trace note sentinel"},
+            result={"ok": True},
+        ),
+        max_events=10,
+    )
     output_path = tmp_path / "exports" / "snapshot.json"
 
     result = CliRunner().invoke(
@@ -124,8 +137,12 @@ def test_local_data_export_cli_writes_secret_safe_snapshot(
     }
     assert "private raw note sentinel" not in exported_text
     assert "private recruiting note sentinel" not in exported_text
+    assert "private trace note sentinel" not in exported_text
+    assert "workflow_traces" not in exported_text
+    assert "add_recruiting_interaction" not in exported_text
     assert "private@example.com" not in exported_text
     assert "summary_embedding" not in exported_text
+    assert trace_path.exists()
 
 
 def test_local_data_reset_cli_is_dry_run_by_default(
@@ -154,6 +171,15 @@ def test_local_data_reset_cli_force_clears_local_records_and_preserves_audit_log
 ) -> None:
     _write_sample_config(monkeypatch, tmp_path)
     store = _seed_local_data(tmp_path)
+    trace_path = workflow_trace_path(
+        {"storage": {"local_data_dir": str(tmp_path / "local-data")}},
+        environ={},
+    )
+    write_trace_event(
+        trace_path,
+        build_workflow_trace_event(tool_name="get_tool_catalog", result={"ok": True}),
+        max_events=10,
+    )
 
     result = CliRunner().invoke(
         app,
@@ -169,6 +195,7 @@ def test_local_data_reset_cli_force_clears_local_records_and_preserves_audit_log
     assert store.load_deals() == []
     assert sum(len(rows) for rows in store.load_recruiting_records().values()) == 0
     assert len(store.load_delete_audit_logs()) == 1
+    assert trace_path.exists()
 
     raw_payload = json.loads(
         (tmp_path / "local-data" / LOCAL_PERSONAL_DEALS_FILE).read_text(
