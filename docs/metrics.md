@@ -407,7 +407,7 @@ provider, and does not write to MongoDB.
 dashboard over the `analytics_snapshots` collection. The renderer supports:
 
 ```bash
-deal-intel render-atlas-dashboard --dashboard pipeline_trend --as-of 2026-06-10 --lookback-days 7
+recruit-ai render-atlas-dashboard --dashboard pipeline_trend --as-of 2026-06-10 --lookback-days 7
 ```
 
 The versioned chart pipelines expose:

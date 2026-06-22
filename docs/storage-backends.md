@@ -106,13 +106,13 @@ runtime requirements are clear:
 Reset/export behavior must be explicit before local personal writes ship:
 
 - Local data lives under `storage.local_data_dir`.
-- `deal-intel local-data status` displays the resolved directory and counts.
-- `deal-intel local-data export` writes a secret-safe JSON snapshot.
-- `deal-intel local-data reset` is dry-run by default.
-- `deal-intel local-data reset --force` clears only local personal deals.
+- `recruit-ai local-data status` displays the resolved directory and counts.
+- `recruit-ai local-data export` writes a secret-safe JSON snapshot.
+- `recruit-ai local-data reset` is dry-run by default.
+- `recruit-ai local-data reset --force` clears only local personal deals.
 - Local delete audit logs are retained after reset.
 - Local personal data to MongoDB migration is available through
-  `migrate_local_data` and `deal-intel local-data migrate-to-mongo`.
+  `migrate_local_data` and `recruit-ai local-data migrate-to-mongo`.
 
 Active read policy:
 
@@ -196,9 +196,9 @@ Behavior:
 CLI:
 
 ```bash
-deal-intel local-data migrate-to-mongo
-deal-intel local-data migrate-to-mongo --apply
-deal-intel local-data migrate-to-mongo --apply --overwrite
+recruit-ai local-data migrate-to-mongo
+recruit-ai local-data migrate-to-mongo --apply
+recruit-ai local-data migrate-to-mongo --apply --overwrite
 ```
 
 If the source local personal store has zero deals and the command is a dry-run,

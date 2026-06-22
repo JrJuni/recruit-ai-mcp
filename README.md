@@ -481,12 +481,12 @@ with `storage.local_data_dir`.
 Useful local-data commands:
 
 ```bash
-deal-intel local-data status
-deal-intel local-data export
-deal-intel local-data reset          # dry-run
-deal-intel local-data reset --force  # clears local deals, preserves delete audit logs
-deal-intel local-data migrate-to-mongo          # dry-run
-deal-intel local-data migrate-to-mongo --apply  # writes local deals to MongoDB
+recruit-ai local-data status
+recruit-ai local-data export
+recruit-ai local-data reset          # dry-run
+recruit-ai local-data reset --force  # clears local deals, preserves delete audit logs
+recruit-ai local-data migrate-to-mongo          # dry-run
+recruit-ai local-data migrate-to-mongo --apply  # writes local deals to MongoDB
 ```
 
 The bundled fictional fixture is immutable. After local personal deals exist,
@@ -743,11 +743,11 @@ in UTC.
 For existing data, use the taxonomy cleanup CLIs:
 
 ```bash
-deal-intel audit-taxonomy
-deal-intel apply-taxonomy-cleanup
-deal-intel apply-taxonomy-cleanup --apply --confirmed-by-user
-deal-intel backfill-industry-tags
-deal-intel backfill-industry-tags --apply --confirmed-by-user
+recruit-ai audit-taxonomy
+recruit-ai apply-taxonomy-cleanup
+recruit-ai apply-taxonomy-cleanup --apply --confirmed-by-user
+recruit-ai backfill-industry-tags
+recruit-ai backfill-industry-tags --apply --confirmed-by-user
 ```
 
 `audit-taxonomy` is read-only. `apply-taxonomy-cleanup` and

@@ -131,6 +131,10 @@ Completed:
   resource descriptions, and tests now use `~/.recruit-ai/...` and
   `recruit-ai ...` as the primary path/command guidance, while compatibility
   aliases and inherited file names remain documented only where intentional.
+- Added Work 7G MCP server name cleanup. The FastMCP app name now presents as
+  `recruit-ai`, and remaining current user-facing CLI examples were aligned to
+  the `recruit-ai` command while keeping inherited compatibility names where
+  intentionally documented.
 
 Validation:
 
@@ -208,6 +212,8 @@ Validation:
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-path-cleanup tests\test_config_profiles.py tests\test_config_writer.py tests\test_env_config.py tests\test_export_report.py tests\test_export_data.py tests\test_chart_ready_refresh.py tests\test_cli_deal_review_smoke.py tests\test_local_sample_backend.py tests\test_llm_providers.py tests\test_profile_smoke_cli.py tests\test_profile_smoke_matrix.py`
   -> 134 passed, 1 third-party warning.
 - `ruff check src tests` -> passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-mcp-name tests\test_config_doctor.py tests\test_tool_surfaces.py tests\test_recruiting_mcp_tools.py tests\test_mcpb_manifest.py`
+  -> 74 passed, 1 third-party warning.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2c tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py`

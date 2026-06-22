@@ -83,7 +83,7 @@ Use the `mcp-config` Python path in the MCPB form.
    - **Use ChatGPT Plus/Pro** - legacy checkbox kept for older installs; the LLM provider field wins when set
    - **Anthropic API key** - required only when using `anthropic`
    - **OpenAI API key** - required only when using `openai_api`
-   - For `chatgpt_oauth`, run `deal-intel login-chatgpt` once in a terminal after install to authenticate
+   - For `chatgpt_oauth`, run `recruit-ai login-chatgpt` once in a terminal after install to authenticate
 4. Restart Claude Desktop
 5. Verify the MCP tool list loads. The current tool contract is documented in
    `docs/baseline.md` and implemented in `src/deal_intel/mcp_server.py`.

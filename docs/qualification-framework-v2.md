@@ -733,7 +733,7 @@ Status:
 Implemented:
 
 - Added `tools/backfill_qualification.py`.
-- Added CLI command `deal-intel backfill-qualification`.
+- Added CLI command `recruit-ai backfill-qualification`.
 - Dry-run is the default; writes require `--apply --confirmed-by-user`.
 - Recomputes `meddpicc_latest` and `qualification_latest` from already stored
   scoring evidence only.
@@ -765,7 +765,7 @@ Boundaries:
 Status:
 
 - Implemented as core + CLI.
-- Added command: `deal-intel backfill-qualification-reextract`.
+- Added command: `recruit-ai backfill-qualification-reextract`.
 - MCP exposure remains deferred to QF-7c.
 
 Purpose:

@@ -367,10 +367,10 @@ Implemented foundation:
 Implemented reset/export surface:
 
 ```bash
-deal-intel local-data status
-deal-intel local-data export
-deal-intel local-data reset
-deal-intel local-data reset --force
+recruit-ai local-data status
+recruit-ai local-data export
+recruit-ai local-data reset
+recruit-ai local-data reset --force
 ```
 
 Behavior:
@@ -417,7 +417,7 @@ Implemented:
 - Supports explicit `overwrite=true` / `--overwrite`.
 - Reports create, overwrite, skipped, and written counts.
 - Exposes both MCP `migrate_local_data` and CLI
-  `deal-intel local-data migrate-to-mongo`.
+  `recruit-ai local-data migrate-to-mongo`.
 
 Non-goals:
 

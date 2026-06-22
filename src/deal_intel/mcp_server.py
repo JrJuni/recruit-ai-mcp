@@ -8,7 +8,7 @@ from fastmcp.exceptions import NotFoundError
 import deal_intel._env  # noqa: F401 - triggers dotenv load at import time
 from deal_intel.errors import ErrorCode, MCPError, Stage, envelope_from_exception
 
-app = FastMCP("deal-intel")
+app = FastMCP("recruit-ai")
 _MAX_EMBEDDING_WARMUP_SECONDS = 30
 
 

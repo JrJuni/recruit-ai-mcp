@@ -733,7 +733,7 @@ QF-v2 separates four concerns:
    projections cannot accidentally erase raw content, contacts, or embeddings.
    It is exposed as the standard/developer MCP tool
    `backfill_qualification` and as the CLI command
-   `deal-intel backfill-qualification`.
+   `recruit-ai backfill-qualification`.
 7. Historical re-extraction:
    `tools/backfill_qualification_reextract.py` is the explicit maintenance
    path for old interactions that need active-framework evidence regenerated
@@ -744,7 +744,7 @@ QF-v2 separates four concerns:
    `update_deal_qualification_reextraction(...)` and records usage under
    `interaction.qualification_backfill_usage`. It is exposed as the
    standard/developer MCP tool `backfill_qualification_reextract` and as the
-   CLI command `deal-intel backfill-qualification-reextract`. MCP dry-run does
+   CLI command `recruit-ai backfill-qualification-reextract`. MCP dry-run does
    not initialize the LLM provider; apply mode requires explicit confirmation.
 
 Current compatibility rule:
