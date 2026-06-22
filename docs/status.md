@@ -137,6 +137,10 @@ Completed:
   result rows now preserve Work 3C `feedback_adjustments`, so service/MCP
   responses can show which client-feedback rubric delta changed a fit
   dimension score.
+- Hardened feedback-adjustment persistence. `ClientFeedback` now accepts the
+  storage-managed `updated_at` metadata already allowed by the Mongo validator,
+  and Mongo/local-sample tests verify recommendation run persistence keeps
+  nested `feedback_adjustments`.
 - Hardened local workflow trace observability. Trace status and reset payloads
   now report invalid JSONL trace line counts while preserving the redacted
   event-only read path.
@@ -463,6 +467,10 @@ Validation:
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recommendation-feedback-ledger tests\test_recruiting_schema.py tests\test_recruiting_match.py tests\test_recruiting_recommendation.py tests\test_recruiting_recommendations_service.py tests\test_recruiting_mcp_tools.py`
   -> 45 passed, 1 external deprecation warning.
 - `ruff check src\deal_intel\schema\recruiting.py src\deal_intel\schema\recruiting_recommendation.py tests\test_recruiting_schema.py tests\test_recruiting_recommendation.py tests\test_recruiting_recommendations_service.py`
+  -> passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-feedback-ledger-persistence tests\test_recruiting_storage_contract.py tests\test_local_sample_backend.py tests\test_recruiting_recommendations_service.py tests\test_recruiting_schema.py`
+  -> 49 passed.
+- `ruff check src\deal_intel\schema\recruiting.py tests\test_recruiting_storage_contract.py tests\test_local_sample_backend.py`
   -> passed.
 - `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-user-test-guide-recruit-ai tests\test_docs_recruit_ai_current.py`

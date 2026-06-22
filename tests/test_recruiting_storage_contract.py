@@ -2,7 +2,13 @@ from __future__ import annotations
 
 import pytest
 
-from deal_intel.schema.recruiting import CandidateProfile
+from deal_intel.schema.recruiting import (
+    CandidateProfile,
+    FitSignal,
+    FitSnapshot,
+    RecommendationResult,
+    RecommendationRun,
+)
 from deal_intel.storage.mongodb import MongoDBClient
 from deal_intel.storage.recruiting_collections import (
     CANDIDATES,
@@ -313,18 +319,49 @@ def test_save_recommendation_run_uses_recommendation_run_id() -> None:
     client, db = _client_with_fake_db()
 
     saved = client.save_recommendation_run(
-        {
-            "recommendation_run_id": "run-1",
-            "mode": "position_to_candidates",
-            "anchor_type": "position",
-            "anchor_id": "pos-1",
-        }
+        RecommendationRun(
+            recommendation_run_id="run-1",
+            mode="position_to_candidates",
+            anchor_type="position",
+            anchor_id="pos-1",
+            results=[
+                RecommendationResult(
+                    target_id="cand-1",
+                    rank=1,
+                    fit_snapshot=FitSnapshot(
+                        overall_score=80,
+                        dimensions={"skill_fit": FitSignal(score=4)},
+                    ),
+                    feedback_adjustments=[
+                        {
+                            "feedback_id": "fb-1",
+                            "dimension": "skill_fit",
+                            "delta": 1,
+                            "original_score": 3,
+                            "adjusted_score": 4,
+                        }
+                    ],
+                )
+            ],
+        )
     )
 
     assert saved is True
     assert db.recommendation_runs.last_replace_filter == {
         "recommendation_run_id": "run-1"
     }
+    assert db.recommendation_runs.rows["run-1"]["results"][0][
+        "feedback_adjustments"
+    ] == [
+        {
+            "feedback_id": "fb-1",
+            "dimension": "skill_fit",
+            "delta": 1,
+            "original_score": 3,
+            "adjusted_score": 4,
+            "reason": "",
+        }
+    ]
 
 
 def test_typed_recommendation_run_list_builds_anchor_filters() -> None:

@@ -439,6 +439,7 @@ class ClientFeedback(RecruitingModel):
     preference_learning: list[str] = Field(default_factory=list)
     summary: str = ""
     created_at: str = ""
+    updated_at: str = ""
 
     @field_validator("feedback_id", "subject_id")
     @classmethod
@@ -468,7 +469,7 @@ class ClientFeedback(RecruitingModel):
     def _safe_preferences(cls, value: list[str]) -> list[str]:
         return _clean_text_list(value, max_items=30, max_length=300)
 
-    @field_validator("summary", "created_at")
+    @field_validator("summary", "created_at", "updated_at")
     @classmethod
     def _safe_text(cls, value: str) -> str:
         return _clean_optional_text(value, max_length=1200)

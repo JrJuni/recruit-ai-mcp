@@ -275,6 +275,17 @@ def test_local_sample_supports_recruiting_records_and_recommendations(tmp_path) 
         summary="Candidate is strong on Python platform work.",
         raw_content="private recruiting screen notes",
     )
+    recruiting_records.add_client_feedback(
+        client,
+        feedback_id="fb_local_skill_boost",
+        subject_type="submission",
+        subject_id="sub_local_placeholder",
+        position_id="pos_local_backend",
+        candidate_id="cand_local_avery",
+        sentiment="positive",
+        decision_signal="advance",
+        rubric_deltas={"skill_fit": 1},
+    )
 
     result = recruiting_recommendations.recommend_candidates_for_position(
         client,
@@ -288,7 +299,14 @@ def test_local_sample_supports_recruiting_records_and_recommendations(tmp_path) 
     assert result["storage_written"] is True
     assert result["result_count"] == 1
     assert result["record"]["results"][0]["target_id"] == "cand_local_avery"
-    assert client.ping()["local_recruiting_record_count"] == 5
+    assert result["record"]["results"][0]["feedback_adjustments"][0]["dimension"] == (
+        "skill_fit"
+    )
+    assert client.ping()["local_recruiting_record_count"] == 6
+    saved_run = payload["records"]["recommendation_runs"][0]
+    assert saved_run["results"][0]["feedback_adjustments"][0]["feedback_id"] == (
+        "fb_local_skill_boost"
+    )
     assert "private recruiting screen notes" not in json.dumps(
         payload,
         ensure_ascii=False,
