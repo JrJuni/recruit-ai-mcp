@@ -124,7 +124,7 @@ Reference:
 <https://www.anaconda.com/docs/getting-started/tos-plugin>
 
 Use the conda environment Python directly. First help the user identify the
-interpreter path for the environment where `deal-intel-mcp` is installed. For a
+interpreter path for the environment where `recruit-ai-mcp` is installed. For a
 new local setup, the recommended environment name is `deal-intel`:
 
 ```powershell
@@ -200,7 +200,7 @@ personal dataset becomes active.
 
 When installing the MCPB, recommend:
 
-- Python interpreter path: the env where `deal-intel-mcp` is installed.
+- Python interpreter path: the env where `recruit-ai-mcp` is installed.
 - Storage backend: `mongo` for real use; `local_sample` only for zero-config
   trial.
 - MCP tool surface: `auto`.

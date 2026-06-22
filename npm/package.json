@@ -1,27 +1,28 @@
 {
-  "name": "deal-intel-mcp",
+  "name": "recruit-ai-mcp",
   "version": "0.2.3",
   "private": false,
-  "description": "Dependency-inclusive bootstrapper for the deal-intel-mcp Python MCP server.",
+  "description": "Dependency-inclusive bootstrapper for the recruit-ai-mcp Python MCP server.",
   "license": "MIT",
-  "homepage": "https://github.com/JrJuni/deal-intel-mcp#readme",
+  "homepage": "https://github.com/JrJuni/recruit-ai-mcp#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/JrJuni/deal-intel-mcp.git",
+    "url": "git+https://github.com/JrJuni/recruit-ai-mcp.git",
     "directory": "npm"
   },
   "bugs": {
-    "url": "https://github.com/JrJuni/deal-intel-mcp/issues"
+    "url": "https://github.com/JrJuni/recruit-ai-mcp/issues"
   },
   "keywords": [
     "mcp",
-    "sales",
-    "crm",
-    "deal-intelligence",
+    "recruiting",
+    "search-firm",
+    "talent-intelligence",
     "mongodb",
     "bootstrapper"
   ],
   "bin": {
+    "recruit-ai-mcp": "bin/deal-intel-mcp.js",
     "deal-intel-mcp": "bin/deal-intel-mcp.js"
   },
   "engines": {

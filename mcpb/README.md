@@ -7,8 +7,8 @@ This folder builds `recruit-ai-mcp.mcpb`, a [Claude Desktop MCP Bundle](https://
 The bundle ships the manifest + user-config schema. When the user double-clicks `recruit-ai-mcp-{version}.mcpb`, Claude Desktop prompts for the required paths/keys via a UI form instead of asking the user to hand-edit JSON.
 
 This bundle does not include the Python package or dependencies. The easiest
-no-git-clone path is to run `npx deal-intel-mcp setup` first, then paste the
-Python interpreter path printed by `npx deal-intel-mcp mcp-config` into the
+no-git-clone path is to run `npx recruit-ai-mcp setup` first, then paste the
+Python interpreter path printed by `npx recruit-ai-mcp mcp-config` into the
 MCPB form.
 
 Alternatively, install the project into an existing Python environment first,
@@ -64,8 +64,8 @@ release artifact.
 Recommended no-git-clone preparation:
 
 ```bash
-npx deal-intel-mcp setup --python /path/to/python
-npx deal-intel-mcp mcp-config
+npx recruit-ai-mcp setup --python /path/to/python
+npx recruit-ai-mcp mcp-config
 ```
 
 Use the `mcp-config` Python path in the MCPB form.

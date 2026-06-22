@@ -111,6 +111,11 @@ Completed:
   `AI_START_HERE.md` now describe the current recruiting workflow, first-use
   path, recruiting report/metric tools, and current surface counts while still
   noting inherited deal-intelligence compatibility.
+- Added Work 7C npm/bootstrapper recruit-ai rename. The npm package metadata,
+  managed runtime path, primary env overrides, install specs, bundled MCPB
+  filename, and Claude handoff now use `recruit-ai-mcp`, `~/.recruit-ai`, and
+  `RECRUIT_AI_*` as primary names while retaining compatibility aliases for
+  the old command and `DEAL_INTEL_*` env values.
 
 Validation:
 
@@ -165,6 +170,19 @@ Validation:
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-7b-docs tests\test_mcpb_manifest.py tests\test_tool_surfaces.py tests\test_sample_data.py`
   -> 69 passed, 1 third-party warning.
 - `mcpb validate mcpb\manifest.json` -> passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-npm-rename tests\test_bootstrapper_skeleton.py tests\test_mcpb_manifest.py tests\test_storage_backend_selection.py`
+  -> 29 passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-npm-final tests\test_bootstrapper_skeleton.py tests\test_mcpb_manifest.py tests\test_storage_backend_selection.py tests\test_profile_smoke_cli.py tests\test_config_doctor.py tests\test_cli_config_profiles.py`
+  -> 53 passed, 1 third-party warning.
+- `ruff check npm tests` -> passed.
+- `node --check npm\bin\deal-intel-mcp.js` -> passed.
+- `npm pack --dry-run` from `npm/` -> passed; tarball contents include
+  `mcpb/recruit-ai-mcp-0.2.3.mcpb`.
+- `mcpb validate mcpb\manifest.json` -> passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-7c-final tests\test_bootstrapper_skeleton.py tests\test_mcpb_manifest.py tests\test_storage_backend_selection.py tests\test_profile_smoke_cli.py tests\test_config_doctor.py tests\test_cli_config_profiles.py tests\test_sample_data.py tests\test_tool_surfaces.py tests\test_recruiting_metrics.py tests\test_export_recruiting_report.py`
+  -> 123 passed, 1 third-party warning.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2c tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py`

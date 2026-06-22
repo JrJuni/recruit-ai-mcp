@@ -23,7 +23,7 @@ def test_config_profiles_cli_returns_profile_catalog_json() -> None:
         "local_sample"
     )
     assert payload["profiles"][0]["config_patch"]["storage"]["local_data_dir"] == (
-        "~/.deal-intel/local-data"
+        "~/.recruit-ai/local-data"
     )
     command_blob = json.dumps(payload["profiles"], ensure_ascii=False)
     assert "config init" not in command_blob
@@ -72,7 +72,7 @@ def test_config_show_cli_summarizes_effective_config_without_secrets(
     assert payload["user_config_exists"] is True
     assert payload["effective_config"]["storage"]["backend"] == "local_sample"
     assert payload["effective_config"]["storage"]["local_data_dir"] == (
-        "~/.deal-intel/local-data"
+        "~/.recruit-ai/local-data"
     )
     assert payload["effective_config"]["tools"] == {
         "surface": "auto",
@@ -80,7 +80,7 @@ def test_config_show_cli_summarizes_effective_config_without_secrets(
         "mcp_tool_count": 24,
     }
     assert payload["effective_config"]["llm"]["provider"] == "openai_api"
-    assert payload["runtime"]["package_name"] == "deal-intel-mcp"
+    assert payload["runtime"]["package_name"] == "recruit-ai-mcp"
     assert payload["runtime"]["package_version"]
     assert "source_tree_version" in payload["runtime"]
     assert "version_mismatch" in payload["runtime"]
@@ -103,7 +103,7 @@ def test_config_show_cli_uses_env_storage_override(monkeypatch, tmp_path) -> Non
     assert payload["user_config_exists"] is False
     assert payload["effective_config"]["storage"]["backend"] == "local_sample"
     assert payload["effective_config"]["storage"]["local_data_dir"] == (
-        "~/.deal-intel/local-data"
+        "~/.recruit-ai/local-data"
     )
     assert payload["effective_config"]["tools"]["resolved_surface"] == "sample"
     assert payload["environment"]["DEAL_INTEL_STORAGE_BACKEND"]["configured"] is True

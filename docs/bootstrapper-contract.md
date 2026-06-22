@@ -1,7 +1,7 @@
 # Bootstrapper Contract
 
 This contract defines the first dependency-inclusive bootstrapper for
-`deal-intel-mcp`.
+`recruit-ai-mcp`.
 
 The bootstrapper is the published `npx` front door for users who should not
 need to clone the repository or run editable installs before the first doctor
@@ -9,7 +9,7 @@ check.
 
 As of package version `0.2.3`, the public npm package is available, installs
 the Python package from PyPI by default, and copies a bundled MCPB file into
-`~/.deal-intel/runtime/mcpb/`. It still requires Node.js 18+ and a usable Python
+`~/.recruit-ai/runtime/mcpb/`. It still requires Node.js 18+ and a usable Python
 3.11+ interpreter on the user's machine; it does not bundle Python, PyTorch, or
 embedding models inside the npm tarball.
 
@@ -20,7 +20,7 @@ install, locate, and run the Python package safely.
 
 Target user:
 
-- a non-developer or AI-assisted user trying Deal Intelligence for the first
+- a non-developer or AI-assisted user trying Recruit AI for the first
   time;
 - a small team that wants the `full` MongoDB-backed path but needs guided setup;
 - a developer who wants a fast disposable setup without reading the repo first.
@@ -28,12 +28,12 @@ Target user:
 The bootstrapper exposes these commands:
 
 ```bash
-npx deal-intel-mcp setup
-npx deal-intel-mcp doctor
-npx deal-intel-mcp smoke
-npx deal-intel-mcp mcp
-npx deal-intel-mcp mcp-config
-npx deal-intel-mcp mcpb
+npx recruit-ai-mcp setup
+npx recruit-ai-mcp doctor
+npx recruit-ai-mcp smoke
+npx recruit-ai-mcp mcp
+npx recruit-ai-mcp mcp-config
+npx recruit-ai-mcp mcpb
 ```
 
 ## Non-Goals
@@ -51,10 +51,10 @@ The bootstrapper must not:
 
 ## Runtime Layout
 
-Use the user-owned Deal Intelligence runtime directory:
+Use the user-owned Recruit AI runtime directory:
 
 ```text
-~/.deal-intel/
+~/.recruit-ai/
   config.yaml
   reports/
   smoke/
@@ -69,14 +69,14 @@ Use the user-owned Deal Intelligence runtime directory:
 Platform-specific Python paths:
 
 ```text
-Windows: ~/.deal-intel/runtime/venv/Scripts/python.exe
-macOS/Linux: ~/.deal-intel/runtime/venv/bin/python
+Windows: ~/.recruit-ai/runtime/venv/Scripts/python.exe
+macOS/Linux: ~/.recruit-ai/runtime/venv/bin/python
 ```
 
 The bootstrapper may also create small launcher scripts under:
 
 ```text
-~/.deal-intel/runtime/bin/
+~/.recruit-ai/runtime/bin/
 ```
 
 Do not write mutable runtime state under:
@@ -90,7 +90,7 @@ Do not write mutable runtime state under:
 
 Current release path:
 
-1. Install the matching `deal-intel-mcp[embedding]==<bootstrapper-version>`
+1. Install the matching `recruit-ai-mcp[embedding]==<bootstrapper-version>`
    from PyPI by default.
 2. Use TestPyPI only for pre-release validation.
 3. Allow a GitHub release wheel URL as an explicit fallback or development
@@ -101,15 +101,15 @@ Do not install from a moving branch such as `main` for the normal user path.
 The first implementation may support these explicit modes:
 
 ```bash
-npx deal-intel-mcp setup --source pypi
-npx deal-intel-mcp setup --source testpypi
-npx deal-intel-mcp setup --wheel-url https://...
+npx recruit-ai-mcp setup --source pypi
+npx recruit-ai-mcp setup --source testpypi
+npx recruit-ai-mcp setup --wheel-url https://...
 ```
 
 Default dependency profile:
 
 ```text
-deal-intel-mcp[embedding]==0.2.3
+recruit-ai-mcp[embedding]==0.2.3
 ```
 
 Reason: product context, semantic search, and most realistic local demos need
@@ -118,7 +118,7 @@ and the Python runtime do not drift. A lightweight mode may exist, but it
 should be explicit:
 
 ```bash
-npx deal-intel-mcp setup --lightweight
+npx recruit-ai-mcp setup --lightweight
 ```
 
 ## Command Contract
@@ -133,13 +133,13 @@ Required behavior:
 - detect usable Python 3.11+;
 - use `python -m venv` and `pip` for the current public bootstrapper;
 - keep `uv` as an optional future optimization, not a required dependency;
-- create or reuse `~/.deal-intel/runtime/venv`;
+- create or reuse `~/.recruit-ai/runtime/venv`;
 - install the selected Python package source;
-- copy the bundled MCPB file into `~/.deal-intel/runtime/mcpb/`;
-- write `~/.deal-intel/runtime/install-state.json`;
+- copy the bundled MCPB file into `~/.recruit-ai/runtime/mcpb/`;
+- write `~/.recruit-ai/runtime/install-state.json`;
 - print the resolved Python interpreter path;
 - print the local MCPB file path to install in Claude Desktop;
-- run `deal-intel smoke-profile --profile sample` after install to prove the
+- run `recruit-ai smoke-profile --profile sample` after install to prove the
   runtime works without MongoDB or API keys.
 
 `setup` should not fail merely because the user has not configured MongoDB yet.
@@ -178,10 +178,10 @@ Purpose: run a bounded local validation after setup.
 Required behavior:
 
 - call:
-  `deal-intel smoke-profile --profile sample`;
+  `recruit-ai smoke-profile --profile sample`;
 - call:
-  `deal-intel smoke-natural-questions --as-of 2026-06-10 --output-dir ~/.deal-intel/smoke`;
-- keep output under `~/.deal-intel/smoke`;
+  `recruit-ai smoke-natural-questions --as-of 2026-06-10 --output-dir ~/.recruit-ai/smoke`;
+- keep output under `~/.recruit-ai/smoke`;
 - summarize pass/fail and output path.
 
 Do not call live LLM completions, embeddings, Atlas admin APIs, or writes by
@@ -227,7 +227,7 @@ It should not validate the runtime; `doctor` owns validation.
 
 ## Configuration And Secrets
 
-The bootstrapper may create a starter `~/.deal-intel/config.yaml`, but it must
+The bootstrapper may create a starter `~/.recruit-ai/config.yaml`, but it must
 not write API keys or MongoDB URIs unless the user explicitly provides them.
 
 Secrets should be supplied through:
@@ -249,7 +249,7 @@ Any generated diagnostic output must redact:
 Write a JSON file:
 
 ```text
-~/.deal-intel/runtime/install-state.json
+~/.recruit-ai/runtime/install-state.json
 ```
 
 Suggested fields:
@@ -292,7 +292,7 @@ MCPB remains the Claude Desktop installation/config surface.
 The bootstrapper should make MCPB easier by providing a stable Python path:
 
 ```text
-~/.deal-intel/runtime/venv/...
+~/.recruit-ai/runtime/venv/...
 ```
 
 MCPB should not be responsible for installing Python dependencies. The

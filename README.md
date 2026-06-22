@@ -1158,7 +1158,7 @@ Current source of truth:
 [Claude Desktop / Codex - natural-language input]
          | stdio JSON-RPC
          v
-[deal-intel-mcp  FastMCP server]
+[recruit-ai-mcp  FastMCP server]
          |
          |-- LLM Provider
          |     |-- ChatGPT OAuth (default, Plus/Pro subscription)

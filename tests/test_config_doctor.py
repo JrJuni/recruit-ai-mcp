@@ -244,7 +244,7 @@ def test_config_doctor_cli_json_and_text_are_secret_safe(monkeypatch, tmp_path) 
     payload = json.loads(json_result.stdout)
     assert payload["ok"] is True
     assert payload["summary"]["storage_backend"] == "local_sample"
-    assert payload["runtime"]["package_name"] == "deal-intel-mcp"
+    assert payload["runtime"]["package_name"] == "recruit-ai-mcp"
     assert payload["runtime"]["package_version"]
     assert "source_tree_version" in payload["runtime"]
     assert "version_mismatch" in payload["runtime"]
@@ -316,7 +316,7 @@ def test_config_doctor_mcp_wrapper_uses_shared_report(monkeypatch, tmp_path) -> 
 
     assert result["ok"] is True
     assert result["profile"] == "sample"
-    assert result["runtime"]["package_name"] == "deal-intel-mcp"
+    assert result["runtime"]["package_name"] == "recruit-ai-mcp"
     assert "version_mismatch" in result["runtime"]
     assert result["runtime"]["python_executable"]
     assert _status(result, "sample_storage") == "pass"
@@ -331,7 +331,7 @@ def test_config_doctor_mcp_runtime_registers_tool(monkeypatch) -> None:
     tools = asyncio.run(mcp_server.app.list_tools())
     names = sorted(tool.name for tool in tools)
 
-    assert len(names) == 42
+    assert len(names) == 52
     assert "config_doctor" in names
     assert "update_config" in names
 
