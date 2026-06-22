@@ -169,6 +169,9 @@ Installed-package smoke passes when:
 - the recruiting smoke contract verifies `candidate_count=9`,
   `written_record_count=29`, `reloaded_record_count=29`, and
   `guardrail_candidate_count=5`;
+- the same contract verifies candidate-to-position smoke uses open-role
+  defaults with `candidate_position_available_count=2` and
+  `candidate_position_excluded_count=1`;
 - `deal_intel.mcp_server.app.list_tools()` returns the sample MCP surface;
 - the core tools `config_doctor`, `get_tool_catalog`, `create_candidate`,
   `add_recruiting_interaction`, `recommend_candidates_for_position`, and

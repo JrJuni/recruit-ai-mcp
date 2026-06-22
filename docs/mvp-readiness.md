@@ -236,6 +236,8 @@ Pass criteria:
   submissions, learned client preferences, candidate risk flags, raw-content
   safety, intake coverage, recruiting report preview readiness, and local
   personal recruiting persistence.
+- Candidate-to-position smoke shows the default open-role filter and the
+  paused role excluded from first-pass recommendations.
 - The pack also covers realistic recommendation guardrails, including
   must-have skill evidence gaps, and client shortlist readiness for open sample
   positions.

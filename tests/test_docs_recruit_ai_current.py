@@ -84,6 +84,16 @@ def test_release_docs_and_workflows_use_recruit_ai_package_name() -> None:
         in release_docs
     )
     assert (
+        "`candidate_position_available_count="
+        f"{EXPECTED_CONTRACT['candidate_position_available_count']}`"
+        in release_docs
+    )
+    assert (
+        "`candidate_position_excluded_count="
+        f"{EXPECTED_CONTRACT['candidate_position_excluded_count']}`"
+        in release_docs
+    )
+    assert (
         "python scripts/validate_recruiting_smoke.py "
         "smoke-evidence/recruiting-natural-questions.json"
     ) in release_workflow

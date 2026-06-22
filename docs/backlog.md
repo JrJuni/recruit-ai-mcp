@@ -80,6 +80,8 @@ Immediate quality order:
    - Recommendation guardrails now check that keyword-strong but risky sample
      candidates do not outrank aligned matches when compensation, location,
      availability, seniority, or scope constraints matter.
+   - Candidate-to-position smoke now shows open-role defaults and the paused
+     sample role excluded from first-pass recommendations.
    - Client shortlist readiness now checks that each open sample position has
      a ranked candidate shortlist with visible review risks and next questions.
    - Keep the inherited deal-intelligence natural-question pack as a

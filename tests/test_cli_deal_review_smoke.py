@@ -546,6 +546,7 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     assert contract_payload["contract"] == EXPECTED_CONTRACT
     assert (output_dir / "rq01_recruiting_pipeline_metrics.json").exists()
     assert (output_dir / "rq02_candidates_for_northstar_backend.json").exists()
+    assert (output_dir / "rq03_positions_for_avery.json").exists()
     position_recommendations = json.loads(
         (output_dir / "rq02_candidates_for_northstar_backend.json").read_text(
             encoding="utf-8"
@@ -559,6 +560,22 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     } == {
         ("fb_avery_northstar_advance", "domain_fit"),
         ("fb_avery_northstar_advance", "client_preference_fit"),
+    }
+    candidate_recommendations = json.loads(
+        (output_dir / "rq03_positions_for_avery.json").read_text(encoding="utf-8")
+    )
+    assert candidate_recommendations["summary"] == {
+        "candidate_id": "cand_avery_chen",
+        "position_status": "open",
+        "available_position_count": 2,
+        "excluded_position_count": 1,
+        "excluded_position_ids": ["pos_northstar_data_manager"],
+    }
+    assert {
+        row["target_id"] for row in candidate_recommendations["run"]["results"]
+    } == {"pos_northstar_backend_lead", "pos_orbitpay_payments_lead"}
+    assert "pos_northstar_data_manager" not in {
+        row["target_id"] for row in candidate_recommendations["run"]["results"]
     }
     assert (output_dir / "rq08_local_recruiting_data_safety.json").exists()
     assert (output_dir / "rq09_recruiting_intake_coverage.json").exists()

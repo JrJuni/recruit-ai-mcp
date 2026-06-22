@@ -24,6 +24,19 @@ def _payload(
                 "payload": {"summary": {"candidate_count": candidate_count}},
             },
             {
+                "id": "rq03_positions_for_avery",
+                "payload": {
+                    "summary": {
+                        "available_position_count": EXPECTED_CONTRACT[
+                            "candidate_position_available_count"
+                        ],
+                        "excluded_position_count": EXPECTED_CONTRACT[
+                            "candidate_position_excluded_count"
+                        ],
+                    }
+                },
+            },
+            {
                 "id": "rq11_local_recruiting_persistence",
                 "payload": {
                     "summary": {

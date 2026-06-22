@@ -13,11 +13,14 @@ EXPECTED_CONTRACT = {
     "written_record_count": 29,
     "reloaded_record_count": 29,
     "guardrail_candidate_count": 5,
+    "candidate_position_available_count": 2,
+    "candidate_position_excluded_count": 1,
     "open_position_count": 2,
     "positions_with_shortlist": 2,
 }
 _REQUIRED_QUESTIONS = (
     "rq01_recruiting_pipeline_metrics",
+    "rq03_positions_for_avery",
     "rq11_local_recruiting_persistence",
     "rq12_recommendation_guardrails",
     "rq13_client_shortlist_readiness",
@@ -27,6 +30,7 @@ _REQUIRED_QUESTIONS = (
 def validate_payload(payload: dict[str, Any]) -> dict[str, Any]:
     questions = _questions_by_id(payload)
     metrics = _summary(questions, "rq01_recruiting_pipeline_metrics")
+    candidate_positions = _summary(questions, "rq03_positions_for_avery")
     persistence = _summary(questions, "rq11_local_recruiting_persistence")
     guardrails = _summary(questions, "rq12_recommendation_guardrails")
     shortlist = _summary(questions, "rq13_client_shortlist_readiness")
@@ -56,6 +60,16 @@ def validate_payload(payload: dict[str, Any]) -> dict[str, Any]:
             guardrails,
             "guardrail_candidate_count",
             scope="rq12_recommendation_guardrails summary",
+        ),
+        "candidate_position_available_count": _required_key(
+            candidate_positions,
+            "available_position_count",
+            scope="rq03_positions_for_avery summary",
+        ),
+        "candidate_position_excluded_count": _required_key(
+            candidate_positions,
+            "excluded_position_count",
+            scope="rq03_positions_for_avery summary",
         ),
         "open_position_count": _required_key(
             shortlist,

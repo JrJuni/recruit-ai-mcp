@@ -3547,14 +3547,32 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
         return {"mode": "position_to_candidates", "run": run}
 
     def candidate_to_positions() -> dict:
+        open_positions = [
+            position for position in positions if position.get("status") == "open"
+        ]
+        excluded_positions = [
+            position for position in positions if position.get("status") != "open"
+        ]
         run = build_candidate_position_recommendation_run(
             candidate=candidates_by_id["cand_avery_chen"],
-            positions=positions,
+            positions=open_positions,
             client_feedback=feedback,
             limit=3,
             created_at=loaded_at,
         ).model_dump(mode="json")
-        return {"mode": "candidate_to_positions", "run": run}
+        return {
+            "mode": "candidate_to_positions",
+            "summary": {
+                "candidate_id": "cand_avery_chen",
+                "position_status": "open",
+                "available_position_count": len(open_positions),
+                "excluded_position_count": len(excluded_positions),
+                "excluded_position_ids": [
+                    position["position_id"] for position in excluded_positions
+                ],
+            },
+            "run": run,
+        }
 
     def feedback_adjustment_summary() -> dict:
         from dataclasses import asdict
