@@ -11,7 +11,8 @@ import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-BOOTSTRAPPER = ROOT / "npm" / "bin" / "deal-intel-mcp.js"
+BOOTSTRAPPER = ROOT / "npm" / "bin" / "recruit-ai-mcp.js"
+COMPAT_BOOTSTRAPPER = ROOT / "npm" / "bin" / "deal-intel-mcp.js"
 MCPB_MANIFEST = ROOT / "mcpb" / "manifest.json"
 PYPROJECT = ROOT / "pyproject.toml"
 
@@ -32,12 +33,32 @@ def test_npm_package_exposes_expected_bin() -> None:
     assert package["private"] is False
     assert package["publishConfig"] == {"access": "public"}
     assert package["bin"] == {
-        "recruit-ai-mcp": "bin/deal-intel-mcp.js",
+        "recruit-ai-mcp": "bin/recruit-ai-mcp.js",
         "deal-intel-mcp": "bin/deal-intel-mcp.js",
     }
     assert package["engines"]["node"] == ">=18"
     assert "mcpb/" in package["files"]
     assert "dependencies" not in package
+    assert package["scripts"]["smoke"] == "node bin/recruit-ai-mcp.js where --json"
+
+
+def test_npm_bootstrapper_keeps_compatibility_launcher(tmp_path: Path) -> None:
+    package = json.loads((ROOT / "npm" / "package.json").read_text(encoding="utf-8"))
+
+    for script in (BOOTSTRAPPER, COMPAT_BOOTSTRAPPER):
+        result = subprocess.run(
+            ["node", str(script), "where", "--json"],
+            check=True,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            env=_env_with_home(tmp_path),
+        )
+        payload = json.loads(result.stdout)
+
+        assert payload["ok"] is True
+        assert payload["bootstrapper_version"] == package["version"]
+        assert payload["mcpb"]["filename"] == f"recruit-ai-mcp-{package['version']}.mcpb"
 
 
 def test_npm_bundled_mcpb_matches_package_version() -> None:

@@ -22,14 +22,14 @@
     "bootstrapper"
   ],
   "bin": {
-    "recruit-ai-mcp": "bin/deal-intel-mcp.js",
+    "recruit-ai-mcp": "bin/recruit-ai-mcp.js",
     "deal-intel-mcp": "bin/deal-intel-mcp.js"
   },
   "engines": {
     "node": ">=18"
   },
   "scripts": {
-    "smoke": "node bin/deal-intel-mcp.js where --json"
+    "smoke": "node bin/recruit-ai-mcp.js where --json"
   },
   "publishConfig": {
     "access": "public"

@@ -350,9 +350,26 @@ Completed:
   criteria, and bootstrapper release tests derive those names from
   `pyproject.toml` so the Python package line stays aligned with the current
   Recruit AI `0.1.0` release target.
+- Added Work 7BC npm recruit-ai launcher cleanup.
+  The npm package now exposes `recruit-ai-mcp` through a first-class
+  `bin/recruit-ai-mcp.js` wrapper while retaining `bin/deal-intel-mcp.js` as a
+  compatibility launcher. Local pre-publish smoke docs now use the recruit-ai
+  wrapper, and tests verify both launchers still produce the same Recruit AI
+  MCPB/runtime handoff metadata.
 
 Validation:
 
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-npm-recruit-wrapper tests\test_bootstrapper_skeleton.py tests\test_docs_recruit_ai_current.py`
+  -> 28 passed.
+- `node npm\bin\recruit-ai-mcp.js where --json` -> passed with
+  `bootstrapper_version=0.1.0` and `recruit-ai-mcp-0.1.0.mcpb`.
+- `node npm\bin\deal-intel-mcp.js where --json` -> passed with
+  compatibility launcher output matching the Recruit AI MCPB/runtime paths.
+- `npm pack .\npm --dry-run --cache .tmp\npm-cache-recruit-wrapper`
+  -> produced `recruit-ai-mcp-0.1.0.tgz` preview containing both
+  `bin/recruit-ai-mcp.js` and compatibility `bin/deal-intel-mcp.js`.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-python-dist-names tests\test_bootstrapper_skeleton.py tests\test_docs_recruit_ai_current.py`
   -> 27 passed.
 - `python -m build --no-isolation --outdir .tmp\python-dist-artifact-gate`

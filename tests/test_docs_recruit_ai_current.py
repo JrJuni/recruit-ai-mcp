@@ -76,6 +76,7 @@ def test_bootstrapper_fresh_smoke_uses_recruit_ai_public_package() -> None:
     docs = (ROOT / "docs" / "bootstrapper-fresh-smoke.md").read_text(
         encoding="utf-8"
     )
+    npm_readme = (ROOT / "npm" / "README.md").read_text(encoding="utf-8")
 
     assert "recruit-ai-mcp@0.1.0 setup" in docs
     assert "recruit-ai-mcp[embedding]==0.1.0" in docs
@@ -85,10 +86,14 @@ def test_bootstrapper_fresh_smoke_uses_recruit_ai_public_package() -> None:
     assert "npm `E404`" in docs
     assert "No matching distribution found for recruit-ai-mcp" in docs
     assert "Do not mark the public `npx recruit-ai-mcp@0.1.0` path ready" in docs
+    assert "node npm\\bin\\recruit-ai-mcp.js setup" in docs
+    assert "node npm\\bin\\recruit-ai-mcp.js setup" in npm_readme
 
     assert "deal-intel-mcp@0.2.1" not in docs
     assert "deal-intel-mcp[embedding]" not in docs
     assert "DEAL_INTEL_HOME" not in docs
+    assert "node npm\\bin\\deal-intel-mcp.js setup" not in docs
+    assert "node npm\\bin\\deal-intel-mcp.js setup" not in npm_readme
 
 
 def test_distribution_plan_lists_current_bootstrapper_handoff_commands() -> None:
