@@ -1,0 +1,174 @@
+from __future__ import annotations
+
+from deal_intel.schema.recruiting import (
+    CandidateProfile,
+    CompensationExpectation,
+    EvidenceReference,
+    Position,
+)
+from deal_intel.schema.recruiting_recommendation import (
+    build_candidate_position_recommendation_run,
+    build_position_candidate_recommendation_run,
+)
+
+
+def _evidence(candidate_id: str) -> EvidenceReference:
+    return EvidenceReference(
+        evidence_id=f"ev_{candidate_id}",
+        source_type="profile",
+        source_id=candidate_id,
+        summary="Recruiter screen confirmed profile details.",
+        confidence="candidate_stated",
+    )
+
+
+def _candidate(candidate_id: str, **updates: object) -> CandidateProfile:
+    payload = {
+        "candidate_id": candidate_id,
+        "name": "Avery Chen" if candidate_id == "cand_avery" else "Blake Rivera",
+        "headline": "Backend platform lead",
+        "current_title": "Lead Backend Engineer",
+        "skills": ["Python", "MongoDB", "distributed systems"],
+        "domains": ["B2B SaaS"],
+        "seniority": "lead",
+        "compensation_expectation": CompensationExpectation(
+            currency="USD",
+            minimum=160000,
+            target=175000,
+            period="annual",
+        ),
+        "locations": ["Remote"],
+        "availability": "30 days",
+        "risk_flags": [],
+        "evidence": [_evidence(candidate_id)],
+    }
+    payload.update(updates)
+    return CandidateProfile.model_validate(payload)
+
+
+def _position(position_id: str = "pos_backend_lead", **updates: object) -> Position:
+    payload = {
+        "position_id": position_id,
+        "client_company_id": "client_acme",
+        "title": "Backend Engineering Lead",
+        "status": "open",
+        "seniority": "lead",
+        "must_have": ["Python", "MongoDB"],
+        "nice_to_have": ["distributed systems", "B2B SaaS"],
+        "target_compensation": CompensationExpectation(
+            currency="USD",
+            minimum=150000,
+            maximum=200000,
+            period="annual",
+        ),
+        "locations": ["Remote"],
+        "remote_policy": "remote",
+    }
+    payload.update(updates)
+    return Position.model_validate(payload)
+
+
+def test_position_candidate_recommendation_run_ranks_candidates() -> None:
+    run = build_position_candidate_recommendation_run(
+        position=_position(ideal_candidate_examples=["cand_avery"]),
+        candidates=[
+            _candidate("cand_blake", skills=["Excel"], domains=["Retail"], seniority="junior"),
+            _candidate("cand_avery"),
+        ],
+        recommendation_run_id="rec_rank_candidates",
+        query={"source": "unit-test"},
+    )
+
+    assert run.mode == "position_to_candidates"
+    assert run.anchor_type == "position"
+    assert run.anchor_id == "pos_backend_lead"
+    assert [result.target_id for result in run.results] == ["cand_avery", "cand_blake"]
+    assert [result.rank for result in run.results] == [1, 2]
+    assert run.results[0].recommendation_reason.startswith(
+        "Strongest evidence-backed dimensions:"
+    )
+    assert run.query == {"source": "unit-test"}
+
+
+def test_candidate_position_recommendation_run_ranks_positions() -> None:
+    run = build_candidate_position_recommendation_run(
+        candidate=_candidate("cand_avery"),
+        positions=[
+            _position(
+                "pos_sales_manager",
+                title="Sales Manager",
+                seniority="manager",
+                must_have=["Salesforce"],
+                nice_to_have=[],
+                locations=["New York"],
+                remote_policy="onsite",
+            ),
+            _position("pos_backend_lead"),
+        ],
+        limit=1,
+    )
+
+    assert run.mode == "candidate_to_positions"
+    assert run.anchor_type == "candidate"
+    assert run.anchor_id == "cand_avery"
+    assert run.recommendation_run_id == "rec_positions_for_cand_avery"
+    assert [result.target_id for result in run.results] == ["pos_backend_lead"]
+    assert run.results[0].rank == 1
+
+
+def test_recommendation_result_exposes_low_fit_reason_and_questions() -> None:
+    run = build_position_candidate_recommendation_run(
+        position=_position(ideal_candidate_examples=[]),
+        candidates=[
+            _candidate(
+                "cand_blake",
+                skills=[],
+                domains=[],
+                seniority="",
+                compensation_expectation=None,
+                locations=[],
+                availability="",
+                evidence=[],
+            )
+        ],
+    )
+
+    result = run.results[0]
+    assert result.fit_snapshot.overall_score < 40
+    assert result.rejected_reason.startswith("Below threshold due to weak")
+    assert "Capture candidate skills with source evidence." in result.next_questions
+    assert "Improve evidence for skill_fit." in result.next_questions
+
+
+def test_recommendation_result_carries_risk_flags_from_candidate_and_fit() -> None:
+    run = build_position_candidate_recommendation_run(
+        position=_position(),
+        candidates=[
+            _candidate(
+                "cand_avery",
+                risk_flags=["counteroffer risk", "limited availability"],
+            )
+        ],
+    )
+
+    result = run.results[0]
+    assert result.risk_flags == [
+        "counteroffer risk",
+        "limited availability",
+        "high_match_risk",
+    ]
+
+
+def test_recommendation_run_accepts_mongo_style_dict_inputs() -> None:
+    candidate = _candidate("cand_avery").model_dump(mode="json")
+    candidate["_id"] = "mongo-candidate-id"
+    position = _position().model_dump(mode="json")
+    position["_id"] = "mongo-position-id"
+
+    run = build_position_candidate_recommendation_run(
+        position=position,
+        candidates=[candidate],
+    )
+
+    assert run.results[0].target_id == "cand_avery"
+    assert run.results[0].fit_snapshot.rubric_key == "recruiting_fit"

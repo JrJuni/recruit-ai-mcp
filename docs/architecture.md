@@ -128,6 +128,14 @@ returned as adjustment records before aggregate scoring. This keeps learned
 client preference influence inspectable instead of hiding it inside the base
 heuristics.
 
+Work 3D adds deterministic recommendation run/result builders in
+`src/deal_intel/schema/recruiting_recommendation.py`. The builders rank
+already-supplied candidate-position pairs through the Work 3B/3C fit builder,
+then return validated `RecommendationRun` and `RecommendationResult` models
+with reasons, low-fit rejection notes, risk flags, and next questions. Search,
+RAG retrieval, persistence, and MCP exposure remain deferred to Work 4 and Work
+5.
+
 ## Product Profiles
 
 The project uses one repository and one package with three profiles:

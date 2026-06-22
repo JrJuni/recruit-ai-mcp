@@ -62,6 +62,12 @@ Completed:
   candidate-position signals are derived, clamp to the 0-5 rubric scale, attach
   feedback evidence when present, and return an adjustment ledger for
   inspectability.
+- Added Work 3D deterministic recommendation result builders. Given one
+  position plus candidates, or one candidate plus positions, the builders rank
+  supplied candidate-position pairs through the fit builder and return
+  validated `RecommendationRun` / `RecommendationResult` models with reasons,
+  low-fit rejection notes, risk flags, and next questions. Search/RAG, storage,
+  and MCP registration remain deferred.
 
 Validation:
 
@@ -86,6 +92,8 @@ Validation:
   -> 86 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-3c-final tests\test_recruiting_match.py tests\test_recruiting_fit.py tests\test_recruiting_schema.py tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_mongo_contracts.py tests\test_mcpb_manifest.py tests\test_storage_backend_selection.py`
   -> 88 passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-3d-final tests\test_recruiting_recommendation.py tests\test_recruiting_match.py tests\test_recruiting_fit.py tests\test_recruiting_schema.py tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_mongo_contracts.py tests\test_mcpb_manifest.py tests\test_storage_backend_selection.py`
+  -> 93 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2c tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py`

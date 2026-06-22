@@ -317,6 +317,30 @@ Adjustment policy:
   and Work 3A inverts that raw risk score during aggregate scoring.
 - Unrelated feedback is ignored for score adjustment.
 
+## Work 3D Recommendation Result Builder
+
+Work 3D adds deterministic recommendation run/result builders on top of Work
+3B and Work 3C. It still does not perform database search, RAG retrieval,
+embedding search, LLM reasoning, storage writes, or MCP registration.
+
+Builder policy:
+
+- Position-to-candidates input is one `Position` plus an iterable of
+  candidates.
+- Candidate-to-positions input is one `CandidateProfile` plus an iterable of
+  positions.
+- Each candidate-position pair is evaluated through the candidate-position fit
+  builder.
+- Results are sorted by descending `FitSnapshot.overall_score` with stable
+  target ID tie-breaking.
+- Output is a validated `RecommendationRun` with ranked
+  `RecommendationResult` rows.
+- Result reasons summarize the strongest evidence-backed dimensions.
+- Results below the low-fit threshold include `rejected_reason`.
+- `next_questions` are derived from missing information and low-dimension
+  warnings.
+- Candidate risk flags and high raw risk scores are surfaced on the result.
+
 ## Collections For Work 2
 
 Recommended Mongo collections:
