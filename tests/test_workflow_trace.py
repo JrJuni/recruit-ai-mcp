@@ -8,6 +8,7 @@ from deal_intel.workflow_trace import (
     append_workflow_trace,
     build_workflow_trace_event,
     build_workflow_trace_status,
+    read_workflow_trace_file,
     read_workflow_traces,
     reset_workflow_trace,
     workflow_trace_enabled,
@@ -146,10 +147,47 @@ def test_workflow_trace_status_reports_recent_events(tmp_path) -> None:
     assert status["trace_path"] == str(path)
     assert status["trace_exists"] is True
     assert status["event_count"] == 3
+    assert status["invalid_event_count"] == 0
     assert status["max_events"] == 10
     assert [event["tool_name"] for event in status["recent_events"]] == [
         "tool_1",
         "tool_2",
+    ]
+
+
+def test_workflow_trace_status_reports_invalid_jsonl_rows(tmp_path) -> None:
+    cfg = {
+        "storage": {"local_data_dir": str(tmp_path)},
+        "observability": {"workflow_trace": {"enabled": True}},
+    }
+    path = workflow_trace_path(cfg, environ={})
+    write_trace_event(
+        path,
+        build_workflow_trace_event(
+            tool_name="create_candidate",
+            result={"ok": True},
+            timestamp="2026-06-22T00:00:00+00:00",
+        ),
+        max_events=10,
+    )
+    path.write_text(
+        path.read_text(encoding="utf-8")
+        + "{not-json}\n"
+        + json.dumps(["not", "an", "event"])
+        + "\n",
+        encoding="utf-8",
+    )
+
+    traces = read_workflow_trace_file(path)
+    status = build_workflow_trace_status(cfg, limit=5, environ={})
+
+    assert len(traces.events) == 1
+    assert traces.invalid_event_count == 2
+    assert read_workflow_traces(path) == traces.events
+    assert status["event_count"] == 1
+    assert status["invalid_event_count"] == 2
+    assert [event["tool_name"] for event in status["recent_events"]] == [
+        "create_candidate"
     ]
 
 
@@ -167,11 +205,13 @@ def test_workflow_trace_reset_is_dry_run_first(tmp_path) -> None:
     assert dry_run["dry_run"] is True
     assert dry_run["storage_written"] is False
     assert dry_run["would_delete_event_count"] == 1
+    assert dry_run["invalid_event_count"] == 0
     assert path.exists()
     applied = reset_workflow_trace(cfg, force=True, environ={})
     assert applied["dry_run"] is False
     assert applied["storage_written"] is True
     assert applied["deleted_event_count"] == 1
+    assert applied["invalid_event_count"] == 0
     assert not path.exists()
 
 

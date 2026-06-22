@@ -127,6 +127,8 @@ Reset/export behavior must be explicit before local personal writes ship:
 - `recruit-ai local-data reset --force` clears local personal deals and
   recruiting records.
 - `recruit-ai local-data trace-status` inspects opt-in local workflow traces.
+  It reports valid event count, recent events, and invalid JSONL trace line
+  count without exposing raw tool arguments or responses.
 - `recruit-ai local-data trace-reset` is dry-run by default and
   `trace-reset --force` deletes only the local trace file.
 - Local delete audit logs are retained after reset.

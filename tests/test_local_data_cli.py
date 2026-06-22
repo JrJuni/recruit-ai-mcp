@@ -214,6 +214,10 @@ def test_local_data_trace_status_cli_reports_recent_events(
         ),
         max_events=10,
     )
+    path.write_text(
+        path.read_text(encoding="utf-8") + "{not-json}\n",
+        encoding="utf-8",
+    )
 
     result = CliRunner().invoke(
         app,
@@ -226,6 +230,7 @@ def test_local_data_trace_status_cli_reports_recent_events(
     assert payload["trace_path"] == str(path)
     assert payload["trace_exists"] is True
     assert payload["event_count"] == 2
+    assert payload["invalid_event_count"] == 1
     assert [event["tool_name"] for event in payload["recent_events"]] == [
         "recommend_candidates_for_position"
     ]
@@ -251,6 +256,7 @@ def test_local_data_trace_reset_cli_is_dry_run_first(
     assert dry_run_payload["dry_run"] is True
     assert dry_run_payload["storage_written"] is False
     assert dry_run_payload["would_delete_event_count"] == 1
+    assert dry_run_payload["invalid_event_count"] == 0
     assert path.exists()
     applied = CliRunner().invoke(
         app,
@@ -261,4 +267,5 @@ def test_local_data_trace_reset_cli_is_dry_run_first(
     assert applied_payload["dry_run"] is False
     assert applied_payload["storage_written"] is True
     assert applied_payload["deleted_event_count"] == 1
+    assert applied_payload["invalid_event_count"] == 0
     assert not path.exists()

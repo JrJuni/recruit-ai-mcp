@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 from collections.abc import Mapping
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from hashlib import sha256
 from pathlib import Path
@@ -55,6 +56,12 @@ _SUMMARY_KEYS = {
     "stage",
     "storage_written",
 }
+
+
+@dataclass(frozen=True)
+class WorkflowTraceReadResult:
+    events: list[dict[str, Any]]
+    invalid_event_count: int
 
 
 def workflow_trace_enabled(
@@ -170,16 +177,17 @@ def build_workflow_trace_status(
     environ: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     path = workflow_trace_path(cfg, environ=environ)
-    events = read_workflow_traces(path)
+    traces = read_workflow_trace_file(path)
     recent_limit = max(0, min(_safe_int(limit) or 0, 50))
     return {
         "ok": True,
         "enabled": workflow_trace_enabled(cfg, environ=environ),
         "trace_path": str(path),
         "trace_exists": path.exists(),
-        "event_count": len(events),
+        "event_count": len(traces.events),
+        "invalid_event_count": traces.invalid_event_count,
         "max_events": workflow_trace_max_events(cfg, environ=environ),
-        "recent_events": events[-recent_limit:] if recent_limit else [],
+        "recent_events": traces.events[-recent_limit:] if recent_limit else [],
     }
 
 
@@ -190,13 +198,14 @@ def reset_workflow_trace(
     environ: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     path = workflow_trace_path(cfg, environ=environ)
-    events = read_workflow_traces(path)
+    traces = read_workflow_trace_file(path)
     payload = {
         "ok": True,
         "dry_run": not force,
         "trace_path": str(path),
         "trace_exists": path.exists(),
-        "would_delete_event_count": len(events),
+        "would_delete_event_count": len(traces.events),
+        "invalid_event_count": traces.invalid_event_count,
         "deleted_event_count": 0,
         "storage_written": False,
     }
@@ -206,7 +215,7 @@ def reset_workflow_trace(
         path.unlink()
         payload["storage_written"] = True
         payload["trace_exists"] = False
-    payload["deleted_event_count"] = len(events)
+    payload["deleted_event_count"] = len(traces.events)
     return payload
 
 
@@ -225,20 +234,31 @@ def write_trace_event(path: str | Path, event: Mapping[str, Any], *, max_events:
 
 
 def read_workflow_traces(path: str | Path) -> list[dict[str, Any]]:
+    return read_workflow_trace_file(path).events
+
+
+def read_workflow_trace_file(path: str | Path) -> WorkflowTraceReadResult:
     trace_path = Path(path)
     if not trace_path.exists():
-        return []
+        return WorkflowTraceReadResult(events=[], invalid_event_count=0)
     rows: list[dict[str, Any]] = []
+    invalid_event_count = 0
     for line in trace_path.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
         try:
             payload = json.loads(line)
         except json.JSONDecodeError:
+            invalid_event_count += 1
             continue
         if isinstance(payload, dict):
             rows.append(payload)
-    return rows
+        else:
+            invalid_event_count += 1
+    return WorkflowTraceReadResult(
+        events=rows,
+        invalid_event_count=invalid_event_count,
+    )
 
 
 def summarize_trace_value(value: Any, *, key: str = "") -> Any:

@@ -2656,6 +2656,7 @@ def _format_local_data_trace_status(payload: dict) -> str:
         f"Trace file: {payload.get('trace_path')}",
         f"Trace file exists: {payload.get('trace_exists')}",
         f"Events: {payload.get('event_count')}",
+        f"Invalid trace lines: {payload.get('invalid_event_count')}",
         f"Max events: {payload.get('max_events')}",
     ]
     recent_events = payload.get("recent_events") or []
@@ -2680,6 +2681,7 @@ def _format_local_data_trace_reset(payload: dict) -> str:
                 "Workflow trace reset: dry-run",
                 f"Trace file: {payload.get('trace_path')}",
                 f"Would delete events: {payload.get('would_delete_event_count')}",
+                f"Invalid trace lines: {payload.get('invalid_event_count')}",
                 "Run again with --force to delete local workflow trace events.",
             ]
         )
@@ -2688,6 +2690,7 @@ def _format_local_data_trace_reset(payload: dict) -> str:
             "Workflow trace reset: applied",
             f"Trace file: {payload.get('trace_path')}",
             f"Deleted events: {payload.get('deleted_event_count')}",
+            f"Invalid trace lines: {payload.get('invalid_event_count')}",
             f"Storage written: {payload.get('storage_written')}",
         ]
     )

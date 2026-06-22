@@ -129,6 +129,9 @@ Completed:
   includes an OrbitPay payments candidate with a strong stack match but a
   heavy-role-shaping conflict, and the scoring layer penalizes applicable
   negative preference learning before shortlist ranking.
+- Hardened local workflow trace observability. Trace status and reset payloads
+  now report invalid JSONL trace line counts while preserving the redacted
+  event-only read path.
 - Added Work 6A recruiting pipeline metrics calculator. It computes summary
   counts, position status rates, submission funnel rates, feedback signal
   rates, and data-quality counters from safe recruiting records without
