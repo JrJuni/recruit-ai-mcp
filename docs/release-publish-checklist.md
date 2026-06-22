@@ -18,6 +18,16 @@ may use security-key/WebAuthn authentication that does not expose a CLI OTP.
 - License: MIT
 - Source repository: `https://github.com/JrJuni/recruit-ai-mcp`
 
+Current public registry evidence, checked on 2026-06-22:
+
+- `npm view recruit-ai-mcp@0.1.0 version` returns npm `E404`.
+- `python -m pip index versions recruit-ai-mcp` returns
+  `No matching distribution found for recruit-ai-mcp`.
+
+This means local package/MCPB gates can be complete, but public `npx` freshness
+cannot be claimed until the PyPI and npm publications happen and the
+post-publish smoke below passes.
+
 The Node package is a bootstrapper. It must not reimplement the Python MCP
 server.
 

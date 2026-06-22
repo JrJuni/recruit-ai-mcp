@@ -301,9 +301,21 @@ Completed:
   `VERSION` and SHA256 checksum, removes the stale inherited
   `deal-intel-mcp-0.2.3.mcpb` artifact, and has a bootstrapper regression test
   that fails if latest drifts back to inherited package names.
+- Added Work 7AS public registry readiness evidence.
+  Release and bootstrapper fresh-smoke docs now record that
+  `recruit-ai-mcp@0.1.0` is not yet visible on npm and `recruit-ai-mcp` is not
+  yet visible on PyPI, so local package/MCPB gates can pass but public
+  `npx recruit-ai-mcp@0.1.0` readiness must remain pending until maintainer
+  publication and post-publish smoke evidence exist.
 
 Validation:
 
+- `npm view recruit-ai-mcp@0.1.0 version` -> npm `E404`.
+- `python -m pip index versions recruit-ai-mcp` -> `No matching distribution found for recruit-ai-mcp`.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-registry-readiness-docs tests\test_docs_recruit_ai_current.py tests\test_bootstrapper_skeleton.py`
+  -> 21 passed.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-release-latest tests\test_bootstrapper_skeleton.py tests\test_mcpb_manifest.py`
   -> 21 passed.
 - `npm pack --dry-run` from `npm/`

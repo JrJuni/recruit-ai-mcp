@@ -41,6 +41,7 @@ def test_release_docs_and_workflows_use_recruit_ai_package_name() -> None:
     ).read_text(encoding="utf-8")
 
     combined = "\n".join([release_docs, release_workflow, staging_workflow])
+    normalized_release_docs = " ".join(release_docs.split())
 
     assert "recruit-ai-mcp[embedding]" in combined
     assert "recruit-ai-mcp@${PACKAGE_VERSION}" in release_workflow
@@ -49,6 +50,9 @@ def test_release_docs_and_workflows_use_recruit_ai_package_name() -> None:
     assert "create_candidate" in combined
     assert "add_recruiting_interaction" in combined
     assert "recommend_candidates_for_position" in combined
+    assert "npm `E404`" in release_docs
+    assert "No matching distribution found for recruit-ai-mcp" in release_docs
+    assert "public `npx` freshness cannot be claimed" in normalized_release_docs
 
     assert "deal-intel-mcp[embedding]" not in combined
     assert "deal-intel-mcp@${PACKAGE_VERSION}" not in combined
@@ -65,6 +69,10 @@ def test_bootstrapper_fresh_smoke_uses_recruit_ai_public_package() -> None:
     assert "recruit-ai-mcp[embedding]==0.1.0" in docs
     assert "RECRUIT_AI_HOME" in docs
     assert "recruit-ai-mcp-0.1.0.mcpb" in docs
+    assert "public registry smoke is still pending publication" in docs
+    assert "npm `E404`" in docs
+    assert "No matching distribution found for recruit-ai-mcp" in docs
+    assert "Do not mark the public `npx recruit-ai-mcp@0.1.0` path ready" in docs
 
     assert "deal-intel-mcp@0.2.1" not in docs
     assert "deal-intel-mcp[embedding]" not in docs
