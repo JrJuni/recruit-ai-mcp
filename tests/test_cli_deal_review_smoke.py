@@ -595,6 +595,11 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     assert "Confirm whether timing fits the search plan." in (
         nora_guardrail["guardrail_next_questions"]
     )
+    eli_guardrail = guardrail_by_candidate["cand_eli_brooks"]
+    assert eli_guardrail["guardrail_dimension_scores"]["client_preference_fit"] == 1
+    assert "Confirm whether candidate is open to an IC mandate." in (
+        eli_guardrail["guardrail_next_questions"]
+    )
     assert (output_dir / "rq13_client_shortlist_readiness.json").exists()
     shortlist = json.loads(
         (output_dir / "rq13_client_shortlist_readiness.json").read_text(
