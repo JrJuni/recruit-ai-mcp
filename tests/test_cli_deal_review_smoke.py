@@ -546,6 +546,20 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     assert contract_payload["contract"] == EXPECTED_CONTRACT
     assert (output_dir / "rq01_recruiting_pipeline_metrics.json").exists()
     assert (output_dir / "rq02_candidates_for_northstar_backend.json").exists()
+    position_recommendations = json.loads(
+        (output_dir / "rq02_candidates_for_northstar_backend.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    top_candidate = position_recommendations["run"]["results"][0]
+    assert top_candidate["target_id"] == "cand_avery_chen"
+    assert {
+        (row["feedback_id"], row["dimension"])
+        for row in top_candidate["feedback_adjustments"]
+    } == {
+        ("fb_avery_northstar_advance", "domain_fit"),
+        ("fb_avery_northstar_advance", "client_preference_fit"),
+    }
     assert (output_dir / "rq08_local_recruiting_data_safety.json").exists()
     assert (output_dir / "rq09_recruiting_intake_coverage.json").exists()
     assert (output_dir / "rq10_recruiting_report_preview.json").exists()

@@ -147,6 +147,9 @@ Completed:
 - Added local-to-Mongo migration coverage for saved recommendation runs with
   nested `feedback_adjustments`, confirming dry-run classification and apply
   writes preserve the nested adjustment ledger.
+- Tightened the recruiting natural-question smoke artifact guardrail so the
+  position-to-candidate recommendation artifact must expose the client-feedback
+  adjustment ledger for the top Northstar candidate.
 - Hardened local workflow trace observability. Trace status and reset payloads
   now report invalid JSONL trace line counts while preserving the redacted
   event-only read path.
@@ -485,6 +488,10 @@ Validation:
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recommendation-run-migration tests\test_local_data_migration.py tests\test_recruiting_storage_contract.py tests\test_local_sample_backend.py`
   -> 42 passed, 1 external deprecation warning.
 - `ruff check tests\test_local_data_migration.py`
+  -> passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recommendation-smoke-ledger tests\test_cli_deal_review_smoke.py::test_smoke_natural_questions_recruiting_pack_writes_artifacts tests\test_validate_recruiting_smoke.py`
+  -> 5 passed.
+- `ruff check tests\test_cli_deal_review_smoke.py`
   -> passed.
 - `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-user-test-guide-recruit-ai tests\test_docs_recruit_ai_current.py`
