@@ -26,11 +26,11 @@ def resolve_demo_database(
     demo_database: str | None = None,
 ) -> DemoDatabaseSelection:
     mongodb_cfg = cfg.get("mongodb", {})
-    primary = str(mongodb_cfg.get("database") or "deal_intel").strip()
+    primary = str(mongodb_cfg.get("database") or "recruit_ai").strip()
     demo = str(
         demo_database
         or mongodb_cfg.get("demo_database")
-        or "deal_intel_demo"
+        or "recruit_ai_demo"
     ).strip()
     _validate_database_name(primary, field_name="mongodb.database")
     _validate_database_name(demo, field_name="demo_database")

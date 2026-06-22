@@ -41,18 +41,23 @@ def test_mcpb_manifest_tools_match_registered_surface_contracts() -> None:
     assert len(manifest_tool_names) == 42
 
 
-def test_mcpb_manifest_describes_meddpicc_as_default_framework() -> None:
+def test_mcpb_manifest_describes_recruit_ai_bootstrap_surface() -> None:
     manifest = _manifest()
     manifest_text = json.dumps(manifest, ensure_ascii=False).lower()
     tool_descriptions = {
         tool["name"]: tool["description"].lower() for tool in manifest["tools"]
     }
 
-    assert "qualification-framework" in manifest["description"].lower()
-    assert "meddpicc as the default" in manifest["description"].lower()
+    assert manifest["name"] == "recruit-ai-mcp"
+    assert manifest["display_name"] == "Recruit AI MCP"
+    assert "bootstrap fork" in manifest["description"].lower()
+    assert "inherited deal-intel tools" in manifest["description"].lower()
+    assert "candidate, client-company, position, feedback" in manifest_text
     assert "meddpicc-structured" not in manifest_text
     assert "source-aware meddpicc extraction" not in manifest_text
     assert "meddpicc scores" not in manifest_text
+    # Work 0 only isolates package/config/runtime surfaces. The inherited MCP
+    # tools still expose deal terminology until the later tool-surface cutover.
     assert "active-framework qualification extraction" in tool_descriptions[
         "add_interaction"
     ]
@@ -86,6 +91,7 @@ def test_package_version_matches_mcpb_manifest() -> None:
     manifest = _manifest()
     pyproject = tomllib.loads(PYPROJECT_PATH.read_text(encoding="utf-8"))
 
+    assert pyproject["project"]["name"] == manifest["name"]
     assert pyproject["project"]["version"] == manifest["version"]
 
 
@@ -105,17 +111,18 @@ def test_mcpb_manifest_env_maps_installer_fields_to_runtime_config() -> None:
     env = _manifest()["server"]["mcp_config"]["env"]
 
     assert env["MONGODB_URI"] == "${user_config.mongodb_uri}"
-    assert env["DEAL_INTEL_STORAGE_BACKEND"] == "${user_config.storage_backend}"
-    assert env["DEAL_INTEL_TOOLS_SURFACE"] == "${user_config.tools_surface}"
-    assert env["DEAL_INTEL_REPORTING_LANGUAGE"] == "${user_config.reporting_language}"
+    assert env["RECRUIT_AI_STORAGE_BACKEND"] == "${user_config.storage_backend}"
+    assert env["RECRUIT_AI_TOOLS_SURFACE"] == "${user_config.tools_surface}"
+    assert env["RECRUIT_AI_REPORTING_LANGUAGE"] == "${user_config.reporting_language}"
     # Product context env is not forwarded from installer fields; it stays a
     # runtime-only setting via update_config / direct env.
-    assert "DEAL_INTEL_PRODUCT_CONTEXT_SOURCE_DIRS" not in env
-    assert "DEAL_INTEL_PRODUCT_CONTEXT_MAX_SOURCE_FILE_MB" not in env
-    assert "DEAL_INTEL_PRODUCT_CONTEXT_MAX_CHUNKS_PER_FILE" not in env
-    assert "DEAL_INTEL_PRODUCT_CONTEXT_MAX_CHUNKS_PER_RUN" not in env
-    assert env["DEAL_INTEL_LLM_PROVIDER"] == "${user_config.llm_provider}"
-    assert env["DEAL_INTEL_USE_CHATGPT_OAUTH"] == "${user_config.use_chatgpt_oauth}"
+    assert "RECRUIT_AI_PRODUCT_CONTEXT_SOURCE_DIRS" not in env
+    assert "RECRUIT_AI_PRODUCT_CONTEXT_MAX_SOURCE_FILE_MB" not in env
+    assert "RECRUIT_AI_PRODUCT_CONTEXT_MAX_CHUNKS_PER_FILE" not in env
+    assert "RECRUIT_AI_PRODUCT_CONTEXT_MAX_CHUNKS_PER_RUN" not in env
+    assert all(not key.startswith("DEAL_INTEL_") for key in env)
+    assert env["RECRUIT_AI_LLM_PROVIDER"] == "${user_config.llm_provider}"
+    assert env["RECRUIT_AI_USE_CHATGPT_OAUTH"] == "${user_config.use_chatgpt_oauth}"
     assert env["ANTHROPIC_API_KEY"] == "${user_config.anthropic_api_key}"
     assert env["OPENAI_API_KEY"] == "${user_config.openai_api_key}"
     assert env["PYTHONIOENCODING"] == "utf-8"
@@ -156,4 +163,4 @@ def test_mcpb_launcher_failure_message_points_to_npx_setup(
     stderr = capsys.readouterr().err
     assert exc_info.value.code == 1
     assert "cannot import deal_intel.mcp_server" in stderr
-    assert "npx deal-intel-mcp setup" in stderr
+    assert "npx recruit-ai-mcp setup" in stderr

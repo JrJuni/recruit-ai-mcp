@@ -46,7 +46,7 @@ def build_config_doctor_report(
     tools = _mapping(cfg.get("tools"))
 
     backend = storage.get("backend", "mongo")
-    database = mongodb.get("database", "deal_intel")
+    database = mongodb.get("database", "recruit_ai")
     vector_search = mongodb.get("vector_search", "python_cosine")
     provider_name = llm.get("provider", "chatgpt_oauth")
     configured_tool_surface = tools.get("surface", "auto")
@@ -63,7 +63,7 @@ def build_config_doctor_report(
             else "Effective config does not exactly match sample/full/pro."
         ),
         details={"profile": profile},
-        hint="Run `deal-intel config profiles` to compare supported profiles."
+        hint="Run `recruit-ai config profiles` to compare supported profiles."
         if profile == "custom"
         else None,
     )
@@ -438,7 +438,7 @@ def _add_llm_provider_check(
             status="fail",
             message="llm.provider must be chatgpt_oauth, openai_api, or anthropic.",
             details={"llm_provider": provider_name},
-            hint="Set DEAL_INTEL_LLM_PROVIDER or llm.provider to a valid provider.",
+            hint="Set RECRUIT_AI_LLM_PROVIDER or llm.provider to a valid provider.",
         )
         return
 

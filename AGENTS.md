@@ -5,9 +5,14 @@ this repository. Keep it current and compact. Put long history in `docs/`.
 
 ## Project North Star
 
-`deal-intel-mcp` is an MCP server for B2B deal intelligence. It turns meeting
-notes into MEDDPICC signals, stores deal state, and exposes BI/reporting tools
-that Claude, Codex, ChatGPT, CSV exports, and Atlas Charts can use.
+`recruit-ai-mcp` is a bootstrap fork of `deal-intel-mcp` for recruiter and
+search-firm intelligence. Work 0 isolates public metadata, CLI alias, config
+paths, env prefix, local paths, and MongoDB defaults while the Python package
+and inherited MCP tools still use `deal_intel` deal-intelligence internals.
+
+Default MongoDB databases are `recruit_ai` and `recruit_ai_demo`. Atlas M0 uses
+the existing Python cosine search path; do not apply Atlas Vector Search unless
+the user intentionally moves to paid M10+ infrastructure.
 
 The product direction is one repository / one package with three profiles:
 
@@ -71,7 +76,7 @@ Useful CLI checks:
 For temporary zero-config sample mode:
 
 ```powershell
-$env:DEAL_INTEL_STORAGE_BACKEND='local_sample'
+$env:RECRUIT_AI_STORAGE_BACKEND='local_sample'
 ```
 
 ## Working Loop

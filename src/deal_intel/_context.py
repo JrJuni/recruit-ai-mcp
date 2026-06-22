@@ -30,7 +30,7 @@ def config() -> dict:
 def reset_config() -> None:
     """Drop the cached user config so the next config() call reloads from disk.
 
-    Call this after a tool writes ~/.deal-intel/config.yaml so a long-running
+    Call this after a tool writes ~/.recruit-ai/config.yaml so a long-running
     server session reflects the change without a manual restart.
     """
     global _config

@@ -34,7 +34,7 @@ from deal_intel.storage.mongodb import MongoDBClient
 
 REPORT_TYPE_WEEKLY_PIPELINE = "weekly_pipeline"
 VALID_REPORT_TYPES = frozenset({REPORT_TYPE_WEEKLY_PIPELINE, REPORT_TYPE_PIPELINE_TREND})
-DEFAULT_OUTPUT_DIR = Path("~/.deal-intel/reports")
+DEFAULT_OUTPUT_DIR = Path("~/.recruit-ai/reports")
 
 
 def handle(
@@ -296,7 +296,7 @@ def _resolve_user_output_path(value: str) -> Path:
     normalized_parts = tuple(part.lower() for part in path.parts)
     if normalized_parts == ("outputs", "reports"):
         return DEFAULT_OUTPUT_DIR.expanduser()
-    return Path.home() / ".deal-intel" / path
+    return Path.home() / ".recruit-ai" / path
 
 
 def _resolve_report_language(cfg: dict) -> str:

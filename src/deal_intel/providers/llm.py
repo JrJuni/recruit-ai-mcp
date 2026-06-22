@@ -151,7 +151,7 @@ class ChatGPTOAuthProvider(LLMProvider):
 
     Uses the same auth.openai.com endpoint as the Codex CLI.
     On first use (or after token expiry), opens a browser for login.
-    Tokens are cached at ~/.deal-intel/chatgpt_auth.json and auto-refreshed.
+    Tokens are cached at ~/.recruit-ai/chatgpt_auth.json and auto-refreshed.
 
     NOTE: This uses an unofficial path (Codex CLI client_id). OpenAI may change
     it. Intended for personal local use only — do not deploy as a shared server.
@@ -163,7 +163,7 @@ class ChatGPTOAuthProvider(LLMProvider):
     _TOKEN_URL = "https://auth.openai.com/oauth/token"
     _REDIRECT_URI = "http://localhost:1455/auth/callback"
     _RESPONSES_URL = "https://chatgpt.com/backend-api/codex/responses"
-    _TOKEN_PATH = Path.home() / ".deal-intel" / "chatgpt_auth.json"
+    _TOKEN_PATH = Path.home() / ".recruit-ai" / "chatgpt_auth.json"
     _ALLOWED_REASONING_EFFORTS = frozenset({"low", "medium", "high"})
 
     def __init__(self, *, model: str = "gpt-5.5", reasoning_effort: str = "low") -> None:
@@ -345,7 +345,7 @@ class ChatGPTOAuthProvider(LLMProvider):
         except Exception as exc:
             raise RuntimeError(
                 f"Could not extract chatgpt_account_id from token: {exc}. "
-                "Delete ~/.deal-intel/chatgpt_auth.json and re-authenticate."
+                "Delete ~/.recruit-ai/chatgpt_auth.json and re-authenticate."
             ) from exc
 
     # ---- Responses API call (SSE) ----
@@ -503,14 +503,14 @@ class ChatGPTOAuthProvider(LLMProvider):
             return {
                 "status": "not_logged_in",
                 "message": "ChatGPT OAuth not authenticated",
-                "fix": "Run `deal-intel login-chatgpt` once in a terminal to authenticate.",
+                "fix": "Run `recruit-ai login-chatgpt` once in a terminal to authenticate.",
             }
         if self._is_token_valid(tokens) or tokens.get("refresh_token"):
             return {"status": "ok", "model": self.model}
         return {
             "status": "not_logged_in",
             "message": "ChatGPT OAuth token expired and no refresh token",
-            "fix": "Run `deal-intel login-chatgpt --force` to re-authenticate.",
+            "fix": "Run `recruit-ai login-chatgpt --force` to re-authenticate.",
         }
 
 
@@ -652,7 +652,7 @@ class OpenAIAPIProvider(LLMProvider):
             return {
                 "status": "missing_key",
                 "message": "OPENAI_API_KEY not set",
-                "fix": "Set OPENAI_API_KEY in .env or ~/.deal-intel/config.yaml.",
+                "fix": "Set OPENAI_API_KEY in .env or ~/.recruit-ai/config.yaml.",
             }
         return {"status": "ok", "model": self.model}
 

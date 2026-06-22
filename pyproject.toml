@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "deal-intel-mcp"
+name = "recruit-ai-mcp"
 version = "0.2.3"
-description = "Self-owned MCP deal intelligence layer for early B2B teams."
+description = "Self-owned MCP recruiting intelligence layer for search firms and recruiters."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
@@ -14,12 +14,12 @@ authors = [
 ]
 keywords = [
     "mcp",
-    "sales",
-    "crm",
-    "b2b",
-    "deal-intelligence",
+    "recruiting",
+    "search-firm",
+    "talent-intelligence",
+    "candidate-matching",
     "mongodb",
-    "meddpicc",
+    "rag",
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -54,12 +54,13 @@ dev = [
 ]
 
 [project.scripts]
+recruit-ai = "deal_intel.cli:app"
 deal-intel = "deal_intel.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/JrJuni/deal-intel-mcp"
-Repository = "https://github.com/JrJuni/deal-intel-mcp"
-Issues = "https://github.com/JrJuni/deal-intel-mcp/issues"
+Homepage = "https://github.com/JrJuni/recruit-ai-mcp"
+Repository = "https://github.com/JrJuni/recruit-ai-mcp"
+Issues = "https://github.com/JrJuni/recruit-ai-mcp/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]

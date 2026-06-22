@@ -1,8 +1,21 @@
-﻿# deal-intel-mcp
+﻿# recruit-ai-mcp
 
 **English** | [Korean](README.ko.md)
 
-Deal Intelligence MCP is a self-owned deal memory layer for solo founders,
+Recruit AI MCP is a bootstrap fork of Deal Intelligence MCP for recruiter and
+search-firm intelligence.
+
+This repository is currently in **Work 0 / bootstrap isolation**:
+
+- Public package metadata, CLI alias, config paths, env prefix, and MongoDB
+  defaults now use `recruit-ai-mcp` / `recruit-ai` / `RECRUIT_AI_*`.
+- Python package imports intentionally remain `deal_intel`.
+- The MCP tool surface still uses inherited deal-intelligence tools until the
+  recruiting domain model and tool cutover land in later work.
+- Default MongoDB databases are `recruit_ai` and `recruit_ai_demo`; M0 uses the
+  existing Python cosine search path, not Atlas Vector Search.
+
+Deal Intelligence MCP is the inherited self-owned deal memory layer for solo founders,
 early AI teams, and lightweight BD teams.
 
 It turns meeting notes, customer email replies, interviews, call summaries, and
@@ -260,7 +273,7 @@ MCP tools are profile-filtered by default:
 
 Use `get_tool_catalog` or `config_doctor` to inspect the current visible count
 for your profile. Use `tools.surface: developer` or
-`DEAL_INTEL_TOOLS_SURFACE=developer` only when you intentionally want the full
+`RECRUIT_AI_TOOLS_SURFACE=developer` only when you intentionally want the full
 maintainer/debug surface.
 
 ---
@@ -343,8 +356,8 @@ Python install.
 For most users, start here:
 
 ```bash
-npx deal-intel-mcp setup --python /path/to/python
-npx deal-intel-mcp mcp-config
+npx recruit-ai-mcp setup --python /path/to/python
+npx recruit-ai-mcp mcp-config
 ```
 
 Use the Python path printed by `mcp-config` in Claude Desktop MCPB. Set
@@ -375,8 +388,8 @@ installed. Adding `[embedding]` installs local semantic-search dependencies.
 After install, check the effective config:
 
 ```bash
-deal-intel config profiles
-deal-intel config show
+recruit-ai config profiles
+recruit-ai config show
 ```
 
 ### Readiness check
@@ -384,14 +397,14 @@ deal-intel config show
 Run these before troubleshooting deeper issues:
 
 ```bash
-deal-intel config doctor --offline
-deal-intel smoke-profile --profile full --offline
+recruit-ai config doctor --offline
+recruit-ai smoke-profile --profile full --offline
 ```
 
 When network access to Atlas is available, run a live storage ping:
 
 ```bash
-deal-intel storage-status
+recruit-ai storage-status
 ```
 
 Use `config_doctor` from the MCP host after installing the bundle. It is the
@@ -404,10 +417,10 @@ email reply, call summary, user interview, or internal sales note, store it with
 ### Optional zero-config smoke
 
 ```bash
-$env:DEAL_INTEL_STORAGE_BACKEND='local_sample'
-deal-intel smoke-profile --profile sample
-deal-intel storage-status
-deal-intel smoke-natural-questions --as-of 2026-06-10
+$env:RECRUIT_AI_STORAGE_BACKEND='local_sample'
+recruit-ai smoke-profile --profile sample
+recruit-ai storage-status
+recruit-ai smoke-natural-questions --as-of 2026-06-10
 ```
 
 Use this only for zero-config evaluation. It starts with bundled fictional data
@@ -429,7 +442,7 @@ Search.
 Temporary PowerShell session:
 
 ```powershell
-$env:DEAL_INTEL_STORAGE_BACKEND='local_sample'
+$env:RECRUIT_AI_STORAGE_BACKEND='local_sample'
 & "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli storage-status
 & "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli smoke-natural-questions --as-of 2026-06-10
 ```
@@ -437,8 +450,8 @@ $env:DEAL_INTEL_STORAGE_BACKEND='local_sample'
 Persistent sample profile:
 
 ```bash
-deal-intel config init --profile sample --dry-run
-deal-intel config init --profile sample
+recruit-ai config init --profile sample --dry-run
+recruit-ai config init --profile sample
 ```
 
 Sample mode is intentionally limited, but it is no longer purely read-only.

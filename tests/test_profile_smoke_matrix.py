@@ -27,7 +27,7 @@ def _cfg_from_contract(profile: str) -> dict:
     return {
         "storage": {"backend": contract.storage_backend},
         "mongodb": {
-            "database": "deal_intel",
+            "database": "recruit_ai",
             "vector_search": contract.vector_search,
         },
         "llm": {

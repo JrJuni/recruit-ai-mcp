@@ -1,7 +1,12 @@
 # AI Start Here
 
 This is the canonical first-run guide for an AI agent helping a new user set up
-`deal-intel-mcp`. Use it before reading deeper install docs.
+`recruit-ai-mcp`. Use it before reading deeper install docs.
+
+Bootstrap note: this repo is currently a recruiting fork in Work 0. Public
+metadata, config paths, env prefix, and MongoDB defaults are isolated for
+`recruit-ai-mcp`, but Python imports and MCP tools still use the inherited
+`deal_intel` / deal-intelligence surface until the recruiting model cutover.
 
 For a step-by-step walkthrough for non-developer full-mode setup, read
 [`AI_FULL_INSTALL_GUIDE.md`](AI_FULL_INSTALL_GUIDE.md). For Korean users, use
@@ -129,11 +134,11 @@ If the user wants the no-git-clone install path, run the npx bootstrapper with
 the Python path you just found:
 
 ```powershell
-npx.cmd deal-intel-mcp setup --python "$HOME\miniconda3\envs\deal-intel\python.exe"
-npx.cmd deal-intel-mcp mcp-config
+npx.cmd recruit-ai-mcp setup --python "$HOME\miniconda3\envs\deal-intel\python.exe"
+npx.cmd recruit-ai-mcp mcp-config
 ```
 
-The bootstrapper creates a managed runtime under `~/.deal-intel/runtime`,
+The bootstrapper creates a managed runtime under `~/.recruit-ai/runtime`,
 installs the Python package, runs a sample smoke check, and prints the Python
 interpreter path to use in MCPB or manual MCP config. It still requires Node.js
 and Python to be installed first.
@@ -181,7 +186,7 @@ Use this only when the user asks to try without MongoDB, or when an AI agent
 needs a fast product-shape check before asking the user to configure Atlas.
 
 ```powershell
-$env:DEAL_INTEL_STORAGE_BACKEND='local_sample'
+$env:RECRUIT_AI_STORAGE_BACKEND='local_sample'
 & "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli smoke-profile --profile sample
 & "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli smoke-natural-questions --as-of 2026-06-10
 ```

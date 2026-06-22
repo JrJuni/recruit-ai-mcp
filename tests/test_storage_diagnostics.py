@@ -28,7 +28,7 @@ def test_storage_error_hint_is_actionable_and_secret_safe() -> None:
     hint = storage_error_hint(exc, operation="export_report.weekly_pipeline.read_deals")
 
     assert hint["operation"] == "export_report.weekly_pipeline.read_deals"
-    assert hint["diagnostic_command"] == "deal-intel config doctor"
+    assert hint["diagnostic_command"] == "recruit-ai config doctor"
     assert hint["next_actions"]
     serialized = str(hint)
     assert "mongodb+srv" not in serialized

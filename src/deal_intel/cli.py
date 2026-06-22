@@ -10,8 +10,8 @@ from typing import Any
 
 import typer
 
-app = typer.Typer(help="deal-intel CLI")
-config_app = typer.Typer(help="Inspect and prepare deal-intel config profiles.")
+app = typer.Typer(help="recruit-ai CLI")
+config_app = typer.Typer(help="Inspect and prepare recruit-ai config profiles.")
 app.add_typer(config_app, name="config")
 local_data_app = typer.Typer(help="Inspect, export, and reset local personal data.")
 app.add_typer(local_data_app, name="local-data")
@@ -26,6 +26,12 @@ CONFIG_ENV_KEYS = (
     "MONGODB_URI",
     "ANTHROPIC_API_KEY",
     "OPENAI_API_KEY",
+    "RECRUIT_AI_LLM_PROVIDER",
+    "RECRUIT_AI_USE_CHATGPT_OAUTH",
+    "RECRUIT_AI_STORAGE_BACKEND",
+    "RECRUIT_AI_TOOLS_SURFACE",
+    "RECRUIT_AI_REPORTING_LANGUAGE",
+    "RECRUIT_AI_PRODUCT_CONTEXT_SOURCE_DIRS",
     "DEAL_INTEL_LLM_PROVIDER",
     "DEAL_INTEL_USE_CHATGPT_OAUTH",
     "DEAL_INTEL_STORAGE_BACKEND",
@@ -154,7 +160,7 @@ def config_doctor(
             return LocalSampleClient(
                 local_data_dir=storage.get("local_data_dir")
             ).ping()
-        database = _mapping(cfg.get("mongodb")).get("database", "deal_intel")
+        database = _mapping(cfg.get("mongodb")).get("database", "recruit_ai")
         return MongoDBClient(database=database).ping()
 
     payload = build_config_doctor_report(
@@ -237,7 +243,7 @@ def config_init(
         help="Print structured JSON instead of concise text.",
     ),
 ) -> None:
-    """Initialize ~/.deal-intel/config.yaml for a profile."""
+    """Initialize ~/.recruit-ai/config.yaml for a profile."""
 
     from deal_intel.config_writer import init_config_profile
 
@@ -817,7 +823,7 @@ def mongo_apply_indexes(
     from deal_intel.storage.mongodb import MongoDBClient
 
     cfg = _env.load_config()
-    database = _mapping(_mapping(cfg).get("mongodb")).get("database", "deal_intel")
+    database = _mapping(_mapping(cfg).get("mongodb")).get("database", "recruit_ai")
     payload = {
         "ok": True,
         "dry_run": not apply,
@@ -897,7 +903,7 @@ def mongo_apply_schema(
         raise typer.BadParameter(f"collection must be one of: {valid}")
 
     cfg = _env.load_config()
-    database = _mapping(_mapping(cfg).get("mongodb")).get("database", "deal_intel")
+    database = _mapping(_mapping(cfg).get("mongodb")).get("database", "recruit_ai")
     commands = {
         name: build_collection_schema_command(name) for name in selected_collections
     }
@@ -987,7 +993,7 @@ def mongo_apply_vector_index(
     from deal_intel.storage.mongodb import MongoDBClient
 
     cfg = _env.load_config()
-    database = _mapping(_mapping(cfg).get("mongodb")).get("database", "deal_intel")
+    database = _mapping(_mapping(cfg).get("mongodb")).get("database", "recruit_ai")
     try:
         spec = load_deal_summary_vector_index_spec()
         command = build_create_search_index_command(dimensions=dimensions)
@@ -1305,7 +1311,7 @@ def local_data_migrate_to_mongo(
     cfg = _env.load_config()
     target_database = database.strip() or _mapping(cfg.get("mongodb")).get(
         "database",
-        "deal_intel",
+        "recruit_ai",
     )
     try:
         payload = _migrate.handle(
@@ -2635,7 +2641,7 @@ def _summarize_config_for_display(cfg: dict[str, Any]) -> dict[str, Any]:
             "mcp_tool_count": mcp_tool_count,
         },
         "mongodb": {
-            "database": mongodb.get("database", "deal_intel"),
+            "database": mongodb.get("database", "recruit_ai"),
             "demo_database": mongodb.get("demo_database"),
             "vector_search": mongodb.get("vector_search", "python_cosine"),
         },
@@ -2706,7 +2712,7 @@ def _format_config_show(payload: dict) -> str:
         f"({'exists' if payload['user_config_exists'] else 'missing'})",
         (
             "Runtime: "
-            f"{runtime.get('package_name', 'deal-intel-mcp')} "
+            f"{runtime.get('package_name', 'recruit-ai-mcp')} "
             f"{runtime.get('package_version', 'unknown')} | "
             f"source={runtime.get('source_tree_version') or 'n/a'} | "
             f"Python: {runtime.get('python_executable', 'unknown')}"
@@ -2756,7 +2762,7 @@ def _format_config_doctor(payload: dict) -> str:
         f"Profile: {payload['profile']}",
         (
             "Runtime: "
-            f"{runtime.get('package_name', 'deal-intel-mcp')} "
+            f"{runtime.get('package_name', 'recruit-ai-mcp')} "
             f"{runtime.get('package_version', 'unknown')} | "
             f"source={runtime.get('source_tree_version') or 'n/a'} | "
             f"Python: {runtime.get('python_executable', 'unknown')}"
@@ -3772,7 +3778,7 @@ def _write_natural_question_smoke_artifacts(
 
 def _default_natural_question_output_dir() -> Path:
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    return Path.home() / ".deal-intel" / "smoke" / f"natural-question-pack-{stamp}"
+    return Path.home() / ".recruit-ai" / "smoke" / f"natural-question-pack-{stamp}"
 
 
 def _format_natural_question_smoke(payload: dict) -> str:

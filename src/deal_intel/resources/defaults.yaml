@@ -7,13 +7,13 @@ llm:
   draft_model: claude-sonnet-4-6
 
 mongodb:
-  database: deal_intel
-  demo_database: deal_intel_demo
+  database: recruit_ai
+  demo_database: recruit_ai_demo
   vector_search: python_cosine   # python_cosine | atlas (atlas requires M10+ cluster)
 
 storage:
   backend: mongo                  # mongo | local_sample
-  local_data_dir: ~/.deal-intel/local-data
+  local_data_dir: ~/.recruit-ai/local-data
 
 tools:
   surface: auto                   # auto | sample | standard | developer
@@ -23,7 +23,7 @@ user_memory:
 
 reporting:
   timezone: Asia/Seoul
-  output_dir: ~/.deal-intel/reports
+  output_dir: ~/.recruit-ai/reports
   language: en                    # en | ko
 
 deal_value:
@@ -46,7 +46,7 @@ meddpicc:
 
 # Meeting-note summary embedding settings for vector search.
 # Runs locally with sentence-transformers, without an API key.
-# Override the model in ~/.deal-intel/config.yaml if needed.
+# Override the model in ~/.recruit-ai/config.yaml if needed.
 embedding:
   model: all-MiniLM-L6-v2   # 384 dims, ~90MB first download, CPU friendly.
 
@@ -57,8 +57,8 @@ embedding:
 product_context:
   enabled: true
   source_dirs:
-    - ~/.deal-intel/product-context/sources
-  cache_dir: ~/.deal-intel/product-context/cache
+    - ~/.recruit-ai/product-context/sources
+  cache_dir: ~/.recruit-ai/product-context/cache
   # Large product catalogs are allowed, but indexing still has chunk budgets so
   # one oversized file cannot consume an entire MCP session.
   max_source_file_mb: 100
@@ -95,7 +95,7 @@ pipeline:
     proposal:      21
     negotiation:   30
 
-# BI metric classification. Override in ~/.deal-intel/config.yaml as operating
+# BI metric classification. Override in ~/.recruit-ai/config.yaml as operating
 # data accumulates; these bands describe MEDDPICC qualification, not win probability.
 metrics:
   health_bands:
@@ -115,7 +115,7 @@ deal_review:
 
 # LLM usage visibility.
 # get_usage always reports token counts from persisted tool metadata. Cost is
-# estimated only when pricing is configured here or in ~/.deal-intel/config.yaml.
+# estimated only when pricing is configured here or in ~/.recruit-ai/config.yaml.
 # ChatGPT OAuth is treated as subscription-backed with zero incremental API
 # estimate because it does not bill through an API key.
 usage:

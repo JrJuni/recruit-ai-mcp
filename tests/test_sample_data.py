@@ -13,7 +13,7 @@ from deal_intel.tools.sample_dataset import SAMPLE_BATCH_ID, build_sample_deals
 
 
 class FakeMongo:
-    def __init__(self, *, database_name: str = "deal_intel_demo") -> None:
+    def __init__(self, *, database_name: str = "recruit_ai_demo") -> None:
         self.database_name = database_name
         self.deals: list[dict] = []
         self.upsert_calls = 0
@@ -57,8 +57,8 @@ class FakeMongo:
 
 def _cfg(**mongodb_overrides) -> dict:
     mongodb = {
-        "database": "deal_intel",
-        "demo_database": "deal_intel_demo",
+        "database": "recruit_ai",
+        "demo_database": "recruit_ai_demo",
     }
     mongodb.update(mongodb_overrides)
     return {"mongodb": mongodb}
@@ -106,8 +106,8 @@ def test_create_sample_data_dry_run_previews_without_writing() -> None:
     assert result["ok"] is True
     assert result["dry_run"] is True
     assert result["storage_written"] is False
-    assert result["primary_database"] == "deal_intel"
-    assert result["demo_database"] == "deal_intel_demo"
+    assert result["primary_database"] == "recruit_ai"
+    assert result["demo_database"] == "recruit_ai_demo"
     assert result["deal_count"] == 22
     assert len(result["preview"]) == 3
     assert mongo.upsert_calls == 0
@@ -116,19 +116,19 @@ def test_create_sample_data_dry_run_previews_without_writing() -> None:
 def test_sample_data_rejects_primary_database_and_wrong_client() -> None:
     with pytest.raises(MCPError) as same_database:
         create_sample_data.handle(
-            mongo=FakeMongo(database_name="deal_intel"),
-            cfg=_cfg(demo_database="deal_intel"),
+            mongo=FakeMongo(database_name="recruit_ai"),
+            cfg=_cfg(demo_database="recruit_ai"),
         )
     with pytest.raises(MCPError) as wrong_client:
         create_sample_data.handle(
-            mongo=FakeMongo(database_name="deal_intel"),
+            mongo=FakeMongo(database_name="recruit_ai"),
             cfg=_cfg(),
         )
 
     assert same_database.value.error_code == ErrorCode.INVALID_INPUT
     assert "different from the primary" in same_database.value.message
     assert wrong_client.value.error_code == ErrorCode.INVALID_INPUT
-    assert wrong_client.value.hint["expected_demo_database"] == "deal_intel_demo"
+    assert wrong_client.value.hint["expected_demo_database"] == "recruit_ai_demo"
 
 
 def test_create_sample_data_requires_confirmation_for_actual_write() -> None:
@@ -262,6 +262,6 @@ def test_mcp_sample_data_wrappers_use_demo_database(monkeypatch) -> None:
 
     assert result["ok"] is True
     assert result["dry_run"] is True
-    assert created_clients[0].database_name == "deal_intel_demo"
+    assert created_clients[0].database_name == "recruit_ai_demo"
     assert len(names) == 42
     assert {"create_sample_data", "delete_sample_data"}.issubset(names)

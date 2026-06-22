@@ -40,7 +40,7 @@ _PROFILES: dict[ConfigProfileName, ConfigProfile] = {
         config_patch={
             "storage": {
                 "backend": "local_sample",
-                "local_data_dir": "~/.deal-intel/local-data",
+                "local_data_dir": "~/.recruit-ai/local-data",
             },
             "mongodb": {"vector_search": "python_cosine"},
             "llm": {"provider": "chatgpt_oauth"},
@@ -60,9 +60,9 @@ _PROFILES: dict[ConfigProfileName, ConfigProfile] = {
             "Team/shared operation assumes MongoDB-backed full mode.",
         ),
         first_run_commands=(
-            "deal-intel config show",
-            "deal-intel storage-status",
-            "deal-intel smoke-natural-questions --as-of 2026-06-10",
+            "recruit-ai config show",
+            "recruit-ai storage-status",
+            "recruit-ai smoke-natural-questions --as-of 2026-06-10",
         ),
     ),
     "full": ConfigProfile(
@@ -87,8 +87,8 @@ _PROFILES: dict[ConfigProfileName, ConfigProfile] = {
             "Large-scale search performance is bounded by Python-side cosine.",
         ),
         first_run_commands=(
-            "deal-intel config show",
-            "deal-intel storage-status",
+            "recruit-ai config show",
+            "recruit-ai storage-status",
         ),
     ),
     "pro": ConfigProfile(
@@ -114,8 +114,8 @@ _PROFILES: dict[ConfigProfileName, ConfigProfile] = {
             "Should be treated as an upgrade path, not the first-run default.",
         ),
         first_run_commands=(
-            "deal-intel config show",
-            "deal-intel storage-status",
+            "recruit-ai config show",
+            "recruit-ai storage-status",
         ),
     ),
 }

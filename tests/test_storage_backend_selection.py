@@ -13,6 +13,18 @@ class FakeMongo:
 
 def test_env_can_select_local_sample_backend(monkeypatch, tmp_path) -> None:
     monkeypatch.setattr(_env, "_USER_CONFIG_PATH", tmp_path / "missing.yaml")
+    monkeypatch.setenv("RECRUIT_AI_STORAGE_BACKEND", "local_sample")
+
+    cfg = _env.load_config()
+
+    assert cfg["storage"]["backend"] == "local_sample"
+
+
+def test_legacy_storage_env_still_selects_local_sample_backend(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    monkeypatch.setattr(_env, "_USER_CONFIG_PATH", tmp_path / "missing.yaml")
     monkeypatch.setenv("DEAL_INTEL_STORAGE_BACKEND", "local_sample")
 
     cfg = _env.load_config()
@@ -20,13 +32,23 @@ def test_env_can_select_local_sample_backend(monkeypatch, tmp_path) -> None:
     assert cfg["storage"]["backend"] == "local_sample"
 
 
+def test_recruit_env_takes_precedence_over_legacy_env(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(_env, "_USER_CONFIG_PATH", tmp_path / "missing.yaml")
+    monkeypatch.setenv("RECRUIT_AI_STORAGE_BACKEND", "mongo")
+    monkeypatch.setenv("DEAL_INTEL_STORAGE_BACKEND", "local_sample")
+
+    cfg = _env.load_config()
+
+    assert cfg["storage"]["backend"] == "mongo"
+
+
 def test_storage_env_override_survives_llm_provider_override(
     monkeypatch,
     tmp_path,
 ) -> None:
     monkeypatch.setattr(_env, "_USER_CONFIG_PATH", tmp_path / "missing.yaml")
-    monkeypatch.setenv("DEAL_INTEL_LLM_PROVIDER", "openai_api")
-    monkeypatch.setenv("DEAL_INTEL_STORAGE_BACKEND", "local_sample")
+    monkeypatch.setenv("RECRUIT_AI_LLM_PROVIDER", "openai_api")
+    monkeypatch.setenv("RECRUIT_AI_STORAGE_BACKEND", "local_sample")
 
     cfg = _env.load_config()
 

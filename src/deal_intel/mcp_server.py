@@ -260,7 +260,7 @@ def update_config(
     """Preview or apply safe non-secret user-config changes.
 
     This tool writes only allowlisted, non-secret settings to
-    ~/.deal-intel/config.yaml. It cannot set MongoDB URIs, API keys, OAuth
+    ~/.recruit-ai/config.yaml. It cannot set MongoDB URIs, API keys, OAuth
     tokens, or other secrets; keep those in MCPB sensitive fields, `.env`, or
     shell environment variables.
 
@@ -544,7 +544,7 @@ def set_active_qualification_framework(
 
     Use this after the user chooses a saved or built-in framework. Defaults to
     dry_run=true. Actual config writes require confirmed_by_user=true. This only
-    changes ~/.deal-intel/config.yaml and does not recompute existing deals,
+    changes ~/.recruit-ai/config.yaml and does not recompute existing deals,
     call LLMs, write MongoDB, or change historical evidence.
     """
     try:
@@ -1390,8 +1390,8 @@ def export_report(
     - industry: exact stored industry match
     - as_of: YYYY-MM-DD business date for stuck/overdue calculations
     - lookback_days: trend window length, used only by pipeline_trend
-    - output_dir: local output directory; defaults to reporting.output_dir or ~/.deal-intel/reports;
-      relative paths are scoped under ~/.deal-intel/
+    - output_dir: local output directory; defaults to reporting.output_dir or ~/.recruit-ai/reports;
+      relative paths are scoped under ~/.recruit-ai/
     """
     try:
         from deal_intel import _context
@@ -1438,8 +1438,8 @@ def export_data(
     - industry: exact stored primary industry match
     - as_of: YYYY-MM-DD business date for stuck/overdue calculations
     - output_dir: local output directory; defaults to reporting.data_output_dir,
-      reporting.output_dir, or ~/.deal-intel/reports; relative paths are scoped
-      under ~/.deal-intel/
+      reporting.output_dir, or ~/.recruit-ai/reports; relative paths are scoped
+      under ~/.recruit-ai/
     """
     try:
         from deal_intel import _context

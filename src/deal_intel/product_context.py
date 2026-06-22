@@ -18,8 +18,8 @@ from deal_intel.user_memory import detect_secret_patterns
 
 CACHE_SCHEMA_VERSION = 1
 PARSER_VERSION = "product_context_v1"
-DEFAULT_SOURCE_DIR = "~/.deal-intel/product-context/sources"
-DEFAULT_CACHE_DIR = "~/.deal-intel/product-context/cache"
+DEFAULT_SOURCE_DIR = "~/.recruit-ai/product-context/sources"
+DEFAULT_CACHE_DIR = "~/.recruit-ai/product-context/cache"
 MANIFEST_FILE = "manifest.json"
 CHUNKS_FILE = "chunks.json"
 SUPPORTED_FILE_TYPES = frozenset({"txt", "md", "json", "csv", "pdf", "docx"})
@@ -776,7 +776,7 @@ def _iter_source_files(
                         how_to_configure=(
                             "Put files in the folder above, or set "
                             "product_context.source_dirs via update_config "
-                            "(or the DEAL_INTEL_PRODUCT_CONTEXT_SOURCE_DIRS env)."
+                            "(or the RECRUIT_AI_PRODUCT_CONTEXT_SOURCE_DIRS env)."
                         ),
                     )
                 )

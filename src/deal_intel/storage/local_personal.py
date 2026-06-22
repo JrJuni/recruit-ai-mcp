@@ -9,7 +9,7 @@ from typing import Any
 
 from deal_intel.storage.local_sample_fixture import SENSITIVE_FIELD_NAMES
 
-DEFAULT_LOCAL_DATA_DIR = "~/.deal-intel/local-data"
+DEFAULT_LOCAL_DATA_DIR = "~/.recruit-ai/local-data"
 LOCAL_PERSONAL_DATASET = "local_personal"
 LOCAL_PERSONAL_SCHEMA_VERSION = 1
 LOCAL_PERSONAL_DEALS_FILE = "deals.json"

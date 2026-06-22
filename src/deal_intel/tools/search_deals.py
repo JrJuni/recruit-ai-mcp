@@ -23,7 +23,7 @@ def handle(
     - "python_cosine" (default): fetch all embeddings from MongoDB, rank in Python.
       Works on any tier (M0/M10+). O(n) scan — sufficient for thousands of deals.
     - "atlas": uses $vectorSearch ANN index. Requires M10+ cluster.
-      Switch by setting mongodb.vector_search: atlas in ~/.deal-intel/config.yaml.
+      Switch by setting mongodb.vector_search: atlas in ~/.recruit-ai/config.yaml.
     """
     if embedding_provider is None:
         raise MCPError(

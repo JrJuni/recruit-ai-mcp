@@ -1,4 +1,4 @@
-"""Fallback launcher for deal-intel-mcp.
+"""Fallback launcher for recruit-ai-mcp.
 
 In the standard MCPB install path, Claude Desktop invokes the user's configured
 Python interpreter with `-m deal_intel.mcp_server` from the user-specified repo
@@ -16,9 +16,9 @@ def main() -> None:
         from deal_intel.mcp_server import main as _main
     except ImportError as exc:
         sys.stderr.write(
-            "deal-intel-mcp launcher: cannot import deal_intel.mcp_server.\n"
+            "recruit-ai-mcp launcher: cannot import deal_intel.mcp_server.\n"
             f"  ImportError: {exc}\n"
-            "  Run `npx deal-intel-mcp setup`, then set the MCPB user_config\n"
+            "  Run `npx recruit-ai-mcp setup`, then set the MCPB user_config\n"
             "  'python_path' to the Python interpreter path printed by setup.\n"
         )
         raise SystemExit(1)

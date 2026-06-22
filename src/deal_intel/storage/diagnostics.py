@@ -6,7 +6,7 @@ def storage_error_hint(exc: Exception, *, operation: str) -> dict[str, object]:
 
     likely_issue = classify_storage_error(exc)
     next_actions = [
-        "Run `deal-intel config doctor` to check profile, storage, and MongoDB readiness.",
+        "Run `recruit-ai config doctor` to check profile, storage, and MongoDB readiness.",
         "Verify MONGODB_URI is configured for the environment running this MCP server.",
         "Check MongoDB Atlas Network Access/IP allowlist, credentials, and cluster status.",
         "If Atlas is resuming, upgrading, or selecting a new primary, wait briefly and retry.",
@@ -14,32 +14,32 @@ def storage_error_hint(exc: Exception, *, operation: str) -> dict[str, object]:
     if likely_issue == "missing_mongodb_uri":
         next_actions = [
             "Set MONGODB_URI in .env or in the host MCP configuration.",
-            "Run `deal-intel config doctor` to confirm the full/pro MongoDB profile is ready.",
-            "Use `deal-intel config show` to confirm which profile and storage backend are active.",
+            "Run `recruit-ai config doctor` to confirm the full/pro MongoDB profile is ready.",
+            "Use `recruit-ai config show` to confirm which profile and storage backend are active.",
         ]
     elif likely_issue == "authentication_or_authorization":
         next_actions = [
             "Verify the MongoDB username, password, and database user permissions.",
             "Confirm the URI is being supplied to the same Python runtime used by the MCP server.",
-            "Run `deal-intel config doctor` after updating credentials.",
+            "Run `recruit-ai config doctor` after updating credentials.",
         ]
     elif likely_issue == "dns_or_network":
         next_actions = [
             "Check internet/VPN/DNS connectivity from this machine.",
             "Verify the Atlas cluster hostname and Network Access/IP allowlist.",
-            "Run `deal-intel config doctor` and retry after transient DNS or network recovery.",
+            "Run `recruit-ai config doctor` and retry after transient DNS or network recovery.",
         ]
     elif likely_issue == "atlas_failover_or_cluster_unavailable":
         next_actions = [
             "Wait 30-60 seconds for Atlas resume, upgrade, or failover to finish.",
             "Check the Atlas cluster status page/metrics for primary election or maintenance.",
-            "Run `deal-intel config doctor` and retry the export.",
+            "Run `recruit-ai config doctor` and retry the export.",
         ]
 
     return {
         "operation": operation,
         "likely_issue": likely_issue,
-        "diagnostic_command": "deal-intel config doctor",
+        "diagnostic_command": "recruit-ai config doctor",
         "next_actions": next_actions,
         "safe_detail": (
             "Original storage errors may contain environment-specific details; "
@@ -113,11 +113,11 @@ def local_sample_mode_hint() -> dict[str, str]:
             "yet. The bundled fixture is immutable; user-created local personal "
             "deals are stored separately under storage.local_data_dir."
         ),
-        "temporary_env": "DEAL_INTEL_STORAGE_BACKEND=local_sample",
-        "powershell": "$env:DEAL_INTEL_STORAGE_BACKEND='local_sample'",
-        "user_config_path": "~/.deal-intel/config.yaml",
+        "temporary_env": "RECRUIT_AI_STORAGE_BACKEND=local_sample",
+        "powershell": "$env:RECRUIT_AI_STORAGE_BACKEND='local_sample'",
+        "user_config_path": "~/.recruit-ai/config.yaml",
         "user_config": "storage:\n  backend: local_sample",
-        "diagnostic_command": "python -m deal_intel.cli storage-status",
+        "diagnostic_command": "recruit-ai storage-status",
     }
 
 
@@ -150,7 +150,7 @@ def missing_mongodb_uri_message() -> str:
     return (
         "MONGODB_URI is not set for storage.backend=mongo. "
         "Set MONGODB_URI in .env for Atlas-backed storage, or switch to "
-        "local sample mode with DEAL_INTEL_STORAGE_BACKEND=local_sample."
+        "local sample mode with RECRUIT_AI_STORAGE_BACKEND=local_sample."
     )
 
 

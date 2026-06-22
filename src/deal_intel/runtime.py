@@ -8,7 +8,7 @@ from typing import Any
 
 import deal_intel
 
-PACKAGE_NAME = "deal-intel-mcp"
+PACKAGE_NAME = "recruit-ai-mcp"
 
 
 def build_runtime_diagnostics() -> dict[str, Any]:
