@@ -18,7 +18,7 @@ from deal_intel.storage.recruiting_collections import (
 DATASET_WEEKLY_PIPELINE = "weekly_pipeline_demo"
 DATASET_RECRUITING_PIPELINE = "recruiting_pipeline_demo"
 DEAL_DATASET_VERSION = "2026-06-14.v2"
-RECRUITING_DATASET_VERSION = "2026-06-22.v2"
+RECRUITING_DATASET_VERSION = "2026-06-22.v3"
 SAMPLE_BATCH_ID = f"{DATASET_WEEKLY_PIPELINE}:{DEAL_DATASET_VERSION}"
 RECRUITING_SAMPLE_BATCH_ID = (
     f"{DATASET_RECRUITING_PIPELINE}:{RECRUITING_DATASET_VERSION}"
@@ -410,6 +410,47 @@ def _base_recruiting_records(*, loaded_at: str) -> dict[str, list[dict]]:
             "created_at": loaded_at,
             "updated_at": loaded_at,
         },
+        {
+            "candidate_id": "cand_iris_kim",
+            "name": "Iris Kim",
+            "headline": "Payments engineer ready for larger ownership",
+            "current_company": "CheckoutWorks",
+            "current_title": "Junior Payments Engineer",
+            "skills": ["Payments", "Kafka", "Risk", "Java", "Kotlin"],
+            "domains": ["fintech", "payments", "risk operations"],
+            "seniority": "junior",
+            "compensation_expectation": {
+                "currency": "USD",
+                "minimum": 135000,
+                "target": 150000,
+                "maximum": 165000,
+                "period": "annual",
+                "note": "Compensation is flexible for a growth role.",
+            },
+            "locations": ["New York", "Remote US"],
+            "work_authorization": "US authorized",
+            "availability": "immediate",
+            "preferences": {
+                "desired_titles": ["Payments Engineer", "Software Engineer"],
+                "preferred_domains": ["fintech", "payments"],
+                "preferred_locations": ["New York", "Remote US"],
+                "remote_preference": "remote-first",
+                "excluded_companies": [],
+                "notes": "Wants mentorship before owning a full platform lead scope.",
+            },
+            "risk_flags": ["needs senior mentorship for platform lead scope"],
+            "evidence": [
+                {
+                    "evidence_id": "ev_iris_profile",
+                    "source_type": "profile",
+                    "source_id": "cand_iris_kim",
+                    "summary": "Built payments risk event consumers under senior guidance.",
+                    "confidence": "candidate_stated",
+                }
+            ],
+            "created_at": loaded_at,
+            "updated_at": loaded_at,
+        },
     ]
     positions = [
         {
@@ -616,6 +657,22 @@ def _base_recruiting_records(*, loaded_at: str) -> dict[str, list[dict]]:
             "summary": (
                 "Nora has deep healthcare platform experience but needs premium "
                 "compensation, UK remote approval, and a later start date."
+            ),
+            "raw_content": "",
+            "evidence_refs": [],
+        },
+        {
+            "interaction_id": "int_iris_screen",
+            "subject_type": "candidate",
+            "subject_id": "cand_iris_kim",
+            "interaction_type": "candidate_screen",
+            "direction": "inbound",
+            "source_confidence": "candidate_stated",
+            "participants": ["Iris Kim", "Recruiter"],
+            "occurred_at": "2026-06-20T17:30:00+00:00",
+            "summary": (
+                "Iris matches OrbitPay's payments stack but is early-career "
+                "for a platform lead mandate."
             ),
             "raw_content": "",
             "evidence_refs": [],

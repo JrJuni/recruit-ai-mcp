@@ -89,6 +89,8 @@ Immediate quality order:
    - Initial stress coverage now includes a strong healthcare platform
      candidate whose compensation, location, availability, and risk constraints
      should prevent a naive keyword match from outranking the aligned candidate.
+   - Additional stress coverage now includes a junior OrbitPay keyword match
+     whose payments stack fit should not outrank the senior aligned candidate.
    - Continue adding synthetic client/candidate examples that stress skills,
      domain, seniority, compensation, location, availability, client
      preferences, and risk.

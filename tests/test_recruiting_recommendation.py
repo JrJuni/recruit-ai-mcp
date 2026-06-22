@@ -200,3 +200,27 @@ def test_recruiting_sample_stress_candidate_does_not_outrank_aligned_match() -> 
         "late availability",
         "high_match_risk",
     ]
+
+
+def test_recruiting_sample_junior_keyword_match_does_not_outrank_senior_fit() -> None:
+    records = build_sample_recruiting_records(loaded_at="2026-06-22T00:00:00+00:00")
+    positions = {row["position_id"]: row for row in records[POSITIONS]}
+
+    run = build_position_candidate_recommendation_run(
+        position=positions["pos_orbitpay_payments_lead"],
+        candidates=records[CANDIDATES],
+        client_feedback=records[FEEDBACK],
+        limit=6,
+    )
+
+    results = {result.target_id: result for result in run.results}
+
+    assert run.results[0].target_id == "cand_mateo_rivera"
+    assert results["cand_iris_kim"].rank > results["cand_mateo_rivera"].rank
+    assert results["cand_iris_kim"].fit_snapshot.overall_score < (
+        results["cand_mateo_rivera"].fit_snapshot.overall_score
+    )
+    assert results["cand_iris_kim"].risk_flags == [
+        "needs senior mentorship for platform lead scope",
+        "review_match_risk",
+    ]

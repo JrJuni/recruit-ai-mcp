@@ -268,9 +268,22 @@ Completed:
   risk constraints. Recommendation tests verify that this high-keyword-match
   candidate does not outrank the aligned Northstar match and carries the
   expected `high_match_risk` signal.
+- Added Work 7AM recruiting seniority stress fixture.
+  The fictional recruiting sample dataset now includes Iris Kim, a junior
+  payments engineer whose stack/domain fit is strong for OrbitPay but whose
+  seniority and scope risk should not outrank Mateo Rivera for the payments
+  platform lead role.
 
 Validation:
 
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-quality-fixture-2 tests\test_sample_data.py tests\test_recruiting_recommendation.py tests\test_recruiting_metrics.py tests\test_cli_deal_review_smoke.py`
+  -> 42 passed, 1 warning.
+- `PYTHONPATH=src python -m deal_intel.cli smoke-natural-questions --pack recruiting --as-of 2026-06-22 --output-dir .tmp\recruiting-quality-fixture-2-smoke --json`
+  -> passed with `ok=true`, `question_count=11`, no blocked questions, and no
+  sensitive failures; the recruiting pack now reports `candidate_count=6` and
+  local recruiting persistence `written=23`, `reloaded=23`.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-quality-fixture tests\test_sample_data.py tests\test_recruiting_recommendation.py tests\test_recruiting_metrics.py tests\test_cli_deal_review_smoke.py`
   -> 41 passed, 1 warning.
 - `PYTHONPATH=src python -m deal_intel.cli smoke-natural-questions --pack recruiting --as-of 2026-06-22 --output-dir .tmp\recruiting-quality-fixture-smoke --json`

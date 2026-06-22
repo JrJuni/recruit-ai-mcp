@@ -522,7 +522,7 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     assert result.exit_code == 0
     assert "Natural Question Smoke (as_of=2026-06-22, questions=11)" in result.output
     assert "OK: True" in result.output
-    assert "candidates=5, open_positions=2, submissions=4" in result.output
+    assert "candidates=6, open_positions=2, submissions=4" in result.output
     assert (output_dir / "summary.md").exists()
     summary = json.loads((output_dir / "summary.json").read_text(encoding="utf-8"))
     assert summary["ok"] is True
