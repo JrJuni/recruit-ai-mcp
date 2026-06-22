@@ -151,6 +151,38 @@ def test_migration_dry_run_without_local_records_skips_target_ping(tmp_path) -> 
     }
 
 
+def test_migration_dry_run_with_only_recruiting_records_checks_target(
+    tmp_path,
+) -> None:
+    store = LocalPersonalStore(tmp_path / "local-data")
+    store.upsert_recruiting_record(
+        "candidates",
+        {
+            "candidate_id": "cand_only_local",
+            "name": "Only Local Candidate",
+        },
+    )
+    mongo = FakeMongo()
+
+    result = migrate_local_data.handle(source_store=store, target_mongo=mongo)
+
+    assert result["ok"] is True
+    assert result["dry_run"] is True
+    assert result["counts"]["source_deals"] == 0
+    assert result["counts"]["source_recruiting_records"] == 1
+    assert result["counts"]["would_create"] == 1
+    assert result["recruiting"] == [
+        {
+            "record_type": "recruiting",
+            "collection": "candidates",
+            "record_id": "cand_only_local",
+            "action": "create",
+            "reason": "target_recruiting_record_missing",
+        }
+    ]
+    assert mongo.ping_count == 1
+
+
 def test_migration_apply_requires_confirmation(tmp_path) -> None:
     store = _seed_store(tmp_path)
 
@@ -220,6 +252,54 @@ def test_migration_skips_existing_by_default_and_overwrites_when_enabled(
     assert overwritten["storage_written"] is True
     assert overwrite_mongo.existing["local-migrate-1"]["company"] == (
         "Local Migration Co"
+    )
+
+
+def test_migration_skips_and_overwrites_existing_recruiting_records(
+    tmp_path,
+) -> None:
+    store = LocalPersonalStore(tmp_path / "local-data")
+    store.upsert_recruiting_record(
+        "candidates",
+        {
+            "candidate_id": "cand_existing",
+            "name": "New Candidate",
+        },
+    )
+    existing_recruiting = {
+        "candidates": {
+            "cand_existing": {
+                "candidate_id": "cand_existing",
+                "name": "Old Candidate",
+            }
+        }
+    }
+    skip_mongo = FakeMongo(existing_recruiting=existing_recruiting)
+    overwrite_mongo = FakeMongo(existing_recruiting=existing_recruiting)
+
+    skipped = migrate_local_data.handle(
+        source_store=store,
+        target_mongo=skip_mongo,
+        dry_run=False,
+        confirmed_by_user=True,
+    )
+    overwritten = migrate_local_data.handle(
+        source_store=store,
+        target_mongo=overwrite_mongo,
+        dry_run=False,
+        confirmed_by_user=True,
+        overwrite=True,
+    )
+
+    assert skipped["counts"]["skipped_existing"] == 1
+    assert skipped["storage_written"] is False
+    assert skip_mongo.existing_recruiting["candidates"]["cand_existing"]["name"] == (
+        "Old Candidate"
+    )
+    assert overwritten["counts"]["overwritten"] == 1
+    assert overwritten["storage_written"] is True
+    assert overwrite_mongo.existing_recruiting["candidates"]["cand_existing"]["name"] == (
+        "New Candidate"
     )
 
 

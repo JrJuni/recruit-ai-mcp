@@ -337,7 +337,7 @@ Validation:
   -> passed.
 - `git diff --check` -> passed; Windows line-ending warnings only.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-local-migration-final tests\test_local_data_migration.py tests\test_local_data_cli.py tests\test_local_sample_backend.py tests\test_tool_surfaces.py tests\test_mcpb_manifest.py`
-  -> 77 passed, 1 third-party warning.
+  -> 79 passed, 1 third-party warning.
 - `ruff check src\deal_intel\tools\migrate_local_data.py src\deal_intel\cli.py src\deal_intel\mcp_server.py src\deal_intel\tool_surfaces.py tests\test_local_data_migration.py tests\test_local_data_cli.py`
   -> passed.
 - `mcpb validate mcpb\manifest.json` -> passed.
