@@ -8,16 +8,34 @@ import pytest
 
 from deal_intel import _context, mcp_server
 from deal_intel.errors import ErrorCode, MCPError
+from deal_intel.schema.recruiting import (
+    CandidateProfile,
+    ClientFeedback,
+    Position,
+    Submission,
+)
+from deal_intel.schema.recruiting_metrics import build_recruiting_pipeline_metrics
+from deal_intel.storage.recruiting_collections import recruiting_id_field
+from deal_intel.tool_surfaces import list_tool_surface_contracts
 from deal_intel.tools import create_sample_data, delete_sample_data
-from deal_intel.tools.sample_dataset import SAMPLE_BATCH_ID, build_sample_deals
+from deal_intel.tools.sample_dataset import (
+    DATASET_RECRUITING_PIPELINE,
+    RECRUITING_SAMPLE_BATCH_ID,
+    SAMPLE_BATCH_ID,
+    build_sample_deals,
+    build_sample_recruiting_records,
+)
 
 
 class FakeMongo:
     def __init__(self, *, database_name: str = "recruit_ai_demo") -> None:
         self.database_name = database_name
         self.deals: list[dict] = []
+        self.recruiting: dict[str, dict[str, dict]] = {}
         self.upsert_calls = 0
         self.delete_calls = 0
+        self.recruiting_upsert_calls = 0
+        self.recruiting_delete_calls = 0
 
     def count_deals(self, query: dict) -> int:
         return len(_matching(self.deals, query))
@@ -53,6 +71,43 @@ class FakeMongo:
             )
         ]
         return before - len(self.deals)
+
+    def upsert_recruiting_record(self, collection: str, record: dict) -> bool:
+        self.recruiting_upsert_calls += 1
+        id_field = recruiting_id_field(collection)
+        self.recruiting.setdefault(collection, {})[record[id_field]] = deepcopy(record)
+        return True
+
+    def upsert_recruiting_records(self, records_by_collection: dict[str, list[dict]]) -> int:
+        count = 0
+        for collection, rows in records_by_collection.items():
+            for row in rows:
+                self.upsert_recruiting_record(collection, row)
+                count += 1
+        return count
+
+    def get_recruiting_record(self, collection: str, record_id: str) -> dict | None:
+        row = self.recruiting.get(collection, {}).get(record_id)
+        return deepcopy(row) if row is not None else None
+
+    def count_recruiting_records_by_ids(self, ids_by_collection: dict[str, list[str]]) -> int:
+        return sum(
+            1
+            for collection, ids in ids_by_collection.items()
+            for record_id in ids
+            if record_id in self.recruiting.get(collection, {})
+        )
+
+    def delete_recruiting_records_by_ids(self, ids_by_collection: dict[str, list[str]]) -> int:
+        self.recruiting_delete_calls += 1
+        deleted = 0
+        for collection, ids in ids_by_collection.items():
+            rows = self.recruiting.setdefault(collection, {})
+            for record_id in ids:
+                if record_id in rows:
+                    del rows[record_id]
+                    deleted += 1
+        return deleted
 
 
 def _cfg(**mongodb_overrides) -> dict:
@@ -95,6 +150,46 @@ def test_public_sample_dataset_excludes_sensitive_and_legacy_fields() -> None:
         assert forbidden not in serialized
 
 
+def test_recruiting_sample_dataset_is_model_safe_and_metric_ready() -> None:
+    records = build_sample_recruiting_records(loaded_at="2026-06-22T00:00:00+00:00")
+    serialized = json.dumps(records, ensure_ascii=False).lower()
+
+    assert {collection: len(rows) for collection, rows in records.items()} == {
+        "candidates": 4,
+        "client_companies": 2,
+        "positions": 3,
+        "submissions": 4,
+        "feedback": 3,
+        "interactions": 3,
+    }
+    for row in records["candidates"]:
+        CandidateProfile.model_validate(row)
+    for row in records["positions"]:
+        Position.model_validate(row)
+    for row in records["submissions"]:
+        Submission.model_validate(row)
+    for row in records["feedback"]:
+        ClientFeedback.model_validate(row)
+    metrics = build_recruiting_pipeline_metrics(
+        candidates=records["candidates"],
+        positions=records["positions"],
+        submissions=records["submissions"],
+        feedback=records["feedback"],
+    )
+
+    assert metrics["summary"]["candidate_count"] == 4
+    assert metrics["summary"]["open_position_count"] == 2
+    assert metrics["summary"]["placed_count"] == 1
+    for forbidden in [
+        "mongodb+srv",
+        "openai_api_key",
+        "anthropic_api_key",
+        "is_sample",
+        "sample_batch_id",
+    ]:
+        assert forbidden not in serialized
+
+
 def test_create_sample_data_dry_run_previews_without_writing() -> None:
     mongo = FakeMongo()
 
@@ -111,6 +206,28 @@ def test_create_sample_data_dry_run_previews_without_writing() -> None:
     assert result["deal_count"] == 22
     assert len(result["preview"]) == 3
     assert mongo.upsert_calls == 0
+
+
+def test_create_recruiting_sample_data_dry_run_previews_without_writing() -> None:
+    mongo = FakeMongo()
+
+    result = create_sample_data.handle(
+        mongo=mongo,
+        cfg=_cfg(),
+        dataset=DATASET_RECRUITING_PIPELINE,
+    )
+
+    assert result["ok"] is True
+    assert result["dataset"] == DATASET_RECRUITING_PIPELINE
+    assert result["sample_batch_id"] == RECRUITING_SAMPLE_BATCH_ID
+    assert result["dry_run"] is True
+    assert result["storage_written"] is False
+    assert result["record_count"] == 19
+    assert result["record_counts"]["candidates"] == 4
+    assert result["preview"]["positions"][0]["position_id"] == (
+        "pos_northstar_backend_lead"
+    )
+    assert mongo.recruiting_upsert_calls == 0
 
 
 def test_sample_data_rejects_primary_database_and_wrong_client() -> None:
@@ -164,6 +281,26 @@ def test_create_sample_data_writes_marked_demo_records() -> None:
     assert mongo.delete_calls == 0
 
 
+def test_create_recruiting_sample_data_writes_multi_collection_records() -> None:
+    mongo = FakeMongo()
+
+    result = create_sample_data.handle(
+        mongo=mongo,
+        cfg=_cfg(),
+        dataset=DATASET_RECRUITING_PIPELINE,
+        dry_run=False,
+        confirmed_by_user=True,
+    )
+
+    assert result["storage_written"] is True
+    assert result["created_or_replaced_count"] == 19
+    assert len(mongo.recruiting["candidates"]) == 4
+    assert len(mongo.recruiting["positions"]) == 3
+    assert "cand_avery_chen" in mongo.recruiting["candidates"]
+    assert "pos_northstar_backend_lead" in mongo.recruiting["positions"]
+    assert mongo.recruiting_delete_calls == 0
+
+
 def test_create_sample_data_blocks_existing_batch_without_overwrite() -> None:
     mongo = FakeMongo()
     create_sample_data.handle(
@@ -183,6 +320,40 @@ def test_create_sample_data_blocks_existing_batch_without_overwrite() -> None:
 
     assert exc_info.value.error_code == ErrorCode.INVALID_INPUT
     assert exc_info.value.hint["fix"] == "Set overwrite=true to replace this sample batch."
+
+
+def test_create_recruiting_sample_data_overwrite_replaces_known_ids() -> None:
+    mongo = FakeMongo()
+    create_sample_data.handle(
+        mongo=mongo,
+        cfg=_cfg(),
+        dataset=DATASET_RECRUITING_PIPELINE,
+        dry_run=False,
+        confirmed_by_user=True,
+    )
+
+    with pytest.raises(MCPError) as exc_info:
+        create_sample_data.handle(
+            mongo=mongo,
+            cfg=_cfg(),
+            dataset=DATASET_RECRUITING_PIPELINE,
+            dry_run=False,
+            confirmed_by_user=True,
+        )
+    result = create_sample_data.handle(
+        mongo=mongo,
+        cfg=_cfg(),
+        dataset=DATASET_RECRUITING_PIPELINE,
+        dry_run=False,
+        overwrite=True,
+        confirmed_by_user=True,
+    )
+
+    assert exc_info.value.error_code == ErrorCode.INVALID_INPUT
+    assert result["deleted_existing_count"] == 19
+    assert result["created_or_replaced_count"] == 19
+    assert result["record_counts"]["feedback"] == 3
+    assert mongo.recruiting_delete_calls == 1
 
 
 def test_create_sample_data_overwrite_replaces_existing_batch() -> None:
@@ -239,6 +410,47 @@ def test_delete_sample_data_dry_run_and_actual_delete() -> None:
     assert mongo.deals == []
 
 
+def test_delete_recruiting_sample_data_dry_run_and_actual_delete() -> None:
+    mongo = FakeMongo()
+    create_sample_data.handle(
+        mongo=mongo,
+        cfg=_cfg(),
+        dataset=DATASET_RECRUITING_PIPELINE,
+        dry_run=False,
+        confirmed_by_user=True,
+    )
+
+    dry_run = delete_sample_data.handle(
+        mongo=mongo,
+        cfg=_cfg(),
+        dataset=DATASET_RECRUITING_PIPELINE,
+    )
+    assert dry_run["dry_run"] is True
+    assert dry_run["would_delete_count"] == 19
+    assert dry_run["storage_written"] is False
+
+    with pytest.raises(MCPError) as missing_confirmation:
+        delete_sample_data.handle(
+            mongo=mongo,
+            cfg=_cfg(),
+            dataset=DATASET_RECRUITING_PIPELINE,
+            dry_run=False,
+        )
+
+    actual = delete_sample_data.handle(
+        mongo=mongo,
+        cfg=_cfg(),
+        dataset=DATASET_RECRUITING_PIPELINE,
+        dry_run=False,
+        confirmed_by_user=True,
+    )
+
+    assert missing_confirmation.value.error_code == ErrorCode.INVALID_INPUT
+    assert actual["deleted_count"] == 19
+    assert actual["storage_written"] is True
+    assert all(not rows for rows in mongo.recruiting.values())
+
+
 def test_mcp_sample_data_wrappers_use_demo_database(monkeypatch) -> None:
     created_clients: list[FakeMongo] = []
 
@@ -263,5 +475,5 @@ def test_mcp_sample_data_wrappers_use_demo_database(monkeypatch) -> None:
     assert result["ok"] is True
     assert result["dry_run"] is True
     assert created_clients[0].database_name == "recruit_ai_demo"
-    assert len(names) == 42
+    assert len(names) == len(list_tool_surface_contracts())
     assert {"create_sample_data", "delete_sample_data"}.issubset(names)

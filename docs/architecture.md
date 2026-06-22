@@ -185,6 +185,14 @@ reads and KPI calculation to `get_recruiting_metrics`, then writes local
 Markdown and CSV files under the configured reporting directory. It is read
 only over MongoDB and does not call LLMs, embeddings, or Atlas Vector Search.
 
+Work 7A adds `recruiting_pipeline_demo` to the developer-only sample-data
+tools. `create_sample_data(dataset="recruiting_pipeline_demo")` writes
+fictional candidates, clients, positions, submissions, feedback, and
+interactions to the configured demo database only. Recruiting sample records do
+not store extra sample marker fields because recruiting read paths validate
+records with strict Pydantic models; overwrite and delete use the dataset's
+stable fictional IDs instead.
+
 ## Product Profiles
 
 The project uses one repository and one package with three profiles:
@@ -491,8 +499,8 @@ notes, raw interaction content, contacts, or vectors.
 | `get_customer_theme_evidence` | `theme.evidence` | `tools/get_customer_theme_evidence.py`, `schema/customer_theme_insights.py` | theme key, filters, limit | safe evidence snippets | `tests/test_customer_theme_insights.py` | Evidence snippets are curated structured evidence, not raw notes. |
 | `search_deals` | `search.deals` | `tools/search_deals.py`, `providers/embedding.py` | query, filters, limit | semantic/similarity result with generic qualification metadata or unsupported-mode response | `tests/test_search_deals_startup.py` | BI paths must not depend on embeddings; never return vectors. |
 | `analyze_deal` | `strategy.analyze` | `tools/analyze_deal.py`, `providers/llm.py`, `product_context.py` | deal id, preview/persist flags | optional LLM strategy preview, confirmed `bd_strategy` persistence, product-context refs metadata | `tests/test_analyze_deal.py`, `tests/test_llm_providers.py` plus strategy-path smoke when changed | Default is preview-only with a short cache; persist only after confirmation. Use seller-side product context only as strategy context, not customer evidence. |
-| `create_sample_data` | `sample.create` | `tools/create_sample_data.py`, `tools/sample_data.py` | demo DB, dry-run/apply flags | Atlas demo seed writes | `tests/test_sample_data.py` | Developer surface only; never write to primary DB. |
-| `delete_sample_data` | `sample.delete` | `tools/delete_sample_data.py`, `tools/sample_data.py` | demo DB, dry-run/apply flags | Atlas demo seed deletion | `tests/test_sample_data.py` | Delete only known sample batch documents. |
+| `create_sample_data` | `sample.create` | `tools/create_sample_data.py`, `tools/sample_data.py`, `tools/sample_dataset.py` | dataset, demo DB, dry-run/apply flags | Atlas demo seed writes | `tests/test_sample_data.py` | Developer surface only; never write to primary DB. |
+| `delete_sample_data` | `sample.delete` | `tools/delete_sample_data.py`, `tools/sample_data.py`, `tools/sample_dataset.py` | dataset, demo DB, dry-run/apply flags | Atlas demo seed deletion | `tests/test_sample_data.py` | Delete only the selected known sample dataset. |
 
 ### Major Internal Engine Index
 

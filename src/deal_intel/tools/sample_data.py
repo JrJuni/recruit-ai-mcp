@@ -6,8 +6,11 @@ from dataclasses import dataclass
 from deal_intel.errors import ErrorCode, MCPError, Stage
 from deal_intel.storage.mongodb import MongoDBClient
 from deal_intel.tools.sample_dataset import (
-    SAMPLE_BATCH_ID,
+    DATASET_RECRUITING_PIPELINE,
+    DATASET_WEEKLY_PIPELINE,
     SUPPORTED_DATASETS,
+    recruiting_sample_ids,
+    sample_batch_id,
 )
 
 _DATABASE_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
@@ -49,7 +52,7 @@ def resolve_demo_database(
 
 
 def validate_dataset(dataset: str) -> str:
-    cleaned = (dataset or "").strip() or "weekly_pipeline_demo"
+    cleaned = (dataset or "").strip() or DATASET_WEEKLY_PIPELINE
     if cleaned not in SUPPORTED_DATASETS:
         raise MCPError(
             error_code=ErrorCode.INVALID_INPUT,
@@ -72,8 +75,60 @@ def require_confirmation(*, confirmed_by_user: bool, action: str) -> None:
         )
 
 
-def sample_query() -> dict:
-    return {"is_sample": True, "sample_batch_id": SAMPLE_BATCH_ID}
+def sample_query(dataset: str = DATASET_WEEKLY_PIPELINE) -> dict:
+    return {"is_sample": True, "sample_batch_id": sample_batch_id(dataset)}
+
+
+def is_recruiting_sample_dataset(dataset: str) -> bool:
+    return dataset == DATASET_RECRUITING_PIPELINE
+
+
+def recruiting_sample_record_ids(records: dict[str, list[dict]]) -> dict[str, list[str]]:
+    return recruiting_sample_ids(records)
+
+
+def count_recruiting_sample_records(
+    mongo: MongoDBClient,
+    records: dict[str, list[dict]],
+) -> int:
+    ids_by_collection = recruiting_sample_record_ids(records)
+    if hasattr(mongo, "count_recruiting_records_by_ids"):
+        return int(mongo.count_recruiting_records_by_ids(ids_by_collection))
+    return sum(
+        1
+        for collection, ids in ids_by_collection.items()
+        for record_id in ids
+        if mongo.get_recruiting_record(collection, record_id) is not None
+    )
+
+
+def upsert_recruiting_sample_records(
+    mongo: MongoDBClient,
+    records: dict[str, list[dict]],
+) -> int:
+    if hasattr(mongo, "upsert_recruiting_records"):
+        return int(mongo.upsert_recruiting_records(records))
+    count = 0
+    for collection, rows in records.items():
+        for row in rows:
+            mongo.upsert_recruiting_record(collection, row)
+            count += 1
+    return count
+
+
+def delete_recruiting_sample_records(
+    mongo: MongoDBClient,
+    records: dict[str, list[dict]],
+) -> int:
+    ids_by_collection = recruiting_sample_record_ids(records)
+    if hasattr(mongo, "delete_recruiting_records_by_ids"):
+        return int(mongo.delete_recruiting_records_by_ids(ids_by_collection))
+    deleted = 0
+    for collection, ids in ids_by_collection.items():
+        for record_id in ids:
+            if mongo.delete_recruiting_record(collection, record_id):
+                deleted += 1
+    return deleted
 
 
 def validate_demo_client(

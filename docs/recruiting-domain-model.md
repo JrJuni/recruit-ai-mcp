@@ -468,6 +468,23 @@ Report policy:
 - The tool is deterministic and does not call LLMs, embeddings, or Atlas
   Vector Search.
 
+## Work 7A Recruiting Demo Dataset
+
+Work 7A adds a developer-only fictional recruiting demo dataset for Atlas demo
+databases.
+
+Sample policy:
+
+- Dataset key: `recruiting_pipeline_demo`.
+- `create_sample_data` writes candidates, client companies, positions,
+  submissions, feedback, and interactions only to the resolved demo database.
+- `delete_sample_data` removes the known fictional sample IDs for that dataset.
+- Recruiting sample records do not store extra sample marker fields; strict
+  recruiting model validation remains compatible with metrics and
+  recommendation reads.
+- The dataset is fictional, deterministic, and does not call LLMs, embeddings,
+  or Atlas Vector Search.
+
 ## Collections For Work 2
 
 Recommended Mongo collections:

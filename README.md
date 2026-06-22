@@ -428,8 +428,9 @@ and does not require MongoDB, paid APIs, or Atlas Vector Search.
 
 `full` starts with the user's own MongoDB data and does not auto-seed sample
 records. If you want a richer Atlas-backed demo, switch to the `developer` tool
-surface and run `create_sample_data`; it writes 22 fictional generated deals to
-the configured demo database, not to the primary real-data database.
+surface and run `create_sample_data`; it can write either
+`weekly_pipeline_demo` deal records or `recruiting_pipeline_demo` recruiting
+records to the configured demo database, not to the primary real-data database.
 
 ---
 

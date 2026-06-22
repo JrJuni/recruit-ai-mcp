@@ -102,8 +102,8 @@ clients see a config-filtered tool surface:
 | `restore_deal` | `deal_id`, `expected_company`, `restore_reason` | `confirmed_by_user` | `ok`, `deal_id`, `company`, `already_active`, `old_deal`, `new_deal`, `storage_written` | Requires explicit confirmation and exact company match, clears archived state, appends restore history, and returns the deal to default BI/read paths |
 | `delete_deal` | `deal_id`, `expected_company`, `delete_reason` | `confirmed_by_user`, `dry_run` | `ok`, `deal_id`, `company`, `dry_run`, `can_delete`, `would_delete`, `blocked_reason`, `storage_written` or `deleted_count`, `audit_id`, `deleted_at` | Defaults to dry-run. Real hard delete requires confirmation, exact company match, a non-empty reason, and an already archived deal. Writes a safe delete audit snapshot before deleting |
 | `migrate_local_data` | None | `target_database`, `confirmed_by_user`, `dry_run`, `overwrite` | `ok`, `migration_type`, `dry_run`, `storage_written`, `source`, `target`, `options`, `counts`, `deals`, `warnings` | Migrates only user-created local personal deals from `storage.local_data_dir` to MongoDB. Defaults to dry-run, requires confirmation for writes, skips existing target deal ids unless `overwrite=true`, and never migrates bundled fixture records or local delete audit logs |
-| `create_sample_data` | None | `dataset`, `demo_database`, `confirmed_by_user`, `dry_run`, `overwrite` | `ok`, `dataset`, `sample_batch_id`, `primary_database`, `demo_database`, `dry_run`, `existing_count`, `deal_count`, `preview`, `storage_written` | Defaults to dry-run. Actual writes require confirmation and write only to a demo database different from the primary database |
-| `delete_sample_data` | None | `dataset`, `demo_database`, `confirmed_by_user`, `dry_run` | `ok`, `dataset`, `sample_batch_id`, `primary_database`, `demo_database`, `dry_run`, `existing_count`, `sample_deals`, `storage_written` | Defaults to dry-run. Actual deletes require confirmation and delete only records with the known sample batch marker in the demo database |
+| `create_sample_data` | None | `dataset`, `demo_database`, `confirmed_by_user`, `dry_run`, `overwrite` | `ok`, `dataset`, `sample_batch_id`, `primary_database`, `demo_database`, `dry_run`, `existing_count`, `deal_count` or `record_count`, `preview`, `storage_written` | Defaults to dry-run. Actual writes require confirmation and write only to a demo database different from the primary database. Supports `weekly_pipeline_demo` deal records and `recruiting_pipeline_demo` multi-collection recruiting records |
+| `delete_sample_data` | None | `dataset`, `demo_database`, `confirmed_by_user`, `dry_run` | `ok`, `dataset`, `sample_batch_id`, `primary_database`, `demo_database`, `dry_run`, `existing_count`, `sample_deals` or `sample_records`, `storage_written` | Defaults to dry-run. Actual deletes require confirmation and delete only the selected known sample dataset in the demo database |
 | `get_deal` | `deal_id` | None | `ok`, `deal`, optional `warnings`, optional `archive` | Safe read only; returns stored deal detail, interactions, qualification scores, and legacy meeting history while excluding raw meeting notes, raw interaction content, contacts, and embeddings |
 | `get_deal_raw` | `deal_id`, `confirmed_by_user`, `reason`, `include_raw_content` | None | `ok`, `deal`, `raw_access`, optional `warnings`, optional `archive` | Developer-surface only. Requires explicit confirmation, a non-empty reason, and `include_raw_content=true`; returns raw notes, raw interaction content, and contacts for intentional admin/debug inspection, but still excludes embeddings |
 | `list_deals` | None | `stage`, `limit`, `as_of` | `ok`, `as_of`, `timezone`, `generated_at`, `deals`, `count`, `data_quality` | Read only; returns health, timing, attention, and field-quality results while excluding meeting raw notes and interaction raw content |
@@ -181,15 +181,19 @@ Default BI/read paths exclude archived deals with:
 This is intentionally not `{"archived": false}` because legacy documents may
 not have an `archived` field and must remain visible.
 
-`create_sample_data` and `delete_sample_data` form the M4.4 onboarding/demo
+`create_sample_data` and `delete_sample_data` form the onboarding/demo
 sample-data layer. They use `mongodb.demo_database` by default
-(`deal_intel_demo`) and reject any demo database equal to the primary
+(`recruit_ai_demo`) and reject any demo database equal to the primary
 `mongodb.database`. Both tools default to `dry_run: true`; actual writes or
-deletes require `confirmed_by_user: true`. `delete_sample_data` only deletes
-documents matching both `is_sample: true` and the known `sample_batch_id`.
-The first supported dataset is `weekly_pipeline_demo`, a generated 22-deal
-fictional full-profile sample. `full` mode never auto-seeds it; users must
-explicitly run `create_sample_data`, and writes go to the demo database.
+deletes require `confirmed_by_user: true`. The supported datasets are
+`weekly_pipeline_demo`, a generated 22-deal fictional full-profile deal sample,
+and `recruiting_pipeline_demo`, a fictional recruiting sample across
+candidate, client-company, position, submission, feedback, and interaction
+collections. Deal sample cleanup uses the known sample batch marker; recruiting
+sample cleanup uses the dataset's stable fictional IDs so recruiting records
+remain compatible with strict Pydantic read validation. `full` mode never
+auto-seeds sample data; users must explicitly run `create_sample_data`, and
+writes go to the demo database.
 
 `analytics_snapshots` form the M5.1-M5.5 trend foundation. `create_deal`,
 `add_interaction`, `update_stage`, and the deprecated `add_meeting` alias attempt to write one

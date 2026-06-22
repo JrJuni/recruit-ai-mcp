@@ -1410,10 +1410,11 @@ def create_sample_data(
     dry_run: bool = True,
     overwrite: bool = False,
 ) -> dict:
-    """Create fictional onboarding sample deals in a separate demo database.
+    """Create fictional onboarding sample data in a separate demo database.
 
     Defaults to dry_run=true. Actual writes require confirmed_by_user=true.
     The demo database must differ from the primary configured database.
+    Supported datasets: weekly_pipeline_demo, recruiting_pipeline_demo.
     """
     try:
         from deal_intel import _context
@@ -1446,10 +1447,10 @@ def delete_sample_data(
     confirmed_by_user: bool = False,
     dry_run: bool = True,
 ) -> dict:
-    """Delete fictional onboarding sample deals from the separate demo database.
+    """Delete fictional onboarding sample data from the separate demo database.
 
-    Deletes only records with the known sample batch marker. Defaults to
-    dry_run=true. Actual deletes require confirmed_by_user=true.
+    Deletes only the selected known sample dataset. Defaults to dry_run=true.
+    Actual deletes require confirmed_by_user=true.
     """
     try:
         from deal_intel import _context

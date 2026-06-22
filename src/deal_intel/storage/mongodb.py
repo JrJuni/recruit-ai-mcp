@@ -360,6 +360,42 @@ class MongoDBClient:
         )
         return bool(getattr(result, "upserted_id", None) or getattr(result, "matched_count", 0))
 
+    def upsert_recruiting_records(self, records_by_collection: dict[str, list[dict]]) -> int:
+        count = 0
+        for collection, rows in records_by_collection.items():
+            for row in rows:
+                self.upsert_recruiting_record(collection, row)
+                count += 1
+        return count
+
+    def count_recruiting_records_by_ids(self, ids_by_collection: dict[str, list[str]]) -> int:
+        db = self._get_db()
+        total = 0
+        for collection, ids in ids_by_collection.items():
+            if not ids:
+                continue
+            id_field = recruiting_id_field(collection)
+            total += int(
+                _get_collection(db, collection).count_documents({id_field: {"$in": ids}})
+            )
+        return total
+
+    def delete_recruiting_record(self, collection: str, record_id: str) -> bool:
+        id_field = recruiting_id_field(collection)
+        result = _get_collection(self._get_db(), collection).delete_one({id_field: record_id})
+        return bool(getattr(result, "deleted_count", 0))
+
+    def delete_recruiting_records_by_ids(self, ids_by_collection: dict[str, list[str]]) -> int:
+        db = self._get_db()
+        total = 0
+        for collection, ids in ids_by_collection.items():
+            if not ids:
+                continue
+            id_field = recruiting_id_field(collection)
+            result = _get_collection(db, collection).delete_many({id_field: {"$in": ids}})
+            total += int(getattr(result, "deleted_count", 0))
+        return total
+
     def get_recruiting_record(
         self,
         collection: str,
