@@ -87,6 +87,12 @@ jobs:
           python -m deal_intel.cli smoke-profile --profile sample --json \
             | tee smoke-evidence/profile-smoke.json
 
+          python -m deal_intel.cli smoke-natural-questions \
+            --pack recruiting \
+            --as-of 2026-06-22 \
+            --json \
+            | tee smoke-evidence/recruiting-natural-questions.json
+
           python - <<'PY' | tee smoke-evidence/mcp-tools.json
           import asyncio
           import json

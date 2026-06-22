@@ -160,12 +160,14 @@ Installed-package smoke passes when:
 
 - the requested package version installs in a fresh virtual environment;
 - `smoke-profile --profile sample --json` exits successfully;
+- `smoke-natural-questions --pack recruiting --as-of 2026-06-22 --json` exits
+  successfully with the current 13-question recruiting pack;
 - `deal_intel.mcp_server.app.list_tools()` returns the sample MCP surface;
 - the core tools `config_doctor`, `get_tool_catalog`, `create_candidate`,
   `add_recruiting_interaction`, `recommend_candidates_for_position`, and
   `get_recruiting_metrics` are present;
 - the workflow uploads a `smoke-evidence` artifact with the package,
-  profile-smoke, and MCP tool-list JSON.
+  profile-smoke, recruiting natural-question, and MCP tool-list JSON.
 
 ## PyPI Publish
 

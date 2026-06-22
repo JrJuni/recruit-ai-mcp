@@ -105,7 +105,9 @@ jobs:
             -q -p no:cacheprovider
 
       - name: Run package smoke
-        run: python -m deal_intel.cli smoke-profile --profile sample
+        run: |
+          python -m deal_intel.cli smoke-profile --profile sample
+          python -m deal_intel.cli smoke-natural-questions --pack recruiting --as-of 2026-06-22 --json
 
       - name: Set up Node
         uses: actions/setup-node@v4

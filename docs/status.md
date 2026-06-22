@@ -114,6 +114,10 @@ Completed:
 - Updated the MVP readiness recruiting workflow smoke gate to require the
   current 13-question pack and document recommendation guardrail plus client
   shortlist readiness coverage.
+- Tightened release/package verification so both the release candidate workflow
+  and installed-package staging smoke run the recruiting natural-question pack;
+  staging now uploads `recruiting-natural-questions.json` with the
+  smoke-evidence artifact.
 - Added Work 6A recruiting pipeline metrics calculator. It computes summary
   counts, position status rates, submission funnel rates, feedback signal
   rates, and data-quality counters from safe recruiting records without

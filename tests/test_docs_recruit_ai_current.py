@@ -56,6 +56,12 @@ def test_release_docs_and_workflows_use_recruit_ai_package_name() -> None:
     assert "recruit-ai-mcp@${PACKAGE_VERSION}" in release_workflow
     assert 'metadata.version("recruit-ai-mcp")' in staging_workflow
     assert "RECRUIT_AI_STORAGE_BACKEND" in staging_workflow
+    assert (
+        "python -m deal_intel.cli smoke-natural-questions --pack recruiting "
+        "--as-of 2026-06-22 --json"
+    ) in release_workflow
+    assert "smoke-evidence/recruiting-natural-questions.json" in staging_workflow
+    assert "current 13-question recruiting pack" in release_docs
     assert "create_candidate" in combined
     assert "add_recruiting_interaction" in combined
     assert "recommend_candidates_for_position" in combined
@@ -77,6 +83,7 @@ def test_release_docs_and_workflows_use_recruit_ai_package_name() -> None:
     assert "deal-intel-mcp@${PACKAGE_VERSION}" not in combined
     assert 'metadata.version("deal-intel-mcp")' not in combined
     assert "DEAL_INTEL_STORAGE_BACKEND" not in combined
+    assert "smoke-natural-questions --pack deal" not in combined
     assert "v0.2.4-rc.1" not in release_docs
     assert "mcpb validate mcpb\\manifest.json" not in release_docs
     assert "mcpb info mcpb\\recruit-ai-mcp-0.1.0.mcpb" not in release_docs
