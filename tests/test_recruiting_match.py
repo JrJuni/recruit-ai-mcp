@@ -118,6 +118,57 @@ def test_candidate_position_fit_scores_partial_must_have_coverage() -> None:
     assert "skill_fit" in low_dimensions
 
 
+def test_candidate_position_fit_applies_feedback_rubric_delta_to_any_dimension() -> None:
+    result = build_candidate_position_fit(
+        candidate=_candidate(skills=["Python"]),
+        position=_position(must_have=["Python", "MongoDB"], ideal_candidate_examples=[]),
+        client_feedback=[
+            {
+                "feedback_id": "fb_skill_override",
+                "subject_type": "submission",
+                "subject_id": "sub_avery_backend",
+                "candidate_id": "cand_avery_chen",
+                "position_id": "pos_backend_lead",
+                "sentiment": "positive",
+                "decision_signal": "advance",
+                "rubric_deltas": {"skill_fit": 2},
+            }
+        ],
+    )
+
+    assert result.signals["skill_fit"].score == 5
+    assert result.feedback_adjustments[0].dimension == "skill_fit"
+    assert result.feedback_adjustments[0].original_score == 3
+    assert result.feedback_adjustments[0].adjusted_score == 5
+
+
+def test_candidate_position_fit_clamps_feedback_rubric_delta() -> None:
+    result = build_candidate_position_fit(
+        candidate=_candidate(),
+        position=_position(),
+        client_feedback=[
+            {
+                "feedback_id": "fb_comp_negative",
+                "subject_type": "submission",
+                "subject_id": "sub_avery_backend",
+                "candidate_id": "cand_avery_chen",
+                "position_id": "pos_backend_lead",
+                "sentiment": "negative",
+                "decision_signal": "reject",
+                "rubric_deltas": {"compensation_fit": -5, "risk": 5},
+            }
+        ],
+    )
+
+    assert result.signals["compensation_fit"].score == 0
+    assert result.signals["risk"].score == 5
+    assert result.dimension_scores["risk"] == 0.0
+    assert [(item.dimension, item.adjusted_score) for item in result.feedback_adjustments] == [
+        ("compensation_fit", 0),
+        ("risk", 5),
+    ]
+
+
 def test_candidate_position_fit_inverts_candidate_risk_flags() -> None:
     result = build_candidate_position_fit(
         candidate=_candidate(risk_flags=["counteroffer risk", "limited availability"]),
@@ -150,6 +201,7 @@ def test_candidate_position_fit_ignores_unrelated_feedback_for_risk() -> None:
 
     assert result.signals["risk"].score == 0
     assert result.dimension_scores["risk"] == 100.0
+    assert result.feedback_adjustments == []
 
 
 def test_candidate_position_fit_accepts_mongo_style_dict_inputs() -> None:

@@ -121,6 +121,13 @@ deterministic heuristics, and delegates aggregate scoring to the Work 3A engine.
 It is the reusable pre-ranking layer for future recommendation tools; it does
 not call storage, embeddings, LLMs, or MCP registration.
 
+Work 3C extends the same module with a transparent feedback adjustment overlay.
+Applicable feedback `rubric_deltas` are applied after the base
+candidate-position signals are derived, clamped to the 0-5 rubric scale, and
+returned as adjustment records before aggregate scoring. This keeps learned
+client preference influence inspectable instead of hiding it inside the base
+heuristics.
+
 ## Product Profiles
 
 The project uses one repository and one package with three profiles:

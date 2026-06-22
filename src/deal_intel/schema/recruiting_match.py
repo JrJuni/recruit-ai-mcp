@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from deal_intel.schema.recruiting import (
+    FIT_DIMENSION_KEYS,
     CandidateProfile,
     ClientFeedback,
     EvidenceReference,
@@ -24,6 +25,17 @@ class CandidatePositionFitResult:
     dimension_scores: dict[str, float]
     warnings: list[dict[str, Any]]
     signals: dict[str, FitSignal]
+    feedback_adjustments: list[FeedbackScoreAdjustment]
+
+
+@dataclass(frozen=True)
+class FeedbackScoreAdjustment:
+    feedback_id: str
+    dimension: str
+    delta: int
+    original_score: int
+    adjusted_score: int
+    reason: str
 
 
 def build_candidate_position_fit(
@@ -44,7 +56,7 @@ def build_candidate_position_fit(
     feedback_models = _coerce_feedback(client_feedback or ())
     evidence = list(candidate_model.evidence[:5])
 
-    signals = {
+    base_signals = {
         "skill_fit": _skill_signal(candidate_model, position_model, evidence),
         "domain_fit": _domain_signal(candidate_model, position_model, feedback_models, evidence),
         "seniority_fit": _seniority_signal(candidate_model, position_model, evidence),
@@ -59,6 +71,11 @@ def build_candidate_position_fit(
         ),
         "risk": _risk_signal(candidate_model, position_model, feedback_models, evidence),
     }
+    applicable_feedback = _applicable_feedback(candidate_model, position_model, feedback_models)
+    signals, feedback_adjustments = _apply_feedback_adjustments(
+        base_signals,
+        applicable_feedback,
+    )
     missing_info = _collect_missing_info(signals.values())
     result = build_fit_snapshot(
         dimensions=signals,
@@ -75,6 +92,7 @@ def build_candidate_position_fit(
         dimension_scores=result.dimension_scores,
         warnings=result.warnings,
         signals=signals,
+        feedback_adjustments=feedback_adjustments,
     )
 
 
@@ -384,7 +402,6 @@ def _client_preference_signal(
                 preference_score += 1
             if item.sentiment == "negative" or item.decision_signal == "reject":
                 preference_score -= 2
-            preference_score += item.rubric_deltas.get("client_preference_fit", 0)
         return FitSignal(
             score=_clamp_score(preference_score),
             rationale="Client feedback provides explicit preference signal for this match.",
@@ -433,7 +450,6 @@ def _risk_signal(
             risk_score += 2
         elif item.sentiment == "mixed" or item.decision_signal == "hold":
             risk_score += 1
-        risk_score += item.rubric_deltas.get("risk", 0)
 
     risk_score = _clamp_score(risk_score)
     if risk_score == 0:
@@ -515,6 +531,53 @@ def _applicable_feedback(
         if candidate_matches and position_matches:
             output.append(item)
     return output
+
+
+def _apply_feedback_adjustments(
+    signals: dict[str, FitSignal],
+    feedback: list[ClientFeedback],
+) -> tuple[dict[str, FitSignal], list[FeedbackScoreAdjustment]]:
+    adjusted = dict(signals)
+    adjustments: list[FeedbackScoreAdjustment] = []
+    for item in feedback:
+        for dimension in FIT_DIMENSION_KEYS:
+            delta = item.rubric_deltas.get(dimension, 0)
+            if delta == 0:
+                continue
+            signal = adjusted[dimension]
+            original_score = signal.score
+            adjusted_score = _clamp_score(original_score + delta)
+            reason = (
+                f"Applied client feedback delta {delta:+d} from "
+                f"{item.feedback_id} to {dimension}."
+            )
+            adjusted[dimension] = signal.model_copy(
+                update={
+                    "score": adjusted_score,
+                    "rationale": _append_rationale(signal.rationale, reason),
+                    "evidence_refs": [
+                        *signal.evidence_refs,
+                        *item.evidence_refs[:3],
+                    ],
+                }
+            )
+            adjustments.append(
+                FeedbackScoreAdjustment(
+                    feedback_id=item.feedback_id,
+                    dimension=dimension,
+                    delta=delta,
+                    original_score=original_score,
+                    adjusted_score=adjusted_score,
+                    reason=reason,
+                )
+            )
+    return adjusted, adjustments
+
+
+def _append_rationale(current: str, addition: str) -> str:
+    if not current:
+        return addition
+    return f"{current} {addition}"
 
 
 def _feedback_preference_text(feedback: list[ClientFeedback]) -> list[str]:

@@ -296,6 +296,27 @@ Builder policy:
 - The output is a validated `FitSnapshot`, per-dimension normalized scores,
   raw dimension signals, and structured warnings.
 
+## Work 3C Feedback Adjustment Overlay
+
+Work 3C makes client feedback influence transparent in the candidate-position
+fit builder.
+
+Adjustment policy:
+
+- The builder first derives base dimension signals from candidate and position
+  fields.
+- Applicable client feedback is limited to records that match the candidate
+  and position when those IDs are present.
+- Each feedback `rubric_deltas` entry is then applied to the matching raw
+  dimension score.
+- Scores are clamped to the fixed 0-5 rubric scale after every feedback delta.
+- Adjustment records expose `feedback_id`, dimension, delta, original score,
+  adjusted score, and reason.
+- Feedback evidence references are attached to adjusted signals when present.
+- `risk` remains a raw risk dimension: a positive risk delta increases risk,
+  and Work 3A inverts that raw risk score during aggregate scoring.
+- Unrelated feedback is ignored for score adjustment.
+
 ## Collections For Work 2
 
 Recommended Mongo collections:
