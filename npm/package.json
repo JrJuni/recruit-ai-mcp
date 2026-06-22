@@ -1,6 +1,6 @@
 {
   "name": "recruit-ai-mcp",
-  "version": "0.2.3",
+  "version": "0.1.0",
   "private": false,
   "description": "Dependency-inclusive bootstrapper for the recruit-ai-mcp Python MCP server.",
   "license": "MIT",

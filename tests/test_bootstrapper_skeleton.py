@@ -4,10 +4,13 @@ import json
 import os
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 BOOTSTRAPPER = ROOT / "npm" / "bin" / "deal-intel-mcp.js"
+MCPB_MANIFEST = ROOT / "mcpb" / "manifest.json"
+PYPROJECT = ROOT / "pyproject.toml"
 
 
 def _env_with_home(home: Path) -> dict[str, str]:
@@ -39,6 +42,35 @@ def test_npm_bundled_mcpb_matches_package_version() -> None:
     expected = ROOT / "npm" / "mcpb" / f"recruit-ai-mcp-{package['version']}.mcpb"
 
     assert expected.exists()
+
+
+def test_release_package_metadata_stays_aligned() -> None:
+    package = json.loads((ROOT / "npm" / "package.json").read_text(encoding="utf-8"))
+    manifest = json.loads(MCPB_MANIFEST.read_text(encoding="utf-8"))
+    pyproject = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))
+    version = package["version"]
+
+    assert package["name"] == "recruit-ai-mcp"
+    assert pyproject["project"]["name"] == package["name"]
+    assert manifest["name"] == package["name"]
+    assert pyproject["project"]["version"] == version
+    assert manifest["version"] == version
+    assert package["homepage"] == "https://github.com/JrJuni/recruit-ai-mcp#readme"
+    assert pyproject["project"]["urls"]["Repository"] == "https://github.com/JrJuni/recruit-ai-mcp"
+    assert manifest["repository"]["url"] == "https://github.com/JrJuni/recruit-ai-mcp"
+    assert (ROOT / "mcpb" / f"recruit-ai-mcp-{version}.mcpb").exists()
+    assert (ROOT / "npm" / "mcpb" / f"recruit-ai-mcp-{version}.mcpb").exists()
+
+    release_workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text(
+        encoding="utf-8"
+    )
+    staging_workflow = (ROOT / ".github" / "workflows" / "staging-smoke.yml").read_text(
+        encoding="utf-8"
+    )
+    assert 'npm view "recruit-ai-mcp@${PACKAGE_VERSION}" version' in release_workflow
+    assert "npm publish --access public" in release_workflow
+    assert 'package_spec="recruit-ai-mcp[embedding]==${PACKAGE_VERSION}"' in staging_workflow
+    assert 'metadata.version("recruit-ai-mcp")' in staging_workflow
 
 
 def test_bootstrapper_where_uses_recruit_ai_home(tmp_path: Path) -> None:
@@ -140,6 +172,7 @@ def test_bootstrapper_missing_runtime_is_actionable(tmp_path: Path) -> None:
 
 def test_bootstrapper_setup_dry_run_plans_runtime_install(tmp_path: Path) -> None:
     package = json.loads((ROOT / "npm" / "package.json").read_text(encoding="utf-8"))
+    version = package["version"]
     result = subprocess.run(
         [
             "node",
@@ -163,11 +196,11 @@ def test_bootstrapper_setup_dry_run_plans_runtime_install(tmp_path: Path) -> Non
     assert payload["ok"] is True
     assert payload["status"] == "planned"
     assert payload["runtime_root"] == str(runtime_root)
-    assert payload["install_spec"] == "recruit-ai-mcp[embedding]==0.2.3"
+    assert payload["install_spec"] == f"recruit-ai-mcp[embedding]=={version}"
     assert payload["extras"] == ["embedding"]
     assert payload["commands"]["create_venv"]["args"][-1] == str(runtime_root / "venv")
     assert payload["commands"]["install_package"]["args"][-1] == (
-        "recruit-ai-mcp[embedding]==0.2.3"
+        f"recruit-ai-mcp[embedding]=={version}"
     )
     assert payload["commands"]["copy_mcpb"]["to"] == str(
         runtime_root / "mcpb" / f"recruit-ai-mcp-{package['version']}.mcpb"
@@ -186,6 +219,7 @@ def test_bootstrapper_setup_dry_run_plans_runtime_install(tmp_path: Path) -> Non
 
 
 def test_bootstrapper_setup_lightweight_uses_base_package(tmp_path: Path) -> None:
+    package = json.loads((ROOT / "npm" / "package.json").read_text(encoding="utf-8"))
     result = subprocess.run(
         [
             "node",
@@ -205,7 +239,7 @@ def test_bootstrapper_setup_lightweight_uses_base_package(tmp_path: Path) -> Non
     )
 
     payload = json.loads(result.stdout)
-    assert payload["install_spec"] == "recruit-ai-mcp==0.2.3"
+    assert payload["install_spec"] == f"recruit-ai-mcp=={package['version']}"
     assert payload["extras"] == []
 
 

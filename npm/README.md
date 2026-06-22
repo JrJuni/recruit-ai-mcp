@@ -1,11 +1,11 @@
-# recruit-ai-mcp Bootstrapper
+﻿# recruit-ai-mcp Bootstrapper
 
-This is the published `npx` front door for Recruit AI MCP.
+This is the `npx` front door for Recruit AI MCP.
 
-Current status: `recruit-ai-mcp@0.2.3` is the npm front door. It installs the
-Python package from PyPI by default and places a matching local MCPB file under
-`~/.recruit-ai/runtime/mcpb/`. The bootstrapper removes the need for a git clone
-or editable install, but it does not bundle Node.js or Python itself.
+Current release target: `recruit-ai-mcp@0.1.0`. After publication, it installs
+the Python package from PyPI by default and places a matching local MCPB file
+under `~/.recruit-ai/runtime/mcpb/`. The bootstrapper removes the need for a
+git clone or editable install, but it does not bundle Node.js or Python itself.
 
 The Node package must not reimplement the MCP server. It installs, finds, and
 runs the Python package described by `docs/bootstrapper-contract.md`.
@@ -69,21 +69,21 @@ npx.cmd recruit-ai-mcp doctor
 
 ## Release smoke
 
-For normal public-release smoke, use the published package:
+For normal public-release smoke after publish, use the registry package:
 
 ```powershell
-npx.cmd recruit-ai-mcp@0.2.3 setup --python "<path-to-python-3.11+>"
-npx.cmd recruit-ai-mcp@0.2.3 smoke --profile-only
-npx.cmd recruit-ai-mcp@0.2.3 where --json
-npx.cmd recruit-ai-mcp@0.2.3 mcpb --json
-npx.cmd recruit-ai-mcp@0.2.3 mcp-config --json
+npx.cmd recruit-ai-mcp@0.1.0 setup --python "<path-to-python-3.11+>"
+npx.cmd recruit-ai-mcp@0.1.0 smoke --profile-only
+npx.cmd recruit-ai-mcp@0.1.0 where --json
+npx.cmd recruit-ai-mcp@0.1.0 mcpb --json
+npx.cmd recruit-ai-mcp@0.1.0 mcp-config --json
 ```
 
 For pre-publish or local regression smoke, use a local wheel:
 
 ```powershell
 $env:RECRUIT_AI_HOME = (Resolve-Path ".tmp\d35-fresh-home").Path
-$wheel = (Resolve-Path ".tmp\d2_3_dist\recruit_ai_mcp-0.2.3-py3-none-any.whl").Path
+$wheel = (Resolve-Path ".tmp\d0_1_dist\recruit_ai_mcp-0.1.0-py3-none-any.whl").Path
 
 node npm\bin\deal-intel-mcp.js setup --wheel-url $wheel --python "$HOME\miniconda3\envs\deal-intel\python.exe"
 node npm\bin\deal-intel-mcp.js smoke --profile-only

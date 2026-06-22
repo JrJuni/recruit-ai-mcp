@@ -1,17 +1,17 @@
-# Bootstrapper Contract
+﻿# Bootstrapper Contract
 
 This contract defines the first dependency-inclusive bootstrapper for
 `recruit-ai-mcp`.
 
-The bootstrapper is the published `npx` front door for users who should not
-need to clone the repository or run editable installs before the first doctor
-check.
+The bootstrapper is the `npx` front door for users who should not need to clone
+the repository or run editable installs before the first doctor check.
 
-As of package version `0.2.3`, the public npm package is available, installs
-the Python package from PyPI by default, and copies a bundled MCPB file into
-`~/.recruit-ai/runtime/mcpb/`. It still requires Node.js 18+ and a usable Python
-3.11+ interpreter on the user's machine; it does not bundle Python, PyTorch, or
-embedding models inside the npm tarball.
+Package version `0.1.0` is the first Recruit AI release target. After
+publication, the public npm package installs the matching Python package from
+PyPI by default and copies a bundled MCPB file into
+`~/.recruit-ai/runtime/mcpb/`. It still requires Node.js 18+ and a usable
+Python 3.11+ interpreter on the user's machine; it does not bundle Python,
+PyTorch, or embedding models inside the npm tarball.
 
 It must not become a second implementation of the MCP server. Its job is to
 install, locate, and run the Python package safely.
@@ -109,7 +109,7 @@ npx recruit-ai-mcp setup --wheel-url https://...
 Default dependency profile:
 
 ```text
-recruit-ai-mcp[embedding]==0.2.3
+recruit-ai-mcp[embedding]==0.1.0
 ```
 
 Reason: product context, semantic search, and most realistic local demos need
@@ -262,7 +262,7 @@ Suggested fields:
   "python_path": "...",
   "python_version": "3.11.x",
   "package_source": "pypi",
-  "package_version": "0.2.3",
+  "package_version": "0.1.0",
   "extras": ["embedding"],
   "last_post_install_check_status": "pass"
 }

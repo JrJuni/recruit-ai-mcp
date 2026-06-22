@@ -1,4 +1,4 @@
-# Bootstrapper Fresh Smoke
+﻿# Bootstrapper Fresh Smoke
 
 This checklist validates the dependency-inclusive Node bootstrapper before a
 new user tries it.
@@ -16,7 +16,7 @@ PowerShell example:
 
 ```powershell
 $env:RECRUIT_AI_HOME = (Resolve-Path ".tmp\recruit-fresh-home").Path
-$wheel = (Resolve-Path ".tmp\dist\recruit_ai_mcp-0.2.3-py3-none-any.whl").Path
+$wheel = (Resolve-Path ".tmp\dist\recruit_ai_mcp-0.1.0-py3-none-any.whl").Path
 
 node npm\bin\deal-intel-mcp.js setup --wheel-url $wheel --python "$HOME\miniconda3\envs\deal-intel\python.exe"
 node npm\bin\deal-intel-mcp.js smoke --profile-only
@@ -86,22 +86,22 @@ line:
 
 ```powershell
 $env:RECRUIT_AI_HOME = (Resolve-Path ".tmp\recruit-public-home").Path
-npx --yes recruit-ai-mcp@0.2.3 setup --python <python-3.11+>
-npx --yes recruit-ai-mcp@0.2.3 where --json
-npx --yes recruit-ai-mcp@0.2.3 smoke --profile-only
-npx --yes recruit-ai-mcp@0.2.3 mcpb --json
-npx --yes recruit-ai-mcp@0.2.3 mcp-config --json
+npx --yes recruit-ai-mcp@0.1.0 setup --python <python-3.11+>
+npx --yes recruit-ai-mcp@0.1.0 where --json
+npx --yes recruit-ai-mcp@0.1.0 smoke --profile-only
+npx --yes recruit-ai-mcp@0.1.0 mcpb --json
+npx --yes recruit-ai-mcp@0.1.0 mcp-config --json
 ```
 
 Pass criteria:
 
-- PyPI fresh install of `recruit-ai-mcp[embedding]==0.2.3` succeeds.
+- PyPI fresh install of `recruit-ai-mcp[embedding]==0.1.0` succeeds.
 - `setup` creates a managed runtime and runs sample profile smoke
   successfully.
 - `where --json` returns managed runtime paths under the selected
   `RECRUIT_AI_HOME`.
 - `smoke --profile-only` passes.
-- `mcpb --json` returns a local `recruit-ai-mcp-0.2.3.mcpb` path.
+- `mcpb --json` returns a local `recruit-ai-mcp-0.1.0.mcpb` path.
 - `mcp-config --json` returns the MCPB/manual host Python interpreter path and
   Claude Desktop snippet.
 

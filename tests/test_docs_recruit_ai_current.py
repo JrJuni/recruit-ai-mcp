@@ -1,4 +1,4 @@
-from pathlib import Path
+﻿from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -13,7 +13,7 @@ def test_mvp_readiness_is_recruit_ai_current() -> None:
     assert "sample=34" in docs
     assert "standard=48" in docs
     assert "developer=52" in docs
-    assert "recruit-ai-mcp-0.2.3.mcpb" in docs
+    assert "recruit-ai-mcp-0.1.0.mcpb" in docs
     assert "create_candidate" in docs
     assert "add_recruiting_interaction" in docs
     assert "recommend_candidates_for_position" in docs
@@ -61,10 +61,10 @@ def test_bootstrapper_fresh_smoke_uses_recruit_ai_public_package() -> None:
         encoding="utf-8"
     )
 
-    assert "recruit-ai-mcp@0.2.3 setup" in docs
-    assert "recruit-ai-mcp[embedding]==0.2.3" in docs
+    assert "recruit-ai-mcp@0.1.0 setup" in docs
+    assert "recruit-ai-mcp[embedding]==0.1.0" in docs
     assert "RECRUIT_AI_HOME" in docs
-    assert "recruit-ai-mcp-0.2.3.mcpb" in docs
+    assert "recruit-ai-mcp-0.1.0.mcpb" in docs
 
     assert "deal-intel-mcp@0.2.1" not in docs
     assert "deal-intel-mcp[embedding]" not in docs

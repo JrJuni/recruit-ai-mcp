@@ -1,8 +1,9 @@
-# Distribution Plan: Git Clone, uvx, npx, and MCPB
+﻿# Distribution Plan: Git Clone, uvx, npx, and MCPB
 
 This plan keeps distribution priorities straight:
 
-1. The public `0.2.3` line ships through PyPI, npm/npx, and MCPB artifacts.
+1. The first Recruit AI public release target is `0.1.0` across PyPI, npm/npx,
+   and MCPB artifacts.
 2. The main human setup path remains `full` with MongoDB Atlas; `sample` is an
    optional no-MongoDB trial.
 3. The npm package is a bootstrapper, not a second implementation of the MCP
@@ -12,9 +13,9 @@ This plan keeps distribution priorities straight:
 
 ## Current Decision
 
-The dependency-inclusive bootstrapper is available as `npx recruit-ai-mcp`.
-It is the preferred no-git-clone path when the user has Node.js 18+ and a
-usable Python 3.11+ interpreter.
+The dependency-inclusive bootstrapper is `npx recruit-ai-mcp`. It is the
+preferred no-git-clone path after the `0.1.0` packages are published, when the
+user has Node.js 18+ and a usable Python 3.11+ interpreter.
 
 The bootstrapper reduces the current prerequisite burden:
 
@@ -33,12 +34,12 @@ The recommended path is:
 4. Keep MCPB as the Claude Desktop installer/config surface, but stop making it
    responsible for Python dependency installation.
 
-## Current Public Distribution
+## Target Public Distribution
 
-Supported today:
+Release target:
 
-- PyPI: `pip install "recruit-ai-mcp[embedding]==0.2.3"`.
-- npm/npx: `npx recruit-ai-mcp@0.2.3 setup --python <python-3.11+>`.
+- PyPI: `pip install "recruit-ai-mcp[embedding]==0.1.0"`.
+- npm/npx: `npx recruit-ai-mcp@0.1.0 setup --python <python-3.11+>`.
 - Git clone plus editable install for contributors and customizers.
 - Claude Desktop MCPB bundle that points at either the npx-managed Python
   runtime or a user-selected Python interpreter.
@@ -52,10 +53,11 @@ for npx, PyPI/editable install, and sample/full/pro setup choices.
 
 ## Packaging Constraint
 
-The Python package has passed wheel/sdist and clean-install smoke, and the npm
-bootstrapper is published. Future wrapper work should focus on first-run
-guidance, prerequisite detection, and cross-platform smoke, not duplicating the
-Python server.
+The Python package has passed wheel/sdist and clean-install smoke in the
+inherited line, and the Recruit AI bootstrapper is prepared for the first
+`0.1.0` publication. Future wrapper work should focus on first-run guidance,
+prerequisite detection, and cross-platform smoke, not duplicating the Python
+server.
 
 Current contract:
 
@@ -105,7 +107,7 @@ Why first:
 
 ### D1. External MVP trial readiness
 
-Goal: keep first-run documentation clear across the current published paths:
+Goal: keep first-run documentation clear across the target published paths:
 npx bootstrapper, PyPI, MCPB, and git clone for customizers.
 
 Current status: first-pass checklist implemented. Public release readiness is
@@ -155,7 +157,7 @@ Current status:
 
 - D2.1 local artifact smoke is complete.
 - D2.2 clean wheel install smoke is complete.
-- PyPI `recruit-ai-mcp==0.2.3` is published.
+- PyPI `recruit-ai-mcp==0.1.0` publication is pending.
 - Local `--no-isolation` build produced both wheel and sdist artifacts.
 - The wheel installs into a temp target and can load packaged defaults, sample
   data, Atlas chart specs, chart-ready specs, Mongo validators, and vector-index
@@ -224,7 +226,8 @@ Remaining risks:
 
 ### D3. Full npx bootstrapper
 
-Status: implemented and published for `0.2.3`.
+Status: implemented for the `0.1.0` release target; public registry smoke is
+pending.
 
 Goal: provide a true no-git-clone command path for non-developer and
 AI-assisted setup.
@@ -353,8 +356,8 @@ Current status:
 
 - Windows local-wheel fresh-runtime smoke passed with an isolated
   `RECRUIT_AI_HOME`.
-- Python and npm package metadata are version-aligned at `0.2.3`.
-- PyPI and npm registry publication are complete for `0.2.3`.
+- Python and npm package metadata are version-aligned at `0.1.0`.
+- PyPI and npm registry publication are pending for `0.1.0`.
 - `setup` now runs `smoke-profile --profile sample` as the post-install check
   so missing MongoDB/API values do not make the first install look broken.
 - `smoke --profile-only` and `mcp-config --json` passed from the managed

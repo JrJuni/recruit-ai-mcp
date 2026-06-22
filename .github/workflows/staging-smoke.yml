@@ -1,4 +1,4 @@
-name: Staging Smoke
+﻿name: Staging Smoke
 
 on:
   workflow_dispatch:
@@ -41,7 +41,7 @@ jobs:
           mkdir -p smoke-evidence
 
           if [[ -z "$PACKAGE_VERSION" || "$PACKAGE_VERSION" == v* ]]; then
-            echo "::error::version must be a package version like 0.2.3, without a leading v"
+            echo "::error::version must be a package version like 0.1.0, without a leading v"
             exit 1
           fi
 

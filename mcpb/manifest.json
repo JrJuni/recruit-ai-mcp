@@ -2,7 +2,7 @@
   "manifest_version": "0.2",
   "name": "recruit-ai-mcp",
   "display_name": "Recruit AI MCP",
-  "version": "0.2.3",
+  "version": "0.1.0",
   "description": "Bootstrap fork for recruiter/search-firm intelligence. The tool surface now includes first recruiting workflows while inherited deal-intelligence compatibility tools remain during the staged cutover.",
   "long_description": "recruit-ai-mcp is a fork of deal-intel-mcp for live-testing a recruiter/search-firm second brain. This bootstrap line keeps the inherited deal_intel Python module and many deal-intel tools while adding the first candidate, client-company, position, feedback, and recommendation workflows. Config paths, runtime env variables, and MongoDB defaults are isolated for recruit-ai-mcp.",
   "author": {

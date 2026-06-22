@@ -1,4 +1,4 @@
-# Backlog
+﻿# Backlog
 
 English is the source language for this document. Korean summaries belong only
 in `README.ko.md` and `AGENTS.ko.md`.
@@ -83,7 +83,7 @@ Immediate quality order:
    - Keep `recruit-ai-mcp` PyPI/npm/MCPB naming aligned across
      `pyproject.toml`, `npm/package.json`, `mcpb/manifest.json`, GitHub
      Actions, README, and release docs.
-   - Record fresh public `npx recruit-ai-mcp@0.2.3` smoke evidence before
+   - Record fresh public `npx recruit-ai-mcp@0.1.0` smoke evidence before
      claiming public registry readiness for this fork.
 4. Improve recruiting recommendation quality with realistic fixtures.
    - Add synthetic client/candidate examples that stress skills, domain,

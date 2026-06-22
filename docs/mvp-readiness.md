@@ -1,4 +1,4 @@
-# MVP Readiness Checklist
+﻿# MVP Readiness Checklist
 
 This checklist answers one question:
 
@@ -46,11 +46,10 @@ Green:
   surface.
 - Local mode can create, export, reset, or migrate local personal recruiting
   records and inherited deal records through dry-run-first commands.
-- Natural-question smoke still covers the inherited deal-intelligence
-  compatibility path; recruiting-first smoke is covered by targeted recruiting
-  tool and sample tests until a dedicated natural-question pack is added.
-- Claude Desktop MCPB `0.2.3` packs successfully and reflects the current
-  installer fields.
+- Natural-question smoke covers both the inherited deal-intelligence
+  compatibility path and the recruiting-first smoke pack.
+- Claude Desktop MCPB `0.1.0` is the current release artifact target and
+  reflects the current installer fields.
 
 Yellow:
 
@@ -287,8 +286,8 @@ From `mcpb/`:
 
 ```powershell
 mcpb validate manifest.json
-mcpb pack . recruit-ai-mcp-0.2.3.mcpb
-mcpb info recruit-ai-mcp-0.2.3.mcpb
+mcpb pack . recruit-ai-mcp-0.1.0.mcpb
+mcpb info recruit-ai-mcp-0.1.0.mcpb
 ```
 
 Pass criteria:
@@ -299,7 +298,7 @@ Pass criteria:
 - Reinstall smoke in Claude Desktop should show the expected sample or standard
   surface based on selected config.
 - For the current package, the latest known npm-bundled build is
-  `npm/mcpb/recruit-ai-mcp-0.2.3.mcpb` with an unsigned-package warning only.
+  `npm/mcpb/recruit-ai-mcp-0.1.0.mcpb` with an unsigned-package warning only.
 
 ## User Trial Script
 

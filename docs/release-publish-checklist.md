@@ -1,4 +1,4 @@
-# Release Publish Checklist
+﻿# Release Publish Checklist
 
 This checklist is for the maintainer. It starts after local package metadata,
 MCPB, and smoke checks pass.
@@ -14,7 +14,7 @@ may use security-key/WebAuthn authentication that does not expose a CLI OTP.
 
 - Python package: `recruit-ai-mcp`
 - Node bootstrapper package: `recruit-ai-mcp`
-- Current version: `0.2.3`
+- Current version: `0.1.0`
 - License: MIT
 - Source repository: `https://github.com/JrJuni/recruit-ai-mcp`
 
@@ -76,8 +76,8 @@ npm trusted publisher values:
 Then publish by pushing a version tag:
 
 ```powershell
-git tag v0.2.3
-git push origin v0.2.3
+git tag v0.1.0
+git push origin v0.1.0
 ```
 
 Only stable `vX.Y.Z` tags are production release tags. Do not use `v*` as the
@@ -93,12 +93,12 @@ gh workflow run release.yml -f target=npm
 ```
 
 The npm job checks the registry before publishing. If
-`recruit-ai-mcp@0.2.3` already exists, do not run `npm publish` again; promote
+`recruit-ai-mcp@0.1.0` already exists, do not run `npm publish` again; promote
 the existing package with the `latest` dist-tag instead:
 
 ```powershell
-npm view recruit-ai-mcp@0.2.3 version
-npm dist-tag add recruit-ai-mcp@0.2.3 latest
+npm view recruit-ai-mcp@0.1.0 version
+npm dist-tag add recruit-ai-mcp@0.1.0 latest
 ```
 
 The npm trusted publishing job must use Node 22.14+ and npm 11.5.1+.
@@ -127,7 +127,7 @@ dependencies, so include PyPI as an extra index:
 ```powershell
 python -m venv .tmp\testpypi-install
 .\.tmp\testpypi-install\Scripts\python.exe -m pip install --upgrade pip
-.\.tmp\testpypi-install\Scripts\python.exe -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ "recruit-ai-mcp[embedding]==0.2.3"
+.\.tmp\testpypi-install\Scripts\python.exe -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ "recruit-ai-mcp[embedding]==0.1.0"
 .\.tmp\testpypi-install\Scripts\python.exe -m deal_intel.cli smoke-profile --profile sample --json
 ```
 
@@ -135,8 +135,8 @@ The repeatable installed-package smoke is also available as a manual GitHub
 Actions workflow:
 
 ```powershell
-gh workflow run staging-smoke.yml -f version=0.2.3 -f source=testpypi
-gh workflow run staging-smoke.yml -f version=0.2.3 -f source=pypi
+gh workflow run staging-smoke.yml -f version=0.1.0 -f source=testpypi
+gh workflow run staging-smoke.yml -f version=0.1.0 -f source=pypi
 ```
 
 Installed-package smoke passes when:
@@ -163,7 +163,7 @@ After publishing, verify:
 ```powershell
 python -m venv .tmp\pypi-install
 .\.tmp\pypi-install\Scripts\python.exe -m pip install --upgrade pip
-.\.tmp\pypi-install\Scripts\python.exe -m pip install "recruit-ai-mcp[embedding]==0.2.3"
+.\.tmp\pypi-install\Scripts\python.exe -m pip install "recruit-ai-mcp[embedding]==0.1.0"
 .\.tmp\pypi-install\Scripts\python.exe -m deal_intel.cli smoke-profile --profile sample --json
 ```
 
@@ -196,10 +196,10 @@ Then run a fresh public `npx` smoke from a disposable home:
 
 ```powershell
 $env:RECRUIT_AI_HOME = (Resolve-Path "..\.tmp\npx-public-home").Path
-npx --yes recruit-ai-mcp@0.2.3 setup
-npx --yes recruit-ai-mcp@0.2.3 smoke --profile-only
-npx --yes recruit-ai-mcp@0.2.3 mcpb --json
-npx --yes recruit-ai-mcp@0.2.3 mcp-config --json
+npx --yes recruit-ai-mcp@0.1.0 setup
+npx --yes recruit-ai-mcp@0.1.0 smoke --profile-only
+npx --yes recruit-ai-mcp@0.1.0 mcpb --json
+npx --yes recruit-ai-mcp@0.1.0 mcp-config --json
 ```
 
 Pass criteria:
@@ -218,8 +218,8 @@ If refreshing the MCPB bundle:
 ```powershell
 mcpb validate mcpb\manifest.json
 Push-Location mcpb
-mcpb pack . recruit-ai-mcp-0.2.3.mcpb
-mcpb info recruit-ai-mcp-0.2.3.mcpb
+mcpb pack . recruit-ai-mcp-0.1.0.mcpb
+mcpb info recruit-ai-mcp-0.1.0.mcpb
 Pop-Location
 ```
 

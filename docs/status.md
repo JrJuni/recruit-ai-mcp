@@ -218,7 +218,7 @@ Completed:
   sample tool path instead of inherited deal-first package names.
 - Added Work 7AC bootstrapper fresh-smoke docs cleanup.
   `docs/bootstrapper-fresh-smoke.md` now treats the current public registry
-  smoke as evidence to collect for `recruit-ai-mcp@0.2.3`, uses
+  smoke as evidence to collect for `recruit-ai-mcp@0.1.0`, uses
   `RECRUIT_AI_HOME`, and no longer presents old `deal-intel-mcp@0.2.1`
   evidence as current Recruit AI release proof.
 - Added Work 7AD backlog current-stream cleanup. `docs/backlog.md` now opens
@@ -254,9 +254,31 @@ Completed:
   also saves fictional recruiting records to a temporary local personal
   `recruiting.json`, reloads them, and verifies restricted raw content does not
   persist without touching the user's real `~/.recruit-ai` data directory.
+- Added Work 7AK Recruit AI release version reset.
+  The new Recruit AI package line now starts at `0.1.0` across
+  `pyproject.toml`, `npm/package.json`, MCPB manifest, release/staging docs,
+  and package-alignment tests. Fresh `recruit-ai-mcp-0.1.0.mcpb` artifacts were
+  packed for the root MCPB handoff and npm bundle, while stale inherited
+  `deal-intel-mcp-0.2.x` / `recruit-ai-mcp-0.2.3` MCPB artifacts were removed.
+  Public npm registry evidence remains pending because
+  `npm view recruit-ai-mcp@0.1.0 version` currently returns 404.
 
 Validation:
 
+- `mcpb validate mcpb\manifest.json` -> passed.
+- From `mcpb/`, `mcpb pack . recruit-ai-mcp-0.1.0.mcpb` -> passed.
+- `mcpb info mcpb\recruit-ai-mcp-0.1.0.mcpb` -> passed with unsigned warning
+  only.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-release-010 tests\test_bootstrapper_skeleton.py tests\test_mcpb_manifest.py tests\test_docs_recruit_ai_current.py tests\test_tool_surfaces.py`
+  -> 65 passed, 1 warning.
+- `node --check npm\bin\deal-intel-mcp.js` -> passed.
+- From `npm/`, `npm pack --dry-run` -> passed for
+  `recruit-ai-mcp-0.1.0.tgz`, containing
+  `mcpb/recruit-ai-mcp-0.1.0.mcpb`.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
+- `npm view recruit-ai-mcp@0.1.0 version name` -> 404, so public npx smoke is
+  still pending publication.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-natural-local-persistence tests\test_cli_deal_review_smoke.py tests\test_local_data_cli.py tests\test_local_sample_backend.py tests\test_docs_recruit_ai_current.py tests\test_sample_data.py`
   -> 63 passed, 1 warning.
 - `PYTHONPATH=src python -m deal_intel.cli smoke-natural-questions --pack recruiting --as-of 2026-06-22 --output-dir .tmp\recruiting-natural-local-persistence-smoke --json`

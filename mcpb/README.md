@@ -1,4 +1,4 @@
-# mcpb - Claude Desktop bundle
+﻿# mcpb - Claude Desktop bundle
 
 This folder builds `recruit-ai-mcp.mcpb`, a [Claude Desktop MCP Bundle](https://github.com/modelcontextprotocol/mcpb) for one-click install.
 
@@ -48,8 +48,8 @@ MongoDB Atlas links:
 ```bash
 cd mcpb
 mcpb validate manifest.json
-mcpb pack . recruit-ai-mcp-0.2.3.mcpb   # output goes into mcpb/ folder
-mcpb info recruit-ai-mcp-0.2.3.mcpb
+mcpb pack . recruit-ai-mcp-0.1.0.mcpb   # output goes into mcpb/ folder
+mcpb info recruit-ai-mcp-0.1.0.mcpb
 ```
 
 `mcpb` CLI: `npm install -g @anthropic-ai/mcpb` (Node.js 18+).

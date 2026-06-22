@@ -1,4 +1,4 @@
-# Config Profiles
+﻿# Config Profiles
 
 Z5 keeps one repository and one package, but introduces three product profiles:
 `sample`, `full`, and `pro`. The profiles are distribution surfaces, not forks.
@@ -261,7 +261,7 @@ Implemented behavior:
   `mongo`, while `local_sample` remains available for zero-config demos.
 - The MCP bundle metadata reflects the current 52-tool internal registration
   with profile-filtered surfaces.
-- The current bundle manifest version is `0.2.3`.
+- The current bundle manifest version is `0.1.0`.
 - `mcpb/README.md` now documents `tools_surface=auto`, mutable local personal
   sample data, and dry-run-first local-to-Mongo migration.
 - `tests/test_mcpb_manifest.py` validates the manifest against the tool-surface

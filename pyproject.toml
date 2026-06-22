@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "recruit-ai-mcp"
-version = "0.2.3"
+version = "0.1.0"
 description = "Self-owned MCP recruiting intelligence layer for search firms and recruiters."
 readme = "README.md"
 requires-python = ">=3.11"
