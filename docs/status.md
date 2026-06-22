@@ -344,9 +344,27 @@ Completed:
   `mcpb pack`, and `mcpb info` from inside `mcpb/`, matching the command shape
   that passes in the local Windows environment and avoiding the stale
   root-relative `mcpb validate mcpb\manifest.json` form.
+- Added Work 7BB Python distribution artifact gate cleanup.
+  `docs/release-publish-checklist.md` now names the expected
+  `recruit_ai_mcp-0.1.0` wheel and sdist artifacts in the pre-publish pass
+  criteria, and bootstrapper release tests derive those names from
+  `pyproject.toml` so the Python package line stays aligned with the current
+  Recruit AI `0.1.0` release target.
 
 Validation:
 
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-python-dist-names tests\test_bootstrapper_skeleton.py tests\test_docs_recruit_ai_current.py`
+  -> 27 passed.
+- `python -m build --no-isolation --outdir .tmp\python-dist-artifact-gate`
+  -> built `recruit_ai_mcp-0.1.0.tar.gz` and
+  `recruit_ai_mcp-0.1.0-py3-none-any.whl`.
+- Inspected the built wheel/sdist:
+  `METADATA` has `Name: recruit-ai-mcp` and `Version: 0.1.0`; packaged
+  resources include `defaults.yaml`, `mongo/candidates.v1.json`, and
+  `sample_datasets/weekly_pipeline_demo.v2.json`; sdist includes
+  `pyproject.toml` and packaged defaults.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-mcpb-artifact-docs tests\test_docs_recruit_ai_current.py tests\test_mcpb_manifest.py`
   -> 20 passed.
 - From `mcpb/`, `mcpb validate manifest.json` -> passed.

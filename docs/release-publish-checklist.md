@@ -50,7 +50,9 @@ git diff --check
 
 Pass criteria:
 
-- Python wheel and sdist build successfully.
+- Python wheel and sdist build successfully as
+  `.tmp\publish-dist\recruit_ai_mcp-0.1.0-py3-none-any.whl` and
+  `.tmp\publish-dist\recruit_ai_mcp-0.1.0.tar.gz`.
 - MCPB manifest validates and the release artifact is inspectable.
 - npm dry-run tarball contains only the bootstrapper files.
 - targeted bootstrapper/MCPB tests pass.

@@ -4,6 +4,7 @@ import fnmatch
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 import tomllib
@@ -125,6 +126,24 @@ def test_python_package_data_covers_runtime_resources() -> None:
     assert "defaults.yaml" in package_data["deal_intel.resources"]
     assert "mongo/*.json" in package_data["deal_intel.resources"]
     assert "*.json" in package_data["deal_intel.resources.sample_datasets"]
+
+
+def test_python_dist_artifact_names_are_recruit_ai_current() -> None:
+    pyproject = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))
+    release_docs = (ROOT / "docs" / "release-publish-checklist.md").read_text(
+        encoding="utf-8"
+    )
+    normalized_name = re.sub(r"[-.]+", "_", pyproject["project"]["name"]).lower()
+    version = pyproject["project"]["version"]
+    wheel_name = f"{normalized_name}-{version}-py3-none-any.whl"
+    sdist_name = f"{normalized_name}-{version}.tar.gz"
+
+    assert normalized_name == "recruit_ai_mcp"
+    assert version == "0.1.0"
+    assert wheel_name == "recruit_ai_mcp-0.1.0-py3-none-any.whl"
+    assert sdist_name == "recruit_ai_mcp-0.1.0.tar.gz"
+    assert f".tmp\\publish-dist\\{wheel_name}" in release_docs
+    assert f".tmp\\publish-dist\\{sdist_name}" in release_docs
 
 
 def test_bootstrapper_where_uses_recruit_ai_home(tmp_path: Path) -> None:
