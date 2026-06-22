@@ -502,7 +502,163 @@ target readiness checks.
 The detailed guide below focuses on the core user-facing workflow. For the
 complete current tool contract, read [`docs/baseline.md`](docs/baseline.md).
 
-> **Tip**: In Claude Desktop, type the example sentences below verbatim or say something similar. You can find a `deal_id` with `create_deal` or `list_deals`.
+> **Tip**: In Claude Desktop, type the example sentences below verbatim or say
+> something similar. For recruiting workflows, start with a client company,
+> position, and candidate before asking for recommendations.
+
+### Recruiting-first workflow
+
+The current recruit-ai surface supports an evidence-first recruiting loop while
+the inherited deal-intelligence tools remain available for compatibility.
+
+Use this sequence for a new search:
+
+1. `create_client_company` - create the hiring customer.
+2. `create_position` - create the open role or search mandate.
+3. `create_candidate` - add candidate profiles.
+4. `add_recruiting_interaction` - add screens, client intake notes, interviews,
+   email threads, call summaries, or internal notes.
+5. `add_client_feedback` - capture client response and reusable preference
+   learning.
+6. `recommend_candidates_for_position` or `recommend_positions_for_candidate`
+   - rank fit in either direction.
+7. `get_recruiting_metrics` - inspect funnel, status, feedback, and data
+   quality.
+8. `export_recruiting_report` - write local Markdown and CSV pipeline artifacts.
+
+These recruiting tools are deterministic today. They do not call LLMs,
+embeddings, or Atlas Vector Search, and they work on Atlas M0 with the existing
+Python ranking path.
+
+#### `create_client_company`
+
+**When to use**: Before creating positions for a hiring customer or saving
+client preference memory.
+
+**Example**:
+```text
+Create client company Northstar Health. Industry healthcare technology,
+stage growth, locations Boston and Remote US. Hiring preferences: values
+healthcare data platform experience and written architecture rationale.
+```
+
+Useful fields include `name`, `industry`, `stage`, `locations`,
+`hiring_preferences`, and `risk_notes`.
+
+#### `create_position`
+
+**When to use**: To define the role/search mandate the recruiter is trying to
+fill.
+
+**Example**:
+```text
+Create a position for Northstar Health: Senior Backend Platform Engineer.
+Must have Python, data platforms, and healthcare. Nice to have Kafka and HIPAA.
+Target compensation 180k to 230k USD. Remote-friendly, Boston or Remote US.
+```
+
+The position stores role requirements, target compensation, location/remote
+constraints, and the default recruiting fit rubric:
+`skill_fit`, `domain_fit`, `seniority_fit`, `compensation_fit`,
+`location_fit`, `availability_fit`, `client_preference_fit`, and `risk`.
+
+#### `create_candidate`
+
+**When to use**: To add or update a candidate profile before matching.
+
+**Example**:
+```text
+Create candidate Avery Chen. Current title Staff Backend Engineer at Clearpath
+Systems. Skills Python, FastAPI, PostgreSQL, Kafka, HIPAA. Domains healthcare
+and data platforms. Seniority staff. Locations Boston and Remote US.
+Availability 30 days.
+```
+
+Candidate records store skills, domains, seniority, locations, work
+authorization, availability, compensation expectation when known, preferences,
+risk flags, and evidence references.
+
+#### `add_recruiting_interaction`
+
+**When to use**: To attach evidence to a candidate, client company, position,
+or submission.
+
+**Example**:
+```text
+Add a candidate_screen interaction for cand_avery_chen. Summary: Avery wants
+staff-level backend platform work, is strongest in healthcare data workflows,
+and can start in about 30 days.
+```
+
+`raw_content` may be stored, but normal responses hide it. This keeps evidence
+available for future internal workflows without leaking raw notes in ordinary
+tool output.
+
+#### `add_client_feedback`
+
+**When to use**: After a client, hiring manager, candidate, or recruiter gives
+feedback on a submission, candidate, or position.
+
+**Example**:
+```text
+Add positive feedback for submission sub_avery_northstar_backend. Decision
+signal advance. Summary: hiring manager liked the healthcare platform depth.
+Rubric deltas: domain_fit +1 and client_preference_fit +1.
+```
+
+Feedback can include `rubric_deltas` so repeated client preference patterns
+adjust future fit scoring transparently. If feedback is attached to a
+submission, the service links the feedback id back to that submission when the
+submission exists.
+
+#### Recommendations
+
+Use `recommend_candidates_for_position(position_id=...)` when a client asks
+"who should we show for this role?" Use
+`recommend_positions_for_candidate(candidate_id=...)` when a candidate asks
+"which open searches fit me?"
+
+Both tools:
+
+- use M0-safe lexical retrieval as a prefilter;
+- score final fit with the deterministic recruiting rubric;
+- include reasons, low-fit rejection notes, risk flags, and next questions;
+- preview by default;
+- write a `recommendation_runs` record only when `save_run=true`.
+
+#### Recruiting metrics and report export
+
+Use `get_recruiting_metrics` for chat answers about open positions,
+submissions, placements, feedback rates, and data quality. Use
+`export_recruiting_report` when you need local Markdown/CSV artifacts for a
+pipeline review.
+
+Example:
+```text
+Show recruiting pipeline metrics.
+Export the recruiting pipeline report for today.
+```
+
+#### Recruiting demo data
+
+For an Atlas-backed fictional recruiting demo, switch to the `developer`
+surface and run:
+
+```text
+create_sample_data(dataset="recruiting_pipeline_demo")
+```
+
+The first call should stay dry-run. Real writes require `dry_run=false` and
+`confirmed_by_user=true`, and they go to the configured demo database, not the
+primary real-data database.
+
+### Inherited deal workflow
+
+The remaining guide covers the inherited deal-intelligence workflow that still
+ships during the staged recruiting cutover. Use it only when the user is
+working with sales/deal records rather than recruiting candidates and roles.
+
+You can find a `deal_id` with `create_deal` or `list_deals`.
 
 ---
 
@@ -1127,6 +1283,21 @@ Customer Themes dashboard setup, including the optional
 
 ## Recommended workflow
 
+Recruiting-first:
+
+```
+1. New client/search       -> create_client_company + create_position
+2. New candidate           -> create_candidate
+3. Evidence capture        -> add_recruiting_interaction
+4. Client preference       -> add_client_feedback
+5. Role-to-candidate match -> recommend_candidates_for_position
+6. Candidate-to-role match -> recommend_positions_for_candidate
+7. Pipeline KPIs           -> get_recruiting_metrics
+8. Local report artifacts  -> export_recruiting_report
+```
+
+Inherited deal workflow:
+
 ```
 1. Right after customer evidence -> add_interaction (meeting/email/interview/call)
 2. On stage change           -> update_stage
@@ -1171,7 +1342,7 @@ Current source of truth:
          |
          `-- Storage
                |-- local_sample  : bundled fixture + local personal deals
-               `-- MongoDB Atlas : real deals collection and analytics snapshots
+               `-- MongoDB Atlas : recruiting collections plus inherited deals
 
 search_deals
   |-- M0 default : reads summary_embedding, computes cosine in Python
@@ -1241,11 +1412,28 @@ src/deal_intel/
     llm.py              LLMProvider ABC + Anthropic + ChatGPTOAuth + factory
     embedding.py        EmbeddingProvider + SentenceTransformerProvider + factory
   schema/
+    recruiting.py       candidate/client/position/submission/feedback models
+    recruiting_fit.py   deterministic fit rubric scoring
+    recruiting_match.py candidate-position fit signals + feedback adjustment
+    recruiting_recommendation.py
+                        recommendation run/result builders
+    recruiting_metrics.py
+                        recruiting pipeline KPI calculator
     meddpicc.py         compute_meddpicc_latest, Deal/Meeting Pydantic models
     customer_themes.py  customer-theme taxonomy, parser, stage-signal validation
   storage/
-    mongodb.py          MongoDBClient - CRUD + aggregation + semantic-search storage
+    mongodb.py          MongoDBClient - recruiting/deal CRUD + aggregation
+    recruiting_collections.py
+                        recruiting collection contracts and safe projections
   tools/
+    recruiting_records.py
+                        candidate/client/position/submission/feedback services
+    recruiting_recommendations.py
+                        position<->candidate recommendation services
+    recruiting_metrics.py
+                        read-only recruiting KPI service
+    export_recruiting_report.py
+                        recruiting Markdown/CSV report export
     create_deal.py
     add_interaction.py  canonical interaction intake + qualification extraction
     add_meeting.py      deprecated compatibility alias for meeting interactions
