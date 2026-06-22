@@ -94,6 +94,9 @@ Completed:
   describes `recruit-ai-mcp` full-mode setup, `~/.recruit-ai` paths, recruiting
   first questions, and the temporary inherited `deal_intel` module command
   boundary.
+- Cleaned storage diagnostic copy so Atlas setup hints describe real
+  recruiting/team data, and local sample hints describe local recruiting
+  records plus compatibility deal records instead of deal-only storage.
 - Added Work 6A recruiting pipeline metrics calculator. It computes summary
   counts, position status rates, submission funnel rates, feedback signal
   rates, and data-quality counters from safe recruiting records without

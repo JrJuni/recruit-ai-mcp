@@ -111,7 +111,8 @@ def local_sample_mode_hint() -> dict[str, str]:
         "purpose": (
             "Use the bundled sample dataset when MongoDB Atlas is not configured "
             "yet. The bundled fixture is immutable; user-created local personal "
-            "deals are stored separately under storage.local_data_dir."
+            "recruiting records and compatibility deal records are stored "
+            "separately under storage.local_data_dir."
         ),
         "temporary_env": "RECRUIT_AI_STORAGE_BACKEND=local_sample",
         "powershell": "$env:RECRUIT_AI_STORAGE_BACKEND='local_sample'",
@@ -125,7 +126,10 @@ def mongodb_atlas_setup_hint() -> dict[str, object]:
     """Return a secret-safe first-time Atlas setup hint."""
 
     return {
-        "purpose": "Full mode stores real deal data in the user's MongoDB Atlas project.",
+        "purpose": (
+            "Full mode stores real recruiting/team data in the user's MongoDB "
+            "Atlas project."
+        ),
         "steps": [
             "Create or sign in to a MongoDB Atlas account.",
             "Create a Free/M0 cluster.",
