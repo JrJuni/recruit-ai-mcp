@@ -170,7 +170,8 @@ Current status:
   dependencies remain opt-in through the `embedding` extra.
 - Installed-artifact CLI smoke passed for `config doctor --offline`,
   `smoke-profile --profile sample`, chart-ready render, and
-  `smoke-natural-questions` with an explicit writable output directory.
+  `smoke-natural-questions --pack recruiting --as-of 2026-06-22` with an
+  explicit writable output directory.
 - Build-isolated artifact creation still needs a CI/release gate. A local
   Windows build-isolation attempt hit a pip-output decoding issue while
   creating the isolated environment.
@@ -187,7 +188,7 @@ Optional uvx-style target for future validation:
 ```bash
 uvx recruit-ai-mcp config doctor --offline
 uvx recruit-ai-mcp smoke-profile --profile sample
-uvx recruit-ai-mcp smoke-natural-questions --as-of 2026-06-10
+uvx recruit-ai-mcp smoke-natural-questions --pack recruiting --as-of 2026-06-22
 ```
 
 Implementation tasks:
@@ -204,7 +205,7 @@ Implementation tasks:
 - Add a clean wheel install smoke in a temporary environment. Done for D2.2:
   - `recruit-ai config doctor --offline`
   - `recruit-ai smoke-profile --profile sample`
-  - `recruit-ai smoke-natural-questions --as-of 2026-06-10`
+  - `recruit-ai smoke-natural-questions --pack recruiting --as-of 2026-06-22`
 - Keep dependency profile split explicit:
   - base install for config/read-only/sample features;
   - `embedding` extra for semantic search and product context.

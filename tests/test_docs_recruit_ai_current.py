@@ -133,10 +133,19 @@ def test_distribution_plan_lists_current_bootstrapper_handoff_commands() -> None
     assert "Public registry `npx recruit-ai-mcp@0.1.0` smoke remains pending" in docs
     assert "macOS fresh-machine smoke remains pending as external-machine evidence" in docs
     assert "not\n  as a blocker for the local Windows pre-publish gate" in docs
+    assert (
+        "uvx recruit-ai-mcp smoke-natural-questions --pack recruiting "
+        "--as-of 2026-06-22"
+    ) in docs
+    assert (
+        "recruit-ai smoke-natural-questions --pack recruiting --as-of 2026-06-22"
+    ) in docs
 
     assert "npx recruit-ai-mcp smoke\nnpx recruit-ai-mcp mcp" not in docs
     assert "`sample=24`, `standard=38`, `developer=42`" not in docs
     assert "Public npm/PyPI `npx` smoke passed" not in docs
+    assert "recruit-ai-mcp smoke-natural-questions --as-of 2026-06-10" not in docs
+    assert "recruit-ai smoke-natural-questions --as-of 2026-06-10" not in docs
 
 
 def test_backlog_current_stream_is_recruit_ai_first() -> None:
