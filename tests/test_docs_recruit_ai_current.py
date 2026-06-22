@@ -144,6 +144,20 @@ def test_tool_surface_docs_match_current_counts_and_env_prefix() -> None:
     assert "`developer`: 42 tools" not in docs
 
 
+def test_baseline_distinguishes_historical_smoke_from_current_surface() -> None:
+    docs = (ROOT / "docs" / "baseline.md").read_text(encoding="utf-8")
+    normalized = " ".join(docs.split())
+
+    assert "Historical Runtime Snapshot" in docs
+    assert "traceability only" in docs
+    assert "FastMCP runtime registration at historical smoke time: 9 tools" in docs
+    assert "The Python server keeps all 52 handler functions available internally" in docs
+    assert "sample 34 tools, standard 48 tools, developer 52 tools" in normalized
+
+    assert "- FastMCP runtime registration: 9 tools" not in docs
+    assert "sample 24 tools" not in docs
+
+
 def test_storage_backend_docs_describe_local_recruiting_persistence() -> None:
     docs = (ROOT / "docs" / "storage-backends.md").read_text(encoding="utf-8")
     normalized = " ".join(docs.split())

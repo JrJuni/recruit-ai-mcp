@@ -316,9 +316,17 @@ Completed:
   `AI_START_HERE.md` now reports the current sample MCP surface as 34 tools,
   matching the source tool-surface contract, and docs regression tests now pin
   the first-run guide's sample/standard/developer counts.
+- Added Work 7AV baseline historical-count clarification.
+  `docs/baseline.md` now labels the old 9-tool Milestone 0.1 runtime smoke as
+  a historical snapshot while keeping the current 52-handler, 34/48/52
+  profile-filtered MCP surface contract as the active baseline.
 
 Validation:
 
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-baseline-current-docs tests\test_docs_recruit_ai_current.py tests\test_tool_surfaces.py`
+  -> 47 passed, 1 warning.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-ai-start-counts tests\test_docs_recruit_ai_current.py tests\test_tool_surfaces.py`
   -> 46 passed, 1 warning.
 - `ruff check src tests` -> passed.

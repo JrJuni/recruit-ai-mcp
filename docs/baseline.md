@@ -5,10 +5,14 @@ changing shared deal or MCP behavior.
 
 ## 2026-06-08 - Milestone 0.1
 
-### Runtime
+### Historical Runtime Snapshot
+
+This section records the original Milestone 0.1 smoke evidence. It is retained
+for traceability only; the current MCP surface contract starts below at
+`MCP Tool Contracts`.
 
 - Python: 3.11.15 (Python 3.11 conda environment)
-- FastMCP runtime registration: 9 tools
+- FastMCP runtime registration at historical smoke time: 9 tools
 - MongoDB database: `recruit_ai`
 - Atlas read smoke: passed
 - Deal count at smoke time: 10
