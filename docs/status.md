@@ -131,6 +131,10 @@ Completed:
 - Expanded the recruiting natural-question recommendation guardrail artifact
   with per-dimension guardrail scores and next questions, so authorization,
   risk, and preference penalties remain visible in release smoke evidence.
+- Tightened the recruiting smoke validator for `rq12_recommendation_guardrails`.
+  The guardrail summary and quick-read now include risk-flag and next-question
+  coverage counts, and validation checks that all five guardrail rows carry
+  concrete risk/question evidence.
 - Added a specific `work_authorization_mismatch` recommendation risk flag so
   shortlist rows expose authorization conflicts directly instead of only
   generic review/high-risk labels.

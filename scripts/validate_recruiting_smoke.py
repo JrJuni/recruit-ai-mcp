@@ -13,6 +13,10 @@ EXPECTED_CONTRACT = {
     "written_record_count": 29,
     "reloaded_record_count": 29,
     "guardrail_candidate_count": 5,
+    "guardrails_with_risk_flags": 5,
+    "guardrails_with_next_questions": 5,
+    "guardrail_risk_row_count": 5,
+    "guardrail_next_question_row_count": 5,
     "candidate_position_available_count": 2,
     "candidate_position_excluded_count": 1,
     "open_position_count": 2,
@@ -36,7 +40,11 @@ def validate_payload(payload: dict[str, Any]) -> dict[str, Any]:
     metrics = _summary(questions, "rq01_recruiting_pipeline_metrics")
     candidate_positions = _summary(questions, "rq03_positions_for_avery")
     persistence = _summary(questions, "rq11_local_recruiting_persistence")
-    guardrails = _summary(questions, "rq12_recommendation_guardrails")
+    guardrail_payload = _question_payload(questions, "rq12_recommendation_guardrails")
+    guardrails = _summary_from_payload(
+        guardrail_payload,
+        question_id="rq12_recommendation_guardrails",
+    )
     shortlist_payload = _question_payload(questions, "rq13_client_shortlist_readiness")
     shortlist = _summary_from_payload(
         shortlist_payload,
@@ -68,6 +76,24 @@ def validate_payload(payload: dict[str, Any]) -> dict[str, Any]:
             guardrails,
             "guardrail_candidate_count",
             scope="rq12_recommendation_guardrails summary",
+        ),
+        "guardrails_with_risk_flags": _required_key(
+            guardrails,
+            "guardrails_with_risk_flags",
+            scope="rq12_recommendation_guardrails summary",
+        ),
+        "guardrails_with_next_questions": _required_key(
+            guardrails,
+            "guardrails_with_next_questions",
+            scope="rq12_recommendation_guardrails summary",
+        ),
+        "guardrail_risk_row_count": _guardrail_row_count(
+            guardrail_payload,
+            field="guardrail_risk_flags",
+        ),
+        "guardrail_next_question_row_count": _guardrail_row_count(
+            guardrail_payload,
+            field="guardrail_next_questions",
         ),
         "candidate_position_available_count": _required_key(
             candidate_positions,
@@ -199,6 +225,33 @@ def _shortlist_row_count(payload: dict[str, Any], *, field: str) -> int:
                 )
             if values:
                 count += 1
+    return count
+
+
+def _guardrail_row_count(payload: dict[str, Any], *, field: str) -> int:
+    guardrails = _required_key(
+        payload,
+        "guardrails",
+        scope="rq12_recommendation_guardrails payload",
+    )
+    if not isinstance(guardrails, list):
+        raise ValueError("Recruiting smoke rq12 guardrails must be a list.")
+    count = 0
+    for guardrail_index, guardrail in enumerate(guardrails):
+        if not isinstance(guardrail, dict):
+            raise ValueError("Recruiting smoke rq12 guardrail rows must be mappings.")
+        values = _required_key(
+            guardrail,
+            field,
+            scope=f"rq12_recommendation_guardrails guardrail {guardrail_index}",
+        )
+        if not isinstance(values, list):
+            raise ValueError(
+                "Recruiting smoke rq12 guardrail "
+                f"field {field!r} must be a list."
+            )
+        if values:
+            count += 1
     return count
 
 

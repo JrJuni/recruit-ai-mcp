@@ -55,8 +55,51 @@ def _payload(
                     "summary": {
                         "guardrail_candidate_count": EXPECTED_CONTRACT[
                             "guardrail_candidate_count"
-                        ]
-                    }
+                        ],
+                        "guardrails_with_risk_flags": EXPECTED_CONTRACT[
+                            "guardrails_with_risk_flags"
+                        ],
+                        "guardrails_with_next_questions": EXPECTED_CONTRACT[
+                            "guardrails_with_next_questions"
+                        ],
+                    },
+                    "guardrails": [
+                        {
+                            "guardrail_candidate_id": "cand_nora_weiss",
+                            "guardrail_risk_flags": ["work_authorization_mismatch"],
+                            "guardrail_next_questions": [
+                                "Confirm work authorization or sponsorship feasibility."
+                            ],
+                        },
+                        {
+                            "guardrail_candidate_id": "cand_jordan_lee",
+                            "guardrail_risk_flags": ["client_exclusion"],
+                            "guardrail_next_questions": [
+                                "Confirm required skill: Python"
+                            ],
+                        },
+                        {
+                            "guardrail_candidate_id": "cand_iris_kim",
+                            "guardrail_risk_flags": ["review_match_risk"],
+                            "guardrail_next_questions": [
+                                "Improve evidence for seniority_fit."
+                            ],
+                        },
+                        {
+                            "guardrail_candidate_id": "cand_eli_brooks",
+                            "guardrail_risk_flags": ["high_match_risk"],
+                            "guardrail_next_questions": [
+                                "Confirm whether candidate is open to an IC mandate."
+                            ],
+                        },
+                        {
+                            "guardrail_candidate_id": "cand_sam_taylor",
+                            "guardrail_risk_flags": ["client_preference_conflict"],
+                            "guardrail_next_questions": [
+                                "Review client preference conflict before shortlisting."
+                            ],
+                        },
+                    ],
                 },
             },
             {
@@ -206,6 +249,32 @@ def test_validate_recruiting_smoke_cli_names_missing_summary_field(tmp_path) -> 
     assert result.returncode == 1
     assert "rq11_local_recruiting_persistence summary" in result.stderr
     assert "reloaded_record_count" in result.stderr
+
+
+def test_validate_recruiting_smoke_cli_fails_without_guardrail_evidence(tmp_path) -> None:
+    payload = _payload()
+    guardrails = next(
+        question
+        for question in payload["questions"]
+        if question["id"] == "rq12_recommendation_guardrails"
+    )
+    for row in guardrails["payload"]["guardrails"][0:2]:
+        row["guardrail_risk_flags"] = []
+        row["guardrail_next_questions"] = []
+    payload_path = tmp_path / "recruiting-natural-questions.json"
+    payload_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = subprocess.run(
+        [sys.executable, str(VALIDATOR), str(payload_path)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    assert "Recruiting natural-question smoke contract mismatch" in result.stderr
+    assert "'guardrail_risk_row_count': 5" in result.stderr
+    assert "'guardrail_next_question_row_count': 5" in result.stderr
 
 
 def test_validate_recruiting_smoke_cli_fails_without_shortlist_evidence(tmp_path) -> None:

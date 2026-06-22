@@ -80,6 +80,9 @@ Immediate quality order:
    - Recommendation guardrails now check that keyword-strong but risky sample
      candidates do not outrank aligned matches when compensation, location,
      availability, seniority, or scope constraints matter.
+   - Recommendation guardrail smoke now records compact risk-flag and
+     next-question coverage counts, and the validator checks that guardrail
+     evidence rows actually carry those fields.
    - Candidate-to-position smoke now shows open-role defaults and the paused
      sample role excluded from first-pass recommendations, including a compact
      quick-read summary in CLI smoke output.

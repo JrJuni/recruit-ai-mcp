@@ -3862,6 +3862,12 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
             "summary": {
                 "guardrail_candidate_count": len(guardrails),
                 "ranking_guardrails_passed": True,
+                "guardrails_with_risk_flags": sum(
+                    1 for row in guardrails if row["guardrail_risk_flags"]
+                ),
+                "guardrails_with_next_questions": sum(
+                    1 for row in guardrails if row["guardrail_next_questions"]
+                ),
             },
             "guardrails": guardrails,
         }
@@ -4439,7 +4445,9 @@ def _natural_question_quick_read(question_id: str, payload: dict) -> str:
         summary = payload.get("summary") or {}
         return (
             f"guardrails={summary.get('guardrail_candidate_count')}, "
-            f"passed={summary.get('ranking_guardrails_passed')}"
+            f"passed={summary.get('ranking_guardrails_passed')}, "
+            f"risk_flags={summary.get('guardrails_with_risk_flags')}, "
+            f"questions={summary.get('guardrails_with_next_questions')}"
         )
     if question_id == "rq13_client_shortlist_readiness":
         summary = payload.get("summary") or {}

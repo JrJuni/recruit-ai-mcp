@@ -527,6 +527,7 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     assert "OK: True" in result.output
     assert "candidates=9, open_positions=2, submissions=4" in result.output
     assert "open_available=2, excluded=1" in result.output
+    assert "guardrails=5, passed=True, risk_flags=5, questions=5" in result.output
     assert (
         "open_positions=2, shortlists=2, risk_reviews=2, question_reviews=2"
         in result.output
@@ -601,6 +602,8 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     assert guardrails["summary"] == {
         "guardrail_candidate_count": 5,
         "ranking_guardrails_passed": True,
+        "guardrails_with_risk_flags": 5,
+        "guardrails_with_next_questions": 5,
     }
     assert {
         row["guardrail_candidate_id"] for row in guardrails["guardrails"]
