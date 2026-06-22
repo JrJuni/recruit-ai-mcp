@@ -155,7 +155,8 @@ Completed:
 - Tightened candidate-to-position smoke evidence. `rq03_positions_for_avery`
   now records the default open-role filter, the two open roles available for
   first-pass matching, and the paused sample role excluded from the recommendation
-  run; the recruiting smoke validator now checks those counts.
+  run; the recruiting smoke validator now checks those counts, and the CLI
+  quick-read output shows the open/excluded counts directly.
 - Added a realistic Northstar recommendation stress fixture for a healthcare
   platform manager-only candidate. The sample recommendation tests and natural
   question guardrails now ensure this keyword-strong but constraint-heavy

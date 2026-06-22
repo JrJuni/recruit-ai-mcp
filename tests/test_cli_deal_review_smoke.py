@@ -526,6 +526,7 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     assert "Natural Question Smoke (as_of=2026-06-22, questions=13)" in result.output
     assert "OK: True" in result.output
     assert "candidates=9, open_positions=2, submissions=4" in result.output
+    assert "open_available=2, excluded=1" in result.output
     assert "open_positions=2, shortlists=2, risk_reviews=2" in result.output
     assert (output_dir / "summary.md").exists()
     summary = json.loads((output_dir / "summary.json").read_text(encoding="utf-8"))
@@ -533,6 +534,10 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     assert summary["pack"] == "recruiting"
     assert summary["question_count"] == 13
     assert summary["answerability_counts"] == {"derived": 9, "direct": 4}
+    questions_by_id = {row["id"]: row for row in summary["questions"]}
+    assert "open_available=2, excluded=1" in (
+        questions_by_id["rq03_positions_for_avery"]["quick_read"]
+    )
     validator = Path(__file__).resolve().parents[1] / "scripts" / (
         "validate_recruiting_smoke.py"
     )

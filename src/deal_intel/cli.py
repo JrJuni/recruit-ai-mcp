@@ -4376,16 +4376,25 @@ def _natural_question_quick_read(question_id: str, payload: dict) -> str:
             f"open_positions={summary.get('open_position_count')}, "
             f"submissions={summary.get('submission_count')}"
         )
-    if question_id in {
-        "rq02_candidates_for_northstar_backend",
-        "rq03_positions_for_avery",
-    }:
+    if question_id == "rq02_candidates_for_northstar_backend":
         run = payload.get("run") or {}
         results = run.get("results") or []
         ranked = ", ".join(
             str(row.get("target_id") or "-") for row in results[:3]
         )
         return f"top={ranked or '-'}"
+    if question_id == "rq03_positions_for_avery":
+        summary = payload.get("summary") or {}
+        run = payload.get("run") or {}
+        results = run.get("results") or []
+        ranked = ", ".join(
+            str(row.get("target_id") or "-") for row in results[:3]
+        )
+        return (
+            f"top={ranked or '-'}, "
+            f"open_available={summary.get('available_position_count')}, "
+            f"excluded={summary.get('excluded_position_count')}"
+        )
     if question_id == "rq04_feedback_adjustment_signal":
         summary = payload.get("summary") or {}
         return f"adjusted={summary.get('adjusted_candidate_count')}"
