@@ -79,25 +79,31 @@ directory after inspection.
 Do not delete the user's real `~/.recruit-ai` directory unless they explicitly
 ask for a full local reset.
 
-## Current Evidence
+## Current Evidence To Collect
 
-Windows local-wheel smoke passed on 2026-06-18:
+Before public handoff, record fresh evidence for the current Recruit AI package
+line:
 
-- local wheel install completed;
-- post-install `smoke-profile --profile sample` passed;
-- `smoke --profile-only` passed from the managed runtime;
-- `mcp-config --json` returned the managed Python path and Claude Desktop
-  snippet.
+```powershell
+$env:RECRUIT_AI_HOME = (Resolve-Path ".tmp\recruit-public-home").Path
+npx --yes recruit-ai-mcp@0.2.3 setup --python <python-3.11+>
+npx --yes recruit-ai-mcp@0.2.3 where --json
+npx --yes recruit-ai-mcp@0.2.3 smoke --profile-only
+npx --yes recruit-ai-mcp@0.2.3 mcpb --json
+npx --yes recruit-ai-mcp@0.2.3 mcp-config --json
+```
 
-Public registry smoke passed on 2026-06-18 for `0.2.1`:
+Pass criteria:
 
-- PyPI fresh install of `deal-intel-mcp[embedding]==0.2.1` succeeded.
-- `npx deal-intel-mcp@0.2.1 setup --python <python-3.11>` created a managed
-  runtime and ran sample profile smoke successfully.
-- `npx deal-intel-mcp@0.2.1 where --json` returned managed runtime paths.
-- `npx deal-intel-mcp@0.2.1 smoke --profile-only` passed.
-- `npx deal-intel-mcp@0.2.1 mcp-config --json` returned the MCPB/manual host
-  Python interpreter path and Claude Desktop snippet.
+- PyPI fresh install of `recruit-ai-mcp[embedding]==0.2.3` succeeds.
+- `setup` creates a managed runtime and runs sample profile smoke
+  successfully.
+- `where --json` returns managed runtime paths under the selected
+  `RECRUIT_AI_HOME`.
+- `smoke --profile-only` passes.
+- `mcpb --json` returns a local `recruit-ai-mcp-0.2.3.mcpb` path.
+- `mcp-config --json` returns the MCPB/manual host Python interpreter path and
+  Claude Desktop snippet.
 
 Still worth checking on a separate machine:
 

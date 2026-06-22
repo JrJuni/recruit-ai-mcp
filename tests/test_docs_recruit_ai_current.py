@@ -53,3 +53,18 @@ def test_release_docs_and_workflows_use_recruit_ai_package_name() -> None:
     assert "deal-intel-mcp@${PACKAGE_VERSION}" not in combined
     assert 'metadata.version("deal-intel-mcp")' not in combined
     assert "DEAL_INTEL_STORAGE_BACKEND" not in combined
+
+
+def test_bootstrapper_fresh_smoke_uses_recruit_ai_public_package() -> None:
+    docs = (ROOT / "docs" / "bootstrapper-fresh-smoke.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert "recruit-ai-mcp@0.2.3 setup" in docs
+    assert "recruit-ai-mcp[embedding]==0.2.3" in docs
+    assert "RECRUIT_AI_HOME" in docs
+    assert "recruit-ai-mcp-0.2.3.mcpb" in docs
+
+    assert "deal-intel-mcp@0.2.1" not in docs
+    assert "deal-intel-mcp[embedding]" not in docs
+    assert "DEAL_INTEL_HOME" not in docs

@@ -216,6 +216,11 @@ Completed:
   commands, release workflow npm promotion path, and staging installed-package
   smoke now use `recruit-ai-mcp` / `RECRUIT_AI_*` and verify the recruiting
   sample tool path instead of inherited deal-first package names.
+- Added Work 7AC bootstrapper fresh-smoke docs cleanup.
+  `docs/bootstrapper-fresh-smoke.md` now treats the current public registry
+  smoke as evidence to collect for `recruit-ai-mcp@0.2.3`, uses
+  `RECRUIT_AI_HOME`, and no longer presents old `deal-intel-mcp@0.2.1`
+  evidence as current Recruit AI release proof.
 
 Validation:
 
@@ -364,6 +369,9 @@ Validation:
 - `ruff check src tests` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-release-docs tests\test_docs_recruit_ai_current.py tests\test_bootstrapper_skeleton.py tests\test_mcpb_manifest.py tests\test_tool_surfaces.py`
   -> 58 passed, 1 third-party warning.
+- `ruff check src tests` -> passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-bootstrapper-docs tests\test_docs_recruit_ai_current.py tests\test_bootstrapper_skeleton.py tests\test_mcpb_manifest.py`
+  -> 22 passed.
 - `ruff check src tests` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
