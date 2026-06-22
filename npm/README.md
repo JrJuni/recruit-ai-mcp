@@ -13,13 +13,13 @@ runs the Python package described by `docs/bootstrapper-contract.md`.
 ## Commands
 
 ```bash
-node bin/deal-intel-mcp.js where
-node bin/deal-intel-mcp.js doctor
-node bin/deal-intel-mcp.js smoke
-node bin/deal-intel-mcp.js mcp
-node bin/deal-intel-mcp.js mcp-config
-node bin/deal-intel-mcp.js mcpb
-node bin/deal-intel-mcp.js setup
+npx recruit-ai-mcp where
+npx recruit-ai-mcp doctor
+npx recruit-ai-mcp smoke
+npx recruit-ai-mcp mcp
+npx recruit-ai-mcp mcp-config
+npx recruit-ai-mcp mcpb
+npx recruit-ai-mcp setup
 ```
 
 `setup --dry-run` prints the install plan without changing files. Running
@@ -32,7 +32,7 @@ post-install check.
 configured yet. After the user enters real config values, run:
 
 ```bash
-node bin/deal-intel-mcp.js doctor --live
+npx recruit-ai-mcp doctor --live
 ```
 
 For normal full mode, the user also needs a MongoDB Atlas URI. Create a
@@ -57,14 +57,14 @@ For local development without the managed runtime, point the wrapper at an
 existing Python environment:
 
 ```bash
-RECRUIT_AI_PYTHON=/path/to/python node bin/deal-intel-mcp.js doctor
+RECRUIT_AI_PYTHON=/path/to/python npx recruit-ai-mcp doctor
 ```
 
 On Windows PowerShell:
 
 ```powershell
 $env:RECRUIT_AI_PYTHON="$HOME\miniconda3\envs\deal-intel\python.exe"
-node bin\deal-intel-mcp.js doctor
+npx.cmd recruit-ai-mcp doctor
 ```
 
 ## Release smoke

@@ -149,6 +149,10 @@ Completed:
 - Added Work 7K env-prefix docs cleanup. Active docs now present
   `RECRUIT_AI_*` as the primary runtime override prefix and describe
   `DEAL_INTEL_*` only as an older-bundle compatibility fallback.
+- Added Work 7L npm bootstrapper README cleanup. General bootstrapper docs now
+  present `npx recruit-ai-mcp ...` as the primary command path, while the
+  inherited physical script name remains only for local regression smoke and
+  compatibility bin mapping.
 
 Validation:
 
@@ -239,6 +243,9 @@ Validation:
   -> 67 passed, 1 third-party warning.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-env-docs tests\test_env_config.py tests\test_storage_backend_selection.py tests\test_cli_config_profiles.py tests\test_config_profiles.py tests\test_mcpb_manifest.py`
   -> 44 passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-npm-readme tests\test_bootstrapper_skeleton.py tests\test_mcpb_manifest.py`
+  -> 19 passed.
+- `node --check npm\bin\deal-intel-mcp.js` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2c tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py`
