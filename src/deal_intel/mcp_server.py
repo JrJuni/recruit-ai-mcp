@@ -161,7 +161,7 @@ def config_doctor(offline: bool = False) -> dict:
 
 @app.tool()
 def get_tool_catalog(include_hidden: bool = False) -> dict:
-    """List Deal Intelligence MCP tools for the current profile/tool surface.
+    """List Recruit AI MCP tools for the current profile/tool surface.
 
     Use this when a host app's tool search shows only a truncated subset of
     tools. Read-only: no storage access, no LLM calls, no file writes.

@@ -36,7 +36,7 @@ def _full_cfg() -> dict:
     return {
         "storage": {"backend": "mongo"},
         "mongodb": {
-            "database": "deal_intel",
+            "database": "recruit_ai",
             "vector_search": "python_cosine",
         },
         "llm": {"provider": "chatgpt_oauth"},
@@ -502,7 +502,7 @@ def test_mongo_cli_doctor_json_is_secret_safe(monkeypatch, tmp_path) -> None:
         "storage:\n"
         "  backend: mongo\n"
         "mongodb:\n"
-        "  database: deal_intel\n",
+        "  database: recruit_ai\n",
         encoding="utf-8",
     )
     monkeypatch.setattr(_env, "_USER_CONFIG_PATH", user_config)
@@ -546,7 +546,7 @@ def test_mongo_cli_apply_schema_json_handles_mongo_timestamp_response(
         "storage:\n"
         "  backend: mongo\n"
         "mongodb:\n"
-        "  database: deal_intel\n",
+        "  database: recruit_ai\n",
         encoding="utf-8",
     )
     monkeypatch.setattr(_env, "_USER_CONFIG_PATH", user_config)
@@ -568,7 +568,7 @@ def test_mongo_cli_apply_vector_index_dry_run(monkeypatch, tmp_path) -> None:
         "storage:\n"
         "  backend: mongo\n"
         "mongodb:\n"
-        "  database: deal_intel\n"
+        "  database: recruit_ai\n"
         "  vector_search: atlas\n",
         encoding="utf-8",
     )
@@ -597,7 +597,7 @@ def test_mongo_cli_apply_vector_index_invalid_dimensions_returns_json(
         "storage:\n"
         "  backend: mongo\n"
         "mongodb:\n"
-        "  database: deal_intel\n"
+        "  database: recruit_ai\n"
         "  vector_search: atlas\n",
         encoding="utf-8",
     )

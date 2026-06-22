@@ -83,6 +83,6 @@ def mongo() -> MongoDBClient | LocalSampleClient:
                     )
                     _mongo = LocalSampleClient(local_data_dir=local_data_dir)
                 else:
-                    db_name = cfg.get("mongodb", {}).get("database", "deal_intel")
+                    db_name = cfg.get("mongodb", {}).get("database", "recruit_ai")
                     _mongo = MongoDBClient(database=db_name)
     return _mongo

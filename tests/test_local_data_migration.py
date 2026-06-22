@@ -48,7 +48,7 @@ def _write_sample_config(monkeypatch, tmp_path) -> None:
         "  backend: local_sample\n"
         f"  local_data_dir: {json.dumps(str(local_data_dir))}\n"
         "mongodb:\n"
-        "  database: deal_intel\n",
+        "  database: recruit_ai\n",
         encoding="utf-8",
     )
     monkeypatch.setattr(_env, "_USER_CONFIG_PATH", user_config)
@@ -214,7 +214,7 @@ def test_local_data_migrate_to_mongo_cli_dry_run_json(
     assert payload["ok"] is True
     assert payload["dry_run"] is True
     assert payload["counts"]["would_create"] == 1
-    assert created_clients[0].database_name == "deal_intel"
+    assert created_clients[0].database_name == "recruit_ai"
 
 
 def test_mcp_migrate_local_data_uses_configured_local_data_dir_and_target_database(

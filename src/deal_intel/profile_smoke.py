@@ -70,7 +70,7 @@ def _storage_ping_for_config(cfg: dict[str, Any]) -> StoragePing:
             return LocalSampleClient(
                 local_data_dir=storage.get("local_data_dir")
             ).ping()
-        database = _mapping(cfg.get("mongodb")).get("database", "deal_intel")
+        database = _mapping(cfg.get("mongodb")).get("database", "recruit_ai")
         return MongoDBClient(database=database).ping()
 
     return _ping

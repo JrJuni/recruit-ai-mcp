@@ -9,7 +9,7 @@ changing shared deal or MCP behavior.
 
 - Python: 3.11.15 (Python 3.11 conda environment)
 - FastMCP runtime registration: 9 tools
-- MongoDB database: `deal_intel`
+- MongoDB database: `recruit_ai`
 - Atlas read smoke: passed
 - Deal count at smoke time: 10
 

@@ -142,6 +142,10 @@ Completed:
   readiness now recommends only sample-visible read/metric tools, while
   Mongo-backed full/pro readiness keeps the recruiting client/position/candidate
   creation and recommendation path.
+- Added Work 7J Mongo fallback cleanup. Runtime fallback database names in
+  context initialization, Mongo doctor, profile smoke, and direct
+  `MongoDBClient` construction now default to `recruit_ai`, matching the
+  recruit-ai config defaults and baseline.
 
 Validation:
 
@@ -228,6 +232,8 @@ Validation:
   -> 80 passed, 1 third-party warning.
 - `ruff check src\deal_intel\config_doctor.py tests\test_config_doctor.py`
   -> passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-db-fallback tests\test_mongo_contracts.py tests\test_local_data_migration.py tests\test_storage_backend_selection.py tests\test_profile_smoke_cli.py tests\test_profile_smoke_matrix.py tests\test_config_doctor.py`
+  -> 67 passed, 1 third-party warning.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2c tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py`

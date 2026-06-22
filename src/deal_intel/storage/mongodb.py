@@ -121,7 +121,7 @@ def preload_driver() -> None:
 class MongoDBClient:
     """MongoDB Atlas client. pymongo is imported lazily (cold-start guard)."""
 
-    def __init__(self, *, uri: str | None = None, database: str = "deal_intel") -> None:
+    def __init__(self, *, uri: str | None = None, database: str = "recruit_ai") -> None:
         self._uri = uri or os.environ.get("MONGODB_URI")
         self._database_name = database
         self._client: Any = None

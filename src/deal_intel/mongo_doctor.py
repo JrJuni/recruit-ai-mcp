@@ -34,7 +34,7 @@ def build_mongo_doctor_report(
     storage = _mapping(cfg.get("storage"))
     mongodb = _mapping(cfg.get("mongodb"))
     backend = storage.get("backend", "mongo")
-    database = mongodb.get("database", "deal_intel")
+    database = mongodb.get("database", "recruit_ai")
     vector_search = mongodb.get("vector_search", "python_cosine")
     profile = infer_config_profile(cfg)
 
