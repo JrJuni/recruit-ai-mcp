@@ -31,7 +31,7 @@ def test_tool_surface_contract_covers_registered_mcp_tools(monkeypatch) -> None:
     contracted = {contract.name for contract in list_tool_surface_contracts()}
 
     assert registered == contracted
-    assert len(contracted) == 48
+    assert len(contracted) == 50
 
 
 def test_tool_intent_aliases_cover_every_registered_tool() -> None:
@@ -51,6 +51,8 @@ def test_tool_intent_aliases_cover_every_registered_tool() -> None:
     assert aliases["recruit.candidate.create"] == "create_candidate"
     assert aliases["recruit.client.create"] == "create_client_company"
     assert aliases["recruit.position.create"] == "create_position"
+    assert aliases["recruit.interaction.add"] == "add_recruiting_interaction"
+    assert aliases["recruit.submission.create"] == "create_submission"
     assert aliases["recruit.feedback.add"] == "add_client_feedback"
     assert aliases["recruit.recommend.candidates"] == "recommend_candidates_for_position"
     assert aliases["recruit.recommend.positions"] == "recommend_positions_for_candidate"
@@ -146,6 +148,8 @@ def test_sample_surface_is_zero_config_safe_local_personal() -> None:
         "create_candidate",
         "create_client_company",
         "create_position",
+        "add_recruiting_interaction",
+        "create_submission",
         "add_client_feedback",
         "recommend_candidates_for_position",
         "recommend_positions_for_candidate",
@@ -192,6 +196,8 @@ def test_sample_local_personal_target_promotes_safe_non_llm_writes() -> None:
         "create_candidate",
         "create_client_company",
         "create_position",
+        "add_recruiting_interaction",
+        "create_submission",
         "add_client_feedback",
         "recommend_candidates_for_position",
         "recommend_positions_for_candidate",
@@ -229,6 +235,8 @@ def test_standard_surface_keeps_real_operator_admin_tools() -> None:
         "create_candidate",
         "create_client_company",
         "create_position",
+        "add_recruiting_interaction",
+        "create_submission",
         "add_client_feedback",
         "recommend_candidates_for_position",
         "recommend_positions_for_candidate",
@@ -395,6 +403,11 @@ def test_high_traffic_tool_descriptions_guide_tool_selection(monkeypatch) -> Non
         "create_candidate": ["candidate intake", "recruit.candidate.create"],
         "create_client_company": ["hiring customer", "recruit.client.create"],
         "create_position": ["role requirements", "recruit.position.create"],
+        "add_recruiting_interaction": [
+            "raw content",
+            "recruit.interaction.add",
+        ],
+        "create_submission": ["fit_snapshot_json", "recruit.submission.create"],
         "add_client_feedback": ["rubric_deltas_json", "recruit.feedback.add"],
         "recommend_candidates_for_position": [
             "recommend candidates",
@@ -500,6 +513,8 @@ def test_get_tool_catalog_can_include_hidden_tools(monkeypatch) -> None:
         "create_candidate",
         "create_client_company",
         "create_position",
+        "add_recruiting_interaction",
+        "create_submission",
         "add_client_feedback",
         "recommend_candidates_for_position",
         "recommend_positions_for_candidate",

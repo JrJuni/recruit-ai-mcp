@@ -86,6 +86,8 @@ TOOL_INTENT_GROUPS: dict[str, dict] = {
             "create_candidate",
             "create_client_company",
             "create_position",
+            "add_recruiting_interaction",
+            "create_submission",
             "add_client_feedback",
             "recommend_candidates_for_position",
             "recommend_positions_for_candidate",
@@ -294,6 +296,8 @@ TOOL_INTENT_ALIASES: dict[str, tuple[str, str]] = {
     "create_candidate": ("recruit", "recruit.candidate.create"),
     "create_client_company": ("recruit", "recruit.client.create"),
     "create_position": ("recruit", "recruit.position.create"),
+    "add_recruiting_interaction": ("recruit", "recruit.interaction.add"),
+    "create_submission": ("recruit", "recruit.submission.create"),
     "add_client_feedback": ("recruit", "recruit.feedback.add"),
     "recommend_candidates_for_position": ("recruit", "recruit.recommend.candidates"),
     "recommend_positions_for_candidate": ("recruit", "recruit.recommend.positions"),
@@ -537,6 +541,27 @@ MCP_TOOL_SURFACE_CONTRACTS: tuple[MCPToolSurfaceContract, ...] = (
         db_writes=True,
         llm_calls=False,
         notes="Creates or updates a recruiting position/search mandate.",
+    ),
+    MCPToolSurfaceContract(
+        name="add_recruiting_interaction",
+        category="recruiting",
+        surfaces=_STANDARD,
+        user_facing=True,
+        db_writes=True,
+        llm_calls=False,
+        notes=(
+            "Adds recruiting evidence while keeping raw content hidden from "
+            "default responses."
+        ),
+    ),
+    MCPToolSurfaceContract(
+        name="create_submission",
+        category="recruiting",
+        surfaces=_STANDARD,
+        user_facing=True,
+        db_writes=True,
+        llm_calls=False,
+        notes="Creates or updates a candidate-position submission record.",
     ),
     MCPToolSurfaceContract(
         name="add_client_feedback",

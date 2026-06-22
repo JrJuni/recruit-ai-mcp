@@ -10,6 +10,8 @@ class FakeRecruitingMCPStorage:
         self.candidates: dict[str, dict] = {}
         self.client_companies: dict[str, dict] = {}
         self.positions: dict[str, dict] = {}
+        self.interactions: dict[str, dict] = {}
+        self.submissions: dict[str, dict] = {}
         self.feedback: dict[str, dict] = {}
         self.recommendation_runs: dict[str, dict] = {}
 
@@ -66,11 +68,27 @@ class FakeRecruitingMCPStorage:
         self.feedback[record["feedback_id"]] = record
         return True
 
+    def append_recruiting_interaction(self, interaction: object) -> bool:
+        record = _record(interaction)
+        self.interactions[record["interaction_id"]] = record
+        return True
+
+    def get_recruiting_interaction(self, interaction_id: str) -> dict | None:
+        record = deepcopy(self.interactions.get(interaction_id))
+        if record is not None:
+            record.pop("raw_content", None)
+        return record
+
+    def upsert_submission(self, submission: object) -> bool:
+        record = _record(submission)
+        self.submissions[record["submission_id"]] = record
+        return True
+
+    def get_submission(self, submission_id: str) -> dict | None:
+        return deepcopy(self.submissions.get(submission_id))
+
     def get_feedback(self, feedback_id: str) -> dict | None:
         return deepcopy(self.feedback.get(feedback_id))
-
-    def get_submission(self, _submission_id: str) -> dict | None:
-        return None
 
     def list_feedback(
         self,
@@ -155,6 +173,46 @@ def test_mcp_add_client_feedback_parses_rubric_delta_json(monkeypatch) -> None:
     assert result["ok"] is True
     assert result["record"]["rubric_deltas"] == {"skill_fit": 1}
     assert result["record"]["preference_learning"] == ["platform leadership"]
+
+
+def test_mcp_add_recruiting_interaction_hides_raw_content(monkeypatch) -> None:
+    storage = FakeRecruitingMCPStorage()
+    monkeypatch.setattr(_context, "mongo", lambda: storage)
+
+    result = mcp_server.add_recruiting_interaction(
+        subject_type="candidate",
+        subject_id="cand_avery",
+        interaction_type="candidate_screen",
+        source_confidence="candidate_stated",
+        participants="Avery Chen, Recruiter",
+        summary="Strong platform screen.",
+        raw_content="Private transcript.",
+    )
+
+    assert result["ok"] is True
+    assert result["record"]["participants"] == ["Avery Chen", "Recruiter"]
+    assert "raw_content" not in result["record"]
+    assert storage.interactions[result["interaction_id"]]["raw_content"] == "Private transcript."
+
+
+def test_mcp_create_submission_parses_fit_snapshot_json(monkeypatch) -> None:
+    storage = FakeRecruitingMCPStorage()
+    monkeypatch.setattr(_context, "mongo", lambda: storage)
+
+    result = mcp_server.create_submission(
+        candidate_id="cand_avery",
+        position_id="pos_backend",
+        fit_snapshot_json=(
+            '{"overall_score": 80, "dimensions": {'
+            '"skill_fit": {"score": 4}, "risk": {"score": 1}}}'
+        ),
+        client_feedback_ids="fb_1, fb_2",
+        next_step="Send to client.",
+    )
+
+    assert result["ok"] is True
+    assert result["record"]["fit_snapshot"]["overall_score"] == 80
+    assert result["record"]["client_feedback_ids"] == ["fb_1", "fb_2"]
 
 
 def test_mcp_recruiting_tools_return_safe_error_for_invalid_json(monkeypatch) -> None:

@@ -57,13 +57,13 @@ available.
 
 ### MCP Tool Contracts
 
-The Python server keeps all 48 handler functions available internally, but MCP
+The Python server keeps all 50 handler functions available internally, but MCP
 clients see a config-filtered tool surface:
 
 - `tools.surface: auto` resolves from the effective profile.
 - `sample` exposes 24 tools for bundled/local personal sample mode.
-- `standard` exposes 44 tools for normal MongoDB-backed operation.
-- `developer` exposes all 48 tools, including demo database seed/cleanup.
+- `standard` exposes 46 tools for normal MongoDB-backed operation.
+- `developer` exposes all 50 tools, including demo database seed/cleanup.
 - Invalid `tools.surface` config exposes only `config_doctor` and
   `update_config` so setup can be diagnosed and repaired.
 
@@ -87,6 +87,8 @@ clients see a config-filtered tool surface:
 | `create_candidate` | `name` | `candidate_id`, `headline`, `current_company`, `current_title`, `skills`, `domains`, `seniority`, `locations`, `work_authorization`, `availability` | `ok`, `entity`, `candidate_id`, `record`, `warnings` | Creates or updates one recruiting candidate profile. Comma-separated list inputs are normalized before Pydantic validation. Writes to the recruiting `candidates` collection and does not call LLMs, embeddings, or Atlas Vector Search |
 | `create_client_company` | `name` | `client_company_id`, `industry`, `stage`, `locations`, `hiring_preferences`, `risk_notes` | `ok`, `entity`, `client_company_id`, `record`, `warnings` | Creates or updates one recruiting client company. Writes to the recruiting `client_companies` collection and does not call LLMs, embeddings, or Atlas Vector Search |
 | `create_position` | `client_company_id`, `title` | `position_id`, `status`, `seniority`, `must_have`, `nice_to_have`, target compensation fields, `locations`, `remote_policy`, `ideal_candidate_examples` | `ok`, `entity`, `position_id`, `record`, `warnings` | Creates or updates one recruiting position/search mandate with default fit rubric metadata. Writes to the recruiting `positions` collection and does not call LLMs, embeddings, or Atlas Vector Search |
+| `add_recruiting_interaction` | `subject_type`, `subject_id`, `interaction_type` | `interaction_id`, `direction`, `source_confidence`, `participants`, `occurred_at`, `summary`, `raw_content` | `ok`, `entity`, `interaction_id`, `record`, `warnings` | Adds recruiting evidence for candidates, clients, positions, or submissions. Raw content may be stored but default responses use the safe read path and do not return `raw_content`. Does not call LLMs, embeddings, or Atlas Vector Search |
+| `create_submission` | `candidate_id`, `position_id` | `submission_id`, `status`, `submitted_at`, `fit_snapshot_json`, `client_feedback_ids`, `next_step` | `ok`, `entity`, `submission_id`, `record`, `warnings` | Creates or updates one candidate-position submission and can store a recommendation fit snapshot as captured at submission time. Does not call LLMs, embeddings, or Atlas Vector Search |
 | `add_client_feedback` | `subject_type`, `subject_id` | `feedback_id`, `position_id`, `candidate_id`, `sentiment`, `decision_signal`, `rubric_deltas_json`, `preference_learning`, `summary`, `link_submission` | `ok`, `entity`, `feedback_id`, `record`, `warnings`, `submission_link` | Adds structured recruiting feedback and optional rubric deltas. Writes to the recruiting `feedback` collection and may link a submission feedback id when the submission exists. Does not call LLMs, embeddings, or Atlas Vector Search |
 | `recommend_candidates_for_position` | `position_id` | `candidate_query_json`, `candidate_limit`, `retrieval_limit`, `result_limit`, `feedback_limit`, `recommendation_run_id`, `save_run` | `ok`, `entity`, `recommendation_run_id`, `mode`, `anchor_type`, `anchor_id`, `result_count`, `storage_written`, `record`, `warnings` | Recommends candidates for one position using M0-safe lexical retrieval and deterministic fit scoring. Preview mode is default; writes a `recommendation_runs` record only when `save_run=true`. Does not call LLMs, embeddings, or Atlas Vector Search |
 | `recommend_positions_for_candidate` | `candidate_id` | `client_company_id`, `position_status`, `position_limit`, `retrieval_limit`, `result_limit`, `feedback_limit`, `recommendation_run_id`, `save_run` | `ok`, `entity`, `recommendation_run_id`, `mode`, `anchor_type`, `anchor_id`, `result_count`, `storage_written`, `record`, `warnings` | Recommends positions for one candidate using M0-safe lexical retrieval and deterministic fit scoring. Preview mode is default; writes a `recommendation_runs` record only when `save_run=true`. Does not call LLMs, embeddings, or Atlas Vector Search |

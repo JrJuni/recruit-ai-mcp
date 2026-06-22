@@ -855,6 +855,87 @@ def create_position(
 
 
 @app.tool()
+def add_recruiting_interaction(
+    subject_type: str,
+    subject_id: str,
+    interaction_type: str,
+    interaction_id: str = "",
+    direction: str = "mixed",
+    source_confidence: str = "unknown",
+    participants: str = "",
+    occurred_at: str = "",
+    summary: str = "",
+    raw_content: str = "",
+) -> dict:
+    """Add recruiting evidence for a candidate, client, position, or submission.
+
+    Use this for candidate screens, client intake notes, interview notes, email
+    summaries, call summaries, and internal recruiter notes. Intent alias:
+    recruit.interaction.add.
+
+    participants is a comma-separated list. raw_content may be stored, but MCP
+    responses use the safe read path and do not return raw content.
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.tools import recruiting_records as _t
+
+        return _t.add_recruiting_interaction(
+            _context.mongo(),
+            subject_type=subject_type,
+            subject_id=subject_id,
+            interaction_type=interaction_type,
+            interaction_id=interaction_id or None,
+            direction=direction,
+            source_confidence=source_confidence,
+            participants=_split_csv(participants),
+            occurred_at=occurred_at,
+            summary=summary,
+            raw_content=raw_content,
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.STORAGE)
+
+
+@app.tool()
+def create_submission(
+    candidate_id: str,
+    position_id: str,
+    submission_id: str = "",
+    status: str = "draft",
+    submitted_at: str = "",
+    fit_snapshot_json: str = "",
+    client_feedback_ids: str = "",
+    next_step: str = "",
+) -> dict:
+    """Create or update a candidate submission for a position.
+
+    Use this when a candidate is presented for a role or when storing the fit
+    snapshot at submission time. Intent alias: recruit.submission.create.
+
+    fit_snapshot_json is an optional JSON object from recommendation output.
+    client_feedback_ids is a comma-separated list.
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.tools import recruiting_records as _t
+
+        return _t.create_submission(
+            _context.mongo(),
+            candidate_id=candidate_id,
+            position_id=position_id,
+            submission_id=submission_id or None,
+            status=status,
+            submitted_at=submitted_at,
+            fit_snapshot=_json_object(fit_snapshot_json, field="fit_snapshot_json"),
+            client_feedback_ids=_split_csv(client_feedback_ids),
+            next_step=next_step,
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.STORAGE)
+
+
+@app.tool()
 def add_client_feedback(
     subject_type: str,
     subject_id: str,

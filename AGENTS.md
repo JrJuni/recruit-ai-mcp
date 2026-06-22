@@ -133,8 +133,9 @@ the number in the same change.
 - Config/readiness: `config_doctor`, `update_config`
 - Discovery: `get_tool_catalog`
 - Recruiting write/recommendation: `create_candidate`,
-  `create_client_company`, `create_position`, `add_client_feedback`,
-  `recommend_candidates_for_position`, `recommend_positions_for_candidate`
+  `create_client_company`, `create_position`, `add_recruiting_interaction`,
+  `create_submission`, `add_client_feedback`, `recommend_candidates_for_position`,
+  `recommend_positions_for_candidate`
 - Deal write/lifecycle compatibility: `create_deal`, `add_interaction`, `update_stage`,
   `update_deal`, `archive_deal`, `restore_deal`, `delete_deal`
 - Deprecated compatibility: `add_meeting` (developer surface only; use

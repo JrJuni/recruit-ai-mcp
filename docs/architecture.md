@@ -160,6 +160,13 @@ Work 5A exposes the first recruiting MCP tools through
 lexical retrieval, and fit scoring only. They do not call LLMs, embeddings, or
 Atlas Vector Search.
 
+Work 5B adds the first recruiting lifecycle MCP tools:
+`add_recruiting_interaction` and `create_submission`. They are also visible on
+`standard` and `developer`, hidden from `sample`, and deterministic. Interaction
+responses keep `raw_content` hidden through the storage safe-read path, while
+submissions can store a fit snapshot JSON object produced by recommendation
+output.
+
 ## Product Profiles
 
 The project uses one repository and one package with three profiles:

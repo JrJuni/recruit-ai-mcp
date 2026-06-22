@@ -397,6 +397,8 @@ MCP tools:
 - `create_candidate`
 - `create_client_company`
 - `create_position`
+- `add_recruiting_interaction`
+- `create_submission`
 - `add_client_feedback`
 - `recommend_candidates_for_position`
 - `recommend_positions_for_candidate`
@@ -407,9 +409,12 @@ Surface policy:
 - Tools are hidden from `sample` because local sample storage does not yet
   implement recruiting write/read wrappers.
 - Create and feedback tools write recruiting collection records.
+- Interaction responses keep stored raw content hidden by default.
+- Submission tools can store the fit snapshot captured at client presentation
+  time.
 - Recommendation tools preview by default and persist a recommendation run only
   when `save_run=true`.
-- All six tools are deterministic and do not call LLMs, embeddings, or Atlas
+- All tools are deterministic and do not call LLMs, embeddings, or Atlas
   Vector Search.
 - List-like MCP inputs use comma-separated strings; rubric deltas and candidate
   query filters use JSON object strings.

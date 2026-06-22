@@ -36,6 +36,8 @@
     {"name": "create_candidate", "description": "Create or update a recruiting candidate profile for deterministic candidate-position recommendations."},
     {"name": "create_client_company", "description": "Create or update a recruiting client company for positions and preference tracking."},
     {"name": "create_position", "description": "Create or update a recruiting position/search mandate with fit rubric inputs."},
+    {"name": "add_recruiting_interaction", "description": "Add recruiting evidence for a candidate, client, position, or submission while hiding raw content from responses."},
+    {"name": "create_submission", "description": "Create or update a candidate-position submission record with an optional fit snapshot."},
     {"name": "add_client_feedback", "description": "Add structured client feedback, preference learning, and optional recruiting fit rubric deltas."},
     {"name": "recommend_candidates_for_position", "description": "Recommend candidates for one position using M0-safe lexical retrieval and deterministic fit scoring."},
     {"name": "recommend_positions_for_candidate", "description": "Recommend positions for one candidate using M0-safe lexical retrieval and deterministic fit scoring."},
