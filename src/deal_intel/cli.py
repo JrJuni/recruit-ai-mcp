@@ -3366,6 +3366,10 @@ def _build_natural_question_smoke_pack(
 
 
 def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
+    from deal_intel.reports.recruiting_pipeline import (
+        build_recruiting_pipeline_markdown,
+        build_recruiting_pipeline_report,
+    )
     from deal_intel.schema.recruiting_match import build_candidate_position_fit
     from deal_intel.schema.recruiting_metrics import build_recruiting_pipeline_metrics
     from deal_intel.schema.recruiting_recommendation import (
@@ -3395,6 +3399,12 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
     candidates_by_id = {row["candidate_id"]: row for row in candidates}
     positions_by_id = {row["position_id"]: row for row in positions}
     clients_by_id = {row["client_company_id"]: row for row in clients}
+    metrics = build_recruiting_pipeline_metrics(
+        candidates=candidates,
+        positions=positions,
+        submissions=submissions,
+        feedback=feedback,
+    )
 
     def call(question_id: str, question: str, answerability: str, fn: Any) -> dict:
         try:
@@ -3537,17 +3547,83 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
             "clients": sorted(row["name"] for row in clients_by_id.values()),
         }
 
+    def intake_coverage_summary() -> dict:
+        client_rows = [
+            {
+                "client_company_id": row["client_company_id"],
+                "name": row["name"],
+                "hiring_preference_count": len(row.get("hiring_preferences") or []),
+            }
+            for row in clients
+        ]
+        candidate_rows = [
+            {
+                "candidate_id": row["candidate_id"],
+                "name": row["name"],
+                "skill_count": len(row.get("skills") or []),
+                "domain_count": len(row.get("domains") or []),
+                "evidence_count": len(row.get("evidence") or []),
+            }
+            for row in candidates
+        ]
+        position_rows = [
+            {
+                "position_id": row["position_id"],
+                "title": row["title"],
+                "client_company_id": row["client_company_id"],
+                "must_have_count": len(row.get("must_have") or []),
+            }
+            for row in positions
+        ]
+        return {
+            "summary": {
+                "client_company_count": len(client_rows),
+                "candidate_count": len(candidate_rows),
+                "position_count": len(position_rows),
+                "candidate_evidence_count": sum(
+                    row["evidence_count"] for row in candidate_rows
+                ),
+                "clients_with_hiring_preferences": sum(
+                    1 for row in client_rows if row["hiring_preference_count"] > 0
+                ),
+                "positions_with_must_have": sum(
+                    1 for row in position_rows if row["must_have_count"] > 0
+                ),
+            },
+            "clients": client_rows,
+            "candidates": candidate_rows,
+            "positions": position_rows,
+        }
+
+    def report_preview_summary() -> dict:
+        report = build_recruiting_pipeline_report(metrics)
+        markdown = build_recruiting_pipeline_markdown(
+            report,
+            generated_at=datetime.fromisoformat(loaded_at),
+            timezone="UTC",
+        )
+        markdown_text = markdown["markdown"]
+        return {
+            "summary": {
+                "report_type": report["report_type"],
+                "row_count": report["row_count"],
+                "column_count": len(report["columns"]),
+                "markdown_line_count": len(markdown_text.splitlines()),
+                "markdown_has_title": markdown_text.startswith(
+                    "# Recruiting Pipeline Report"
+                ),
+                "briefing": markdown["briefing"],
+            },
+            "columns": report["columns"],
+            "metrics": markdown["metrics"],
+        }
+
     questions = [
         call(
             "rq01_recruiting_pipeline_metrics",
             "Show recruiting pipeline metrics for the sample search firm.",
             "direct",
-            lambda: build_recruiting_pipeline_metrics(
-                candidates=candidates,
-                positions=positions,
-                submissions=submissions,
-                feedback=feedback,
-            ),
+            lambda: metrics,
         ),
         call(
             "rq02_candidates_for_northstar_backend",
@@ -3590,6 +3666,18 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
             "Does the recruiting smoke payload avoid raw content and secrets?",
             "derived",
             data_safety_summary,
+        ),
+        call(
+            "rq09_recruiting_intake_coverage",
+            "Do we have enough client, candidate, and position intake to start matching?",
+            "derived",
+            intake_coverage_summary,
+        ),
+        call(
+            "rq10_recruiting_report_preview",
+            "Can we produce a recruiting pipeline report from the smoke data?",
+            "derived",
+            report_preview_summary,
         ),
     ]
 
@@ -3991,6 +4079,19 @@ def _natural_question_quick_read(question_id: str, payload: dict) -> str:
         return (
             f"interactions={summary.get('interaction_count')}, "
             f"restricted_content_present={summary.get('restricted_content_present')}"
+        )
+    if question_id == "rq09_recruiting_intake_coverage":
+        summary = payload.get("summary") or {}
+        return (
+            f"clients={summary.get('client_company_count')}, "
+            f"candidates={summary.get('candidate_count')}, "
+            f"positions={summary.get('position_count')}"
+        )
+    if question_id == "rq10_recruiting_report_preview":
+        summary = payload.get("summary") or {}
+        return (
+            f"rows={summary.get('row_count')}, "
+            f"title={summary.get('markdown_has_title')}"
         )
     if question_id == "q01_pipeline_health":
         kpis = payload.get("kpis") or {}

@@ -244,9 +244,21 @@ Completed:
   and covers recruiting metrics, two-way recommendations, feedback-adjusted
   scoring, active submissions, learned client preferences, candidate risk
   flags, and raw-content safety.
+- Added Work 7AI recruiting natural-question intake/report coverage.
+  `smoke-natural-questions --pack recruiting` now runs a 10-question pack that
+  also verifies client/candidate/position intake coverage and an in-memory
+  recruiting pipeline report preview without requiring MongoDB/config context
+  or writing export files.
 
 Validation:
 
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-natural-expand tests\test_cli_deal_review_smoke.py tests\test_docs_recruit_ai_current.py tests\test_sample_data.py tests\test_recruiting_recommendation.py tests\test_recruiting_metrics.py tests\test_export_recruiting_report.py`
+  -> 53 passed, 1 warning.
+- `PYTHONPATH=src python -m deal_intel.cli smoke-natural-questions --pack recruiting --as-of 2026-06-22 --output-dir .tmp\recruiting-natural-expanded-cli-smoke --json`
+  -> passed with `ok=true`, `question_count=10`, no blocked questions, and no
+  sensitive failures.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `ruff check src tests` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2a tests\test_recruiting_schema.py tests\test_recruiting_storage_contract.py tests\test_mongo_contracts.py`
   -> 36 passed.

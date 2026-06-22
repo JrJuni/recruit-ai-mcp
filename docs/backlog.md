@@ -72,9 +72,10 @@ Immediate quality order:
    - Current coverage includes recruiting metrics, candidate-to-position
      matching, position-to-candidate matching, feedback-informed scoring,
      active submissions, learned client preferences, candidate risk flags, and
-     raw-content safety.
-   - Add client intake, candidate intake, recruiting report export, and local
-     personal persistence cases when those answer paths need release evidence.
+     raw-content safety, plus client/candidate/position intake coverage and an
+     in-memory recruiting report preview.
+   - Add local personal persistence cases when those answer paths need release
+     evidence.
    - Keep the inherited deal-intelligence natural-question pack as a
      compatibility smoke, not the primary Recruit AI user journey.
 3. Tighten release/package verification.

@@ -520,18 +520,20 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     )
 
     assert result.exit_code == 0
-    assert "Natural Question Smoke (as_of=2026-06-22, questions=8)" in result.output
+    assert "Natural Question Smoke (as_of=2026-06-22, questions=10)" in result.output
     assert "OK: True" in result.output
     assert "candidates=4, open_positions=2, submissions=4" in result.output
     assert (output_dir / "summary.md").exists()
     summary = json.loads((output_dir / "summary.json").read_text(encoding="utf-8"))
     assert summary["ok"] is True
     assert summary["pack"] == "recruiting"
-    assert summary["question_count"] == 8
-    assert summary["answerability_counts"] == {"derived": 4, "direct": 4}
+    assert summary["question_count"] == 10
+    assert summary["answerability_counts"] == {"derived": 6, "direct": 4}
     assert (output_dir / "rq01_recruiting_pipeline_metrics.json").exists()
     assert (output_dir / "rq02_candidates_for_northstar_backend.json").exists()
     assert (output_dir / "rq08_local_recruiting_data_safety.json").exists()
+    assert (output_dir / "rq09_recruiting_intake_coverage.json").exists()
+    assert (output_dir / "rq10_recruiting_report_preview.json").exists()
     encoded = json.dumps(summary, ensure_ascii=False)
     assert "raw_content" not in encoded
     assert "contacts" not in encoded
@@ -575,6 +577,8 @@ def test_smoke_natural_questions_recruiting_pack_json(monkeypatch, tmp_path) -> 
         "rq06_client_preference_learning",
         "rq07_candidate_risk_flags",
         "rq08_local_recruiting_data_safety",
+        "rq09_recruiting_intake_coverage",
+        "rq10_recruiting_report_preview",
     ]
 
 

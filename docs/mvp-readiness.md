@@ -222,14 +222,14 @@ recruit-ai smoke-natural-questions --pack recruiting --as-of 2026-06-22
 
 Pass criteria:
 
-- `questions=8`.
+- `questions=10`.
 - `OK: True`.
 - No blocked questions.
 - No sensitive failures.
 - The pack covers recruiting metrics, position-to-candidate recommendations,
   candidate-to-position recommendations, feedback-adjusted scoring, active
-  submissions, learned client preferences, candidate risk flags, and raw-content
-  safety.
+  submissions, learned client preferences, candidate risk flags, raw-content
+  safety, intake coverage, and recruiting report preview readiness.
 
 ### 4. Inherited Deal Review QA
 
