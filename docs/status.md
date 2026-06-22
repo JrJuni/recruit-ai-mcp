@@ -330,9 +330,20 @@ Completed:
   and schema maintenance, and guarded pro-only vector index commands while
   retaining inherited `deal_intel` internal module paths during the staged
   package cutover.
+- Added Work 7AY release-candidate tag doc cleanup.
+  `docs/release-publish-checklist.md` now uses the current first Recruit AI
+  release line in its release-candidate tag example (`v0.1.0-rc.1`) instead of
+  the inherited deal-intel `0.2.x` line.
 
 Validation:
 
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-release-rc-docs tests\test_docs_recruit_ai_current.py tests\test_bootstrapper_skeleton.py`
+  -> 26 passed.
+- `npm pack .\npm --dry-run --cache .tmp\npm-cache-release-rc-docs`
+  -> produced `recruit-ai-mcp-0.1.0.tgz` preview containing
+  `mcpb/recruit-ai-mcp-0.1.0.mcpb`.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-mongodb-atlas-pro-docs tests\test_docs_recruit_ai_current.py tests\test_atlas_charts.py`
   -> 37 passed.
 - `ruff check src tests` -> passed.

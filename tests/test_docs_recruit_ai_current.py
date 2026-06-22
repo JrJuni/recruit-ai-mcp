@@ -53,11 +53,13 @@ def test_release_docs_and_workflows_use_recruit_ai_package_name() -> None:
     assert "npm `E404`" in release_docs
     assert "No matching distribution found for recruit-ai-mcp" in release_docs
     assert "public `npx` freshness cannot be claimed" in normalized_release_docs
+    assert "v0.1.0-rc.1" in release_docs
 
     assert "deal-intel-mcp[embedding]" not in combined
     assert "deal-intel-mcp@${PACKAGE_VERSION}" not in combined
     assert 'metadata.version("deal-intel-mcp")' not in combined
     assert "DEAL_INTEL_STORAGE_BACKEND" not in combined
+    assert "v0.2.4-rc.1" not in release_docs
 
 
 def test_bootstrapper_fresh_smoke_uses_recruit_ai_public_package() -> None:

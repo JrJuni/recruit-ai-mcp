@@ -92,7 +92,7 @@ git push origin v0.1.0
 
 Only stable `vX.Y.Z` tags are production release tags. Do not use `v*` as the
 release trigger pattern, because it can also match release-candidate tags such
-as `v0.2.4-rc.1`.
+as `v0.1.0-rc.1`.
 
 If the Python package published successfully but the npm job failed, fix the
 workflow and rerun only the npm target instead of republishing the same Python
