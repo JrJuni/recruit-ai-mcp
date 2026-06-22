@@ -126,6 +126,9 @@ Reset/export behavior must be explicit before local personal writes ship:
 - `recruit-ai local-data reset` is dry-run by default.
 - `recruit-ai local-data reset --force` clears local personal deals and
   recruiting records.
+- `recruit-ai local-data trace-status` inspects opt-in local workflow traces.
+- `recruit-ai local-data trace-reset` is dry-run by default and
+  `trace-reset --force` deletes only the local trace file.
 - Local delete audit logs are retained after reset.
 - Local personal deal and recruiting data to MongoDB migration is available through
   `migrate_local_data` and `recruit-ai local-data migrate-to-mongo`.

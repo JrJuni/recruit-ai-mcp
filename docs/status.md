@@ -285,9 +285,18 @@ Completed:
   host tool call, with a reentrancy guard to avoid duplicate FastMCP internal
   calls. Trace failures are swallowed so observability cannot break tool
   execution.
+- Added Work 7AP local workflow trace CLI controls.
+  `recruit-ai local-data trace-status` now reports the local trace file,
+  opt-in state, bounded retention, event count, and recent redacted events.
+  `recruit-ai local-data trace-reset` is dry-run by default and deletes only
+  local workflow trace events when rerun with `--force`.
 
 Validation:
 
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-workflow-trace-cli tests\test_workflow_trace.py tests\test_local_data_cli.py tests\test_tool_surfaces.py`
+  -> 49 passed, 1 warning.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-workflow-trace-mcp-final tests\test_workflow_trace.py tests\test_tool_surfaces.py tests\test_mcpb_manifest.py`
   -> 49 passed, 1 warning.
 - `ruff check src tests` -> passed.

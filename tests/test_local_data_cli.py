@@ -12,6 +12,11 @@ from deal_intel.storage.local_personal import (
     LocalPersonalStore,
 )
 from deal_intel.storage.local_sample import LocalSampleClient
+from deal_intel.workflow_trace import (
+    build_workflow_trace_event,
+    workflow_trace_path,
+    write_trace_event,
+)
 
 
 def _write_sample_config(monkeypatch, tmp_path) -> None:
@@ -180,3 +185,80 @@ def test_local_data_reset_cli_force_clears_local_records_and_preserves_audit_log
     assert all(not rows for rows in raw_recruiting_payload["records"].values())
     assert client.ping()["data_mode"] == "local_personal"
     assert client.get_deal("sample-pavebridge") is None
+
+
+def test_local_data_trace_status_cli_reports_recent_events(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    _write_sample_config(monkeypatch, tmp_path)
+    cfg = {"storage": {"local_data_dir": str(tmp_path / "local-data")}}
+    path = workflow_trace_path(cfg, environ={})
+    write_trace_event(
+        path,
+        build_workflow_trace_event(
+            tool_name="create_candidate",
+            arguments={"candidate_id": "cand_local_cli"},
+            result={"ok": True},
+            timestamp="2026-06-22T00:00:00+00:00",
+        ),
+        max_events=10,
+    )
+    write_trace_event(
+        path,
+        build_workflow_trace_event(
+            tool_name="recommend_candidates_for_position",
+            arguments={"position_id": "pos_local_cli"},
+            result={"ok": True},
+            timestamp="2026-06-22T00:00:01+00:00",
+        ),
+        max_events=10,
+    )
+
+    result = CliRunner().invoke(
+        app,
+        ["local-data", "trace-status", "--limit", "1", "--json"],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert payload["ok"] is True
+    assert payload["trace_path"] == str(path)
+    assert payload["trace_exists"] is True
+    assert payload["event_count"] == 2
+    assert [event["tool_name"] for event in payload["recent_events"]] == [
+        "recommend_candidates_for_position"
+    ]
+
+
+def test_local_data_trace_reset_cli_is_dry_run_first(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    _write_sample_config(monkeypatch, tmp_path)
+    cfg = {"storage": {"local_data_dir": str(tmp_path / "local-data")}}
+    path = workflow_trace_path(cfg, environ={})
+    write_trace_event(
+        path,
+        build_workflow_trace_event(tool_name="get_tool_catalog", result={"ok": True}),
+        max_events=10,
+    )
+
+    dry_run = CliRunner().invoke(app, ["local-data", "trace-reset", "--json"])
+
+    assert dry_run.exit_code == 0
+    dry_run_payload = json.loads(dry_run.stdout)
+    assert dry_run_payload["dry_run"] is True
+    assert dry_run_payload["storage_written"] is False
+    assert dry_run_payload["would_delete_event_count"] == 1
+    assert path.exists()
+    applied = CliRunner().invoke(
+        app,
+        ["local-data", "trace-reset", "--force", "--json"],
+    )
+    assert applied.exit_code == 0
+    applied_payload = json.loads(applied.stdout)
+    assert applied_payload["dry_run"] is False
+    assert applied_payload["storage_written"] is True
+    assert applied_payload["deleted_event_count"] == 1
+    assert not path.exists()

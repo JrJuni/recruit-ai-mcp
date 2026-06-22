@@ -7,7 +7,9 @@ from deal_intel import _context, mcp_server
 from deal_intel.workflow_trace import (
     append_workflow_trace,
     build_workflow_trace_event,
+    build_workflow_trace_status,
     read_workflow_traces,
+    reset_workflow_trace,
     workflow_trace_enabled,
     workflow_trace_path,
     write_trace_event,
@@ -119,6 +121,58 @@ def test_workflow_trace_can_be_enabled_by_env_and_is_bounded(tmp_path) -> None:
     ]
     assert events[1]["success"] is False
     assert events[1]["error_category"] == "TEST"
+
+
+def test_workflow_trace_status_reports_recent_events(tmp_path) -> None:
+    cfg = {
+        "storage": {"local_data_dir": str(tmp_path)},
+        "observability": {"workflow_trace": {"enabled": True, "max_events": 10}},
+    }
+    path = workflow_trace_path(cfg, environ={})
+    for index in range(3):
+        write_trace_event(
+            path,
+            build_workflow_trace_event(
+                tool_name=f"tool_{index}",
+                result={"ok": True},
+                timestamp=f"2026-06-22T00:00:0{index}+00:00",
+            ),
+            max_events=10,
+        )
+
+    status = build_workflow_trace_status(cfg, limit=2, environ={})
+
+    assert status["enabled"] is True
+    assert status["trace_path"] == str(path)
+    assert status["trace_exists"] is True
+    assert status["event_count"] == 3
+    assert status["max_events"] == 10
+    assert [event["tool_name"] for event in status["recent_events"]] == [
+        "tool_1",
+        "tool_2",
+    ]
+
+
+def test_workflow_trace_reset_is_dry_run_first(tmp_path) -> None:
+    cfg = {"storage": {"local_data_dir": str(tmp_path)}}
+    path = workflow_trace_path(cfg, environ={})
+    write_trace_event(
+        path,
+        build_workflow_trace_event(tool_name="get_tool_catalog", result={"ok": True}),
+        max_events=10,
+    )
+
+    dry_run = reset_workflow_trace(cfg, force=False, environ={})
+
+    assert dry_run["dry_run"] is True
+    assert dry_run["storage_written"] is False
+    assert dry_run["would_delete_event_count"] == 1
+    assert path.exists()
+    applied = reset_workflow_trace(cfg, force=True, environ={})
+    assert applied["dry_run"] is False
+    assert applied["storage_written"] is True
+    assert applied["deleted_event_count"] == 1
+    assert not path.exists()
 
 
 def test_mcp_call_tool_writes_opt_in_workflow_trace(monkeypatch, tmp_path) -> None:

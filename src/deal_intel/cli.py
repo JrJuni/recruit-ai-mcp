@@ -1288,6 +1288,59 @@ def local_data_reset(
         typer.echo(_format_local_data_reset(payload))
 
 
+@local_data_app.command("trace-status")
+def local_data_trace_status(
+    limit: int = typer.Option(
+        5,
+        "--limit",
+        help="Number of recent trace events to include, capped at 50.",
+    ),
+    json_output: bool = typer.Option(
+        False,
+        "--json",
+        help="Print structured JSON instead of concise text.",
+    ),
+) -> None:
+    """Show local workflow trace status and recent redacted events."""
+
+    from deal_intel import _env
+    from deal_intel.workflow_trace import build_workflow_trace_status
+
+    payload = build_workflow_trace_status(_env.load_config(), limit=limit)
+    if json_output:
+        typer.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        typer.echo(_format_local_data_trace_status(payload))
+
+
+@local_data_app.command("trace-reset")
+def local_data_trace_reset(
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help=(
+            "Actually delete local workflow trace events. "
+            "Without this flag the command is a dry-run."
+        ),
+    ),
+    json_output: bool = typer.Option(
+        False,
+        "--json",
+        help="Print structured JSON instead of concise text.",
+    ),
+) -> None:
+    """Clear local workflow trace events without touching personal data."""
+
+    from deal_intel import _env
+    from deal_intel.workflow_trace import reset_workflow_trace
+
+    payload = reset_workflow_trace(_env.load_config(), force=force)
+    if json_output:
+        typer.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        typer.echo(_format_local_data_trace_reset(payload))
+
+
 @local_data_app.command("migrate-to-mongo")
 def local_data_migrate_to_mongo(
     database: str = typer.Option(
@@ -2594,6 +2647,50 @@ def _format_local_data_reset(payload: dict) -> str:
     else:
         lines.append("Delete audit logs were preserved.")
     return "\n".join(lines)
+
+
+def _format_local_data_trace_status(payload: dict) -> str:
+    state = "enabled" if payload.get("enabled") else "disabled"
+    lines = [
+        f"Workflow trace: {state}",
+        f"Trace file: {payload.get('trace_path')}",
+        f"Trace file exists: {payload.get('trace_exists')}",
+        f"Events: {payload.get('event_count')}",
+        f"Max events: {payload.get('max_events')}",
+    ]
+    recent_events = payload.get("recent_events") or []
+    if recent_events:
+        lines.append("Recent events:")
+        for event in recent_events:
+            status = "ok" if event.get("success") else "error"
+            lines.append(
+                "- "
+                f"{event.get('timestamp')} "
+                f"{event.get('tool_name')} "
+                f"{status} "
+                f"{event.get('duration_ms')}ms"
+            )
+    return "\n".join(lines)
+
+
+def _format_local_data_trace_reset(payload: dict) -> str:
+    if payload.get("dry_run"):
+        return "\n".join(
+            [
+                "Workflow trace reset: dry-run",
+                f"Trace file: {payload.get('trace_path')}",
+                f"Would delete events: {payload.get('would_delete_event_count')}",
+                "Run again with --force to delete local workflow trace events.",
+            ]
+        )
+    return "\n".join(
+        [
+            "Workflow trace reset: applied",
+            f"Trace file: {payload.get('trace_path')}",
+            f"Deleted events: {payload.get('deleted_event_count')}",
+            f"Storage written: {payload.get('storage_written')}",
+        ]
+    )
 
 
 def _format_local_data_migration(payload: dict) -> str:

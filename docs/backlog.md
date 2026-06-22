@@ -101,9 +101,11 @@ Immediate quality order:
      retention and secret-safe argument/result summaries.
    - MCP tool calls now write one opt-in trace event per host call when
      `RECRUIT_AI_WORKFLOW_TRACE=1` or config enables workflow tracing.
-   - If added, store secret-safe local metadata only: timestamp, tool name,
-     duration, success/error category, redacted argument summary, and compact
-     result summary.
+   - `recruit-ai local-data trace-status` and `trace-reset` can inspect and
+     dry-run-first clear local workflow trace files.
+   - Store secret-safe local metadata only: timestamp, tool name, duration,
+     success/error category, redacted argument summary, and compact result
+     summary.
    - Never store raw recruiting interaction content, contacts, embeddings,
      API keys, OAuth tokens, MongoDB URIs, or full tool responses.
 

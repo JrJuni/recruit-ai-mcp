@@ -163,6 +163,53 @@ def append_workflow_trace(
     }
 
 
+def build_workflow_trace_status(
+    cfg: Mapping[str, Any],
+    *,
+    limit: int = 5,
+    environ: Mapping[str, str] | None = None,
+) -> dict[str, Any]:
+    path = workflow_trace_path(cfg, environ=environ)
+    events = read_workflow_traces(path)
+    recent_limit = max(0, min(_safe_int(limit) or 0, 50))
+    return {
+        "ok": True,
+        "enabled": workflow_trace_enabled(cfg, environ=environ),
+        "trace_path": str(path),
+        "trace_exists": path.exists(),
+        "event_count": len(events),
+        "max_events": workflow_trace_max_events(cfg, environ=environ),
+        "recent_events": events[-recent_limit:] if recent_limit else [],
+    }
+
+
+def reset_workflow_trace(
+    cfg: Mapping[str, Any],
+    *,
+    force: bool = False,
+    environ: Mapping[str, str] | None = None,
+) -> dict[str, Any]:
+    path = workflow_trace_path(cfg, environ=environ)
+    events = read_workflow_traces(path)
+    payload = {
+        "ok": True,
+        "dry_run": not force,
+        "trace_path": str(path),
+        "trace_exists": path.exists(),
+        "would_delete_event_count": len(events),
+        "deleted_event_count": 0,
+        "storage_written": False,
+    }
+    if not force:
+        return payload
+    if path.exists():
+        path.unlink()
+        payload["storage_written"] = True
+        payload["trace_exists"] = False
+    payload["deleted_event_count"] = len(events)
+    return payload
+
+
 def write_trace_event(path: str | Path, event: Mapping[str, Any], *, max_events: int) -> None:
     trace_path = Path(path)
     events = [*read_workflow_traces(trace_path), dict(event)]
