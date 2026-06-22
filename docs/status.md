@@ -185,6 +185,11 @@ Completed:
   full set of `RECRUIT_AI_*` product-context limit overrides it already accepts,
   and tests pin that primary recruit-ai env values take precedence over legacy
   `DEAL_INTEL_*` fallbacks.
+- Added Work 7V README recruit-first positioning cleanup. The public README
+  now describes Recruit AI as a recruiting memory and recommendation backend in
+  the first viewport, updates the architecture overview around recruiting
+  records/recommendations, and labels inherited deal-health guidance as
+  compatibility behavior.
 
 Validation:
 
@@ -300,6 +305,10 @@ Validation:
   -> 41 passed, 1 third-party warning.
 - `ruff check src\deal_intel\cli.py tests\test_cli_config_profiles.py tests\test_env_config.py`
   -> passed.
+- `git diff --check` -> passed; Windows line-ending warnings only.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-readme-positioning tests\test_mcpb_manifest.py tests\test_tool_surfaces.py tests\test_config_profiles.py`
+  -> 67 passed, 1 third-party warning.
+- `ruff check src tests` -> passed.
 - `git diff --check` -> passed; Windows line-ending warnings only.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.

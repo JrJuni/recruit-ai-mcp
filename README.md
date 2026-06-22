@@ -17,19 +17,25 @@ This repository is currently a staged recruiting fork:
 - Default MongoDB databases are `recruit_ai` and `recruit_ai_demo`; M0 uses the
   existing Python cosine search path, not Atlas Vector Search.
 
-Deal Intelligence MCP is the inherited self-owned deal memory layer for solo founders,
-early AI teams, and lightweight BD teams.
+Recruit AI MCP is a self-owned recruiting memory and recommendation layer for
+solo recruiters, search firms, and small hiring teams.
 
-It turns meeting notes, customer email replies, interviews, call summaries, and
-internal notes into structured deal signals: what is known, what is missing,
-which accounts need attention, and what should be reviewed before the next
-conversation.
+It stores candidate profiles, client companies, open positions, submissions,
+client feedback, recruiter interactions, and recommendation runs in a database
+you control. It then turns that structured evidence into transparent fit
+signals: who matches a role, which roles fit a candidate, what is missing, what
+risks should be reviewed, and how client feedback changes the ranking.
 
-For mature sales organizations, it is not a Salesforce replacement. For early
-teams whose current system is scattered notes, spreadsheets, email threads, and
-memory, it can act as a lightweight first CRM-like layer: your data, your
-MongoDB or local storage, your LLM provider, queried from Claude Desktop,
-Codex, or another MCP-capable host.
+For mature recruiting platforms, it is not an ATS replacement. For teams whose
+current system is scattered resumes, spreadsheets, intake notes, email threads,
+and memory, it can act as a lightweight recruiting intelligence layer: your
+data, your MongoDB or local storage, your fit criteria, queried from Claude
+Desktop, Codex, or another MCP-capable host.
+
+The inherited Deal Intelligence MCP workflows remain available as a
+compatibility layer during the staged cutover. Those tools still support deal
+records, qualification evidence, customer themes, product context, and weekly
+sales reports for users who need them while the recruiting surface matures.
 
 The default operating path is MongoDB Atlas-backed `full` mode, including the
 free/M0 tier. A bundled no-MongoDB `sample` mode exists for AI agents, quick
@@ -56,9 +62,9 @@ Start here:
   deterministic fit scoring plus M0-safe lexical retrieval.
 - Reports recruiting pipeline counts, funnel status, feedback signals, and
   local Markdown/CSV recruiting reports.
-- Stores deal records and customer evidence in your MongoDB Atlas database, or
-  in local sample/personal storage for zero-config trials during the inherited
-  deal-intelligence cutover.
+- Keeps inherited deal records and customer evidence available in your MongoDB
+  Atlas database, or in local sample/personal storage for zero-config trials
+  during the staged cutover.
 - Converts messy customer evidence into structured deal fields, health signals,
   follow-up gaps, customer themes, and weekly review artifacts.
 - Lets you add seller-side product/solution context, such as ICP notes,
@@ -85,8 +91,9 @@ Start here:
 
 ## Architecture At A Glance
 
-This is not just a prompt wrapper. It is a small deal-intelligence backend
-exposed through MCP:
+This is not just a prompt wrapper. It is a small recruiting intelligence
+backend exposed through MCP, with inherited deal-intelligence compatibility
+tools still present during the staged cutover:
 
 ```text
 [AI host: Claude / Codex / ChatGPT]
@@ -96,11 +103,12 @@ exposed through MCP:
         |
         v
 [Domain service layer]
-  |-- deal and interaction intake
-  |-- qualification extraction
-  |-- product context retrieval
-  |-- metrics, gaps, themes, reports
-  `-- export and diagnostics
+  |-- candidates, client companies, and positions
+  |-- recruiting interactions, submissions, and feedback
+  |-- fit scoring, lexical retrieval, and recommendations
+  |-- recruiting metrics and reports
+  |-- compatibility deal intake and sales reports
+  `-- export, config, and diagnostics
         |
         v
 [Storage and retrieval]
@@ -109,7 +117,18 @@ exposed through MCP:
   `-- Atlas Vector Search pro mode
 ```
 
-A normal write path looks like this:
+A normal recruiting recommendation path looks like this:
+
+```text
+1. Candidate, client-company, and position records enter through recruiting tools.
+2. Interactions, submissions, and client feedback add evidence over time.
+3. The deterministic fit builder compares candidate and position signals.
+4. Client feedback rubric deltas adjust visible dimensions with an audit ledger.
+5. M0-safe lexical retrieval narrows pools before final fit scoring.
+6. The MCP host narrates the recommendation, risks, and next questions.
+```
+
+An inherited deal-intelligence write path looks like this:
 
 ```text
 1. A meeting note, email reply, interview, or call summary enters through add_interaction.
@@ -168,14 +187,15 @@ LLM-free so the host app can do the final narration without extra API cost.
 
 ---
 
-## How deal health works
+## Inherited Deal Health Compatibility
 
-Internally, the project uses an active qualification framework to turn messy
-evidence into comparable deal signals. MEDDPICC is the bundled default B2B
-framework, and QF-v2 adds guarded custom framework support so teams can copy a
-preset and adapt the criteria to their own sales motion. You do not need to be
-a sales expert to use the tool; the user-facing output is framed as health,
-missing information, risk signals, customer themes, and next questions.
+The inherited deal-intelligence tools use an active qualification framework to
+turn messy customer evidence into comparable deal signals. MEDDPICC is the
+bundled default B2B framework, and QF-v2 adds guarded custom framework support
+so teams can copy a preset and adapt the criteria to their own sales motion.
+You do not need to be a sales expert to use the compatibility tools; the
+user-facing output is framed as health, missing information, risk signals,
+customer themes, and next questions.
 
 | Dimension | What it measures |
 |---|---|
@@ -187,11 +207,11 @@ missing information, risk signals, customer themes, and next questions.
 | **C**hampion | Whether you have an internal advocate |
 | **C**ompetition | How you compare with competitors and the status quo |
 
-When you add customer evidence, the server-side LLM extracts these signals and
-stores the structured result. In `full` mode, real deal data persists in
-MongoDB Atlas and powers pattern analysis. In optional `sample` mode, the same
-read/review surfaces run against bundled fictional data so AI agents can
-evaluate the tool without setup.
+When you add customer evidence through inherited deal tools, the server-side
+LLM extracts these signals and stores the structured result. In `full` mode,
+compatibility deal data persists in MongoDB Atlas and powers pattern analysis.
+In optional `sample` mode, the same read/review surfaces run against bundled
+fictional data so AI agents can evaluate the tool without setup.
 
 ---
 
@@ -289,22 +309,25 @@ maintainer/debug surface.
 
 ## Fork And Customize
 
-Fork this if your sales process is too specific for a generic CRM, but too
-important to live only in notes, spreadsheets, and memory.
+Fork this if your recruiting workflow is too specific for a generic ATS, but
+too important to live only in resumes, spreadsheets, intake notes, and memory.
 
-The repo is designed as a customizable MCP deal intelligence engine, not only a
-fixed demo app. Useful fork paths include:
+The repo is designed as a customizable MCP recruiting intelligence engine with
+inherited deal-intelligence compatibility, not only a fixed demo app. Useful
+fork paths include:
 
-- early B2B SaaS or AI teams that need structure before adopting a heavy CRM;
-- RevOps-minded developers who want BANT, SPICED, or their own qualification
-  framework instead of the bundled MEDDPICC default;
-- MCP workflow builders experimenting with chat-first deal operations;
-- consulting, SI, or agency teams that want meeting, proposal, and risk memory
-  across accounts.
+- solo recruiters or boutique search firms that need structured candidate and
+  client memory before adopting a heavier ATS;
+- hiring teams that want transparent candidate-position fit criteria and
+  reusable client preference memory;
+- MCP workflow builders experimenting with chat-first recruiting operations;
+- teams that also want to preserve the inherited deal-intelligence workflows
+  for sales qualification, customer themes, or weekly pipeline reports.
 
 Common extension seams:
 
-- qualification frameworks and scoring criteria;
+- recruiting fit rubric dimensions and scoring criteria;
+- candidate, client-company, position, and submission schemas;
 - profile and tool-surface visibility;
 - storage backends and MongoDB operational contracts;
 - server-side LLM providers and cost tracking;
