@@ -110,7 +110,8 @@ Completed:
 - Broadened the recruiting-first natural-question smoke pack with
   `rq13_client_shortlist_readiness`, which verifies open sample positions have
   ranked candidate shortlists plus visible review risk flags and next-question
-  text, with quick-read counts for risk and question review coverage.
+  text, with quick-read counts for risk and question review coverage. Shortlist
+  candidate rows now also include compact recruiting-fit dimension scores.
 - Updated the MVP readiness recruiting workflow smoke gate to require the
   current 13-question pack and document recommendation guardrail plus client
   shortlist readiness coverage.

@@ -26,6 +26,7 @@ EXPECTED_CONTRACT = {
     "positions_with_next_questions": 2,
     "shortlist_risk_row_count": 4,
     "shortlist_next_question_row_count": 5,
+    "shortlist_dimension_score_row_count": 6,
 }
 _REQUIRED_QUESTIONS = (
     "rq01_recruiting_pipeline_metrics",
@@ -147,6 +148,9 @@ def validate_payload(payload: dict[str, Any]) -> dict[str, Any]:
             shortlist_payload,
             field="next_questions",
         ),
+        "shortlist_dimension_score_row_count": _shortlist_dimension_score_row_count(
+            shortlist_payload
+        ),
     }
     if actual != EXPECTED_CONTRACT:
         raise ValueError(
@@ -239,6 +243,60 @@ def _shortlist_row_count(payload: dict[str, Any], *, field: str) -> int:
                 )
             if values:
                 count += 1
+    return count
+
+
+def _shortlist_dimension_score_row_count(payload: dict[str, Any]) -> int:
+    shortlists = _required_key(
+        payload,
+        "shortlists",
+        scope="rq13_client_shortlist_readiness payload",
+    )
+    if not isinstance(shortlists, list):
+        raise ValueError("Recruiting smoke rq13 shortlists must be a list.")
+    count = 0
+    for shortlist_index, shortlist in enumerate(shortlists):
+        if not isinstance(shortlist, dict):
+            raise ValueError(
+                "Recruiting smoke rq13 shortlist rows must be mappings."
+            )
+        candidates = _required_key(
+            shortlist,
+            "candidates",
+            scope=f"rq13_client_shortlist_readiness shortlist {shortlist_index}",
+        )
+        if not isinstance(candidates, list):
+            raise ValueError(
+                "Recruiting smoke rq13 shortlist candidates must be a list."
+            )
+        for candidate_index, candidate in enumerate(candidates):
+            if not isinstance(candidate, dict):
+                raise ValueError(
+                    "Recruiting smoke rq13 candidate rows must be mappings."
+                )
+            scores = _required_key(
+                candidate,
+                "dimension_scores",
+                scope=(
+                    "rq13_client_shortlist_readiness "
+                    f"candidate {candidate_index}"
+                ),
+            )
+            if not isinstance(scores, dict):
+                raise ValueError(
+                    "Recruiting smoke rq13 dimension_scores must be a mapping."
+                )
+            missing = [
+                dimension
+                for dimension in _REQUIRED_FIT_DIMENSIONS
+                if dimension not in scores
+            ]
+            if missing:
+                raise ValueError(
+                    "Recruiting smoke rq13 dimension_scores missing "
+                    + ", ".join(missing)
+                )
+            count += 1
     return count
 
 

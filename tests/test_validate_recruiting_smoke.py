@@ -140,11 +140,13 @@ def _payload(
                             "candidates": [
                                 {
                                     "candidate_id": "cand_avery_chen",
+                                    "dimension_scores": dict(GUARDRAIL_DIMENSION_SCORES),
                                     "risk_flags": [],
                                     "next_questions": [],
                                 },
                                 {
                                     "candidate_id": "cand_jordan_lee",
+                                    "dimension_scores": dict(GUARDRAIL_DIMENSION_SCORES),
                                     "risk_flags": [
                                         "missing production Python evidence"
                                     ],
@@ -154,6 +156,7 @@ def _payload(
                                 },
                                 {
                                     "candidate_id": "cand_eli_brooks",
+                                    "dimension_scores": dict(GUARDRAIL_DIMENSION_SCORES),
                                     "risk_flags": ["requires manager scope"],
                                     "next_questions": [
                                         "Confirm compensation flexibility."
@@ -166,6 +169,7 @@ def _payload(
                             "candidates": [
                                 {
                                     "candidate_id": "cand_mateo_rivera",
+                                    "dimension_scores": dict(GUARDRAIL_DIMENSION_SCORES),
                                     "risk_flags": [],
                                     "next_questions": [
                                         "Confirm whether timing fits the search plan."
@@ -173,6 +177,7 @@ def _payload(
                                 },
                                 {
                                     "candidate_id": "cand_iris_kim",
+                                    "dimension_scores": dict(GUARDRAIL_DIMENSION_SCORES),
                                     "risk_flags": [
                                         "needs senior mentorship for platform lead scope"
                                     ],
@@ -182,6 +187,7 @@ def _payload(
                                 },
                                 {
                                     "candidate_id": "cand_sam_taylor",
+                                    "dimension_scores": dict(GUARDRAIL_DIMENSION_SCORES),
                                     "risk_flags": ["needs heavy role shaping"],
                                     "next_questions": [
                                         "Review client preference conflict before shortlisting."
@@ -338,3 +344,27 @@ def test_validate_recruiting_smoke_cli_fails_without_shortlist_evidence(tmp_path
     assert "Recruiting natural-question smoke contract mismatch" in result.stderr
     assert "'shortlist_risk_row_count': 4" in result.stderr
     assert "'shortlist_next_question_row_count': 5" in result.stderr
+
+
+def test_validate_recruiting_smoke_cli_fails_without_shortlist_dimensions(tmp_path) -> None:
+    payload = _payload()
+    shortlist = next(
+        question
+        for question in payload["questions"]
+        if question["id"] == "rq13_client_shortlist_readiness"
+    )
+    del shortlist["payload"]["shortlists"][0]["candidates"][0]["dimension_scores"][
+        "skill_fit"
+    ]
+    payload_path = tmp_path / "recruiting-natural-questions.json"
+    payload_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = subprocess.run(
+        [sys.executable, str(VALIDATOR), str(payload_path)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    assert "Recruiting smoke rq13 dimension_scores missing skill_fit" in result.stderr

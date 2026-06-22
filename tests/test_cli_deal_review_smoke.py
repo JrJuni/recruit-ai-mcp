@@ -676,6 +676,9 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     jordan_shortlist = next(
         row for row in northstar_candidates if row["candidate_id"] == "cand_jordan_lee"
     )
+    assert jordan_shortlist["dimension_scores"]["skill_fit"] == 2
+    assert jordan_shortlist["dimension_scores"]["client_preference_fit"] == 0
+    assert jordan_shortlist["dimension_scores"]["risk"] == 4
     assert jordan_shortlist["risk_flags"] == [
         "missing production Python evidence",
         "client_exclusion",
@@ -689,6 +692,7 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     sam_shortlist = next(
         row for row in orbitpay_candidates if row["candidate_id"] == "cand_sam_taylor"
     )
+    assert sam_shortlist["dimension_scores"]["client_preference_fit"] == 1
     assert sam_shortlist["risk_flags"] == [
         "needs heavy role shaping",
         "client_preference_conflict",

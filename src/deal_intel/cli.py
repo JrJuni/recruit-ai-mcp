@@ -3889,6 +3889,10 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
                     "candidate_id": result.target_id,
                     "rank": result.rank,
                     "overall_score": result.fit_snapshot.overall_score,
+                    "dimension_scores": {
+                        key: signal.score
+                        for key, signal in result.fit_snapshot.dimensions.items()
+                    },
                     "risk_flag_count": len(result.risk_flags),
                     "risk_flags": result.risk_flags[:10],
                     "next_question_count": len(result.next_questions),
