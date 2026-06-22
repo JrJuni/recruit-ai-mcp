@@ -121,6 +121,9 @@ Completed:
 - Added release workflow smoke-evidence upload so the `0.1.0` release job
   retains the validated recruiting natural-question JSON as
   `release-smoke-evidence-<version>`.
+- Cleaned architecture and recruiting-domain docs so they no longer describe
+  current recruiting MCP, recommendation, metrics, or sample-surface paths as
+  deferred after those paths are implemented.
 - Added a realistic Northstar recommendation stress fixture for a healthcare
   platform manager-only candidate. The sample recommendation tests and natural
   question guardrails now ensure this keyword-strong but constraint-heavy

@@ -44,8 +44,9 @@ intelligence codebase. Work 0 isolated public package/config/runtime defaults;
 Work 1 added the recruiting domain contract; Work 2A added Mongo-managed
 recruiting collections beside the inherited deal collections; Work 2B added
 storage payload normalization and typed internal read wrappers; Work 2C added
-internal create services; Work 2D adds internal lifecycle services without
-changing MCP tool registration.
+internal create services; Work 2D added internal lifecycle services; Work 3-6
+added deterministic fit scoring, recommendations, MCP tools, metrics, and
+reports; and Work 7 added local/sample/demo/docs cleanup.
 
 The recruiting schema source is:
 
@@ -100,13 +101,14 @@ It owns the first future write-tool path for candidates, client companies, and
 positions: input dicts are validated with the recruiting Pydantic models,
 missing IDs are generated with entity prefixes, storage failures become
 retryable `STORAGE_ERROR` responses, and validation failures become secret-safe
-`INVALID_INPUT` responses. Public MCP registration remains deferred.
+`INVALID_INPUT` responses. These services are exposed through the Work 5 MCP
+tools.
 
 Work 2D extends that module for interactions, submissions, and feedback.
 Interaction responses keep raw content hidden by default. Feedback can be
 captured even when the referenced submission is missing; when the submission is
 present, the service links `feedback_id` into `submission.client_feedback_ids`.
-Public MCP registration remains deferred.
+These lifecycle services are also exposed through the Work 5 MCP tools.
 
 Work 3A adds deterministic fit scoring in
 `src/deal_intel/schema/recruiting_fit.py`. It builds validated `FitSnapshot`
@@ -135,15 +137,15 @@ Work 3D adds deterministic recommendation run/result builders in
 already-supplied candidate-position pairs through the Work 3B/3C fit builder,
 then return validated `RecommendationRun` and `RecommendationResult` models
 with reasons, low-fit rejection notes, risk flags, and next questions. Search,
-RAG retrieval, persistence, and MCP exposure remain deferred to Work 4 and Work
-5.
+retrieval ordering, persistence, and MCP exposure are handled by Work 4 and Work
+5; Atlas Vector Search remains deferred to paid infrastructure.
 
 Work 4A adds internal recommendation services in
 `src/deal_intel/tools/recruiting_recommendations.py`. These services bridge
 storage read wrappers to the deterministic recommendation builders for both
 `position_to_candidates` and `candidate_to_positions`. Run persistence is
-explicit through `save_run`; preview mode is default. Public MCP registration,
-semantic retrieval, and Atlas Vector Search remain deferred.
+explicit through `save_run`; preview mode is default. Work 5 exposes these
+services through MCP. Atlas Vector Search remains deferred.
 
 Work 4B adds M0-safe lexical retrieval helpers in
 `src/deal_intel/schema/recruiting_retrieval.py`. The helpers order or limit
@@ -199,7 +201,7 @@ The project uses one repository and one package with three profiles:
 
 | Profile | Storage | Search | Default LLM | Purpose |
 |---|---|---|---|---|
-| `sample` | `local_sample` | no semantic search | `chatgpt_oauth` | Zero-config feature test, future local personal use |
+| `sample` | `local_sample` | no semantic search | `chatgpt_oauth` | Zero-config fixture and local personal use |
 | `full` | MongoDB Atlas | Python cosine | `chatgpt_oauth` | Real team data |
 | `pro` | MongoDB Atlas | Atlas Vector Search | `openai_api` (`gpt-5.4-mini`) | Paid infra path |
 

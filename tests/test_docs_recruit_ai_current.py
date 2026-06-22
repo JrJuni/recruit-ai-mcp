@@ -360,6 +360,28 @@ def test_tool_surface_docs_match_current_counts_and_env_prefix() -> None:
     assert "`developer`: 42 tools" not in docs
 
 
+def test_architecture_and_domain_docs_match_current_recruiting_surface() -> None:
+    architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
+    domain = (ROOT / "docs" / "recruiting-domain-model.md").read_text(
+        encoding="utf-8"
+    )
+    combined = "\n".join([architecture, domain])
+    normalized_architecture = " ".join(architecture.split())
+    normalized_domain = " ".join(domain.split())
+
+    assert "Work 5 exposes these services through MCP" in normalized_architecture
+    assert "Work 5 exposes the service paths through MCP" in domain
+    assert "Work 5A-B Current Recruiting MCP Tools" in domain
+    assert "Tools are visible on `sample`, `standard`, and `developer`." in domain
+    assert "Zero-config fixture and local personal use" in architecture
+    assert "export_recruiting_report" in combined
+
+    assert "Public MCP registration remains deferred" not in combined
+    assert "MCP exposure remain deferred" not in combined
+    assert "Public MCP registration, semantic retrieval" not in combined
+    assert "Tools are hidden from `sample`" not in normalized_domain
+
+
 def test_mongodb_atlas_pro_docs_use_recruit_ai_cli() -> None:
     docs = (ROOT / "docs" / "mongodb-atlas-pro.md").read_text(encoding="utf-8")
 

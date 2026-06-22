@@ -349,14 +349,13 @@ Builder policy:
 ## Work 4A Internal Recommendation Services
 
 Work 4A connects the deterministic recommendation builders to recruiting
-storage read wrappers. It still does not register public MCP tools and does not
-use embeddings, LLMs, or Atlas Vector Search.
+storage read wrappers. It does not use embeddings, LLMs, or Atlas Vector
+Search; Work 5 exposes the service paths through MCP.
 
 Service entry points:
 
 - `recommend_candidates_for_position`
 - `recommend_positions_for_candidate`
-- `get_recruiting_metrics`
 
 Service policy:
 
@@ -392,11 +391,10 @@ Retrieval policy:
   `RecommendationRun` from Work 3D.
 - Atlas Vector Search remains deferred to paid M10+ infrastructure.
 
-## Work 5A First Recruiting MCP Tools
+## Work 5A-B Current Recruiting MCP Tools
 
-Work 5A exposes the first recruiting workflows through the public MCP tool
-surface. It keeps the inherited deal tools during the staged cutover and does
-not register the full future recruiting lifecycle surface yet.
+Work 5A and Work 5B expose the current recruiting workflows through the public
+MCP tool surface while keeping inherited deal tools during the staged cutover.
 
 MCP tools:
 
@@ -413,9 +411,10 @@ MCP tools:
 
 Surface policy:
 
-- Tools are visible on `standard` and `developer`.
-- Tools are hidden from `sample` because local sample storage does not yet
-  implement recruiting write/read wrappers.
+- Tools are visible on `sample`, `standard`, and `developer`.
+- In `sample`, recruiting writes use local personal storage when the user
+  creates records; fixture mode remains zero-config for safe reads and
+  diagnostics.
 - Create and feedback tools write recruiting collection records.
 - Interaction responses keep stored raw content hidden by default.
 - Submission tools can store the fit snapshot captured at client presentation
