@@ -322,6 +322,14 @@ Node.js, MongoDB Atlas, and Claude/Codex/ChatGPT setup.
 - For LLM extraction/scoring: ChatGPT OAuth from a compatible subscription,
   `ANTHROPIC_API_KEY`, or `OPENAI_API_KEY`
 
+If you install Miniconda/Anaconda for the first time, the first `conda create`
+or `conda install` may ask you to accept Anaconda Terms of Service for the
+default package channels, commonly `https://repo.anaconda.com/pkgs/main` and
+`https://repo.anaconda.com/pkgs/r`. Read the prompt and enter `a` to accept, or
+run `conda tos accept` from Terminal/PowerShell after reviewing the terms. See
+Anaconda's command-line ToS guide:
+<https://www.anaconda.com/docs/getting-started/tos-plugin>.
+
 Short version:
 
 ```text

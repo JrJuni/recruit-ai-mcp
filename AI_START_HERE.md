@@ -91,6 +91,32 @@ now, or continue in zero-config sample mode for now and come back to MongoDB
 later?
 ```
 
+### Conda First-Run Terms Of Service
+
+If the user just installed Miniconda/Anaconda, the first `conda create` or
+`conda install` can stop and ask for Terms of Service acceptance for Anaconda's
+default channels. This is expected. The usual channels are:
+
+- `https://repo.anaconda.com/pkgs/main`
+- `https://repo.anaconda.com/pkgs/r`
+
+Guide the user to read the prompt and enter `a` for each channel they accept.
+If they prefer to accept from the command line after reviewing the terms, use:
+
+```bash
+conda tos accept
+```
+
+If conda asks for channel-specific acceptance, use:
+
+```bash
+conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+```
+
+Reference:
+<https://www.anaconda.com/docs/getting-started/tos-plugin>
+
 Use the conda environment Python directly. First help the user identify the
 interpreter path for the environment where `deal-intel-mcp` is installed. For a
 new local setup, the recommended environment name is `deal-intel`:

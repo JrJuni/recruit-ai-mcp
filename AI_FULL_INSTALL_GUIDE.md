@@ -57,6 +57,33 @@ Confirm these before running commands.
   app, retry `config doctor` from the user's normal terminal before changing
   credentials.
 
+### Miniconda/Anaconda First-Run Terms Of Service
+
+On a fresh Miniconda or Anaconda install, the first `conda create`,
+`conda install`, or other channel-using command may pause for Terms of Service
+acceptance. Anaconda documents this behavior for its default channels, commonly:
+
+- `https://repo.anaconda.com/pkgs/main`
+- `https://repo.anaconda.com/pkgs/r`
+
+Tell the user this is normal. Ask them to read the prompt and enter `a` for
+each channel they accept. If they want to accept from the command line after
+reviewing the terms, run:
+
+```bash
+conda tos accept
+```
+
+If conda requires explicit channel selection, run:
+
+```bash
+conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+```
+
+Reference:
+<https://www.anaconda.com/docs/getting-started/tos-plugin>
+
 ## 3. Python Interpreter Path
 
 The Python interpreter path is the full path to the Python executable inside the
@@ -123,6 +150,10 @@ Create a conda env if needed:
 ```powershell
 & "$HOME\miniconda3\Scripts\conda.exe" create -n deal-intel python=3.11 -y
 ```
+
+If this command stops with a Terms of Service prompt, have the user accept the
+two default Anaconda channels as described in the preparation section, then run
+the `conda create` command again.
 
 Install the package:
 
