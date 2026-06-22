@@ -32,7 +32,8 @@ Do not read every doc by default. Start here:
 4. `docs/status.md` for the latest completed work.
 5. `docs/baseline.md` for MCP tool contracts.
 6. `docs/metrics.md`, `docs/reports.md`, `docs/storage-backends.md`, or
-   `docs/config-profiles.md` only when the task touches that area.
+   `docs/config-profiles.md` only when the task touches that area, including
+   recruiting pipeline metrics or recruiting report exports.
 
 Append-only or historical docs such as `docs/lesson-learned.md` and old
 sections of `docs/backlog.md` are archive material. Search them for a specific
@@ -189,8 +190,9 @@ the number in the same change.
   archive.
 - `docs/backlog.md`: current backlog index first, historical roadmap below.
 - `docs/baseline.md`: MCP tool contracts and verification baseline.
-- `docs/metrics.md`: BI metric definitions and boundary contracts.
-- `docs/reports.md`: CSV/Markdown report contracts.
+- `docs/metrics.md`: deal BI and recruiting pipeline metric definitions and
+  boundary contracts.
+- `docs/reports.md`: deal and recruiting CSV/Markdown report contracts.
 - `docs/storage-backends.md`: Mongo vs local sample storage contract.
 - `docs/config-profiles.md`: `sample/full/pro` profile plan.
 - `docs/lesson-learned.md`: append-only failure log; search it when debugging.

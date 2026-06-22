@@ -34,8 +34,8 @@ These are active source-adjacent contracts.
 | `extending.md` | Forking or customizing the project for a specific sales motion |
 | `customization-recipes.md` | Following practical examples for common fork changes |
 | `baseline.md` | Changing MCP tools, storage behavior, or smoke expectations |
-| `metrics.md` | Changing health, pipeline value, timing, win rate, data quality, or trend metrics |
-| `reports.md` | Changing CSV/Markdown exports or report row shapes |
+| `metrics.md` | Changing deal BI metrics or recruiting pipeline KPI/data-quality metrics |
+| `reports.md` | Changing deal or recruiting CSV/Markdown exports and report row shapes |
 | `storage-backends.md` | Changing Mongo/local sample storage behavior |
 | `config-profiles.md` | Changing `sample`, `full`, or `pro` profile behavior |
 | `recruiting-domain-model.md` | Designing the recruiting fork data model, fit rubric, or recommendation records |
@@ -143,5 +143,5 @@ If archived content conflicts with code or active contract docs, prefer:
   storage.
 - Deal review quality: separate evidence coverage, health quality, confirmed
   risks, and uncertainty.
-- Reporting/BI: shared metric engine feeding MCP answers, CSV/Markdown, and
-  Atlas Charts.
+- Reporting/BI: shared deal metric engine plus recruiting pipeline metrics
+  feeding MCP answers, CSV/Markdown, and Atlas Charts where applicable.
