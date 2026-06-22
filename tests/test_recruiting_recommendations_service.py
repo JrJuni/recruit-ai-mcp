@@ -10,7 +10,9 @@ from deal_intel.schema.recruiting import (
     CompensationExpectation,
     Position,
 )
+from deal_intel.storage.recruiting_collections import CANDIDATES, FEEDBACK, POSITIONS
 from deal_intel.tools import recruiting_recommendations
+from deal_intel.tools.sample_dataset import build_sample_recruiting_records
 
 
 class FakeRecommendationStorage:
@@ -184,6 +186,35 @@ def test_recommend_positions_for_candidate_filters_open_positions() -> None:
     assert [row["target_id"] for row in result["record"]["results"]] == [
         "pos_backend_lead"
     ]
+
+
+def test_recommend_positions_for_candidate_defaults_to_open_sample_roles() -> None:
+    records = build_sample_recruiting_records(loaded_at="2026-06-22T00:00:00+00:00")
+    storage = FakeRecommendationStorage()
+    storage.candidates = {row["candidate_id"]: row for row in records[CANDIDATES]}
+    storage.positions = {row["position_id"]: row for row in records[POSITIONS]}
+    storage.feedback = records[FEEDBACK]
+
+    default_result = recruiting_recommendations.recommend_positions_for_candidate(
+        storage,
+        candidate_id="cand_lin_park",
+    )
+    all_status_result = recruiting_recommendations.recommend_positions_for_candidate(
+        storage,
+        candidate_id="cand_lin_park",
+        position_status=None,
+    )
+
+    assert {
+        row["target_id"] for row in default_result["record"]["results"]
+    } == {"pos_northstar_backend_lead", "pos_orbitpay_payments_lead"}
+    assert "pos_northstar_data_manager" not in {
+        row["target_id"] for row in default_result["record"]["results"]
+    }
+    assert all_status_result["record"]["results"][0]["target_id"] == (
+        "pos_northstar_data_manager"
+    )
+    assert all_status_result["record"]["query"]["position_status"] is None
 
 
 def test_recommend_candidates_for_position_applies_retrieval_limit() -> None:

@@ -122,6 +122,9 @@ Completed:
   platform manager-only candidate. The sample recommendation tests and natural
   question guardrails now ensure this keyword-strong but constraint-heavy
   candidate does not outrank the aligned staff IC match.
+- Added a service-level recommendation guardrail confirming candidate-to-position
+  recommendations default to open roles and exclude paused sample positions
+  unless `position_status=None` is explicitly requested.
 - Added Work 6A recruiting pipeline metrics calculator. It computes summary
   counts, position status rates, submission funnel rates, feedback signal
   rates, and data-quality counters from safe recruiting records without
