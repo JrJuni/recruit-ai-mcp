@@ -106,6 +106,8 @@ Immediate quality order:
    - Additional stress coverage now includes an OrbitPay payments candidate
      whose strong stack match is outweighed by a learned negative client
      preference for candidates who need heavy role shaping before interviews.
+     Recommendation rows now surface that condition with a
+     `client_preference_conflict` risk flag.
    - Additional stress coverage now includes a Northstar healthcare workflow
      candidate whose adjacent domain fit should not outrank the aligned staff
      candidate while required Python and data-platform evidence is missing.

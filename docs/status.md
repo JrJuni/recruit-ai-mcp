@@ -176,7 +176,8 @@ Completed:
 - Added a learned-client-preference recommendation guardrail. The sample now
   includes an OrbitPay payments candidate with a strong stack match but a
   heavy-role-shaping conflict, and the scoring layer penalizes applicable
-  negative preference learning before shortlist ranking.
+  negative preference learning before shortlist ranking. Recommendation rows
+  now expose this as a `client_preference_conflict` risk flag.
 - Added a candidate excluded-company recommendation guardrail. Candidate
   `preferences.excluded_companies` now suppresses client preference fit for a
   matching position client, raises review-level match risk, and can move an

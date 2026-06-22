@@ -469,5 +469,6 @@ def test_recruiting_sample_client_preference_conflict_does_not_outrank_match() -
     )
     assert results["cand_sam_taylor"].risk_flags == [
         "needs heavy role shaping",
+        "client_preference_conflict",
         "review_match_risk",
     ]

@@ -647,6 +647,12 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     assert "Confirm whether candidate is open to an IC mandate." in (
         eli_guardrail["guardrail_next_questions"]
     )
+    sam_guardrail = guardrail_by_candidate["cand_sam_taylor"]
+    assert sam_guardrail["guardrail_risk_flags"] == [
+        "needs heavy role shaping",
+        "client_preference_conflict",
+        "review_match_risk",
+    ]
     assert (output_dir / "rq13_client_shortlist_readiness.json").exists()
     shortlist = json.loads(
         (output_dir / "rq13_client_shortlist_readiness.json").read_text(
@@ -682,6 +688,7 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     )
     assert sam_shortlist["risk_flags"] == [
         "needs heavy role shaping",
+        "client_preference_conflict",
         "review_match_risk",
     ]
     assert "Review client preference conflict before shortlisting." in (

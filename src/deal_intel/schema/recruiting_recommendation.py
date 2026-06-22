@@ -173,6 +173,8 @@ def _risk_flags(
         flags.append("compensation_mismatch")
     if _has_client_exclusion(fit) and "client_exclusion" not in flags:
         flags.append("client_exclusion")
+    if _has_client_preference_conflict(fit) and "client_preference_conflict" not in flags:
+        flags.append("client_preference_conflict")
     if _has_availability_timing_risk(fit) and not _has_existing_availability_flag(flags):
         flags.append("availability_timing_risk")
     if _has_role_scope_mismatch(fit) and not _has_existing_scope_flag(flags):
@@ -218,6 +220,16 @@ def _has_client_exclusion(fit: CandidatePositionFitResult) -> bool:
         "Candidate excluded this client company from target searches."
         in preference_signal.rationale
         or "Confirm whether the candidate exclusion can be revisited."
+        in preference_signal.missing_info
+    )
+
+
+def _has_client_preference_conflict(fit: CandidatePositionFitResult) -> bool:
+    preference_signal = fit.signals["client_preference_fit"]
+    return (
+        "Candidate profile overlaps learned negative client preference text."
+        in preference_signal.rationale
+        or "Review client preference conflict before shortlisting."
         in preference_signal.missing_info
     )
 
