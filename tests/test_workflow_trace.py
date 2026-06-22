@@ -12,6 +12,7 @@ from deal_intel.workflow_trace import (
     read_workflow_traces,
     reset_workflow_trace,
     workflow_trace_enabled,
+    workflow_trace_max_events,
     workflow_trace_path,
     write_trace_event,
 )
@@ -122,6 +123,44 @@ def test_workflow_trace_can_be_enabled_by_env_and_is_bounded(tmp_path) -> None:
     ]
     assert events[1]["success"] is False
     assert events[1]["error_category"] == "TEST"
+
+
+def test_workflow_trace_recruit_ai_env_overrides_legacy_env(tmp_path) -> None:
+    cfg = {
+        "storage": {"local_data_dir": str(tmp_path)},
+        "observability": {"workflow_trace": {"enabled": False, "max_events": 25}},
+    }
+    primary_path = tmp_path / "primary-trace.jsonl"
+    legacy_path = tmp_path / "legacy-trace.jsonl"
+    environ = {
+        "RECRUIT_AI_WORKFLOW_TRACE": "0",
+        "DEAL_INTEL_WORKFLOW_TRACE": "1",
+        "RECRUIT_AI_WORKFLOW_TRACE_PATH": str(primary_path),
+        "DEAL_INTEL_WORKFLOW_TRACE_PATH": str(legacy_path),
+        "RECRUIT_AI_WORKFLOW_TRACE_MAX_EVENTS": "7",
+        "DEAL_INTEL_WORKFLOW_TRACE_MAX_EVENTS": "3",
+    }
+
+    assert workflow_trace_enabled(cfg, environ=environ) is False
+    assert workflow_trace_path(cfg, environ=environ) == primary_path
+    assert workflow_trace_max_events(cfg, environ=environ) == 7
+
+
+def test_workflow_trace_uses_legacy_env_when_primary_env_missing(tmp_path) -> None:
+    cfg = {
+        "storage": {"local_data_dir": str(tmp_path)},
+        "observability": {"workflow_trace": {"enabled": False, "max_events": 25}},
+    }
+    legacy_path = tmp_path / "legacy-trace.jsonl"
+    environ = {
+        "DEAL_INTEL_WORKFLOW_TRACE": "1",
+        "DEAL_INTEL_WORKFLOW_TRACE_PATH": str(legacy_path),
+        "DEAL_INTEL_WORKFLOW_TRACE_MAX_EVENTS": "3",
+    }
+
+    assert workflow_trace_enabled(cfg, environ=environ) is True
+    assert workflow_trace_path(cfg, environ=environ) == legacy_path
+    assert workflow_trace_max_events(cfg, environ=environ) == 3
 
 
 def test_workflow_trace_status_reports_recent_events(tmp_path) -> None:

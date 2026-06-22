@@ -134,6 +134,9 @@ Completed:
   event-only read path.
 - Added local-data boundary coverage confirming workflow traces stay out of
   personal data exports and are preserved by the normal local-data reset path.
+- Added workflow trace env-prefix guardrails and `.env.example` hints for the
+  opt-in `RECRUIT_AI_WORKFLOW_TRACE*` settings while keeping legacy
+  `DEAL_INTEL_WORKFLOW_TRACE*` fallback behavior covered by tests.
 - Added Work 6A recruiting pipeline metrics calculator. It computes summary
   counts, position status rates, submission funnel rates, feedback signal
   rates, and data-quality counters from safe recruiting records without
