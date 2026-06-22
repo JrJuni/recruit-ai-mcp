@@ -1,10 +1,10 @@
 # mcpb - Claude Desktop bundle
 
-This folder builds `deal-intel-mcp.mcpb`, a [Claude Desktop MCP Bundle](https://github.com/modelcontextprotocol/mcpb) for one-click install.
+This folder builds `recruit-ai-mcp.mcpb`, a [Claude Desktop MCP Bundle](https://github.com/modelcontextprotocol/mcpb) for one-click install.
 
 ## Why .mcpb
 
-The bundle ships the manifest + user-config schema. When the user double-clicks `deal-intel-mcp-{version}.mcpb`, Claude Desktop prompts for the required paths/keys via a UI form instead of asking the user to hand-edit JSON.
+The bundle ships the manifest + user-config schema. When the user double-clicks `recruit-ai-mcp-{version}.mcpb`, Claude Desktop prompts for the required paths/keys via a UI form instead of asking the user to hand-edit JSON.
 
 This bundle does not include the Python package or dependencies. The easiest
 no-git-clone path is to run `npx deal-intel-mcp setup` first, then paste the
@@ -14,9 +14,9 @@ MCPB form.
 Alternatively, install the project into an existing Python environment first,
 then provide these fields:
 
-- **`python_path`** - select the Python interpreter where `deal-intel-mcp` is
+- **`python_path`** - select the Python interpreter where `recruit-ai-mcp` is
   installed. This can be the npx-managed runtime path or an existing Python
-  environment that ran `pip install "deal-intel-mcp[embedding]"` or
+  environment that ran `pip install "recruit-ai-mcp[embedding]"` or
   `pip install -e ".[embedding]"`.
 - **`storage_backend`** - choose `mongo` for real Atlas-backed data. Use
   `local_sample` only for zero-config sample/local personal mode.
@@ -48,8 +48,8 @@ MongoDB Atlas links:
 ```bash
 cd mcpb
 mcpb validate manifest.json
-mcpb pack . deal-intel-mcp-0.2.3.mcpb   # output goes into mcpb/ folder
-mcpb info deal-intel-mcp-0.2.3.mcpb
+mcpb pack . recruit-ai-mcp-0.2.3.mcpb   # output goes into mcpb/ folder
+mcpb info recruit-ai-mcp-0.2.3.mcpb
 ```
 
 `mcpb` CLI: `npm install -g @anthropic-ai/mcpb` (Node.js 18+).
@@ -71,7 +71,7 @@ npx deal-intel-mcp mcp-config
 Use the `mcp-config` Python path in the MCPB form.
 
 1. Open Claude Desktop -> Settings -> Extensions
-2. Drag `deal-intel-mcp-{version}.mcpb` onto the Extensions pane (or click "Install from file")
+2. Drag `recruit-ai-mcp-{version}.mcpb` onto the Extensions pane (or click "Install from file")
 3. Fill the user_config form:
    - **Python interpreter path** - select the npx-managed Python path or an
      existing environment's `python.exe`
@@ -102,11 +102,10 @@ Suggested first install:
 2. Set **MCP tool surface** to `auto`.
 3. Fill **MongoDB Atlas URI**. M0/free tier works for the `full` profile.
 4. Restart Claude Desktop and run `config_doctor(offline=true)`.
-5. If `config_doctor` is OK, create the first deal and paste the first meeting
-   note, customer email reply, call summary, user interview, or internal note
-   with `add_interaction`.
-6. Run `get_deal_review` for the first deal before asking broader pipeline
-   questions.
+5. If `config_doctor` is OK, create the first client, position, and candidate
+   with `create_client_company`, `create_position`, and `create_candidate`.
+6. Run `recommend_candidates_for_position`, `recommend_positions_for_candidate`,
+   or `get_recruiting_metrics` before asking broader pipeline questions.
 
 Zero-config demo install:
 
@@ -114,9 +113,18 @@ Zero-config demo install:
 2. Set **MCP tool surface** to `auto`.
 3. Leave MongoDB/API-key fields blank.
 4. Restart Claude Desktop and run `config_doctor(offline=true)`.
-5. Try the bundled sample data. You can also create small local personal deals;
+5. Try the bundled deal sample data. You can also create small local personal deals;
    once local personal data exists, active reads use that local dataset instead
    of the immutable bundled fixture.
+
+Atlas-backed recruiting demo:
+
+1. Set **Storage backend** to `mongo`.
+2. Set **MCP tool surface** to `developer`.
+3. Use a demo database different from the primary database.
+4. Run `create_sample_data(dataset="recruiting_pipeline_demo")` first as a
+   dry-run, then again with `dry_run=false` and `confirmed_by_user=true` when
+   the preview looks right.
 
 ## Validation in this repository
 
@@ -137,6 +145,6 @@ external `mcpb` CLI.
 
 1. Update `version` in `manifest.json`
 2. Update `tools[]` if the MCP tool surface changed
-3. Rebuild: `mcpb pack . deal-intel-mcp-{new_version}.mcpb`
+3. Rebuild: `mcpb pack . recruit-ai-mcp-{new_version}.mcpb`
 
 **Note:** bundle `version` is an independent track from `pyproject.toml` version. Only bump when the install-surface (manifest fields / form) changes.

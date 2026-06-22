@@ -5,13 +5,15 @@
 Recruit AI MCP is a bootstrap fork of Deal Intelligence MCP for recruiter and
 search-firm intelligence.
 
-This repository is currently in **Work 0 / bootstrap isolation**:
+This repository is currently a staged recruiting fork:
 
 - Public package metadata, CLI alias, config paths, env prefix, and MongoDB
   defaults now use `recruit-ai-mcp` / `recruit-ai` / `RECRUIT_AI_*`.
 - Python package imports intentionally remain `deal_intel`.
-- The MCP tool surface still uses inherited deal-intelligence tools until the
-  recruiting domain model and tool cutover land in later work.
+- The MCP tool surface now includes first recruiting workflows for candidates,
+  client companies, positions, feedback, recommendations, metrics, reports,
+  and demo data.
+- Inherited deal-intelligence tools remain available during the staged cutover.
 - Default MongoDB databases are `recruit_ai` and `recruit_ai_demo`; M0 uses the
   existing Python cosine search path, not Atlas Vector Search.
 
@@ -48,8 +50,15 @@ Start here:
 
 ## What it does
 
+- Stores recruiting records for candidates, hiring customers, positions,
+  submissions, feedback, interactions, and recommendation runs.
+- Recommends candidates for positions and positions for candidates using
+  deterministic fit scoring plus M0-safe lexical retrieval.
+- Reports recruiting pipeline counts, funnel status, feedback signals, and
+  local Markdown/CSV recruiting reports.
 - Stores deal records and customer evidence in your MongoDB Atlas database, or
-  in local sample/personal storage for zero-config trials.
+  in local sample/personal storage for zero-config trials during the inherited
+  deal-intelligence cutover.
 - Converts messy customer evidence into structured deal fields, health signals,
   follow-up gaps, customer themes, and weekly review artifacts.
 - Lets you add seller-side product/solution context, such as ICP notes,

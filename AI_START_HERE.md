@@ -210,8 +210,8 @@ When installing the MCPB, recommend:
 Expected visible tool counts:
 
 - `sample`: 24 tools
-- `standard` / `full`: 38 tools
-- `developer`: 41 tools
+- `standard` / `full`: 48 tools
+- `developer`: 52 tools
 
 If the host app's tool search shows only a handful of tools, that is usually a
 host-side search limit rather than a server loading failure. Ask it to call
@@ -219,12 +219,38 @@ host-side search limit rather than a server loading failure. Ask it to call
 
 After restart, ask Claude/Codex to run `config_doctor` first.
 
-## First Customer Evidence
+## First Useful Recruiting Data
 
 If `config_doctor` is OK, do not stop at diagnostics. Help the user add the
-first real customer evidence so the system has something useful to remember.
+first real recruiting records so the system has something useful to match,
+score, and remember.
 
-For a new `full` workspace, the first value path is:
+For a new recruiting `full` workspace, the first value path is:
+
+1. Create the hiring customer with `create_client_company`.
+2. Create one search mandate with `create_position`.
+3. Create one candidate profile with `create_candidate`.
+4. Add useful evidence with `add_recruiting_interaction` or
+   `add_client_feedback`.
+5. Run `recommend_candidates_for_position`, `recommend_positions_for_candidate`,
+   or `get_recruiting_metrics`.
+
+Use this prompt after a successful first `config_doctor`:
+
+```text
+Setup looks ready. The next step is to add the first recruiting records.
+
+Please give me one client/company, one open role, and one candidate profile.
+Useful details are: role title, must-have skills, seniority, location/remote
+policy, target compensation if known, candidate skills, current title,
+locations, availability, and any client preference or feedback.
+
+I will create the client, position, and candidate, then run the first
+candidate-position recommendation or recruiting pipeline metric.
+```
+
+Inherited deal-intelligence tools still exist during the staged cutover. If
+the user is using the legacy deal workflow instead, use this path:
 
 1. Create or identify the first deal with `create_deal` or `list_deals`.
 2. Ask the user to paste one customer evidence item:
@@ -237,7 +263,7 @@ For a new `full` workspace, the first value path is:
 4. Run `get_deal_review` on that deal to show health, gaps, uncertainty, and
    next questions.
 
-Use this prompt after a successful first `config_doctor`:
+Prompt for the inherited deal workflow:
 
 ```text
 Setup looks ready. The next step is to add your first customer evidence.
@@ -255,15 +281,19 @@ I will create or select the deal, store the evidence with add_interaction, then
 show you the first deal review.
 ```
 
-For sample mode, explain that fictional deals already exist. The user can ask
-sample questions immediately, or create a local personal deal and then paste
-their own evidence.
+For sample mode, explain that fictional deal records already exist. For an
+Atlas-backed fictional recruiting demo, switch to the `developer` surface and
+run `create_sample_data(dataset="recruiting_pipeline_demo")` against the demo
+database.
 
 ## First Useful Questions
 
-After at least one deal/evidence item exists, ask:
+After at least one recruiting or deal evidence item exists, ask:
 
 ```text
+Who are the strongest candidates for this position?
+Which open positions fit this candidate?
+Show recruiting pipeline metrics.
 How healthy is the current pipeline?
 Show me the current deal list.
 Which deal needs attention first?
@@ -274,6 +304,10 @@ What are customers most often concerned about?
 
 Prefer deterministic read tools for normal questions:
 
+- Candidate recommendations for a role -> `recommend_candidates_for_position`
+- Open-position recommendations for a candidate -> `recommend_positions_for_candidate`
+- Recruiting KPI / funnel / feedback metrics -> `get_recruiting_metrics`
+- Recruiting Markdown/CSV pipeline report -> `export_recruiting_report`
 - Pipeline health / KPI / trend -> `get_metrics`
 - Pipeline table / stuck deals at a glance -> `list_deals`
 - One deal's stored history -> `get_deal`

@@ -107,6 +107,10 @@ Completed:
   interactions in the demo database only. Recruiting sample cleanup uses stable
   fictional IDs instead of extra marker fields so strict recruiting read
   validation remains compatible with metrics and recommendations.
+- Added Work 7B user-facing recruiting docs cleanup. README and
+  `AI_START_HERE.md` now describe the current recruiting workflow, first-use
+  path, recruiting report/metric tools, and current surface counts while still
+  noting inherited deal-intelligence compatibility.
 
 Validation:
 
@@ -157,6 +161,9 @@ Validation:
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-7a-final tests\test_sample_data.py tests\test_recruiting_metrics_service.py tests\test_recruiting_metrics.py tests\test_export_recruiting_report.py tests\test_recruiting_mcp_tools.py tests\test_recruiting_recommendations_service.py tests\test_recruiting_retrieval.py tests\test_recruiting_recommendation.py tests\test_recruiting_match.py tests\test_recruiting_fit.py tests\test_recruiting_schema.py tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_mongo_contracts.py tests\test_tool_surfaces.py tests\test_mcpb_manifest.py tests\test_storage_backend_selection.py`
   -> 181 passed, 1 third-party warning.
 - `ruff check src tests` -> passed.
+- `mcpb validate mcpb\manifest.json` -> passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-7b-docs tests\test_mcpb_manifest.py tests\test_tool_surfaces.py tests\test_sample_data.py`
+  -> 69 passed, 1 third-party warning.
 - `mcpb validate mcpb\manifest.json` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
