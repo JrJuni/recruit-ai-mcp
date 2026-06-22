@@ -320,6 +320,31 @@ Read wrapper policy:
 - Interaction list/get wrappers keep `raw_content` hidden unless
   `include_raw=True` is passed internally.
 
+## Work 2C Internal Create Services
+
+Work 2C adds internal service functions for the first future recruiting write
+tools. It still does not register public MCP tools.
+
+Service entry points:
+
+- `create_candidate`
+- `create_client_company`
+- `create_position`
+
+Service policy:
+
+- Inputs are validated through the Work 1 Pydantic models before storage.
+- Missing IDs are generated deterministically from the human-facing name or
+  title using entity prefixes: `cand_`, `client_`, and `pos_`.
+- Explicit IDs are accepted only if the Pydantic model accepts them.
+- Validation errors are converted to secret-safe `INVALID_INPUT` errors without
+  echoing raw user input.
+- Storage errors are converted to retryable `STORAGE_ERROR` errors.
+- Responses return `ok`, entity type, entity ID, stored safe record, and
+  warnings.
+- The service calls the typed storage wrappers from Work 2B, so timestamps and
+  raw-content projection policy remain centralized.
+
 ## Out Of Scope For Work 1
 
 - No storage migration.

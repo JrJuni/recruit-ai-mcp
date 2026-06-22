@@ -37,6 +37,11 @@ Completed:
 - Added typed internal read wrappers for recruiting positions, submissions,
   feedback, interactions, and recommendation runs. Interaction raw content
   remains hidden unless an internal caller explicitly passes `include_raw=True`.
+- Added Work 2C internal create services for candidates, client companies, and
+  positions. These validate through the recruiting Pydantic models, generate
+  deterministic prefixed IDs when omitted, return stored safe records, and wrap
+  validation/storage failures in MCP-style errors. Public MCP registration is
+  still deferred.
 
 Validation:
 
@@ -53,6 +58,16 @@ Validation:
   -> passed with `recruit_ai` and `python_cosine`.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2c tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py`
+  -> 30 passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2c-final tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py tests\test_mcpb_manifest.py tests\test_storage_backend_selection.py`
+  -> 69 passed.
+- `PYTHONPATH=src python -m deal_intel.cli mongo apply-indexes --json`
+  -> dry-run passed for `recruit_ai`.
+- `PYTHONPATH=src python -m deal_intel.cli mongo apply-schema --collection all --json`
+  -> dry-run passed for `recruit_ai`.
+- `PYTHONPATH=src python -m deal_intel.cli mongo doctor --offline --json`
+  -> passed with `recruit_ai` and `python_cosine`.
 
 ## Previous Update - 2026-06-21
 

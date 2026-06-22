@@ -42,9 +42,9 @@ surface.
 `recruit-ai-mcp` is currently in a staged fork from the inherited deal
 intelligence codebase. Work 0 isolated public package/config/runtime defaults;
 Work 1 added the recruiting domain contract; Work 2A added Mongo-managed
-recruiting collections beside the inherited deal collections; Work 2B adds
-storage payload normalization and typed internal read wrappers without changing
-MCP tool registration.
+recruiting collections beside the inherited deal collections; Work 2B added
+storage payload normalization and typed internal read wrappers; Work 2C adds
+internal create services without changing MCP tool registration.
 
 The recruiting schema source is:
 
@@ -91,6 +91,13 @@ models or plain mappings into Mongo-safe replacement documents, strips Mongo
 primary ID before writes. Typed internal wrappers now cover the common future
 read paths for positions, submissions, feedback, interactions, and
 recommendation runs.
+
+The Work 2C service source is `src/deal_intel/tools/recruiting_records.py`.
+It owns the first future write-tool path for candidates, client companies, and
+positions: input dicts are validated with the recruiting Pydantic models,
+missing IDs are generated with entity prefixes, storage failures become
+retryable `STORAGE_ERROR` responses, and validation failures become secret-safe
+`INVALID_INPUT` responses. Public MCP registration remains deferred.
 
 ## Product Profiles
 
