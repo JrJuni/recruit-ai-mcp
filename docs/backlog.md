@@ -77,6 +77,9 @@ Immediate quality order:
    - Local personal recruiting persistence is covered with a temp
      `recruiting.json` save/reload case that avoids touching the user's real
      `~/.recruit-ai` data.
+   - Recommendation guardrails now check that keyword-strong but risky sample
+     candidates do not outrank aligned matches when compensation, location,
+     availability, seniority, or scope constraints matter.
    - Keep the inherited deal-intelligence natural-question pack as a
      compatibility smoke, not the primary Recruit AI user journey.
 3. Tighten release/package verification.

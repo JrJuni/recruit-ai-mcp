@@ -290,9 +290,22 @@ Completed:
   opt-in state, bounded retention, event count, and recent redacted events.
   `recruit-ai local-data trace-reset` is dry-run by default and deletes only
   local workflow trace events when rerun with `--force`.
+- Added Work 7AQ recruiting recommendation guardrail smoke.
+  The recruiting natural-question pack now includes a deterministic guardrail
+  question that fails if keyword-strong but constrained sample candidates
+  outrank the aligned matches for Northstar or OrbitPay. This protects
+  compensation, location, availability, seniority, and scope risk behavior in
+  the end-to-end smoke path.
 
 Validation:
 
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-smoke-guardrails tests\test_cli_deal_review_smoke.py tests\test_recruiting_recommendation.py tests\test_sample_data.py`
+  -> 38 passed, 1 warning.
+- `PYTHONPATH=src python -m deal_intel.cli smoke-natural-questions --pack recruiting --as-of 2026-06-22 --output-dir .tmp\recruiting-smoke-guardrails --json`
+  -> passed with `ok=true`, `question_count=12`, no blocked questions, and no
+  sensitive failures.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-workflow-trace-cli tests\test_workflow_trace.py tests\test_local_data_cli.py tests\test_tool_surfaces.py`
   -> 49 passed, 1 warning.
 - `ruff check src tests` -> passed.

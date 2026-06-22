@@ -3768,6 +3768,63 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
             "collection_counts": collection_counts,
         }
 
+    def recommendation_guardrail_summary() -> dict:
+        checks = [
+            (
+                "pos_northstar_backend_lead",
+                "cand_avery_chen",
+                "cand_nora_weiss",
+            ),
+            (
+                "pos_orbitpay_payments_lead",
+                "cand_mateo_rivera",
+                "cand_iris_kim",
+            ),
+        ]
+        guardrails = []
+        for position_id, aligned_candidate_id, guardrail_candidate_id in checks:
+            run = build_position_candidate_recommendation_run(
+                position=positions_by_id[position_id],
+                candidates=candidates,
+                client_feedback=feedback,
+                limit=6,
+                created_at=loaded_at,
+            )
+            results = {result.target_id: result for result in run.results}
+            aligned = results[aligned_candidate_id]
+            guardrail = results[guardrail_candidate_id]
+            if run.results[0].target_id != aligned_candidate_id:
+                raise ValueError(
+                    f"{position_id} top candidate changed to {run.results[0].target_id}"
+                )
+            if guardrail.rank <= aligned.rank:
+                raise ValueError(
+                    f"{guardrail_candidate_id} outranked {aligned_candidate_id}"
+                )
+            if guardrail.fit_snapshot.overall_score >= aligned.fit_snapshot.overall_score:
+                raise ValueError(
+                    f"{guardrail_candidate_id} score no longer trails {aligned_candidate_id}"
+                )
+            guardrails.append(
+                {
+                    "position_id": position_id,
+                    "aligned_candidate_id": aligned_candidate_id,
+                    "guardrail_candidate_id": guardrail_candidate_id,
+                    "aligned_rank": aligned.rank,
+                    "guardrail_rank": guardrail.rank,
+                    "aligned_score": aligned.fit_snapshot.overall_score,
+                    "guardrail_score": guardrail.fit_snapshot.overall_score,
+                    "guardrail_risk_flags": guardrail.risk_flags,
+                }
+            )
+        return {
+            "summary": {
+                "guardrail_candidate_count": len(guardrails),
+                "ranking_guardrails_passed": True,
+            },
+            "guardrails": guardrails,
+        }
+
     questions = [
         call(
             "rq01_recruiting_pipeline_metrics",
@@ -3834,6 +3891,12 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
             "Can local personal recruiting records be saved and reloaded safely?",
             "derived",
             local_personal_persistence_summary,
+        ),
+        call(
+            "rq12_recommendation_guardrails",
+            "Do realistic risk constraints keep keyword-strong candidates below aligned matches?",
+            "derived",
+            recommendation_guardrail_summary,
         ),
     ]
 
@@ -4255,6 +4318,12 @@ def _natural_question_quick_read(question_id: str, payload: dict) -> str:
             f"written={summary.get('written_record_count')}, "
             f"reloaded={summary.get('reloaded_record_count')}, "
             f"restricted_content_present={summary.get('restricted_content_present')}"
+        )
+    if question_id == "rq12_recommendation_guardrails":
+        summary = payload.get("summary") or {}
+        return (
+            f"guardrails={summary.get('guardrail_candidate_count')}, "
+            f"passed={summary.get('ranking_guardrails_passed')}"
         )
     if question_id == "q01_pipeline_health":
         kpis = payload.get("kpis") or {}
