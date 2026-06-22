@@ -47,6 +47,11 @@ Completed:
   can store fit snapshots, and feedback can link itself to
   `submission.client_feedback_ids` while still preserving feedback capture when
   the submission is missing.
+- Added Work 3A deterministic recruiting fit scoring. The scoring engine
+  builds validated `FitSnapshot` objects from dimension signals, applies rubric
+  weights, inverts `risk`, penalizes missing dimensions, and returns structured
+  warnings for missing dimensions, missing evidence, missing information, and
+  low normalized scores.
 
 Validation:
 
@@ -65,6 +70,8 @@ Validation:
   -> 35 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2d-final tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py tests\test_mcpb_manifest.py tests\test_storage_backend_selection.py`
   -> 74 passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-3a-final tests\test_recruiting_fit.py tests\test_recruiting_schema.py tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_mongo_contracts.py tests\test_mcpb_manifest.py tests\test_storage_backend_selection.py`
+  -> 80 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2c tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py`

@@ -246,6 +246,28 @@ The `risk` dimension is directionally different. A high risk score means higher
 risk, while high scores on the other dimensions mean stronger fit. Aggregate
 recommendation logic should account for this in later scoring work.
 
+## Work 3A Fit Scoring Contract
+
+Work 3A adds deterministic recruiting fit scoring. It does not use LLMs,
+embeddings, storage, or MCP tool registration.
+
+Scoring policy:
+
+- Inputs are a recruiting fit rubric and dimension signals.
+- Every rubric dimension participates in the denominator.
+- Missing dimensions contribute zero and produce `missing_dimension` warnings.
+- Normal dimensions contribute `score / 5 * 100`.
+- `risk` and any dimension with `higher_is_better=false` contribute
+  `(5 - score) / 5 * 100`.
+- Dimension weights are applied after normalization.
+- `overall_score` is the weighted average rounded to two decimals.
+- Dimensions without evidence references produce `missing_evidence` warnings.
+- Dimensions with `missing_info` produce `missing_info` warnings.
+- Dimensions whose normalized score is at or below their gap threshold produce
+  `low_dimension_score` warnings.
+- The output is a validated `FitSnapshot`, per-dimension normalized scores,
+  and warnings.
+
 ## Collections For Work 2
 
 Recommended Mongo collections:

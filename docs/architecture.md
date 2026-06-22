@@ -106,6 +106,14 @@ captured even when the referenced submission is missing; when the submission is
 present, the service links `feedback_id` into `submission.client_feedback_ids`.
 Public MCP registration remains deferred.
 
+Work 3A adds deterministic fit scoring in
+`src/deal_intel/schema/recruiting_fit.py`. It builds validated `FitSnapshot`
+objects from rubric dimension signals, applies dimension weights, inverts
+`risk` through the `higher_is_better=false` contract, penalizes missing
+dimensions, and returns structured warnings for missing dimensions, missing
+evidence, open information gaps, and low normalized dimension scores. It is
+pure logic only: no LLM, storage, embeddings, or MCP registration.
+
 ## Product Profiles
 
 The project uses one repository and one package with three profiles:
