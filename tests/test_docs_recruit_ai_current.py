@@ -68,3 +68,21 @@ def test_bootstrapper_fresh_smoke_uses_recruit_ai_public_package() -> None:
     assert "deal-intel-mcp@0.2.1" not in docs
     assert "deal-intel-mcp[embedding]" not in docs
     assert "DEAL_INTEL_HOME" not in docs
+
+
+def test_backlog_current_stream_is_recruit_ai_first() -> None:
+    docs = (ROOT / "docs" / "backlog.md").read_text(encoding="utf-8")
+    current = docs.split("## Historical Planning Archive", 1)[0]
+
+    assert "### Recruit AI bootstrap roadmap" in current
+    assert "recruiter/search-firm intelligence layer" in current
+    assert "recruit_ai" in current
+    assert "RECRUIT_AI_*" in current
+    assert "create_candidate" in current
+    assert "recommend_candidates_for_position" in current
+    assert "recruiting-first natural-question smoke pack" in current
+    assert "### Inherited Deal-Intel Post-v1 / v2 Roadmap" not in current
+
+    assert "deal-intel-mcp==0.2.1" not in current
+    assert "deal-intel-mcp@0.2.1" not in current
+    assert "mcpb pack . deal-intel-mcp" not in current

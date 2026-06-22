@@ -17,7 +17,95 @@ When this file conflicts with code, tests, or contract docs, prefer:
 
 ## Current Active Streams
 
-### Post-v1 / v2 Roadmap
+### Recruit AI bootstrap roadmap
+
+Goal: turn the inherited `deal-intel-mcp` codebase into `recruit-ai-mcp`, a
+recruiter/search-firm intelligence layer for client companies, open positions,
+candidates, submissions, feedback, interactions, recommendation runs, metrics,
+reports, and safe local/sample onboarding.
+
+Current positioning:
+
+- `full` is the default real-data path for MongoDB-backed recruiting records in
+  `recruit_ai`; `sample` remains the zero-config evaluation path.
+- Atlas Free/M0 stays on deterministic Python cosine / lexical retrieval.
+  Atlas Vector Search belongs only to the paid `pro` path after the user
+  intentionally moves to M10+ infrastructure.
+- Python package imports intentionally remain under `deal_intel` during the
+  staged cutover. Public metadata, CLI alias, env prefix, local paths, MCPB
+  copy, MongoDB defaults, and current docs should present `recruit-ai-mcp`,
+  `recruit-ai`, `RECRUIT_AI_*`, and `~/.recruit-ai`.
+- Inherited deal-intelligence tools remain compatibility surfaces. Current
+  user-facing first-run guidance should lead with recruiting tools:
+  `create_client_company`, `create_position`, `create_candidate`,
+  `add_recruiting_interaction`, `add_client_feedback`,
+  `recommend_candidates_for_position`, `recommend_positions_for_candidate`,
+  `get_recruiting_metrics`, and `export_recruiting_report`.
+
+Current completed baseline:
+
+- Work 0 isolation is implemented for public package metadata, CLI aliases,
+  config paths, env precedence, local paths, MCPB metadata, MongoDB defaults,
+  npm bootstrapper naming, and release/staging docs/workflows.
+- Work 1-2 recruiting domain models, Mongo collection contracts, storage
+  wrappers, normalization, and internal create/lifecycle services are in place.
+- Work 3-4 deterministic recruiting fit scoring, feedback adjustments,
+  recommendation builders, recommendation services, and M0-safe retrieval are
+  in place.
+- Work 5-6 recruiting MCP tools, tool-surface registration, metrics, and report
+  export are in place.
+- Work 7 demo/sample/docs paths are in place, including fictional recruiting
+  demo data, local sample recruiting persistence, and local recruiting
+  migration to MongoDB.
+
+Immediate quality order:
+
+1. Finish current-doc cleanup.
+   - Keep active docs aligned to Recruit AI package names, env prefixes,
+     sample/full/pro profile behavior, MCPB package naming, and recruiting
+     first-use workflows.
+   - Treat historical docs as archive instead of rewriting every old milestone
+     entry.
+2. Add a recruiting-first natural-question smoke pack.
+   - Cover client intake, candidate intake, candidate-to-position matching,
+     position-to-candidate matching, feedback-informed reranking, recruiting
+     metrics, recruiting report export, and local sample behavior.
+   - Keep the inherited deal-intelligence natural-question pack as a
+     compatibility smoke, not the primary Recruit AI user journey.
+3. Tighten release/package verification.
+   - Keep `recruit-ai-mcp` PyPI/npm/MCPB naming aligned across
+     `pyproject.toml`, `npm/package.json`, `mcpb/manifest.json`, GitHub
+     Actions, README, and release docs.
+   - Record fresh public `npx recruit-ai-mcp@0.2.3` smoke evidence before
+     claiming public registry readiness for this fork.
+4. Improve recruiting recommendation quality with realistic fixtures.
+   - Add synthetic client/candidate examples that stress skills, domain,
+     seniority, compensation, location, availability, client preferences, and
+     risk.
+   - Keep scoring deterministic and inspectable before adding optional LLM
+     narrative layers.
+5. Add recruiting workflow observability only after the core path is stable.
+   - If added, store secret-safe local metadata only: timestamp, tool name,
+     duration, success/error category, redacted argument summary, and compact
+     result summary.
+   - Never store raw recruiting interaction content, contacts, embeddings,
+     API keys, OAuth tokens, MongoDB URIs, or full tool responses.
+
+Deferred:
+
+- Full Python package rename from `deal_intel` to a recruit-specific import
+  path. Keep it staged until tests, MCPB launchers, and downstream docs can move
+  together.
+- Pro-scale Atlas Vector Search hardening beyond M0-safe retrieval.
+- CRM-like people graph and multi-workspace switching.
+- Broad inherited deal-tool renaming beyond compatibility labeling.
+
+## Historical Planning Archive
+
+The sections below describe the inherited Deal Intelligence v1/v2 roadmap and
+are retained for traceability. They are not the active Recruit AI backlog.
+
+### Inherited Deal-Intel Post-v1 / v2 Roadmap
 
 Goal: turn the v1 MVP into a customizable deal-intelligence framework while
 keeping the product usable for one-person or small AI-assisted sales teams.

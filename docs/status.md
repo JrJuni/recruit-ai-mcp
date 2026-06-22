@@ -221,6 +221,10 @@ Completed:
   smoke as evidence to collect for `recruit-ai-mcp@0.2.3`, uses
   `RECRUIT_AI_HOME`, and no longer presents old `deal-intel-mcp@0.2.1`
   evidence as current Recruit AI release proof.
+- Added Work 7AD backlog current-stream cleanup. `docs/backlog.md` now opens
+  with the active Recruit AI bootstrap roadmap, current completed baseline,
+  immediate quality order, and deferrals, while the inherited Deal Intelligence
+  v1/v2 roadmap is explicitly marked as historical archive material.
 
 Validation:
 
@@ -372,6 +376,9 @@ Validation:
 - `ruff check src tests` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-bootstrapper-docs tests\test_docs_recruit_ai_current.py tests\test_bootstrapper_skeleton.py tests\test_mcpb_manifest.py`
   -> 22 passed.
+- `ruff check src tests` -> passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-backlog-docs tests\test_docs_recruit_ai_current.py`
+  -> 4 passed.
 - `ruff check src tests` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
