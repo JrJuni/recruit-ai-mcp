@@ -9,6 +9,10 @@ from deal_intel.schema.recruiting_recommendation import (
     build_candidate_position_recommendation_run,
     build_position_candidate_recommendation_run,
 )
+from deal_intel.schema.recruiting_retrieval import (
+    rank_candidates_for_position_retrieval,
+    rank_positions_for_candidate_retrieval,
+)
 from deal_intel.storage.identifiers import suggest_slug
 
 
@@ -18,6 +22,7 @@ def recommend_candidates_for_position(
     position_id: str,
     candidate_query: dict[str, Any] | None = None,
     candidate_limit: int = 50,
+    retrieval_limit: int | None = None,
     result_limit: int = 10,
     feedback_limit: int = 200,
     recommendation_run_id: str | None = None,
@@ -34,6 +39,14 @@ def recommend_candidates_for_position(
         query=candidate_query or {},
         limit=candidate_limit,
     )
+    candidate_pool = [
+        result.record
+        for result in rank_candidates_for_position_retrieval(
+            position=position,
+            candidates=candidates,
+            limit=retrieval_limit,
+        )
+    ]
     feedback = _read_many_or_raise(
         mongo.list_feedback,
         entity="feedback",
@@ -43,13 +56,14 @@ def recommend_candidates_for_position(
     run = _build_or_raise(
         build_position_candidate_recommendation_run,
         position=position,
-        candidates=candidates,
+        candidates=candidate_pool,
         client_feedback=feedback,
         recommendation_run_id=recommendation_run_id
         or _generated_run_id("rec_candidates_for", position_id),
         query={
             "candidate_query": candidate_query or {},
             "candidate_limit": candidate_limit,
+            "retrieval_limit": retrieval_limit,
             "result_limit": result_limit,
             "feedback_limit": feedback_limit,
         },
@@ -70,6 +84,7 @@ def recommend_positions_for_candidate(
     client_company_id: str | None = None,
     position_status: str | None = "open",
     position_limit: int = 50,
+    retrieval_limit: int | None = None,
     result_limit: int = 10,
     feedback_limit: int = 200,
     recommendation_run_id: str | None = None,
@@ -87,6 +102,14 @@ def recommend_positions_for_candidate(
         status=position_status,
         limit=position_limit,
     )
+    position_pool = [
+        result.record
+        for result in rank_positions_for_candidate_retrieval(
+            candidate=candidate,
+            positions=positions,
+            limit=retrieval_limit,
+        )
+    ]
     feedback = _read_many_or_raise(
         mongo.list_feedback,
         entity="feedback",
@@ -96,7 +119,7 @@ def recommend_positions_for_candidate(
     run = _build_or_raise(
         build_candidate_position_recommendation_run,
         candidate=candidate,
-        positions=positions,
+        positions=position_pool,
         client_feedback=feedback,
         recommendation_run_id=recommendation_run_id
         or _generated_run_id("rec_positions_for", candidate_id),
@@ -104,6 +127,7 @@ def recommend_positions_for_candidate(
             "client_company_id": client_company_id,
             "position_status": position_status,
             "position_limit": position_limit,
+            "retrieval_limit": retrieval_limit,
             "result_limit": result_limit,
             "feedback_limit": feedback_limit,
         },

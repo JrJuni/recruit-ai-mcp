@@ -143,6 +143,12 @@ storage read wrappers to the deterministic recommendation builders for both
 explicit through `save_run`; preview mode is default. Public MCP registration,
 semantic retrieval, and Atlas Vector Search remain deferred.
 
+Work 4B adds M0-safe lexical retrieval helpers in
+`src/deal_intel/schema/recruiting_retrieval.py`. The helpers order or limit
+candidate/position pools by deterministic token overlap before Work 4A services
+run fit scoring. This is a prefilter only; final ranking still comes from the
+fit-scored recommendation run. Atlas Vector Search remains out of scope for M0.
+
 ## Product Profiles
 
 The project uses one repository and one package with three profiles:

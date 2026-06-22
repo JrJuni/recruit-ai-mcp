@@ -74,6 +74,10 @@ Completed:
   `RecommendationRun` records, and optionally persist runs when `save_run=True`.
   Public MCP registration, embeddings, LLMs, and Atlas Vector Search remain
   deferred.
+- Added Work 4B M0-safe lexical retrieval prefilter. Candidate and position
+  pools can now be ordered or limited by deterministic token overlap before
+  final fit scoring. This keeps retrieval usable on Atlas M0 without Atlas
+  Vector Search; final ranking still comes from the Work 3D recommendation run.
 
 Validation:
 
@@ -102,6 +106,8 @@ Validation:
   -> 93 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-4a-final tests\test_recruiting_recommendations_service.py tests\test_recruiting_recommendation.py tests\test_recruiting_match.py tests\test_recruiting_fit.py tests\test_recruiting_schema.py tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_mongo_contracts.py tests\test_mcpb_manifest.py tests\test_storage_backend_selection.py`
   -> 98 passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-4b-final tests\test_recruiting_retrieval.py tests\test_recruiting_recommendations_service.py tests\test_recruiting_recommendation.py tests\test_recruiting_match.py tests\test_recruiting_fit.py tests\test_recruiting_schema.py tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_mongo_contracts.py tests\test_mcpb_manifest.py tests\test_storage_backend_selection.py`
+  -> 102 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2c tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py`

@@ -365,6 +365,27 @@ Service policy:
 - Responses include `storage_written`, result count, the full safe run record,
   and warnings for empty candidate or position pools.
 
+## Work 4B M0-Safe Retrieval Prefilter
+
+Work 4B adds deterministic lexical retrieval helpers for narrowing or ordering
+candidate and position pools before fit scoring. It is designed for Atlas M0
+and does not use Atlas Vector Search.
+
+Retrieval policy:
+
+- Position-to-candidates retrieval compares role title, seniority, locations,
+  remote policy, must-have skills, and nice-to-have skills against candidate
+  skills, domains, title/headline, seniority, locations, and preferences.
+- Candidate-to-positions retrieval uses the same lexical overlap in the reverse
+  direction.
+- Retrieval returns target ID, lexical score, matched terms, and the validated
+  candidate or position record.
+- Internal recommendation services apply retrieval ordering before final fit
+  scoring and accept an optional `retrieval_limit`.
+- Retrieval is only a pool prefilter. Final ordering remains the fit-scored
+  `RecommendationRun` from Work 3D.
+- Atlas Vector Search remains deferred to paid M10+ infrastructure.
+
 ## Collections For Work 2
 
 Recommended Mongo collections:

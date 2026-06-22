@@ -186,6 +186,22 @@ def test_recommend_positions_for_candidate_filters_open_positions() -> None:
     ]
 
 
+def test_recommend_candidates_for_position_applies_retrieval_limit() -> None:
+    storage = _storage()
+
+    result = recruiting_recommendations.recommend_candidates_for_position(
+        storage,
+        position_id="pos_backend_lead",
+        retrieval_limit=1,
+        result_limit=10,
+    )
+
+    assert result["record"]["query"]["retrieval_limit"] == 1
+    assert [row["target_id"] for row in result["record"]["results"]] == [
+        "cand_avery"
+    ]
+
+
 def test_recommendation_service_applies_feedback_deltas() -> None:
     storage = _storage()
     storage.feedback.append(
