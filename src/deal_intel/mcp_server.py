@@ -1061,6 +1061,38 @@ def recommend_positions_for_candidate(
 
 
 @app.tool()
+def get_recruiting_metrics(
+    candidate_limit: int = 500,
+    position_limit: int = 500,
+    submission_limit: int = 1000,
+    feedback_limit: int = 1000,
+    position_status: str = "",
+) -> dict:
+    """Return deterministic recruiting pipeline metrics.
+
+    Use this for recruiting KPI questions such as open positions, submission
+    funnel, placement rate, feedback sentiment, and data-quality gaps. Intent
+    alias: recruit.metrics.
+
+    Read-only. Does not call LLMs, embeddings, or Atlas Vector Search.
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.tools import recruiting_metrics as _t
+
+        return _t.get_recruiting_metrics(
+            _context.mongo(),
+            candidate_limit=candidate_limit,
+            position_limit=position_limit,
+            submission_limit=submission_limit,
+            feedback_limit=feedback_limit,
+            position_status=position_status or None,
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.STORAGE)
+
+
+@app.tool()
 def add_meeting(deal_id: str, date: str, raw_notes: str) -> dict:
     """Deprecated alias for add_interaction with interaction_type=meeting.
 

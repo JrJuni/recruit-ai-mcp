@@ -31,7 +31,7 @@ def test_tool_surface_contract_covers_registered_mcp_tools(monkeypatch) -> None:
     contracted = {contract.name for contract in list_tool_surface_contracts()}
 
     assert registered == contracted
-    assert len(contracted) == 50
+    assert len(contracted) == 51
 
 
 def test_tool_intent_aliases_cover_every_registered_tool() -> None:
@@ -56,6 +56,7 @@ def test_tool_intent_aliases_cover_every_registered_tool() -> None:
     assert aliases["recruit.feedback.add"] == "add_client_feedback"
     assert aliases["recruit.recommend.candidates"] == "recommend_candidates_for_position"
     assert aliases["recruit.recommend.positions"] == "recommend_positions_for_candidate"
+    assert aliases["recruit.metrics"] == "get_recruiting_metrics"
 
 
 def test_tool_surface_matrix_is_stable_and_serializable() -> None:
@@ -153,6 +154,7 @@ def test_sample_surface_is_zero_config_safe_local_personal() -> None:
         "add_client_feedback",
         "recommend_candidates_for_position",
         "recommend_positions_for_candidate",
+        "get_recruiting_metrics",
     ],
 )
 def test_sample_surface_hides_tools_that_break_first_run_expectations(
@@ -201,6 +203,7 @@ def test_sample_local_personal_target_promotes_safe_non_llm_writes() -> None:
         "add_client_feedback",
         "recommend_candidates_for_position",
         "recommend_positions_for_candidate",
+        "get_recruiting_metrics",
     }.isdisjoint(target_tools)
 
 
@@ -240,6 +243,7 @@ def test_standard_surface_keeps_real_operator_admin_tools() -> None:
         "add_client_feedback",
         "recommend_candidates_for_position",
         "recommend_positions_for_candidate",
+        "get_recruiting_metrics",
     }.issubset(standard_tools)
     assert "add_meeting" not in standard_tools
     assert "get_deal_raw" not in standard_tools
@@ -419,6 +423,11 @@ def test_high_traffic_tool_descriptions_guide_tool_selection(monkeypatch) -> Non
             "atlas vector search",
             "recruit.recommend.positions",
         ],
+        "get_recruiting_metrics": [
+            "recruiting kpi",
+            "read-only",
+            "recruit.metrics",
+        ],
     }
 
     for tool_name, snippets in expected_snippets.items():
@@ -518,6 +527,7 @@ def test_get_tool_catalog_can_include_hidden_tools(monkeypatch) -> None:
         "add_client_feedback",
         "recommend_candidates_for_position",
         "recommend_positions_for_candidate",
+        "get_recruiting_metrics",
     ]
     guide_by_intent = {
         item["intent"]: item for item in result["tool_selection_guide"]

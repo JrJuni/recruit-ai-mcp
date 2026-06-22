@@ -87,6 +87,9 @@ class FakeRecruitingMCPStorage:
     def get_submission(self, submission_id: str) -> dict | None:
         return deepcopy(self.submissions.get(submission_id))
 
+    def list_submissions(self, *, limit: int = 50) -> list[dict]:
+        return [deepcopy(row) for row in self.submissions.values()][:limit]
+
     def get_feedback(self, feedback_id: str) -> dict | None:
         return deepcopy(self.feedback.get(feedback_id))
 
@@ -213,6 +216,31 @@ def test_mcp_create_submission_parses_fit_snapshot_json(monkeypatch) -> None:
     assert result["ok"] is True
     assert result["record"]["fit_snapshot"]["overall_score"] == 80
     assert result["record"]["client_feedback_ids"] == ["fb_1", "fb_2"]
+
+
+def test_mcp_get_recruiting_metrics_is_read_only(monkeypatch) -> None:
+    storage = FakeRecruitingMCPStorage()
+    storage.candidates["cand_avery"] = {
+        "candidate_id": "cand_avery",
+        "name": "Avery Chen",
+        "skills": ["Python"],
+        "availability": "30 days",
+    }
+    storage.positions["pos_backend"] = {
+        "position_id": "pos_backend",
+        "client_company_id": "client_acme",
+        "title": "Backend Lead",
+        "status": "open",
+        "must_have": ["Python"],
+    }
+    monkeypatch.setattr(_context, "mongo", lambda: storage)
+
+    result = mcp_server.get_recruiting_metrics()
+
+    assert result["ok"] is True
+    assert result["storage_written"] is False
+    assert result["summary"]["candidate_count"] == 1
+    assert result["summary"]["open_position_count"] == 1
 
 
 def test_mcp_recruiting_tools_return_safe_error_for_invalid_json(monkeypatch) -> None:

@@ -351,6 +351,7 @@ Service entry points:
 
 - `recommend_candidates_for_position`
 - `recommend_positions_for_candidate`
+- `get_recruiting_metrics`
 
 Service policy:
 
@@ -414,6 +415,8 @@ Surface policy:
   time.
 - Recommendation tools preview by default and persist a recommendation run only
   when `save_run=true`.
+- `get_recruiting_metrics` reads recruiting collection wrappers and returns
+  read-only pipeline metrics.
 - All tools are deterministic and do not call LLMs, embeddings, or Atlas
   Vector Search.
 - List-like MCP inputs use comma-separated strings; rubric deltas and candidate
@@ -438,6 +441,10 @@ Metrics policy:
   rate, and advance rate.
 - Data-quality counters identify missing candidate skills, availability, role
   must-haves, role compensation, submission fit snapshots, and feedback links.
+
+Work 6B exposes those metrics through the internal service and MCP tool
+`get_recruiting_metrics`. The tool is read-only and uses storage list wrappers
+only; it does not call LLMs, embeddings, or Atlas Vector Search.
 
 ## Collections For Work 2
 

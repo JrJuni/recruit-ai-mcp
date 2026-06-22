@@ -91,6 +91,7 @@ TOOL_INTENT_GROUPS: dict[str, dict] = {
             "add_client_feedback",
             "recommend_candidates_for_position",
             "recommend_positions_for_candidate",
+            "get_recruiting_metrics",
         ),
     },
     "product_context": {
@@ -301,6 +302,7 @@ TOOL_INTENT_ALIASES: dict[str, tuple[str, str]] = {
     "add_client_feedback": ("recruit", "recruit.feedback.add"),
     "recommend_candidates_for_position": ("recruit", "recruit.recommend.candidates"),
     "recommend_positions_for_candidate": ("recruit", "recruit.recommend.positions"),
+    "get_recruiting_metrics": ("recruit", "recruit.metrics"),
 }
 
 
@@ -595,6 +597,15 @@ MCP_TOOL_SURFACE_CONTRACTS: tuple[MCPToolSurfaceContract, ...] = (
             "Ranks positions for a candidate using M0-safe lexical retrieval "
             "and deterministic fit scoring; persistence is optional."
         ),
+    ),
+    MCPToolSurfaceContract(
+        name="get_recruiting_metrics",
+        category="recruiting",
+        surfaces=_STANDARD,
+        user_facing=True,
+        db_writes=False,
+        llm_calls=False,
+        notes="Read-only recruiting pipeline metrics and data-quality counters.",
     ),
     MCPToolSurfaceContract(
         name="add_meeting",

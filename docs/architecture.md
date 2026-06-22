@@ -173,6 +173,11 @@ breakdowns, funnel rates, feedback signal rates, and data-quality counters from
 already supplied safe recruiting records. Storage reads, reports, and MCP
 exposure remain later layers.
 
+Work 6B adds `src/deal_intel/tools/recruiting_metrics.py` and exposes
+`get_recruiting_metrics` through MCP. The tool reads recruiting collection
+wrappers, delegates calculation to Work 6A, and returns read-only recruiting
+pipeline KPIs without LLMs, embeddings, or writes.
+
 ## Product Profiles
 
 The project uses one repository and one package with three profiles:

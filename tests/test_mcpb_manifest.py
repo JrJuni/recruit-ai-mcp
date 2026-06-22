@@ -38,7 +38,7 @@ def test_mcpb_manifest_tools_match_registered_surface_contracts() -> None:
     contract_tool_names = [contract.name for contract in list_tool_surface_contracts()]
 
     assert manifest_tool_names == contract_tool_names
-    assert len(manifest_tool_names) == 50
+    assert len(manifest_tool_names) == 51
 
 
 def test_mcpb_manifest_describes_recruit_ai_bootstrap_surface() -> None:
