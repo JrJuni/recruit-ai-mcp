@@ -163,6 +163,9 @@ Completed:
 - Added Work 7O tool-count doc cleanup. `docs/config-profiles.md` and
   `docs/baseline.md` now match the current profile-filtered MCP surface counts:
   sample 24, standard 48, developer 52.
+- Added Work 7P MCPB wording cleanup. The manifest now avoids using
+  "candidate qualification framework" for validation copy, preventing confusion
+  with recruiting candidate profiles.
 
 Validation:
 
@@ -261,6 +264,9 @@ Validation:
 - `git diff --check` -> passed for the docs map cleanup.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-tool-counts tests\test_tool_surfaces.py tests\test_mcpb_manifest.py tests\test_config_doctor.py`
   -> 69 passed, 1 third-party warning.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-mcpb-wording tests\test_mcpb_manifest.py tests\test_tool_surfaces.py`
+  -> 55 passed, 1 third-party warning.
+- `mcpb validate mcpb\manifest.json` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2c tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py`
