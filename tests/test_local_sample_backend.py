@@ -13,6 +13,7 @@ from deal_intel.storage.backend import (
 from deal_intel.storage.local_personal import (
     LOCAL_PERSONAL_DEALS_FILE,
     LOCAL_PERSONAL_DELETE_AUDIT_FILE,
+    LOCAL_PERSONAL_RECRUITING_FILE,
     LocalPersonalStore,
     resolve_local_data_dir,
 )
@@ -26,6 +27,8 @@ from deal_intel.tools import (
     get_deal_review,
     get_metrics,
     list_deals,
+    recruiting_recommendations,
+    recruiting_records,
     restore_deal,
     update_deal,
     update_stage,
@@ -228,6 +231,72 @@ def test_local_personal_deals_replace_fixture_in_active_reads(tmp_path) -> None:
     ) == []
     for field_name in SENSITIVE_FIELD_NAMES:
         assert field_name not in payload
+
+
+def test_local_sample_supports_recruiting_records_and_recommendations(tmp_path) -> None:
+    client = LocalSampleClient(local_data_dir=tmp_path)
+
+    recruiting_records.create_client_company(
+        client,
+        client_company_id="client_local",
+        name="Local Hiring Co",
+        industry="Healthcare SaaS",
+    )
+    recruiting_records.create_position(
+        client,
+        position_id="pos_local_backend",
+        client_company_id="client_local",
+        title="Backend Platform Lead",
+        status="open",
+        seniority="staff",
+        must_have=["Python", "MongoDB", "platform"],
+        nice_to_have=["healthcare"],
+        locations=["Remote US"],
+        remote_policy="remote",
+    )
+    recruiting_records.create_candidate(
+        client,
+        candidate_id="cand_local_avery",
+        name="Avery Local",
+        headline="Staff backend engineer",
+        current_title="Staff Engineer",
+        skills=["Python", "MongoDB", "platform"],
+        domains=["healthcare"],
+        seniority="staff",
+        locations=["Remote US"],
+        availability="available",
+    )
+    recruiting_records.add_recruiting_interaction(
+        client,
+        interaction_id="int_local_private",
+        subject_type="candidate",
+        subject_id="cand_local_avery",
+        interaction_type="candidate_screen",
+        summary="Candidate is strong on Python platform work.",
+        raw_content="private recruiting screen notes",
+    )
+
+    result = recruiting_recommendations.recommend_candidates_for_position(
+        client,
+        position_id="pos_local_backend",
+        result_limit=3,
+        save_run=True,
+    )
+    payload = json.loads((tmp_path / LOCAL_PERSONAL_RECRUITING_FILE).read_text())
+
+    assert result["ok"] is True
+    assert result["storage_written"] is True
+    assert result["result_count"] == 1
+    assert result["record"]["results"][0]["target_id"] == "cand_local_avery"
+    assert client.ping()["local_recruiting_record_count"] == 5
+    assert "private recruiting screen notes" not in json.dumps(
+        payload,
+        ensure_ascii=False,
+    )
+    assert client.get_recruiting_interaction("int_local_private")["summary"] == (
+        "Candidate is strong on Python platform work."
+    )
+    assert client.get_recruiting_interaction("int_local_private").get("raw_content") is None
 
 
 def test_local_personal_store_rejects_duplicate_deal_ids(tmp_path) -> None:

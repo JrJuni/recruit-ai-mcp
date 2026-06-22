@@ -12,6 +12,16 @@ from deal_intel.storage.local_sample_fixture import (
     load_zero_config_sample_snapshots,
     validate_zero_config_sample_fixture,
 )
+from deal_intel.storage.recruiting_collections import (
+    CANDIDATES,
+    CLIENT_COMPANIES,
+    FEEDBACK,
+    INTERACTIONS,
+    POSITIONS,
+    RECOMMENDATION_RUNS,
+    SUBMISSIONS,
+)
+from deal_intel.storage.recruiting_records import normalize_recruiting_record
 
 
 class LocalSampleClient:
@@ -35,6 +45,11 @@ class LocalSampleClient:
         )
         self._local_deals = (
             self._personal_store.load_deals() if self._personal_store else []
+        )
+        self._local_recruiting = (
+            self._personal_store.load_recruiting_records()
+            if self._personal_store
+            else {}
         )
         validation = validate_zero_config_sample_fixture(
             deals=self._fixture_deals,
@@ -71,6 +86,9 @@ class LocalSampleClient:
             "deal_count": summary["deal_count"],
             "snapshot_count": summary["snapshot_count"],
             "local_deal_count": len(self._local_deals),
+            "local_recruiting_record_count": sum(
+                len(rows) for rows in self._local_recruiting.values()
+            ),
             "fixture_archived": local_personal_active,
             "fixture_archive": {
                 "dataset": ZERO_CONFIG_SAMPLE_DATASET,
@@ -209,7 +227,260 @@ class LocalSampleClient:
         store = self._ensure_personal_store()
         result = store.reset_deals(force=force)
         self._local_deals = store.load_deals()
+        self._local_recruiting = store.load_recruiting_records()
         return result
+
+    # --- local personal recruiting collections ---
+
+    def upsert_recruiting_record(self, collection: str, record: object) -> bool:
+        normalized = normalize_recruiting_record(collection, record)
+        store = self._ensure_personal_store()
+        result = store.upsert_recruiting_record(collection, normalized)
+        self._local_recruiting = store.load_recruiting_records()
+        return result
+
+    def upsert_recruiting_records(self, records_by_collection: dict[str, list[dict]]) -> int:
+        store = self._ensure_personal_store()
+        count = store.upsert_recruiting_records(records_by_collection)
+        self._local_recruiting = store.load_recruiting_records()
+        return count
+
+    def count_recruiting_records_by_ids(self, ids_by_collection: dict[str, list[str]]) -> int:
+        return self._ensure_personal_store().count_recruiting_records_by_ids(
+            ids_by_collection
+        )
+
+    def delete_recruiting_record(self, collection: str, record_id: str) -> bool:
+        store = self._ensure_personal_store()
+        deleted = store.delete_recruiting_record(collection, record_id)
+        self._local_recruiting = store.load_recruiting_records()
+        return deleted
+
+    def delete_recruiting_records_by_ids(self, ids_by_collection: dict[str, list[str]]) -> int:
+        store = self._ensure_personal_store()
+        deleted = store.delete_recruiting_records_by_ids(ids_by_collection)
+        self._local_recruiting = store.load_recruiting_records()
+        return deleted
+
+    def get_recruiting_record(
+        self,
+        collection: str,
+        record_id: str,
+        *,
+        include_raw: bool = False,
+    ) -> dict | None:
+        del include_raw
+        return self._ensure_personal_store().get_recruiting_record(collection, record_id)
+
+    def list_recruiting_records(
+        self,
+        collection: str,
+        *,
+        query: dict | None = None,
+        limit: int = 50,
+        include_raw: bool = False,
+        sort: list[tuple[str, int]] | None = None,
+    ) -> list[dict]:
+        del include_raw, sort
+        return self._ensure_personal_store().list_recruiting_records(
+            collection,
+            query=query,
+            limit=limit,
+        )
+
+    def upsert_candidate(self, candidate: object) -> bool:
+        return self.upsert_recruiting_record(CANDIDATES, candidate)
+
+    def get_candidate(self, candidate_id: str, *, include_raw: bool = False) -> dict | None:
+        return self.get_recruiting_record(
+            CANDIDATES,
+            candidate_id,
+            include_raw=include_raw,
+        )
+
+    def list_candidates(self, *, query: dict | None = None, limit: int = 50) -> list[dict]:
+        return self.list_recruiting_records(CANDIDATES, query=query, limit=limit)
+
+    def upsert_client_company(self, client_company: object) -> bool:
+        return self.upsert_recruiting_record(CLIENT_COMPANIES, client_company)
+
+    def get_client_company(
+        self,
+        client_company_id: str,
+        *,
+        include_raw: bool = False,
+    ) -> dict | None:
+        return self.get_recruiting_record(
+            CLIENT_COMPANIES,
+            client_company_id,
+            include_raw=include_raw,
+        )
+
+    def list_client_companies(
+        self,
+        *,
+        query: dict | None = None,
+        limit: int = 50,
+    ) -> list[dict]:
+        return self.list_recruiting_records(CLIENT_COMPANIES, query=query, limit=limit)
+
+    def upsert_position(self, position: object) -> bool:
+        return self.upsert_recruiting_record(POSITIONS, position)
+
+    def get_position(self, position_id: str, *, include_raw: bool = False) -> dict | None:
+        return self.get_recruiting_record(
+            POSITIONS,
+            position_id,
+            include_raw=include_raw,
+        )
+
+    def list_positions(
+        self,
+        *,
+        client_company_id: str | None = None,
+        status: str | None = None,
+        limit: int = 50,
+    ) -> list[dict]:
+        return self.list_recruiting_records(
+            POSITIONS,
+            query=_without_none(
+                {
+                    "client_company_id": client_company_id,
+                    "status": status,
+                }
+            ),
+            limit=limit,
+        )
+
+    def upsert_submission(self, submission: object) -> bool:
+        return self.upsert_recruiting_record(SUBMISSIONS, submission)
+
+    def get_submission(self, submission_id: str, *, include_raw: bool = False) -> dict | None:
+        return self.get_recruiting_record(
+            SUBMISSIONS,
+            submission_id,
+            include_raw=include_raw,
+        )
+
+    def list_submissions(
+        self,
+        *,
+        candidate_id: str | None = None,
+        position_id: str | None = None,
+        status: str | None = None,
+        limit: int = 50,
+    ) -> list[dict]:
+        return self.list_recruiting_records(
+            SUBMISSIONS,
+            query=_without_none(
+                {
+                    "candidate_id": candidate_id,
+                    "position_id": position_id,
+                    "status": status,
+                }
+            ),
+            limit=limit,
+        )
+
+    def add_client_feedback(self, feedback: object) -> bool:
+        return self.upsert_recruiting_record(FEEDBACK, feedback)
+
+    def get_feedback(self, feedback_id: str, *, include_raw: bool = False) -> dict | None:
+        return self.get_recruiting_record(
+            FEEDBACK,
+            feedback_id,
+            include_raw=include_raw,
+        )
+
+    def list_feedback(
+        self,
+        *,
+        subject_type: str | None = None,
+        subject_id: str | None = None,
+        position_id: str | None = None,
+        candidate_id: str | None = None,
+        limit: int = 50,
+    ) -> list[dict]:
+        return self.list_recruiting_records(
+            FEEDBACK,
+            query=_without_none(
+                {
+                    "subject_type": subject_type,
+                    "subject_id": subject_id,
+                    "position_id": position_id,
+                    "candidate_id": candidate_id,
+                }
+            ),
+            limit=limit,
+        )
+
+    def append_recruiting_interaction(self, interaction: object) -> bool:
+        return self.upsert_recruiting_record(INTERACTIONS, interaction)
+
+    def get_recruiting_interaction(
+        self,
+        interaction_id: str,
+        *,
+        include_raw: bool = False,
+    ) -> dict | None:
+        return self.get_recruiting_record(
+            INTERACTIONS,
+            interaction_id,
+            include_raw=include_raw,
+        )
+
+    def list_recruiting_interactions(
+        self,
+        *,
+        subject_type: str | None = None,
+        subject_id: str | None = None,
+        limit: int = 50,
+        include_raw: bool = False,
+    ) -> list[dict]:
+        return self.list_recruiting_records(
+            INTERACTIONS,
+            query=_without_none(
+                {
+                    "subject_type": subject_type,
+                    "subject_id": subject_id,
+                }
+            ),
+            limit=limit,
+            include_raw=include_raw,
+        )
+
+    def save_recommendation_run(self, recommendation_run: object) -> bool:
+        return self.upsert_recruiting_record(RECOMMENDATION_RUNS, recommendation_run)
+
+    def get_recommendation_run(
+        self,
+        recommendation_run_id: str,
+        *,
+        include_raw: bool = False,
+    ) -> dict | None:
+        return self.get_recruiting_record(
+            RECOMMENDATION_RUNS,
+            recommendation_run_id,
+            include_raw=include_raw,
+        )
+
+    def list_recommendation_runs(
+        self,
+        *,
+        anchor_type: str | None = None,
+        anchor_id: str | None = None,
+        limit: int = 50,
+    ) -> list[dict]:
+        return self.list_recruiting_records(
+            RECOMMENDATION_RUNS,
+            query=_without_none(
+                {
+                    "anchor_type": anchor_type,
+                    "anchor_id": anchor_id,
+                }
+            ),
+            limit=limit,
+        )
 
     def _active_deals(self, *, include_archived: bool = False) -> list[dict]:
         source = self._local_deals if self._local_personal_active() else self._fixture_deals
@@ -256,6 +527,10 @@ def _restricted_deals(deals: list[dict]) -> list[dict]:
                 if isinstance(interaction, dict):
                     interaction.pop("raw_content", None)
     return restricted
+
+
+def _without_none(query: dict) -> dict:
+    return {key: value for key, value in query.items() if value is not None}
 
 
 def _maintenance_deals(deals: list[dict]) -> list[dict]:

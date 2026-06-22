@@ -8,6 +8,7 @@ from deal_intel import _env
 from deal_intel.cli import app
 from deal_intel.storage.local_personal import (
     LOCAL_PERSONAL_DEALS_FILE,
+    LOCAL_PERSONAL_RECRUITING_FILE,
     LocalPersonalStore,
 )
 from deal_intel.storage.local_sample import LocalSampleClient
@@ -55,6 +56,14 @@ def _seed_local_data(tmp_path) -> LocalPersonalStore:
             },
         }
     )
+    store.upsert_recruiting_record(
+        "candidates",
+        {
+            "candidate_id": "cand_local_cli",
+            "name": "Local CLI Candidate",
+            "raw_content": "private recruiting note sentinel",
+        },
+    )
     return store
 
 
@@ -72,6 +81,7 @@ def test_local_data_status_cli_reports_configured_directory(
     assert payload["ok"] is True
     assert payload["dataset"] == "local_personal"
     assert payload["deal_count"] == 1
+    assert payload["recruiting_record_count"] == 1
     assert payload["delete_audit_log_count"] == 1
     assert payload["data_dir"].endswith("local-data")
 
@@ -102,8 +112,13 @@ def test_local_data_export_cli_writes_secret_safe_snapshot(
     assert payload["ok"] is True
     assert payload["export_path"] == str(output_path)
     assert exported["export_type"] == "local_personal_snapshot"
-    assert exported["counts"] == {"deals": 1, "delete_audit_logs": 1}
+    assert exported["counts"] == {
+        "deals": 1,
+        "recruiting_records": 1,
+        "delete_audit_logs": 1,
+    }
     assert "private raw note sentinel" not in exported_text
+    assert "private recruiting note sentinel" not in exported_text
     assert "private@example.com" not in exported_text
     assert "summary_embedding" not in exported_text
 
@@ -122,11 +137,13 @@ def test_local_data_reset_cli_is_dry_run_by_default(
     assert payload["dry_run"] is True
     assert payload["storage_written"] is False
     assert payload["would_delete_deal_count"] == 1
+    assert payload["would_delete_recruiting_record_count"] == 1
     assert len(store.load_deals()) == 1
+    assert sum(len(rows) for rows in store.load_recruiting_records().values()) == 1
     assert len(store.load_delete_audit_logs()) == 1
 
 
-def test_local_data_reset_cli_force_clears_deals_and_preserves_audit_logs(
+def test_local_data_reset_cli_force_clears_local_records_and_preserves_audit_logs(
     monkeypatch,
     tmp_path,
 ) -> None:
@@ -143,7 +160,9 @@ def test_local_data_reset_cli_force_clears_deals_and_preserves_audit_logs(
     assert payload["dry_run"] is False
     assert payload["storage_written"] is True
     assert payload["deleted_deal_count"] == 1
+    assert payload["deleted_recruiting_record_count"] == 1
     assert store.load_deals() == []
+    assert sum(len(rows) for rows in store.load_recruiting_records().values()) == 0
     assert len(store.load_delete_audit_logs()) == 1
 
     raw_payload = json.loads(
@@ -151,7 +170,13 @@ def test_local_data_reset_cli_force_clears_deals_and_preserves_audit_logs(
             encoding="utf-8"
         )
     )
+    raw_recruiting_payload = json.loads(
+        (tmp_path / "local-data" / LOCAL_PERSONAL_RECRUITING_FILE).read_text(
+            encoding="utf-8"
+        )
+    )
     client = LocalSampleClient(local_data_dir=tmp_path / "local-data")
     assert raw_payload["deals"] == []
+    assert all(not rows for rows in raw_recruiting_payload["records"].values())
     assert client.ping()["data_mode"] == "local_personal"
     assert client.get_deal("sample-pavebridge") is None

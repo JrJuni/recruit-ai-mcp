@@ -13,9 +13,9 @@ The source contract lives in `src/deal_intel/tool_surfaces.py`.
 ## Mental Model
 
 - `sample`: a zero-config, bundled, limited feature-test surface with safe
-  local personal write/admin tools and optional LLM-backed note intake for
-  user-created local deals. User-memory tools are included because they only
-  read/write constrained local Markdown files.
+  local personal deal and recruiting tools, plus optional LLM-backed note
+  intake for user-created local deals. User-memory tools are included because
+  they only read/write constrained local Markdown files.
 - `standard`: the normal operator surface for real team data.
 - `developer`: everything, including demo seeding and internal QA helpers.
 
@@ -29,7 +29,7 @@ and future local personal path.
 
 | Surface | Default Profiles | Purpose | Tool Policy |
 |---|---|---|---|
-| `sample` | `sample` | Let a new user or AI agent test useful questions and small local personal datasets with no setup | Mostly LLM-free tools that work against bundled sample data or local personal `deals.json`, plus `add_interaction` when the configured LLM provider is ready |
+| `sample` | `sample` | Let a new user or AI agent test useful questions and small local personal datasets with no setup | Mostly LLM-free tools that work against bundled sample data, local personal `deals.json`, or local personal `recruiting.json`, plus `add_interaction` when the configured LLM provider is ready |
 | `standard` | `full`, `pro`, `custom` | Real operating mode for teams using MongoDB-backed data | User-facing core, admin, analysis, semantic search, and reporting tools |
 | `developer` | none by default | Maintainer/debug mode | Every MCP tool, including sample-data seeding helpers |
 
@@ -48,6 +48,16 @@ without MongoDB today. It is not the full operating surface:
 - `archive_deal`
 - `restore_deal`
 - `delete_deal`
+- `create_candidate`
+- `create_client_company`
+- `create_position`
+- `add_recruiting_interaction`
+- `create_submission`
+- `add_client_feedback`
+- `recommend_candidates_for_position`
+- `recommend_positions_for_candidate`
+- `get_recruiting_metrics`
+- `export_recruiting_report`
 - `migrate_local_data`
 - `get_deal`
 - `list_deals`
@@ -80,6 +90,9 @@ Why this matters:
 - `migrate_local_data` is visible in `sample` so a user can graduate local
   personal deals to MongoDB after connecting a URI. It is dry-run-first and
   never migrates bundled fixture records.
+- Recruiting tools are visible in `sample` because they are deterministic and
+  persist only local personal records under `recruiting.json`. They do not call
+  LLMs, embeddings, Atlas Vector Search, or MongoDB in sample mode.
 - `get_user_memory` and `record_user_memory` support user-owned operating
   notes under `user_docs/` or configured `user_memory.dir`; writes are
   constrained to safe Markdown slugs and reject secret-shaped content.

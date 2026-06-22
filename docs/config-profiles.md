@@ -28,7 +28,8 @@ The product is fundamentally designed for MongoDB-backed team operation.
 it can support lightweight personal/local experiments. It starts with a bundled
 immutable fixture; once user-created local deals exist, the fixture is archived
 from active reads and `storage.local_data_dir/deals.json` becomes the working
-dataset.
+deal dataset. Local recruiting records are stored separately in
+`storage.local_data_dir/recruiting.json`.
 
 ## Profile Contract
 
@@ -43,8 +44,9 @@ The source contract lives in `src/deal_intel/config_profiles.py`.
 Notes:
 
 - `sample` stays safe by default, but it is not permanently read-only. Local
-  personal `deals.json` supports small user datasets without MongoDB, and
-  `local-data reset/export` gives users a recovery path for messy testing.
+  personal `deals.json` and `recruiting.json` support small user datasets
+  without MongoDB, and `local-data reset/export` gives users a recovery path
+  for messy testing.
 - The default local personal data directory is `~/.recruit-ai/local-data`, and
   users should be able to override it through config as `storage.local_data_dir`.
 - `full` should remain the operational default for real recruiting/team data
@@ -303,12 +305,18 @@ Implemented:
 - `src/deal_intel/tool_surfaces.py` is the source contract.
 - Tool surfaces are optimized for non-developer first-run clarity:
   `sample`, `standard`, and `developer`.
-- `sample` exposes mostly LLM-free tools that work against bundled sample data
-  or local personal `deals.json`, plus `add_interaction` for user-created local
-  deals when the configured LLM provider is ready.
-- `sample` now includes safe non-LLM write/admin tools:
+- `sample` exposes mostly LLM-free tools that work against bundled sample data,
+  local personal `deals.json`, and local personal `recruiting.json`, plus
+  `add_interaction` for user-created local deals when the configured LLM
+  provider is ready.
+- `sample` now includes safe non-LLM deal write/admin tools:
   `create_deal`, `update_stage`, `update_deal`, `archive_deal`,
   `restore_deal`, and `delete_deal`.
+- `sample` also includes safe non-LLM recruiting tools:
+  `create_candidate`, `create_client_company`, `create_position`,
+  `add_recruiting_interaction`, `create_submission`, `add_client_feedback`,
+  `recommend_candidates_for_position`, `recommend_positions_for_candidate`,
+  `get_recruiting_metrics`, and `export_recruiting_report`.
 - `standard` is the normal real-data operating surface for `full`, `pro`, and
   custom Mongo-backed configs.
 - `developer` contains every MCP tool, including Atlas demo-database seed and
@@ -336,9 +344,9 @@ Result:
 
 - `build_tool_surface_matrix()` returns a serializable surface matrix.
 - Targeted tests verify that all registered MCP tools are classified.
-- Targeted tests verify that `sample` includes safe local personal write/admin
-  tools while excluding LLM-heavy, semantic-search, legacy Mongo aggregation,
-  and Mongo demo-database maintenance tools.
+- Targeted tests verify that `sample` includes safe local personal deal and
+  recruiting tools while excluding LLM-heavy, semantic-search, legacy Mongo
+  aggregation, and Mongo demo-database maintenance tools.
 - Targeted tests verify runtime MCP filtering for sample/developer surfaces and
   hidden-tool call blocking.
 - Detailed policy lives in `docs/tool-surfaces.md`.
@@ -377,13 +385,14 @@ recruit-ai local-data reset --force
 Behavior:
 
 - `status` reports the configured local personal data directory, deal count,
-  and delete-audit-log count.
-- `export` writes a local personal snapshot of deals and delete audit logs. It
-  strips legacy raw notes, contacts, and embeddings; canonical
-  `interactions.raw_content` may be present in deal details until a later
-  redaction/encryption layer is added.
+  recruiting record count, and delete-audit-log count.
+- `export` writes a local personal snapshot of deals, recruiting records, and
+  delete audit logs. It strips legacy raw notes, contacts, embeddings, and
+  recruiting raw content; canonical `interactions.raw_content` may be present
+  in deal details until a later redaction/encryption layer is added.
 - `reset` is dry-run by default.
-- `reset --force` clears only local personal deals in `deals.json`.
+- `reset --force` clears local personal deals in `deals.json` and recruiting
+  records in `recruiting.json`.
 - Delete audit logs are preserved across reset.
 - An empty `deals.json` still keeps the bundled fixture archived, so reset does
   not silently re-mix fictional data into the working dataset.

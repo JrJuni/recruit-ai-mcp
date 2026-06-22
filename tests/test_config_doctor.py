@@ -41,6 +41,7 @@ def _ok_sample_ping() -> dict:
         "sample_dataset_version": "v1",
         "deal_count": 10,
         "snapshot_count": 20,
+        "local_recruiting_record_count": 0,
     }
 
 
@@ -72,9 +73,12 @@ def test_config_doctor_sample_profile_passes_without_mongodb_uri(
     assert _status(result, "sample_storage") == "pass"
     assert _status(result, "llm_provider") == "warn"
     assert [step["tool"] for step in result["first_data_next_steps"]] == [
-        "list_deals",
-        "get_deal_review",
-        "get_metrics",
+        "create_client_company + create_position + create_candidate",
+        "create_client_company",
+        "create_position",
+        "create_candidate",
+        "add_recruiting_interaction",
+        "recommend_candidates_for_position",
     ]
 
 
@@ -275,14 +279,16 @@ def test_config_doctor_cli_json_and_text_are_secret_safe(monkeypatch, tmp_path) 
     assert "version_mismatch" in payload["runtime"]
     assert payload["runtime"]["python_executable"]
     assert payload["runtime"]["package_location"]
-    assert payload["first_data_next_steps"][0]["tool"] == "list_deals"
-    assert payload["first_data_next_steps"][1]["tool"] == "get_deal_review"
+    assert payload["first_data_next_steps"][0]["tool"] == (
+        "create_client_company + create_position + create_candidate"
+    )
+    assert payload["first_data_next_steps"][1]["tool"] == "create_client_company"
     assert "Runtime:" in text_result.stdout
     assert "source=" in text_result.stdout
     assert "Python:" in text_result.stdout
     assert "Module:" in text_result.stdout
     assert "First data flow:" in text_result.stdout
-    assert "get_metrics" in text_result.stdout
+    assert "recommend_candidates_for_position" in text_result.stdout
 
 
 def test_config_doctor_cli_exits_nonzero_on_fail(monkeypatch, tmp_path) -> None:

@@ -110,7 +110,8 @@ Reset/export behavior must be explicit before local personal writes ship:
 - `recruit-ai local-data status` displays the resolved directory and counts.
 - `recruit-ai local-data export` writes a secret-safe JSON snapshot.
 - `recruit-ai local-data reset` is dry-run by default.
-- `recruit-ai local-data reset --force` clears only local personal deals.
+- `recruit-ai local-data reset --force` clears local personal deals and
+  recruiting records.
 - Local delete audit logs are retained after reset.
 - Local personal data to MongoDB migration is available through
   `migrate_local_data` and `recruit-ai local-data migrate-to-mongo`.
@@ -129,8 +130,8 @@ Active read policy:
 
 Implemented write policy:
 
-- `LocalPersonalStore` writes `deals.json` with schema version and dataset
-  metadata.
+- `LocalPersonalStore` writes `deals.json` and `recruiting.json` with schema
+  version and dataset metadata.
 - Writes strip legacy `raw_notes`, `contacts`, and `summary_embedding` before
   persistence. Canonical `interactions.raw_content` is retained in local
   personal storage so future redaction/security modules can process it.
@@ -146,15 +147,21 @@ Implemented write policy:
   `LocalSampleClient.upsert_deal`.
 - `delete_deal` writes an audit entry to `delete_audit_logs.json` before
   removing a local personal deal from `deals.json`.
+- Safe non-LLM recruiting tools persist candidates, client companies,
+  positions, submissions, feedback, recruiting interactions, and saved
+  recommendation runs to `recruiting.json`.
+- Local recruiting interaction persistence strips `raw_content`; summaries and
+  metadata remain available for recommendations, metrics, and reports.
 - Delete audit logs are preserved independently from `deals.json` and should
   not be removed by future local reset unless the user explicitly asks for an
   audit reset.
-- `local-data reset --force` writes an empty `deals.json`, which keeps the
-  bundled fixture archived instead of re-mixing fictional data into active
-  reads.
-- `local-data export` includes local personal deals and delete audit logs, but
-  not legacy raw notes, contacts, or embeddings. Canonical raw content may be
-  present in local deal details.
+- `local-data reset --force` writes empty `deals.json` and `recruiting.json`.
+  Empty local deals keep the bundled fixture archived instead of re-mixing
+  fictional data into active deal reads.
+- `local-data export` includes local personal deals, recruiting records, and
+  delete audit logs, but not legacy raw notes, contacts, embeddings, or
+  recruiting raw content. Canonical raw content may be present in local deal
+  details.
 - Bundled fixture deal ids are read-only and cannot be promoted into local
   personal storage through lifecycle writes.
 - Bundled fixture deal ids are also read-only for `add_interaction`; users

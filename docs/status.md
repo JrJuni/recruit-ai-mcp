@@ -162,7 +162,7 @@ Completed:
   recruiting report work, not only inherited deal BI work.
 - Added Work 7O tool-count doc cleanup. `docs/config-profiles.md` and
   `docs/baseline.md` now match the current profile-filtered MCP surface counts:
-  sample 24, standard 48, developer 52.
+  sample 34, standard 48, developer 52.
 - Added Work 7P MCPB wording cleanup. The manifest now avoids using
   "candidate qualification framework" for validation copy, preventing confusion
   with recruiting candidate profiles.
@@ -194,6 +194,10 @@ Completed:
   separates first recruiting questions and tool defaults from inherited
   deal-intelligence compatibility flows, including recruiting write tools for
   records, interactions, and client feedback.
+- Added Work 7X zero-config recruiting local sample support. `local_sample`
+  now persists recruiting records in local personal `recruiting.json`, exposes
+  the safe non-LLM recruiting workflow on the `sample` tool surface, and keeps
+  raw recruiting interaction content out of local sample storage.
 
 Validation:
 
@@ -317,6 +321,16 @@ Validation:
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-ai-start-routing tests\test_mcpb_manifest.py tests\test_tool_surfaces.py tests\test_config_doctor.py tests\test_recruiting_mcp_tools.py`
   -> 75 passed, 1 third-party warning.
 - `ruff check src tests` -> passed.
+- `git diff --check` -> passed; Windows line-ending warnings only.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-local-sample tests\test_local_sample_backend.py tests\test_local_data_cli.py tests\test_tool_surfaces.py tests\test_cli_config_profiles.py tests\test_config_doctor.py tests\test_recruiting_mcp_tools.py tests\test_recruiting_recommendations_service.py tests\test_storage_backend_selection.py`
+  -> 104 passed, 1 third-party warning.
+- `ruff check src\deal_intel\storage\local_personal.py src\deal_intel\storage\local_sample.py src\deal_intel\tool_surfaces.py src\deal_intel\config_doctor.py src\deal_intel\cli.py tests\test_local_sample_backend.py tests\test_local_data_cli.py tests\test_tool_surfaces.py tests\test_cli_config_profiles.py tests\test_config_doctor.py`
+  -> passed.
+- `git diff --check` -> passed; Windows line-ending warnings only.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-local-sample-final tests\test_local_data_cli.py tests\test_local_sample_backend.py tests\test_config_doctor.py tests\test_cli_config_profiles.py tests\test_tool_surfaces.py`
+  -> 82 passed, 1 third-party warning.
+- `ruff check src\deal_intel\storage\local_personal.py src\deal_intel\storage\local_sample.py src\deal_intel\tool_surfaces.py src\deal_intel\config_doctor.py src\deal_intel\cli.py tests\test_local_sample_backend.py tests\test_local_data_cli.py tests\test_tool_surfaces.py tests\test_cli_config_profiles.py tests\test_config_doctor.py`
+  -> passed.
 - `git diff --check` -> passed; Windows line-ending warnings only.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.

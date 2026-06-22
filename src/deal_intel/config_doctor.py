@@ -554,36 +554,6 @@ def _first_data_next_steps(*, failed: int, backend: str) -> list[dict[str, str]]
     if failed:
         return []
 
-    if backend == "local_sample":
-        return [
-            {
-                "step": "inspect_sample_records",
-                "tool": "list_deals",
-                "message": (
-                    "Sample mode starts with bundled fictional deal records and "
-                    "a limited sample-safe tool surface. Use list_deals to inspect "
-                    "the available local sample records."
-                ),
-            },
-            {
-                "step": "review_sample_record",
-                "tool": "get_deal_review",
-                "message": (
-                    "Open one sample deal review to verify read-only health, gap, "
-                    "risk, and next-question behavior before entering real data."
-                ),
-            },
-            {
-                "step": "check_sample_metrics",
-                "tool": "get_metrics",
-                "message": (
-                    "Use pipeline_health metrics for a zero-config smoke. Switch "
-                    "to full mode before creating real recruiting clients, roles, "
-                    "candidates, or recommendations."
-                ),
-            },
-        ]
-
     steps = [
         {
             "step": "create_client_company",
@@ -626,6 +596,19 @@ def _first_data_next_steps(*, failed: int, backend: str) -> list[dict[str, str]]
             ),
         },
     ]
+    if backend == "local_sample":
+        steps.insert(
+            0,
+            {
+                "step": "start_local_recruiting_sample",
+                "tool": "create_client_company + create_position + create_candidate",
+                "message": (
+                    "Sample mode can now create local personal recruiting records "
+                    "in recruiting.json without MongoDB. Start with one fictional "
+                    "or trial client, role, and candidate."
+                ),
+            },
+        )
     if backend == "mongo":
         steps.insert(
             0,
@@ -653,6 +636,7 @@ def _safe_ping_details(ping: dict[str, Any]) -> dict[str, Any]:
         "snapshot_count",
         "local_data_dir",
         "local_deal_count",
+        "local_recruiting_record_count",
         "fixture_archived",
         "message",
         "fix",

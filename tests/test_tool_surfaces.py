@@ -90,6 +90,16 @@ def test_sample_surface_is_zero_config_safe_local_personal() -> None:
         "archive_deal",
         "restore_deal",
         "delete_deal",
+        "create_candidate",
+        "create_client_company",
+        "create_position",
+        "add_recruiting_interaction",
+        "create_submission",
+        "add_client_feedback",
+        "recommend_candidates_for_position",
+        "recommend_positions_for_candidate",
+        "get_recruiting_metrics",
+        "export_recruiting_report",
         "migrate_local_data",
         "get_deal",
         "list_deals",
@@ -121,9 +131,18 @@ def test_sample_surface_is_zero_config_safe_local_personal() -> None:
         "archive_deal",
         "restore_deal",
         "delete_deal",
+        "create_candidate",
+        "create_client_company",
+        "create_position",
+        "add_recruiting_interaction",
+        "create_submission",
+        "add_client_feedback",
+        "recommend_candidates_for_position",
+        "recommend_positions_for_candidate",
         "migrate_local_data",
     }
     assert get_tool_surface_contract("update_config").local_file_writes is True
+    assert get_tool_surface_contract("export_recruiting_report").local_file_writes is True
 
 
 @pytest.mark.parametrize(
@@ -147,16 +166,6 @@ def test_sample_surface_is_zero_config_safe_local_personal() -> None:
         "backfill_qualification",
         "backfill_qualification_reextract",
         "get_deal_raw",
-        "create_candidate",
-        "create_client_company",
-        "create_position",
-        "add_recruiting_interaction",
-        "create_submission",
-        "add_client_feedback",
-        "recommend_candidates_for_position",
-        "recommend_positions_for_candidate",
-        "get_recruiting_metrics",
-        "export_recruiting_report",
     ],
 )
 def test_sample_surface_hides_tools_that_break_first_run_expectations(
@@ -177,6 +186,16 @@ def test_sample_local_personal_target_promotes_safe_non_llm_writes() -> None:
         "restore_deal",
         "delete_deal",
         "migrate_local_data",
+        "create_candidate",
+        "create_client_company",
+        "create_position",
+        "add_recruiting_interaction",
+        "create_submission",
+        "add_client_feedback",
+        "recommend_candidates_for_position",
+        "recommend_positions_for_candidate",
+        "get_recruiting_metrics",
+        "export_recruiting_report",
     }.issubset(target_tools)
     assert "add_interaction" in target_tools
     assert {
@@ -197,16 +216,6 @@ def test_sample_local_personal_target_promotes_safe_non_llm_writes() -> None:
         "backfill_qualification",
         "backfill_qualification_reextract",
         "get_deal_raw",
-        "create_candidate",
-        "create_client_company",
-        "create_position",
-        "add_recruiting_interaction",
-        "create_submission",
-        "add_client_feedback",
-        "recommend_candidates_for_position",
-        "recommend_positions_for_candidate",
-        "get_recruiting_metrics",
-        "export_recruiting_report",
     }.isdisjoint(target_tools)
 
 
@@ -477,7 +486,18 @@ def test_get_tool_catalog_reports_visible_surface(monkeypatch) -> None:
         "get_customer_theme_breakdown",
         "get_customer_theme_evidence",
     ]
-    assert "recruiting_workflow" not in result["intent_groups"]
+    assert result["intent_groups"]["recruiting_workflow"]["tools"] == [
+        "create_candidate",
+        "create_client_company",
+        "create_position",
+        "add_recruiting_interaction",
+        "create_submission",
+        "add_client_feedback",
+        "recommend_candidates_for_position",
+        "recommend_positions_for_candidate",
+        "get_recruiting_metrics",
+        "export_recruiting_report",
+    ]
     guide_by_intent = {
         item["intent"]: item for item in result["tool_selection_guide"]
     }

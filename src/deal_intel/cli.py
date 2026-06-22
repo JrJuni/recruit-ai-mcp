@@ -1250,7 +1250,7 @@ def local_data_export(
         help="Print structured JSON instead of concise text.",
     ),
 ) -> None:
-    """Export local personal deals and delete audit logs to a JSON snapshot."""
+    """Export local personal deal, recruiting, and delete-audit data."""
 
     store = _local_personal_store_from_config()
     payload = store.export_data(output_path=output)
@@ -1266,8 +1266,8 @@ def local_data_reset(
         False,
         "--force",
         help=(
-            "Actually clear local personal deals. Without this flag the command "
-            "is a dry-run."
+            "Actually clear local personal deal and recruiting records. "
+            "Without this flag the command is a dry-run."
         ),
     ),
     json_output: bool = typer.Option(
@@ -1276,7 +1276,7 @@ def local_data_reset(
         help="Print structured JSON instead of concise text.",
     ),
 ) -> None:
-    """Clear local personal deals while preserving delete audit logs."""
+    """Clear local personal deal and recruiting records while preserving audit logs."""
 
     store = _local_personal_store_from_config()
     payload = store.reset_deals(force=force)
@@ -2550,6 +2550,7 @@ def _format_local_data_export(payload: dict) -> str:
             f"Export path: {payload.get('export_path')}",
             f"Data dir: {payload.get('data_dir')}",
             f"Deals: {payload.get('deal_count')}",
+            f"Recruiting records: {payload.get('recruiting_record_count')}",
             f"Delete audit logs: {payload.get('delete_audit_log_count')}",
         ]
     )
@@ -2561,7 +2562,12 @@ def _format_local_data_reset(payload: dict) -> str:
         f"Local personal data reset: {status}",
         f"Data dir: {payload.get('data_dir')}",
         f"Deals file: {payload.get('deals_path')}",
+        f"Recruiting file: {payload.get('recruiting_path')}",
         f"Would delete deals: {payload.get('would_delete_deal_count')}",
+        (
+            "Would delete recruiting records: "
+            f"{payload.get('would_delete_recruiting_record_count')}"
+        ),
         (
             "Preserved delete audit logs: "
             f"{payload.get('preserved_delete_audit_log_count')}"
@@ -2569,7 +2575,9 @@ def _format_local_data_reset(payload: dict) -> str:
         f"Storage written: {payload.get('storage_written')}",
     ]
     if payload.get("dry_run"):
-        lines.append("Run again with --force to clear only local personal deals.")
+        lines.append(
+            "Run again with --force to clear local personal deals and recruiting records."
+        )
     else:
         lines.append("Delete audit logs were preserved.")
     return "\n".join(lines)

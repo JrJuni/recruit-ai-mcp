@@ -525,7 +525,7 @@ MCP_TOOL_SURFACE_CONTRACTS: tuple[MCPToolSurfaceContract, ...] = (
     MCPToolSurfaceContract(
         name="create_candidate",
         category="recruiting",
-        surfaces=_STANDARD,
+        surfaces=_SAMPLE,
         user_facing=True,
         db_writes=True,
         llm_calls=False,
@@ -534,7 +534,7 @@ MCP_TOOL_SURFACE_CONTRACTS: tuple[MCPToolSurfaceContract, ...] = (
     MCPToolSurfaceContract(
         name="create_client_company",
         category="recruiting",
-        surfaces=_STANDARD,
+        surfaces=_SAMPLE,
         user_facing=True,
         db_writes=True,
         llm_calls=False,
@@ -543,7 +543,7 @@ MCP_TOOL_SURFACE_CONTRACTS: tuple[MCPToolSurfaceContract, ...] = (
     MCPToolSurfaceContract(
         name="create_position",
         category="recruiting",
-        surfaces=_STANDARD,
+        surfaces=_SAMPLE,
         user_facing=True,
         db_writes=True,
         llm_calls=False,
@@ -552,7 +552,7 @@ MCP_TOOL_SURFACE_CONTRACTS: tuple[MCPToolSurfaceContract, ...] = (
     MCPToolSurfaceContract(
         name="add_recruiting_interaction",
         category="recruiting",
-        surfaces=_STANDARD,
+        surfaces=_SAMPLE,
         user_facing=True,
         db_writes=True,
         llm_calls=False,
@@ -564,7 +564,7 @@ MCP_TOOL_SURFACE_CONTRACTS: tuple[MCPToolSurfaceContract, ...] = (
     MCPToolSurfaceContract(
         name="create_submission",
         category="recruiting",
-        surfaces=_STANDARD,
+        surfaces=_SAMPLE,
         user_facing=True,
         db_writes=True,
         llm_calls=False,
@@ -573,7 +573,7 @@ MCP_TOOL_SURFACE_CONTRACTS: tuple[MCPToolSurfaceContract, ...] = (
     MCPToolSurfaceContract(
         name="add_client_feedback",
         category="recruiting",
-        surfaces=_STANDARD,
+        surfaces=_SAMPLE,
         user_facing=True,
         db_writes=True,
         llm_calls=False,
@@ -582,7 +582,7 @@ MCP_TOOL_SURFACE_CONTRACTS: tuple[MCPToolSurfaceContract, ...] = (
     MCPToolSurfaceContract(
         name="recommend_candidates_for_position",
         category="recruiting",
-        surfaces=_STANDARD,
+        surfaces=_SAMPLE,
         user_facing=True,
         db_writes=True,
         llm_calls=False,
@@ -594,7 +594,7 @@ MCP_TOOL_SURFACE_CONTRACTS: tuple[MCPToolSurfaceContract, ...] = (
     MCPToolSurfaceContract(
         name="recommend_positions_for_candidate",
         category="recruiting",
-        surfaces=_STANDARD,
+        surfaces=_SAMPLE,
         user_facing=True,
         db_writes=True,
         llm_calls=False,
@@ -606,7 +606,7 @@ MCP_TOOL_SURFACE_CONTRACTS: tuple[MCPToolSurfaceContract, ...] = (
     MCPToolSurfaceContract(
         name="get_recruiting_metrics",
         category="recruiting",
-        surfaces=_STANDARD,
+        surfaces=_SAMPLE,
         user_facing=True,
         db_writes=False,
         llm_calls=False,
@@ -615,7 +615,7 @@ MCP_TOOL_SURFACE_CONTRACTS: tuple[MCPToolSurfaceContract, ...] = (
     MCPToolSurfaceContract(
         name="export_recruiting_report",
         category="local_artifact",
-        surfaces=_STANDARD,
+        surfaces=_SAMPLE,
         user_facing=True,
         db_writes=False,
         llm_calls=False,
