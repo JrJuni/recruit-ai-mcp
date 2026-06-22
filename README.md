@@ -454,6 +454,7 @@ store customer evidence with `add_interaction`, then run `get_deal_review`.
 $env:RECRUIT_AI_STORAGE_BACKEND='local_sample'
 recruit-ai smoke-profile --profile sample
 recruit-ai storage-status
+recruit-ai smoke-natural-questions --pack recruiting --as-of 2026-06-22
 recruit-ai smoke-natural-questions --as-of 2026-06-10
 ```
 
@@ -479,6 +480,7 @@ Temporary PowerShell session:
 ```powershell
 $env:RECRUIT_AI_STORAGE_BACKEND='local_sample'
 & "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli storage-status
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli smoke-natural-questions --pack recruiting --as-of 2026-06-22
 & "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli smoke-natural-questions --as-of 2026-06-10
 ```
 

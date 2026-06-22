@@ -1780,6 +1780,11 @@ def smoke_natural_questions(
         "--as-of",
         help="Business date for deterministic natural-question smoke checks.",
     ),
+    pack: str = typer.Option(
+        "deal",
+        "--pack",
+        help="Question pack to run: deal or recruiting.",
+    ),
     output_dir: Path | None = typer.Option(
         None,
         "--output-dir",
@@ -1794,14 +1799,20 @@ def smoke_natural_questions(
     """Run deterministic natural-question smoke checks and save evidence files."""
     from deal_intel import _context
 
-    cfg = _context.config()
-    mongo = _context.mongo()
     try:
-        payload = _build_natural_question_smoke_pack(
-            mongo=mongo,
-            cfg=cfg,
-            as_of=as_of,
-        )
+        pack_key = pack.strip().lower()
+        if pack_key == "deal":
+            cfg = _context.config()
+            mongo = _context.mongo()
+            payload = _build_natural_question_smoke_pack(
+                mongo=mongo,
+                cfg=cfg,
+                as_of=as_of,
+            )
+        elif pack_key == "recruiting":
+            payload = _build_recruiting_natural_question_smoke_pack(as_of=as_of)
+        else:
+            raise ValueError("pack must be one of: deal, recruiting")
         payload["output_dir"] = str(
             _write_natural_question_smoke_artifacts(payload, output_dir=output_dir)
         )
@@ -3354,6 +3365,254 @@ def _build_natural_question_smoke_pack(
     }
 
 
+def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
+    from deal_intel.schema.recruiting_match import build_candidate_position_fit
+    from deal_intel.schema.recruiting_metrics import build_recruiting_pipeline_metrics
+    from deal_intel.schema.recruiting_recommendation import (
+        build_candidate_position_recommendation_run,
+        build_position_candidate_recommendation_run,
+    )
+    from deal_intel.storage.recruiting_collections import (
+        CANDIDATES,
+        CLIENT_COMPANIES,
+        FEEDBACK,
+        INTERACTIONS,
+        POSITIONS,
+        SUBMISSIONS,
+    )
+    from deal_intel.tools.sample_dataset import build_sample_recruiting_records
+
+    smoke_as_of = as_of or "2026-06-22"
+    loaded_at = f"{smoke_as_of}T00:00:00+00:00"
+    generated_at = datetime.now().isoformat(timespec="seconds")
+    records = build_sample_recruiting_records(loaded_at=loaded_at)
+    candidates = records[CANDIDATES]
+    clients = records[CLIENT_COMPANIES]
+    positions = records[POSITIONS]
+    submissions = records[SUBMISSIONS]
+    feedback = records[FEEDBACK]
+    interactions = records[INTERACTIONS]
+    candidates_by_id = {row["candidate_id"]: row for row in candidates}
+    positions_by_id = {row["position_id"]: row for row in positions}
+    clients_by_id = {row["client_company_id"]: row for row in clients}
+
+    def call(question_id: str, question: str, answerability: str, fn: Any) -> dict:
+        try:
+            payload = {"ok": True, "as_of": smoke_as_of, **fn()}
+            sensitive_ok = not _contains_sensitive_result_key(payload)
+            return {
+                "id": question_id,
+                "question": question,
+                "answerability": answerability,
+                "sensitive": "pass" if sensitive_ok else "fail",
+                "file": _natural_question_file_name(question_id),
+                "quick_read": _natural_question_quick_read(question_id, payload),
+                "payload": payload,
+            }
+        except Exception as exc:
+            return _natural_question_blocked_row(
+                question_id,
+                question,
+                answerability,
+                {
+                    "ok": False,
+                    "error_code": "INTERNAL",
+                    "stage": "cli",
+                    "message": f"{type(exc).__name__}: {exc}",
+                    "hint": None,
+                    "retryable": False,
+                },
+            )
+
+    def position_to_candidates() -> dict:
+        run = build_position_candidate_recommendation_run(
+            position=positions_by_id["pos_northstar_backend_lead"],
+            candidates=candidates,
+            client_feedback=feedback,
+            limit=3,
+            created_at=loaded_at,
+        ).model_dump(mode="json")
+        return {"mode": "position_to_candidates", "run": run}
+
+    def candidate_to_positions() -> dict:
+        run = build_candidate_position_recommendation_run(
+            candidate=candidates_by_id["cand_avery_chen"],
+            positions=positions,
+            client_feedback=feedback,
+            limit=3,
+            created_at=loaded_at,
+        ).model_dump(mode="json")
+        return {"mode": "candidate_to_positions", "run": run}
+
+    def feedback_adjustment_summary() -> dict:
+        from dataclasses import asdict
+
+        rows = []
+        for candidate_id in ("cand_avery_chen", "cand_priya_shah"):
+            fit = build_candidate_position_fit(
+                candidate=candidates_by_id[candidate_id],
+                position=positions_by_id["pos_northstar_backend_lead"],
+                client_feedback=feedback,
+            )
+            rows.append(
+                {
+                    "candidate_id": candidate_id,
+                    "overall_score": fit.snapshot.overall_score,
+                    "feedback_adjustments": [
+                        asdict(item) for item in fit.feedback_adjustments
+                    ],
+                }
+            )
+        return {
+            "summary": {
+                "candidate_count": len(rows),
+                "adjusted_candidate_count": sum(
+                    1 for row in rows if row["feedback_adjustments"]
+                ),
+            },
+            "candidates": rows,
+        }
+
+    def active_submission_summary() -> dict:
+        active = [
+            row
+            for row in submissions
+            if row["status"] in {"submitted", "client_review", "interviewing", "offer"}
+        ]
+        return {
+            "summary": {"active_submission_count": len(active)},
+            "submissions": [
+                {
+                    "submission_id": row["submission_id"],
+                    "candidate_id": row["candidate_id"],
+                    "position_id": row["position_id"],
+                    "status": row["status"],
+                    "next_step": row.get("next_step", ""),
+                }
+                for row in active
+            ],
+        }
+
+    def preference_learning_summary() -> dict:
+        rows = [
+            {
+                "feedback_id": row["feedback_id"],
+                "position_id": row.get("position_id"),
+                "candidate_id": row.get("candidate_id"),
+                "decision_signal": row["decision_signal"],
+                "preference_learning": row.get("preference_learning") or [],
+            }
+            for row in feedback
+            if row.get("preference_learning")
+        ]
+        return {
+            "summary": {"feedback_with_preference_learning": len(rows)},
+            "feedback": rows,
+        }
+
+    def candidate_risk_summary() -> dict:
+        rows = [
+            {
+                "candidate_id": row["candidate_id"],
+                "name": row["name"],
+                "risk_flags": row.get("risk_flags") or [],
+            }
+            for row in candidates
+            if row.get("risk_flags")
+        ]
+        return {"summary": {"candidate_risk_count": len(rows)}, "candidates": rows}
+
+    def data_safety_summary() -> dict:
+        restricted_content_present = any(
+            bool(row.get("raw_content")) for row in interactions
+        )
+        return {
+            "summary": {
+                "candidate_count": len(candidates),
+                "client_company_count": len(clients),
+                "position_count": len(positions),
+                "interaction_count": len(interactions),
+                "restricted_content_present": restricted_content_present,
+            },
+            "clients": sorted(row["name"] for row in clients_by_id.values()),
+        }
+
+    questions = [
+        call(
+            "rq01_recruiting_pipeline_metrics",
+            "Show recruiting pipeline metrics for the sample search firm.",
+            "direct",
+            lambda: build_recruiting_pipeline_metrics(
+                candidates=candidates,
+                positions=positions,
+                submissions=submissions,
+                feedback=feedback,
+            ),
+        ),
+        call(
+            "rq02_candidates_for_northstar_backend",
+            "Which candidates should Northstar review for the backend platform role?",
+            "direct",
+            position_to_candidates,
+        ),
+        call(
+            "rq03_positions_for_avery",
+            "Which open roles fit Avery Chen best?",
+            "direct",
+            candidate_to_positions,
+        ),
+        call(
+            "rq04_feedback_adjustment_signal",
+            "Is client feedback changing any candidate-position fit scores?",
+            "direct",
+            feedback_adjustment_summary,
+        ),
+        call(
+            "rq05_active_submission_next_steps",
+            "Which active submissions need a next step?",
+            "derived",
+            active_submission_summary,
+        ),
+        call(
+            "rq06_client_preference_learning",
+            "What client preferences have we learned from feedback?",
+            "derived",
+            preference_learning_summary,
+        ),
+        call(
+            "rq07_candidate_risk_flags",
+            "Which candidates have risk flags before submission?",
+            "derived",
+            candidate_risk_summary,
+        ),
+        call(
+            "rq08_local_recruiting_data_safety",
+            "Does the recruiting smoke payload avoid raw content and secrets?",
+            "derived",
+            data_safety_summary,
+        ),
+    ]
+
+    sensitive_failures = [
+        row["id"] for row in questions if row.get("sensitive") == "fail"
+    ]
+    blocked_questions = [
+        row["id"] for row in questions if row.get("blocked_reason") is not None
+    ]
+    answerability_counts = _counter_dict(row["answerability"] for row in questions)
+    return {
+        "ok": not sensitive_failures and not blocked_questions,
+        "pack": "recruiting",
+        "generated_at": generated_at,
+        "as_of": smoke_as_of,
+        "question_count": len(questions),
+        "answerability_counts": answerability_counts,
+        "sensitive_failures": sensitive_failures,
+        "blocked_questions": blocked_questions,
+        "questions": questions,
+    }
+
+
 def _natural_question_blocked_row(
     question_id: str,
     question: str,
@@ -3698,6 +3957,41 @@ def _top_decision_theme_key(payload: dict) -> str | None:
 def _natural_question_quick_read(question_id: str, payload: dict) -> str:
     if not payload.get("ok", True):
         return "blocked"
+    if question_id == "rq01_recruiting_pipeline_metrics":
+        summary = payload.get("summary") or {}
+        return (
+            f"candidates={summary.get('candidate_count')}, "
+            f"open_positions={summary.get('open_position_count')}, "
+            f"submissions={summary.get('submission_count')}"
+        )
+    if question_id in {
+        "rq02_candidates_for_northstar_backend",
+        "rq03_positions_for_avery",
+    }:
+        run = payload.get("run") or {}
+        results = run.get("results") or []
+        ranked = ", ".join(
+            str(row.get("target_id") or "-") for row in results[:3]
+        )
+        return f"top={ranked or '-'}"
+    if question_id == "rq04_feedback_adjustment_signal":
+        summary = payload.get("summary") or {}
+        return f"adjusted={summary.get('adjusted_candidate_count')}"
+    if question_id == "rq05_active_submission_next_steps":
+        summary = payload.get("summary") or {}
+        return f"active={summary.get('active_submission_count')}"
+    if question_id == "rq06_client_preference_learning":
+        summary = payload.get("summary") or {}
+        return f"learned={summary.get('feedback_with_preference_learning')}"
+    if question_id == "rq07_candidate_risk_flags":
+        summary = payload.get("summary") or {}
+        return f"risk_candidates={summary.get('candidate_risk_count')}"
+    if question_id == "rq08_local_recruiting_data_safety":
+        summary = payload.get("summary") or {}
+        return (
+            f"interactions={summary.get('interaction_count')}, "
+            f"restricted_content_present={summary.get('restricted_content_present')}"
+        )
     if question_id == "q01_pipeline_health":
         kpis = payload.get("kpis") or {}
         return (

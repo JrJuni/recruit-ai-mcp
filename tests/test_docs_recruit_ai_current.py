@@ -17,6 +17,7 @@ def test_mvp_readiness_is_recruit_ai_current() -> None:
     assert "create_candidate" in docs
     assert "add_recruiting_interaction" in docs
     assert "recommend_candidates_for_position" in docs
+    assert "smoke-natural-questions --pack recruiting --as-of 2026-06-22" in docs
 
     assert "sales/deal-intelligence" not in docs
     assert "deal-intel usage" not in docs
@@ -81,6 +82,7 @@ def test_backlog_current_stream_is_recruit_ai_first() -> None:
     assert "create_candidate" in current
     assert "recommend_candidates_for_position" in current
     assert "recruiting-first natural-question smoke pack" in current
+    assert "smoke-natural-questions --pack recruiting" in current
     assert "### Inherited Deal-Intel Post-v1 / v2 Roadmap" not in current
 
     assert "deal-intel-mcp==0.2.1" not in current
@@ -133,3 +135,11 @@ def test_storage_backend_docs_describe_local_recruiting_persistence() -> None:
     assert "`recommend_candidates_for_position`" in docs
     assert "strips `raw_content` before persistence" in docs
     assert "DEAL_INTEL_STORAGE_BACKEND` remains a compatibility fallback" in normalized
+
+
+def test_first_run_docs_include_recruiting_natural_question_pack() -> None:
+    for relative in ("README.md", "AI_START_HERE.md", "docs/config-profiles.md"):
+        docs = (ROOT / relative).read_text(encoding="utf-8")
+
+        assert "smoke-natural-questions" in docs
+        assert "--pack recruiting" in docs

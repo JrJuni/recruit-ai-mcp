@@ -189,6 +189,7 @@ needs a fast product-shape check before asking the user to configure Atlas.
 ```powershell
 $env:RECRUIT_AI_STORAGE_BACKEND='local_sample'
 & "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli smoke-profile --profile sample
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli smoke-natural-questions --pack recruiting --as-of 2026-06-22
 & "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli smoke-natural-questions --as-of 2026-06-10
 ```
 

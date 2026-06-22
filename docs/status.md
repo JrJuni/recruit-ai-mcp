@@ -237,6 +237,13 @@ Completed:
   `docs/storage-backends.md` now lists the local personal recruiting record
   methods and safe recruiting tools that persist to `recruiting.json`, including
   raw-content stripping for local recruiting interactions.
+- Added Work 7AH recruiting natural-question smoke pack.
+  `smoke-natural-questions --pack recruiting` now runs an 8-question
+  deterministic recruiting pack from the fictional recruiting sample dataset
+  without requiring MongoDB/config context, writes the usual smoke artifacts,
+  and covers recruiting metrics, two-way recommendations, feedback-adjusted
+  scoring, active submissions, learned client preferences, candidate risk
+  flags, and raw-content safety.
 
 Validation:
 
@@ -400,6 +407,12 @@ Validation:
 - `ruff check src tests` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-storage-docs tests\test_docs_recruit_ai_current.py tests\test_local_sample_backend.py tests\test_local_data_cli.py`
   -> 31 passed.
+- `ruff check src tests` -> passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-natural-final tests\test_cli_deal_review_smoke.py tests\test_docs_recruit_ai_current.py tests\test_sample_data.py tests\test_recruiting_recommendation.py tests\test_recruiting_metrics.py tests\test_tool_surfaces.py tests\test_mcpb_manifest.py`
+  -> 93 passed, 1 third-party warning.
+- `PYTHONPATH=src python -m deal_intel.cli smoke-natural-questions --pack recruiting --as-of 2026-06-22 --output-dir .tmp\recruiting-natural-cli-smoke --json`
+  -> passed with `ok=true`, `question_count=8`, no blocked questions, and no
+  sensitive failures.
 - `ruff check src tests` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.

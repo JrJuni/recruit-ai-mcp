@@ -79,8 +79,8 @@ Not MVP-blocking:
 
 Remaining post-v2 quality candidates:
 
-- Keep validating recruiting tool-selection descriptions through real host
-  usage and add a recruiting-first natural-question smoke pack.
+- Keep validating recruiting tool-selection descriptions through the
+  recruiting-first natural-question smoke pack and real host usage.
 - Improve recruiting recommendation, report, and inherited deal-review quality
   with real user traces and synthetic corner-case datasets.
 
@@ -212,21 +212,24 @@ Pass criteria:
 
 ### 3b. Recruiting Workflow Smoke
 
-Run the targeted recruiting tests until the dedicated natural-question smoke
-pack exists:
+Run the deterministic recruiting question pack:
 
 ```powershell
-& "$HOME\miniconda3\envs\deal-intel\python.exe" -m pytest tests\test_recruiting_mcp_tools.py tests\test_recruiting_recommendations_service.py tests\test_local_sample_backend.py -q
+$env:RECRUIT_AI_STORAGE_BACKEND='local_sample'
+$env:RECRUIT_AI_TOOLS_SURFACE='sample'
+recruit-ai smoke-natural-questions --pack recruiting --as-of 2026-06-22
 ```
 
 Pass criteria:
 
-- Candidate, client-company, position, interaction, feedback, submission, and
-  recommendation paths pass.
-- Sample/local mode can persist recruiting records without raw interaction
-  content in local sample storage.
-- Recommendation runs remain deterministic and M0-safe without Atlas Vector
-  Search.
+- `questions=8`.
+- `OK: True`.
+- No blocked questions.
+- No sensitive failures.
+- The pack covers recruiting metrics, position-to-candidate recommendations,
+  candidate-to-position recommendations, feedback-adjusted scoring, active
+  submissions, learned client preferences, candidate risk flags, and raw-content
+  safety.
 
 ### 4. Inherited Deal Review QA
 

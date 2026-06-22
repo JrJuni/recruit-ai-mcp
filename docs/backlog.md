@@ -57,6 +57,8 @@ Current completed baseline:
 - Work 7 demo/sample/docs paths are in place, including fictional recruiting
   demo data, local sample recruiting persistence, and local recruiting
   migration to MongoDB.
+- Recruiting-first natural-question smoke is available through
+  `recruit-ai smoke-natural-questions --pack recruiting`.
 
 Immediate quality order:
 
@@ -66,10 +68,13 @@ Immediate quality order:
      first-use workflows.
    - Treat historical docs as archive instead of rewriting every old milestone
      entry.
-2. Add a recruiting-first natural-question smoke pack.
-   - Cover client intake, candidate intake, candidate-to-position matching,
-     position-to-candidate matching, feedback-informed reranking, recruiting
-     metrics, recruiting report export, and local sample behavior.
+2. Broaden the recruiting-first natural-question smoke pack.
+   - Current coverage includes recruiting metrics, candidate-to-position
+     matching, position-to-candidate matching, feedback-informed scoring,
+     active submissions, learned client preferences, candidate risk flags, and
+     raw-content safety.
+   - Add client intake, candidate intake, recruiting report export, and local
+     personal persistence cases when those answer paths need release evidence.
    - Keep the inherited deal-intelligence natural-question pack as a
      compatibility smoke, not the primary Recruit AI user journey.
 3. Tighten release/package verification.

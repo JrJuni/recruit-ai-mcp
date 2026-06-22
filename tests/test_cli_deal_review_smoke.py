@@ -497,6 +497,87 @@ def test_smoke_natural_questions_json_outputs_artifact_path(monkeypatch, tmp_pat
     assert mongo.write_count == 0
 
 
+def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    mongo = FakeMongo([_deal("deal-1", company="페이브릿지")])
+    monkeypatch.setattr(_context, "mongo", lambda: mongo)
+    monkeypatch.setattr(_context, "config", lambda: {})
+    output_dir = tmp_path / "recruiting-natural-pack"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "smoke-natural-questions",
+            "--pack",
+            "recruiting",
+            "--as-of",
+            "2026-06-22",
+            "--output-dir",
+            str(output_dir),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Natural Question Smoke (as_of=2026-06-22, questions=8)" in result.output
+    assert "OK: True" in result.output
+    assert "candidates=4, open_positions=2, submissions=4" in result.output
+    assert (output_dir / "summary.md").exists()
+    summary = json.loads((output_dir / "summary.json").read_text(encoding="utf-8"))
+    assert summary["ok"] is True
+    assert summary["pack"] == "recruiting"
+    assert summary["question_count"] == 8
+    assert summary["answerability_counts"] == {"derived": 4, "direct": 4}
+    assert (output_dir / "rq01_recruiting_pipeline_metrics.json").exists()
+    assert (output_dir / "rq02_candidates_for_northstar_backend.json").exists()
+    assert (output_dir / "rq08_local_recruiting_data_safety.json").exists()
+    encoded = json.dumps(summary, ensure_ascii=False)
+    assert "raw_content" not in encoded
+    assert "contacts" not in encoded
+    assert "summary_embedding" not in encoded
+    assert mongo.write_count == 0
+
+
+def test_smoke_natural_questions_recruiting_pack_json(monkeypatch, tmp_path) -> None:
+    def fail_context() -> None:
+        raise AssertionError("recruiting pack should not require runtime storage config")
+
+    monkeypatch.setattr(_context, "mongo", fail_context)
+    monkeypatch.setattr(_context, "config", fail_context)
+    output_dir = tmp_path / "recruiting-natural-pack"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "smoke-natural-questions",
+            "--pack",
+            "recruiting",
+            "--as-of",
+            "2026-06-22",
+            "--output-dir",
+            str(output_dir),
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["ok"] is True
+    assert payload["pack"] == "recruiting"
+    assert payload["output_dir"] == str(output_dir.resolve())
+    assert [row["id"] for row in payload["questions"]] == [
+        "rq01_recruiting_pipeline_metrics",
+        "rq02_candidates_for_northstar_backend",
+        "rq03_positions_for_avery",
+        "rq04_feedback_adjustment_signal",
+        "rq05_active_submission_next_steps",
+        "rq06_client_preference_learning",
+        "rq07_candidate_risk_flags",
+        "rq08_local_recruiting_data_safety",
+    ]
+
+
 def test_smoke_natural_questions_default_output_dir_uses_user_home(
     monkeypatch,
     tmp_path,

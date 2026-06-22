@@ -240,7 +240,8 @@ Implemented behavior:
 - AI agents are instructed to start in `sample`.
 - Agents do not ask for MongoDB/API keys before sample smoke succeeds.
 - The guide points to `storage-status`, `config profiles`, and
-  `smoke-natural-questions`.
+  `smoke-natural-questions`, including the recruiting-first
+  `--pack recruiting` smoke.
 - The guide tells agents to preview `config init --profile sample --dry-run`
   before writing user config.
 - Existing config is protected: agents must preview any `config switch ...`
