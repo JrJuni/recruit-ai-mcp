@@ -362,9 +362,18 @@ Completed:
   README, public `bin/recruit-ai-mcp.js`, compatibility
   `bin/deal-intel-mcp.js`, package metadata, and the bundled
   `recruit-ai-mcp-0.1.0.mcpb`.
+- Added Work 7BE distribution pending-state cleanup.
+  `docs/distribution-plan.md` now uses the current MCP surface counts
+  (`sample=34`, `standard=48`, `developer=52`) and distinguishes completed
+  local pre-publish bootstrapper smoke from still-pending public registry
+  `npx recruit-ai-mcp@0.1.0` smoke.
 
 Validation:
 
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-distribution-pending-split tests\test_docs_recruit_ai_current.py tests\test_bootstrapper_skeleton.py`
+  -> 29 passed.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-npm-tarball-contract tests\test_bootstrapper_skeleton.py`
   -> 17 passed.
 - `npm pack .\npm --dry-run --json --cache .tmp\npm-cache-tarball-contract`

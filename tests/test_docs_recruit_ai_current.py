@@ -106,8 +106,13 @@ def test_distribution_plan_lists_current_bootstrapper_handoff_commands() -> None
     assert "npx recruit-ai-mcp mcp-config" in docs
     assert "npx recruit-ai-mcp mcp" in docs
     assert "public registry smoke is\npending" in docs
+    assert "`sample=34`, `standard=48`, `developer=52`" in docs
+    assert "Local pre-publish npm/PyPI bootstrapper smoke passed" in docs
+    assert "Public registry `npx recruit-ai-mcp@0.1.0` smoke remains pending" in docs
 
     assert "npx recruit-ai-mcp smoke\nnpx recruit-ai-mcp mcp" not in docs
+    assert "`sample=24`, `standard=38`, `developer=42`" not in docs
+    assert "Public npm/PyPI `npx` smoke passed" not in docs
 
 
 def test_backlog_current_stream_is_recruit_ai_first() -> None:

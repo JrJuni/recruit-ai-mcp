@@ -128,7 +128,7 @@ Tasks:
   setup checks.
 - Keep `sample` smoke documented as an optional zero-config evaluation path.
 - Keep tool surface counts aligned with the runtime contract:
-  `sample=24`, `standard=38`, `developer=42`.
+  `sample=34`, `standard=48`, `developer=52`.
 - Keep user-memory, canonical interaction intake, industry metadata, and local
   personal data commands represented in the MVP checklist.
 - Record any live MongoDB or MCPB reinstall checks that could not be completed
@@ -364,8 +364,10 @@ Current status:
   so missing MongoDB/API values do not make the first install look broken.
 - `smoke --profile-only` and `mcp-config --json` passed from the managed
   runtime.
-- Public npm/PyPI `npx` smoke passed on Windows with an explicit Python 3.11+
-  interpreter path.
+- Local pre-publish npm/PyPI bootstrapper smoke passed on Windows with an
+  explicit Python 3.11+ interpreter path and local wheel source.
+- Public registry `npx recruit-ai-mcp@0.1.0` smoke remains pending until
+  PyPI/npm publication is complete.
 - macOS fresh-machine smoke remains pending.
 - Keep the detailed checklist in
   [bootstrapper-fresh-smoke.md](bootstrapper-fresh-smoke.md).
