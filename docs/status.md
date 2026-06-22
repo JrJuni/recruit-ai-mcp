@@ -89,6 +89,10 @@ Completed:
   surfaces, and MCPB manifest. Recruiting interaction responses keep
   `raw_content` hidden by default, and submissions can store a fit snapshot
   JSON object from recommendation output.
+- Added Work 6A recruiting pipeline metrics calculator. It computes summary
+  counts, position status rates, submission funnel rates, feedback signal
+  rates, and data-quality counters from safe recruiting records without
+  storage reads, writes, LLMs, embeddings, or MCP registration.
 
 Validation:
 
@@ -124,6 +128,8 @@ Validation:
 - `mcpb validate mcpb\manifest.json` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-5b-final tests\test_recruiting_mcp_tools.py tests\test_recruiting_recommendations_service.py tests\test_recruiting_retrieval.py tests\test_recruiting_recommendation.py tests\test_recruiting_match.py tests\test_recruiting_fit.py tests\test_recruiting_schema.py tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_mongo_contracts.py tests\test_tool_surfaces.py tests\test_mcpb_manifest.py tests\test_storage_backend_selection.py`
   -> 152 passed, 1 third-party warning.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-6a-final tests\test_recruiting_metrics.py tests\test_recruiting_mcp_tools.py tests\test_recruiting_recommendations_service.py tests\test_recruiting_retrieval.py tests\test_recruiting_recommendation.py tests\test_recruiting_match.py tests\test_recruiting_fit.py tests\test_recruiting_schema.py tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_mongo_contracts.py tests\test_tool_surfaces.py tests\test_mcpb_manifest.py tests\test_storage_backend_selection.py`
+  -> 156 passed, 1 third-party warning.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2c tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py`

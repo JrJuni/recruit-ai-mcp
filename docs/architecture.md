@@ -167,6 +167,12 @@ responses keep `raw_content` hidden through the storage safe-read path, while
 submissions can store a fit snapshot JSON object produced by recommendation
 output.
 
+Work 6A adds deterministic recruiting pipeline metrics in
+`src/deal_intel/schema/recruiting_metrics.py`. It calculates counts, status
+breakdowns, funnel rates, feedback signal rates, and data-quality counters from
+already supplied safe recruiting records. Storage reads, reports, and MCP
+exposure remain later layers.
+
 ## Product Profiles
 
 The project uses one repository and one package with three profiles:

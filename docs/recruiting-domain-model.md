@@ -419,6 +419,26 @@ Surface policy:
 - List-like MCP inputs use comma-separated strings; rubric deltas and candidate
   query filters use JSON object strings.
 
+## Work 6A Recruiting Pipeline Metrics Calculator
+
+Work 6A adds a deterministic recruiting pipeline metrics calculator. It does
+not read storage, write storage, call LLMs, use embeddings, or register a new
+MCP tool.
+
+Metrics policy:
+
+- Inputs are candidate, position, submission, and feedback records as Pydantic
+  models or storage dictionaries.
+- Summary counts cover candidates, positions, open positions, submissions,
+  active submissions, placements, and feedback.
+- Position metrics include status counts and open rate.
+- Submission metrics include status counts, a fixed funnel view, placed rate,
+  and interview rate.
+- Feedback metrics include sentiment counts, decision-signal counts, positive
+  rate, and advance rate.
+- Data-quality counters identify missing candidate skills, availability, role
+  must-haves, role compensation, submission fit snapshots, and feedback links.
+
 ## Collections For Work 2
 
 Recommended Mongo collections:
