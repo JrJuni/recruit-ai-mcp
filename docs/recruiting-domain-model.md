@@ -296,6 +296,10 @@ Builder policy:
 - Late or passive availability contributes to match risk and can surface an
   `availability_timing_risk` recommendation flag when the candidate does not
   already carry an availability/passive risk flag.
+- Manager-scope candidate preference on an IC-looking role lowers
+  `client_preference_fit`, raises match risk, and can surface a
+  `role_scope_mismatch` recommendation flag when the candidate does not already
+  carry a scope-related risk flag.
 - Client preference fit uses ideal-candidate examples first, then applicable
   feedback and learned preference text.
 - Risk remains directionally inverted by the Work 3A rubric. Candidate risk

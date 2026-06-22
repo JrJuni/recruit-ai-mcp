@@ -171,6 +171,8 @@ def _risk_flags(
         flags.append("work_authorization_mismatch")
     if _has_availability_timing_risk(fit) and not _has_existing_availability_flag(flags):
         flags.append("availability_timing_risk")
+    if _has_role_scope_mismatch(fit) and not _has_existing_scope_flag(flags):
+        flags.append("role_scope_mismatch")
     risk_score = fit.signals["risk"].score
     if risk_score >= 4 and "high_match_risk" not in flags:
         flags.append("high_match_risk")
@@ -198,6 +200,25 @@ def _has_existing_availability_flag(flags: list[str]) -> bool:
         "availability" in flag.lower()
         or "passive" in flag.lower()
         or "not actively" in flag.lower()
+        for flag in flags
+    )
+
+
+def _has_role_scope_mismatch(fit: CandidatePositionFitResult) -> bool:
+    preference_signal = fit.signals["client_preference_fit"]
+    return (
+        "manager scope while role appears IC" in preference_signal.rationale
+        or "Confirm whether candidate is open to an IC mandate."
+        in preference_signal.missing_info
+    )
+
+
+def _has_existing_scope_flag(flags: list[str]) -> bool:
+    return any(
+        "manager scope" in flag.lower()
+        or "role scope" in flag.lower()
+        or "ic mandate" in flag.lower()
+        or "direct report" in flag.lower()
         for flag in flags
     )
 

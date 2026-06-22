@@ -248,6 +248,33 @@ def test_candidate_position_fit_penalizes_candidate_excluded_company() -> None:
     )
 
 
+def test_candidate_position_fit_penalizes_manager_scope_preference_for_ic_role() -> None:
+    result = build_candidate_position_fit(
+        candidate=_candidate(
+            current_title="Engineering Manager",
+            seniority="manager",
+            preferences={
+                "desired_titles": ["Engineering Manager", "Head of Platform"],
+                "notes": "Only interested in manager scope with direct reports.",
+            },
+        ),
+        position=_position(
+            title="Senior Backend Platform Engineer",
+            seniority="staff",
+            ideal_candidate_examples=[],
+        ),
+    )
+
+    assert result.signals["client_preference_fit"].score == 1
+    assert result.signals["client_preference_fit"].rationale == (
+        "Candidate preference indicates manager scope while role appears IC."
+    )
+    assert result.signals["risk"].score == 2
+    assert "Confirm whether candidate is open to an IC mandate." in (
+        result.snapshot.missing_info
+    )
+
+
 def test_candidate_position_fit_penalizes_work_authorization_mismatch() -> None:
     result = build_candidate_position_fit(
         candidate=_candidate(

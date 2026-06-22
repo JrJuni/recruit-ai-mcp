@@ -439,6 +439,13 @@ def _client_preference_signal(
             evidence_refs=[*evidence, *feedback_evidence],
             missing_info=["Confirm whether the candidate exclusion can be revisited."],
         )
+    if _candidate_prefers_manager_scope_for_ic_role(candidate, position):
+        return FitSignal(
+            score=1,
+            rationale="Candidate preference indicates manager scope while role appears IC.",
+            evidence_refs=[*evidence, *feedback_evidence],
+            missing_info=["Confirm whether candidate is open to an IC mandate."],
+        )
     if candidate.candidate_id in position.ideal_candidate_examples:
         return FitSignal(
             score=5,
@@ -519,6 +526,8 @@ def _risk_signal(
     if _requires_us_authorization(position) and not _has_us_authorization(candidate):
         risk_score += 2
     risk_score += _availability_risk_increment(candidate)
+    if _candidate_prefers_manager_scope_for_ic_role(candidate, position):
+        risk_score += 2
 
     risk_score = _clamp_score(risk_score)
     if risk_score == 0:
@@ -616,6 +625,57 @@ def _candidate_excludes_position_client(
     if not excluded or not position.client_company_id:
         return False
     return bool(_matched_items(excluded, [position.client_company_id]))
+
+
+def _candidate_prefers_manager_scope_for_ic_role(
+    candidate: CandidateProfile,
+    position: Position,
+) -> bool:
+    return _candidate_prefers_manager_scope(candidate) and _position_looks_ic(position)
+
+
+def _candidate_prefers_manager_scope(candidate: CandidateProfile) -> bool:
+    text = " ".join(
+        [
+            candidate.seniority,
+            candidate.current_title,
+            candidate.preferences.notes,
+            *candidate.preferences.desired_titles,
+            *candidate.risk_flags,
+        ]
+    ).lower()
+    return any(
+        term in text
+        for term in (
+            "manager",
+            "management",
+            "head of",
+            "director",
+            "direct report",
+            "direct reports",
+            "team ownership",
+            "org ownership",
+        )
+    )
+
+
+def _position_looks_ic(position: Position) -> bool:
+    text = " ".join([position.seniority, position.title]).lower()
+    if any(term in text for term in ("manager", "management", "head of", "director")):
+        return False
+    return any(
+        term in text
+        for term in (
+            "engineer",
+            "individual contributor",
+            " ic ",
+            "staff",
+            "senior",
+            "principal",
+            "architect",
+            "lead",
+        )
+    )
 
 
 def _requires_us_authorization(position: Position) -> bool:

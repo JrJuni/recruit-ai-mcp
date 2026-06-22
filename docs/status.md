@@ -138,6 +138,9 @@ Completed:
   now raises match risk and can surface an `availability_timing_risk`
   recommendation flag when the candidate has no explicit availability/passive
   risk flag.
+- Added deterministic role-scope mismatch handling. Manager-scope candidate
+  preferences now lower `client_preference_fit`, raise match risk, and can
+  surface a `role_scope_mismatch` recommendation flag for IC-looking roles.
 - Added a realistic Northstar recommendation stress fixture for a healthcare
   platform manager-only candidate. The sample recommendation tests and natural
   question guardrails now ensure this keyword-strong but constraint-heavy

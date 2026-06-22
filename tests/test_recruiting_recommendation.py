@@ -256,6 +256,38 @@ def test_recommendation_result_surfaces_late_availability_risk() -> None:
     assert "Confirm whether timing fits the search plan." in result.next_questions
 
 
+def test_recommendation_result_surfaces_role_scope_mismatch() -> None:
+    run = build_position_candidate_recommendation_run(
+        position=_position(
+            title="Senior Backend Platform Engineer",
+            seniority="staff",
+            ideal_candidate_examples=[],
+        ),
+        candidates=[
+            _candidate(
+                "cand_blake",
+                current_title="Engineering Manager",
+                seniority="manager",
+                preferences={
+                    "desired_titles": ["Engineering Manager", "Head of Platform"],
+                    "notes": "Only interested in manager scope with direct reports.",
+                },
+            )
+        ],
+    )
+
+    result = run.results[0]
+
+    assert result.fit_snapshot.dimensions["client_preference_fit"].score == 1
+    assert result.risk_flags == [
+        "role_scope_mismatch",
+        "review_match_risk",
+    ]
+    assert "Confirm whether candidate is open to an IC mandate." in (
+        result.next_questions
+    )
+
+
 def test_recommendation_run_accepts_mongo_style_dict_inputs() -> None:
     candidate = _candidate("cand_avery").model_dump(mode="json")
     candidate["_id"] = "mongo-candidate-id"
