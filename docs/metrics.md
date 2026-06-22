@@ -4,6 +4,75 @@ BI, CSV, and Atlas Charts must use the same definitions in this document.
 Implementation helpers live in `deal_intel.schema.metrics`.
 The shared pipeline-health summary lives in
 `deal_intel.schema.pipeline_metrics`.
+Recruiting pipeline metrics live in
+`deal_intel.schema.recruiting_metrics`.
+
+## Recruiting Pipeline Metrics
+
+`build_recruiting_pipeline_metrics` builds deterministic recruiting metrics
+from already fetched safe candidate, position, submission, and feedback
+records. It has no storage access, file IO, LLM calls, embeddings, or Atlas
+admin/API dependencies. `get_recruiting_metrics` is the MCP/storage wrapper
+that reads recruiting collections and delegates calculation to this helper.
+
+### Recruiting Summary
+
+The top-level `summary` object contains:
+
+- `candidate_count`
+- `position_count`
+- `open_position_count`
+- `submission_count`
+- `feedback_count`
+- `active_submission_count`
+- `placed_count`
+
+`active_submission_count` excludes submissions in `rejected`, `withdrawn`, or
+`paused` status. `placed_count` counts submissions whose status is `placed`.
+
+### Recruiting Positions
+
+The `positions` object contains:
+
+- `by_status`: sorted count by position status.
+- `open_rate`: open positions divided by all positions, rounded to four
+  decimal places. Empty input returns `0.0`.
+
+### Recruiting Submissions
+
+The `submissions` object contains:
+
+- `by_status`: sorted count by submission status.
+- `funnel`: fixed-order rows for `draft`, `submitted`, `client_review`,
+  `interviewing`, `offer`, and `placed`, each with `status`, `count`, and
+  `rate`.
+- `placed_rate`: placed submissions divided by all submissions.
+- `interview_rate`: `interviewing + offer + placed` submissions divided by all
+  submissions.
+
+All rates are rounded to four decimal places. Empty input returns `0.0`.
+
+### Recruiting Feedback
+
+The `feedback` object contains:
+
+- `by_sentiment`: sorted count by feedback sentiment.
+- `by_decision_signal`: sorted count by decision signal.
+- `positive_rate`: positive feedback records divided by all feedback.
+- `advance_rate`: feedback records with `decision_signal=advance` divided by
+  all feedback.
+
+### Recruiting Data Quality
+
+The `data_quality` object counts records missing fields needed for reliable
+matching, reporting, or preference learning:
+
+- `candidates_missing_skills`
+- `candidates_missing_availability`
+- `positions_missing_must_have`
+- `positions_missing_compensation`
+- `submissions_missing_fit_snapshot`
+- `feedback_missing_position_or_candidate`
 
 ## Part A - Pipeline Scope and Health
 

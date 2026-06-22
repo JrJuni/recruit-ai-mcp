@@ -22,6 +22,39 @@ This split replaces the early MVP assumption that a weekly pipeline "report"
 should primarily be CSV plus a thin Markdown summary. CSV remains useful, but
 CSV is now treated as data export, not the user-facing weekly report surface.
 
+## Recruiting Pipeline Report
+
+`export_recruiting_report` creates local Markdown and CSV artifacts from safe
+recruiting records. It reads candidates, positions, submissions, and feedback
+through the recruiting storage wrappers, delegates KPI calculation to
+`get_recruiting_metrics`, and writes local files only. It does not write
+MongoDB, call LLMs, use embeddings, or require Atlas Vector Search.
+
+The report type is `recruiting_pipeline`. The CSV table is a simple flattened
+metric ledger with these columns:
+
+- `section`
+- `metric`
+- `value`
+
+Rows are generated from the `summary`, `positions`, `submissions`, `feedback`,
+and `data_quality` metric sections. Nested dictionaries and lists are flattened
+with dotted metric names.
+
+The Markdown artifact contains:
+
+- Summary counts for candidates, positions, open positions, submissions,
+  active submissions, placements, and feedback records.
+- Submission funnel rows for `draft`, `submitted`, `client_review`,
+  `interviewing`, `offer`, and `placed`.
+- Open-position, interview, placement, positive-feedback, and
+  advance-feedback rates.
+- Data-quality counters.
+
+The MCP response includes `briefing`, `metrics`, `csv_path`, `markdown_path`,
+`row_count`, and filter/limit metadata. `reporting.recruiting_output_dir`
+overrides the default report output directory for recruiting reports.
+
 ## Data Export Datasets
 
 `deal_intel.reports.data_export.build_data_export` builds deterministic CSV

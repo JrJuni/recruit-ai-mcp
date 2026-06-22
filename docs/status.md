@@ -153,6 +153,10 @@ Completed:
   present `npx recruit-ai-mcp ...` as the primary command path, while the
   inherited physical script name remains only for local regression smoke and
   compatibility bin mapping.
+- Added Work 7M recruiting metrics/report contract docs. `docs/metrics.md`
+  now records the deterministic recruiting KPI contract, and
+  `docs/reports.md` now records the current recruiting pipeline Markdown/CSV
+  report contract.
 
 Validation:
 
@@ -246,6 +250,8 @@ Validation:
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-npm-readme tests\test_bootstrapper_skeleton.py tests\test_mcpb_manifest.py`
   -> 19 passed.
 - `node --check npm\bin\deal-intel-mcp.js` -> passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-doc-contracts tests\test_recruiting_metrics.py tests\test_recruiting_metrics_service.py tests\test_export_recruiting_report.py tests\test_mcpb_manifest.py tests\test_tool_surfaces.py`
+  -> 67 passed, 1 third-party warning.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2c tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py`
