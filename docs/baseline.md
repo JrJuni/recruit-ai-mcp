@@ -45,10 +45,10 @@ Valid `llm.provider` values:
 - `openai_api` - uses the official OpenAI Responses API with `OPENAI_API_KEY`.
 - `anthropic` - uses `ANTHROPIC_API_KEY` through the Anthropic SDK.
 
-`DEAL_INTEL_LLM_PROVIDER` is the explicit install/bundle override and accepts
-the same values. `DEAL_INTEL_USE_CHATGPT_OAUTH` remains a legacy boolean
-override for older bundles. When both are present, `DEAL_INTEL_LLM_PROVIDER`
-wins.
+`RECRUIT_AI_LLM_PROVIDER` is the explicit install/bundle override and accepts
+the same values. `RECRUIT_AI_USE_CHATGPT_OAUTH` remains the primary boolean
+OAuth toggle for packaged installs. Older `DEAL_INTEL_*` variables remain
+compatibility fallbacks; when both prefixes are present, `RECRUIT_AI_*` wins.
 
 OpenAI API live smoke is not part of the current baseline because this local
 environment may not have API credits. The provider is covered by mock HTTP

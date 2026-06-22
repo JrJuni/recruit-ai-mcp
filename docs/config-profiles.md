@@ -315,8 +315,9 @@ Implemented:
   cleanup helpers.
 - `tools.surface: auto` resolves the default surface from the effective
   profile.
-- `DEAL_INTEL_TOOLS_SURFACE` can override the configured surface for packaged
-  installs and smoke tests.
+- `RECRUIT_AI_TOOLS_SURFACE` can override the configured surface for packaged
+  installs and smoke tests. `DEAL_INTEL_TOOLS_SURFACE` remains a compatibility
+  fallback for older bundles.
 - The MCP server filters `list_tools()` and blocks hidden `call_tool()` calls.
 - Invalid `tools.surface` config leaves only `config_doctor` and
   `update_config` visible so the server can explain and repair safe

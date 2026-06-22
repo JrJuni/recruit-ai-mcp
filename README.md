@@ -1128,7 +1128,7 @@ you configure `usage.pricing`.
 
 **Example**:
 ```
-Show my Deal Intelligence MCP usage this month.
+Show my Recruit AI MCP usage this month.
 ```
 ```
 Show usage since 2026-06-01.

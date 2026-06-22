@@ -30,8 +30,9 @@ storage:
   backend: mongo        # mongo | local_sample
 ```
 
-`DEAL_INTEL_STORAGE_BACKEND=local_sample` can be used for temporary smoke
-tests without editing user config.
+`RECRUIT_AI_STORAGE_BACKEND=local_sample` can be used for temporary smoke
+tests without editing user config. `DEAL_INTEL_STORAGE_BACKEND` remains a
+compatibility fallback for older bundles.
 
 Local personal storage should default to:
 
@@ -309,7 +310,7 @@ The new CLI command is:
 Temporary sample mode:
 
 ```powershell
-$env:DEAL_INTEL_STORAGE_BACKEND='local_sample'
+$env:RECRUIT_AI_STORAGE_BACKEND='local_sample'
 ```
 
 Persistent sample mode:

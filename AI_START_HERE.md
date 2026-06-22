@@ -215,7 +215,7 @@ Expected visible tool counts:
 
 If the host app's tool search shows only a handful of tools, that is usually a
 host-side search limit rather than a server loading failure. Ask it to call
-`get_tool_catalog` for the full current Deal Intelligence tool surface.
+`get_tool_catalog` for the full current Recruit AI tool surface.
 
 After restart, ask Claude/Codex to run `config_doctor` first.
 
