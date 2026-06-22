@@ -356,9 +356,22 @@ Completed:
   compatibility launcher. Local pre-publish smoke docs now use the recruit-ai
   wrapper, and tests verify both launchers still produce the same Recruit AI
   MCPB/runtime handoff metadata.
+- Added Work 7BD npm tarball contents gate.
+  Bootstrapper release tests now parse `npm pack --dry-run --json` and assert
+  the Recruit AI npm tarball contains exactly the expected handoff files:
+  README, public `bin/recruit-ai-mcp.js`, compatibility
+  `bin/deal-intel-mcp.js`, package metadata, and the bundled
+  `recruit-ai-mcp-0.1.0.mcpb`.
 
 Validation:
 
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-npm-tarball-contract tests\test_bootstrapper_skeleton.py`
+  -> 17 passed.
+- `npm pack .\npm --dry-run --json --cache .tmp\npm-cache-tarball-contract`
+  -> `recruit-ai-mcp-0.1.0.tgz`, `entryCount=5`, with README, both launcher
+  scripts, package metadata, and bundled MCPB.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-npm-recruit-wrapper tests\test_bootstrapper_skeleton.py tests\test_docs_recruit_ai_current.py`
   -> 28 passed.
 - `node npm\bin\recruit-ai-mcp.js where --json` -> passed with

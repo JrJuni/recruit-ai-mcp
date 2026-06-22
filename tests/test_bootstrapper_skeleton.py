@@ -68,6 +68,44 @@ def test_npm_bundled_mcpb_matches_package_version() -> None:
     assert expected.exists()
 
 
+def test_npm_pack_dry_run_contains_expected_handoff_files(tmp_path: Path) -> None:
+    package = json.loads((ROOT / "npm" / "package.json").read_text(encoding="utf-8"))
+    npm_command = "npm.cmd" if os.name == "nt" else "npm"
+    result = subprocess.run(
+        [
+            npm_command,
+            "pack",
+            str(ROOT / "npm"),
+            "--dry-run",
+            "--json",
+            "--cache",
+            str(tmp_path / "npm-cache"),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        cwd=ROOT,
+    )
+
+    payload = json.loads(result.stdout)
+    assert len(payload) == 1
+    package_preview = payload[0]
+    file_paths = sorted(file["path"] for file in package_preview["files"])
+
+    assert package_preview["name"] == "recruit-ai-mcp"
+    assert package_preview["version"] == package["version"]
+    assert package_preview["filename"] == f"recruit-ai-mcp-{package['version']}.tgz"
+    assert package_preview["entryCount"] == 5
+    assert file_paths == [
+        "README.md",
+        "bin/deal-intel-mcp.js",
+        "bin/recruit-ai-mcp.js",
+        f"mcpb/recruit-ai-mcp-{package['version']}.mcpb",
+        "package.json",
+    ]
+
+
 def test_release_package_metadata_stays_aligned() -> None:
     package = json.loads((ROOT / "npm" / "package.json").read_text(encoding="utf-8"))
     manifest = json.loads(MCPB_MANIFEST.read_text(encoding="utf-8"))
