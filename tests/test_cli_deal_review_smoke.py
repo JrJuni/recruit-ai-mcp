@@ -520,15 +520,16 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     )
 
     assert result.exit_code == 0
-    assert "Natural Question Smoke (as_of=2026-06-22, questions=12)" in result.output
+    assert "Natural Question Smoke (as_of=2026-06-22, questions=13)" in result.output
     assert "OK: True" in result.output
     assert "candidates=6, open_positions=2, submissions=4" in result.output
+    assert "open_positions=2, shortlists=2, risk_reviews=2" in result.output
     assert (output_dir / "summary.md").exists()
     summary = json.loads((output_dir / "summary.json").read_text(encoding="utf-8"))
     assert summary["ok"] is True
     assert summary["pack"] == "recruiting"
-    assert summary["question_count"] == 12
-    assert summary["answerability_counts"] == {"derived": 8, "direct": 4}
+    assert summary["question_count"] == 13
+    assert summary["answerability_counts"] == {"derived": 9, "direct": 4}
     assert (output_dir / "rq01_recruiting_pipeline_metrics.json").exists()
     assert (output_dir / "rq02_candidates_for_northstar_backend.json").exists()
     assert (output_dir / "rq08_local_recruiting_data_safety.json").exists()
@@ -536,6 +537,22 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     assert (output_dir / "rq10_recruiting_report_preview.json").exists()
     assert (output_dir / "rq11_local_recruiting_persistence.json").exists()
     assert (output_dir / "rq12_recommendation_guardrails.json").exists()
+    assert (output_dir / "rq13_client_shortlist_readiness.json").exists()
+    shortlist = json.loads(
+        (output_dir / "rq13_client_shortlist_readiness.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert shortlist["summary"] == {
+        "open_position_count": 2,
+        "positions_with_shortlist": 2,
+        "positions_with_review_risks": 2,
+        "positions_with_next_questions": 2,
+    }
+    assert [row["top_candidate_id"] for row in shortlist["shortlists"]] == [
+        "cand_avery_chen",
+        "cand_mateo_rivera",
+    ]
     encoded = json.dumps(summary, ensure_ascii=False)
     assert "raw_content" not in encoded
     assert "contacts" not in encoded
@@ -583,6 +600,7 @@ def test_smoke_natural_questions_recruiting_pack_json(monkeypatch, tmp_path) -> 
         "rq10_recruiting_report_preview",
         "rq11_local_recruiting_persistence",
         "rq12_recommendation_guardrails",
+        "rq13_client_shortlist_readiness",
     ]
 
 

@@ -107,6 +107,10 @@ Completed:
   and hosted-SaaS boundary describe recruiting/team data and recruiting
   recommendations first, while inherited deal-intelligence stays framed as
   compatibility.
+- Broadened the recruiting-first natural-question smoke pack with
+  `rq13_client_shortlist_readiness`, which verifies open sample positions have
+  ranked candidate shortlists plus visible review risks and next-question
+  signals.
 - Added Work 6A recruiting pipeline metrics calculator. It computes summary
   counts, position status rates, submission funnel rates, feedback signal
   rates, and data-quality counters from safe recruiting records without

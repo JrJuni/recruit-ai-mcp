@@ -3825,6 +3825,64 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
             "guardrails": guardrails,
         }
 
+    def client_shortlist_readiness_summary() -> dict:
+        rows = []
+        for position in positions:
+            if position.get("status") != "open":
+                continue
+            run = build_position_candidate_recommendation_run(
+                position=position,
+                candidates=candidates,
+                client_feedback=feedback,
+                limit=3,
+                created_at=loaded_at,
+            )
+            top_results = [
+                {
+                    "candidate_id": result.target_id,
+                    "rank": result.rank,
+                    "overall_score": result.fit_snapshot.overall_score,
+                    "risk_flag_count": len(result.risk_flags),
+                    "next_question_count": len(result.next_questions),
+                    "rejected": bool(result.rejected_reason),
+                }
+                for result in run.results
+            ]
+            rows.append(
+                {
+                    "client_company_id": position["client_company_id"],
+                    "client_name": clients_by_id[position["client_company_id"]]["name"],
+                    "position_id": position["position_id"],
+                    "title": position["title"],
+                    "shortlist_size": len(top_results),
+                    "top_candidate_id": (
+                        top_results[0]["candidate_id"] if top_results else None
+                    ),
+                    "has_review_risks": any(
+                        row["risk_flag_count"] > 0 for row in top_results
+                    ),
+                    "has_next_questions": any(
+                        row["next_question_count"] > 0 for row in top_results
+                    ),
+                    "candidates": top_results,
+                }
+            )
+        return {
+            "summary": {
+                "open_position_count": len(rows),
+                "positions_with_shortlist": sum(
+                    1 for row in rows if row["shortlist_size"] > 0
+                ),
+                "positions_with_review_risks": sum(
+                    1 for row in rows if row["has_review_risks"]
+                ),
+                "positions_with_next_questions": sum(
+                    1 for row in rows if row["has_next_questions"]
+                ),
+            },
+            "shortlists": rows,
+        }
+
     questions = [
         call(
             "rq01_recruiting_pipeline_metrics",
@@ -3897,6 +3955,12 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
             "Do realistic risk constraints keep keyword-strong candidates below aligned matches?",
             "derived",
             recommendation_guardrail_summary,
+        ),
+        call(
+            "rq13_client_shortlist_readiness",
+            "Which open positions have a client-ready candidate shortlist?",
+            "derived",
+            client_shortlist_readiness_summary,
         ),
     ]
 
@@ -4324,6 +4388,13 @@ def _natural_question_quick_read(question_id: str, payload: dict) -> str:
         return (
             f"guardrails={summary.get('guardrail_candidate_count')}, "
             f"passed={summary.get('ranking_guardrails_passed')}"
+        )
+    if question_id == "rq13_client_shortlist_readiness":
+        summary = payload.get("summary") or {}
+        return (
+            f"open_positions={summary.get('open_position_count')}, "
+            f"shortlists={summary.get('positions_with_shortlist')}, "
+            f"risk_reviews={summary.get('positions_with_review_risks')}"
         )
     if question_id == "q01_pipeline_health":
         kpis = payload.get("kpis") or {}

@@ -80,6 +80,8 @@ Immediate quality order:
    - Recommendation guardrails now check that keyword-strong but risky sample
      candidates do not outrank aligned matches when compensation, location,
      availability, seniority, or scope constraints matter.
+   - Client shortlist readiness now checks that each open sample position has
+     a ranked candidate shortlist with visible review risks and next questions.
    - Keep the inherited deal-intelligence natural-question pack as a
      compatibility smoke, not the primary Recruit AI user journey.
 3. Tighten release/package verification.
