@@ -111,7 +111,7 @@ Still worth checking on a separate machine:
 
 ## Current Public Registry Evidence
 
-As of 2026-06-22, public registry smoke is still pending publication:
+As of 2026-06-23, public registry smoke is still pending publication:
 
 - `npm view recruit-ai-mcp@0.1.0 version` returns npm `E404`.
 - `python -m pip index versions recruit-ai-mcp` returns

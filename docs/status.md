@@ -10,7 +10,7 @@ Read the newest section first. Older sections are retained as an archive for
 traceability and should be searched by topic, milestone, or file path rather
 than loaded wholesale.
 
-## Latest Update - 2026-06-22
+## Latest Update - 2026-06-23
 
 ### Recruiting domain model and Mongo storage contract
 
@@ -367,9 +367,21 @@ Completed:
   (`sample=34`, `standard=48`, `developer=52`) and distinguishes completed
   local pre-publish bootstrapper smoke from still-pending public registry
   `npx recruit-ai-mcp@0.1.0` smoke.
+- Added Work 7BF public registry evidence refresh.
+  Release and bootstrapper fresh-smoke docs now record 2026-06-23 as the
+  latest public registry check date. npm still returns `E404` for
+  `recruit-ai-mcp@0.1.0`, and PyPI still has no matching distribution for
+  `recruit-ai-mcp`, so public `npx` readiness remains pending.
 
 Validation:
 
+- `npm view recruit-ai-mcp@0.1.0 version` -> npm `E404`.
+- `python -m pip index versions recruit-ai-mcp`
+  -> `No matching distribution found for recruit-ai-mcp`.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-registry-evidence-refresh tests\test_docs_recruit_ai_current.py`
+  -> 12 passed.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-distribution-pending-split tests\test_docs_recruit_ai_current.py tests\test_bootstrapper_skeleton.py`
   -> 29 passed.
 - `ruff check src tests` -> passed.

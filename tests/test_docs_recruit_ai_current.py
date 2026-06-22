@@ -52,6 +52,7 @@ def test_release_docs_and_workflows_use_recruit_ai_package_name() -> None:
     assert "recommend_candidates_for_position" in combined
     assert "npm `E404`" in release_docs
     assert "No matching distribution found for recruit-ai-mcp" in release_docs
+    assert "last checked on 2026-06-23" in release_docs
     assert "public `npx` freshness cannot be claimed" in normalized_release_docs
     assert "v0.1.0-rc.1" in release_docs
     assert "Push-Location mcpb" in release_docs
@@ -83,6 +84,7 @@ def test_bootstrapper_fresh_smoke_uses_recruit_ai_public_package() -> None:
     assert "RECRUIT_AI_HOME" in docs
     assert "recruit-ai-mcp-0.1.0.mcpb" in docs
     assert "public registry smoke is still pending publication" in docs
+    assert "As of 2026-06-23" in docs
     assert "npm `E404`" in docs
     assert "No matching distribution found for recruit-ai-mcp" in docs
     assert "Do not mark the public `npx recruit-ai-mcp@0.1.0` path ready" in docs

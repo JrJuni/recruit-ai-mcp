@@ -18,7 +18,7 @@ may use security-key/WebAuthn authentication that does not expose a CLI OTP.
 - License: MIT
 - Source repository: `https://github.com/JrJuni/recruit-ai-mcp`
 
-Current public registry evidence, checked on 2026-06-22:
+Current public registry evidence, last checked on 2026-06-23:
 
 - `npm view recruit-ai-mcp@0.1.0 version` returns npm `E404`.
 - `python -m pip index versions recruit-ai-mcp` returns
