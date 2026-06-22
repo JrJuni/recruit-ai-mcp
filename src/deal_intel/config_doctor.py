@@ -554,6 +554,36 @@ def _first_data_next_steps(*, failed: int, backend: str) -> list[dict[str, str]]
     if failed:
         return []
 
+    if backend == "local_sample":
+        return [
+            {
+                "step": "inspect_sample_records",
+                "tool": "list_deals",
+                "message": (
+                    "Sample mode starts with bundled fictional deal records and "
+                    "a limited sample-safe tool surface. Use list_deals to inspect "
+                    "the available local sample records."
+                ),
+            },
+            {
+                "step": "review_sample_record",
+                "tool": "get_deal_review",
+                "message": (
+                    "Open one sample deal review to verify read-only health, gap, "
+                    "risk, and next-question behavior before entering real data."
+                ),
+            },
+            {
+                "step": "check_sample_metrics",
+                "tool": "get_metrics",
+                "message": (
+                    "Use pipeline_health metrics for a zero-config smoke. Switch "
+                    "to full mode before creating real recruiting clients, roles, "
+                    "candidates, or recommendations."
+                ),
+            },
+        ]
+
     steps = [
         {
             "step": "create_client_company",
