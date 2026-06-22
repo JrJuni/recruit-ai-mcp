@@ -74,3 +74,48 @@ def test_validate_recruiting_smoke_cli_fails_on_contract_mismatch(tmp_path) -> N
     assert "Recruiting natural-question smoke contract mismatch" in result.stderr
     assert "'candidate_count': 8" in result.stderr
     assert "'candidate_count': 7" in result.stderr
+
+
+def test_validate_recruiting_smoke_cli_names_missing_question(tmp_path) -> None:
+    payload = _payload()
+    payload["questions"] = [
+        question
+        for question in payload["questions"]
+        if question["id"] != "rq12_recommendation_guardrails"
+    ]
+    payload_path = tmp_path / "recruiting-natural-questions.json"
+    payload_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = subprocess.run(
+        [sys.executable, str(VALIDATOR), str(payload_path)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    assert "missing required question ids" in result.stderr
+    assert "rq12_recommendation_guardrails" in result.stderr
+
+
+def test_validate_recruiting_smoke_cli_names_missing_summary_field(tmp_path) -> None:
+    payload = _payload()
+    persistence = next(
+        question
+        for question in payload["questions"]
+        if question["id"] == "rq11_local_recruiting_persistence"
+    )
+    del persistence["payload"]["summary"]["reloaded_record_count"]
+    payload_path = tmp_path / "recruiting-natural-questions.json"
+    payload_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = subprocess.run(
+        [sys.executable, str(VALIDATOR), str(payload_path)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    assert "rq11_local_recruiting_persistence summary" in result.stderr
+    assert "reloaded_record_count" in result.stderr
