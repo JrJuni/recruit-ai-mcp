@@ -45,6 +45,7 @@ class FakeMetricsStorage:
                 "candidate_id": "cand_avery",
                 "sentiment": "positive",
                 "decision_signal": "advance",
+                "updated_at": "2026-06-22T00:00:00+00:00",
             }
         ]
 

@@ -146,7 +146,15 @@ def test_recruiting_pipeline_metrics_handles_empty_input() -> None:
 def test_recruiting_pipeline_metrics_accepts_mongo_style_dicts() -> None:
     candidate = _candidate("cand_avery")
     candidate["_id"] = "mongo-candidate-id"
+    feedback = _feedback("fb_1", sentiment="positive", decision_signal="advance")
+    feedback["_id"] = "mongo-feedback-id"
+    feedback["updated_at"] = "2026-06-22T00:00:00+00:00"
 
-    metrics = build_recruiting_pipeline_metrics(candidates=[candidate])
+    metrics = build_recruiting_pipeline_metrics(
+        candidates=[candidate],
+        feedback=[feedback],
+    )
 
     assert metrics["summary"]["candidate_count"] == 1
+    assert metrics["summary"]["feedback_count"] == 1
+    assert metrics["feedback"]["advance_rate"] == 1.0
