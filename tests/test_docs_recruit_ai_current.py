@@ -26,3 +26,30 @@ def test_mvp_readiness_is_recruit_ai_current() -> None:
     assert "developer=42" not in docs
     assert "deal-intel-mcp-0.2.1.mcpb" not in docs
     assert "mcpb pack . deal-intel" not in docs
+
+
+def test_release_docs_and_workflows_use_recruit_ai_package_name() -> None:
+    release_docs = (ROOT / "docs" / "release-publish-checklist.md").read_text(
+        encoding="utf-8"
+    )
+    release_workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text(
+        encoding="utf-8"
+    )
+    staging_workflow = (
+        ROOT / ".github" / "workflows" / "staging-smoke.yml"
+    ).read_text(encoding="utf-8")
+
+    combined = "\n".join([release_docs, release_workflow, staging_workflow])
+
+    assert "recruit-ai-mcp[embedding]" in combined
+    assert "recruit-ai-mcp@${PACKAGE_VERSION}" in release_workflow
+    assert 'metadata.version("recruit-ai-mcp")' in staging_workflow
+    assert "RECRUIT_AI_STORAGE_BACKEND" in staging_workflow
+    assert "create_candidate" in combined
+    assert "add_recruiting_interaction" in combined
+    assert "recommend_candidates_for_position" in combined
+
+    assert "deal-intel-mcp[embedding]" not in combined
+    assert "deal-intel-mcp@${PACKAGE_VERSION}" not in combined
+    assert 'metadata.version("deal-intel-mcp")' not in combined
+    assert "DEAL_INTEL_STORAGE_BACKEND" not in combined

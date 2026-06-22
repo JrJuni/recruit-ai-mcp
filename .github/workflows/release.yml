@@ -191,16 +191,16 @@ jobs:
         run: |
           set -euo pipefail
           set +e
-          view_output="$(npm view "deal-intel-mcp@${PACKAGE_VERSION}" version 2>&1)"
+          view_output="$(npm view "recruit-ai-mcp@${PACKAGE_VERSION}" version 2>&1)"
           view_status=$?
           set -e
 
           if [[ "$view_status" -eq 0 ]]; then
-            echo "npm deal-intel-mcp@${PACKAGE_VERSION} already exists as ${view_output}."
+            echo "npm recruit-ai-mcp@${PACKAGE_VERSION} already exists as ${view_output}."
             echo "Promoting existing package with latest dist-tag; skipping npm publish."
-            npm dist-tag add "deal-intel-mcp@${PACKAGE_VERSION}" latest
+            npm dist-tag add "recruit-ai-mcp@${PACKAGE_VERSION}" latest
           elif echo "$view_output" | grep -Eq "E404|404"; then
-            echo "npm deal-intel-mcp@${PACKAGE_VERSION} does not exist yet; publishing."
+            echo "npm recruit-ai-mcp@${PACKAGE_VERSION} does not exist yet; publishing."
             npm publish --access public
           else
             echo "$view_output"

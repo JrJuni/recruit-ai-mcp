@@ -211,6 +211,11 @@ Completed:
   `RECRUIT_AI_*`, `recruit-ai`, current MCP surface counts, recruiting workflow
   smoke coverage, and the recruit-ai MCPB package naming for current public
   handoff guidance.
+- Added Work 7AB release publish recruit-ai cleanup. The release publish
+  checklist, trusted-publisher guidance, public `npx` smoke, MCPB package
+  commands, release workflow npm promotion path, and staging installed-package
+  smoke now use `recruit-ai-mcp` / `RECRUIT_AI_*` and verify the recruiting
+  sample tool path instead of inherited deal-first package names.
 
 Validation:
 
@@ -356,6 +361,9 @@ Validation:
 - `ruff check src tests` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-mvp-readiness tests\test_docs_recruit_ai_current.py tests\test_tool_surfaces.py tests\test_mcpb_manifest.py tests\test_local_sample_backend.py tests\test_recruiting_mcp_tools.py`
   -> 72 passed, 1 third-party warning.
+- `ruff check src tests` -> passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-release-docs tests\test_docs_recruit_ai_current.py tests\test_bootstrapper_skeleton.py tests\test_mcpb_manifest.py tests\test_tool_surfaces.py`
+  -> 58 passed, 1 third-party warning.
 - `ruff check src tests` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.

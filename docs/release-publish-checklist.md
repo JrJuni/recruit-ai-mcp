@@ -12,11 +12,11 @@ may use security-key/WebAuthn authentication that does not expose a CLI OTP.
 
 ## Current Release Shape
 
-- Python package: `deal-intel-mcp`
-- Node bootstrapper package: `deal-intel-mcp`
+- Python package: `recruit-ai-mcp`
+- Node bootstrapper package: `recruit-ai-mcp`
 - Current version: `0.2.3`
 - License: MIT
-- Source repository: `https://github.com/JrJuni/deal-intel-mcp`
+- Source repository: `https://github.com/JrJuni/recruit-ai-mcp`
 
 The Node package is a bootstrapper. It must not reimplement the Python MCP
 server.
@@ -46,7 +46,7 @@ Pass criteria:
 
 Publish Python first, then npm.
 
-Reason: `npx deal-intel-mcp setup` installs the Python package. If npm is
+Reason: `npx recruit-ai-mcp setup` installs the Python package. If npm is
 published first but Python is not reachable, the no-git-clone path will fail.
 
 The release workflow in `.github/workflows/release.yml` enforces this order:
@@ -61,7 +61,7 @@ Before using it, configure trusted publishers on both registries.
 PyPI trusted publisher values:
 
 - Owner: `JrJuni`
-- Repository: `deal-intel-mcp`
+- Repository: `recruit-ai-mcp`
 - Workflow filename: `release.yml`
 - Environment name: `pypi`
 
@@ -69,7 +69,7 @@ npm trusted publisher values:
 
 - Provider: GitHub Actions
 - Owner: `JrJuni`
-- Repository: `deal-intel-mcp`
+- Repository: `recruit-ai-mcp`
 - Workflow filename: `release.yml`
 - Environment name: `npm`
 
@@ -93,12 +93,12 @@ gh workflow run release.yml -f target=npm
 ```
 
 The npm job checks the registry before publishing. If
-`deal-intel-mcp@0.2.3` already exists, do not run `npm publish` again; promote
+`recruit-ai-mcp@0.2.3` already exists, do not run `npm publish` again; promote
 the existing package with the `latest` dist-tag instead:
 
 ```powershell
-npm view deal-intel-mcp@0.2.3 version
-npm dist-tag add deal-intel-mcp@0.2.3 latest
+npm view recruit-ai-mcp@0.2.3 version
+npm dist-tag add recruit-ai-mcp@0.2.3 latest
 ```
 
 The npm trusted publishing job must use Node 22.14+ and npm 11.5.1+.
@@ -127,7 +127,7 @@ dependencies, so include PyPI as an extra index:
 ```powershell
 python -m venv .tmp\testpypi-install
 .\.tmp\testpypi-install\Scripts\python.exe -m pip install --upgrade pip
-.\.tmp\testpypi-install\Scripts\python.exe -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ "deal-intel-mcp[embedding]==0.2.3"
+.\.tmp\testpypi-install\Scripts\python.exe -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ "recruit-ai-mcp[embedding]==0.2.3"
 .\.tmp\testpypi-install\Scripts\python.exe -m deal_intel.cli smoke-profile --profile sample --json
 ```
 
@@ -144,8 +144,9 @@ Installed-package smoke passes when:
 - the requested package version installs in a fresh virtual environment;
 - `smoke-profile --profile sample --json` exits successfully;
 - `deal_intel.mcp_server.app.list_tools()` returns the sample MCP surface;
-- the core tools `config_doctor`, `get_tool_catalog`, `create_deal`,
-  `add_interaction`, and `get_deal_review` are present;
+- the core tools `config_doctor`, `get_tool_catalog`, `create_candidate`,
+  `add_recruiting_interaction`, `recommend_candidates_for_position`, and
+  `get_recruiting_metrics` are present;
 - the workflow uploads a `smoke-evidence` artifact with the package,
   profile-smoke, and MCP tool-list JSON.
 
@@ -162,7 +163,7 @@ After publishing, verify:
 ```powershell
 python -m venv .tmp\pypi-install
 .\.tmp\pypi-install\Scripts\python.exe -m pip install --upgrade pip
-.\.tmp\pypi-install\Scripts\python.exe -m pip install "deal-intel-mcp[embedding]==0.2.3"
+.\.tmp\pypi-install\Scripts\python.exe -m pip install "recruit-ai-mcp[embedding]==0.2.3"
 .\.tmp\pypi-install\Scripts\python.exe -m deal_intel.cli smoke-profile --profile sample --json
 ```
 
@@ -194,11 +195,11 @@ Maintainer auth note:
 Then run a fresh public `npx` smoke from a disposable home:
 
 ```powershell
-$env:DEAL_INTEL_HOME = (Resolve-Path "..\.tmp\npx-public-home").Path
-npx --yes deal-intel-mcp@0.2.3 setup
-npx --yes deal-intel-mcp@0.2.3 smoke --profile-only
-npx --yes deal-intel-mcp@0.2.3 mcpb --json
-npx --yes deal-intel-mcp@0.2.3 mcp-config --json
+$env:RECRUIT_AI_HOME = (Resolve-Path "..\.tmp\npx-public-home").Path
+npx --yes recruit-ai-mcp@0.2.3 setup
+npx --yes recruit-ai-mcp@0.2.3 smoke --profile-only
+npx --yes recruit-ai-mcp@0.2.3 mcpb --json
+npx --yes recruit-ai-mcp@0.2.3 mcp-config --json
 ```
 
 Pass criteria:
@@ -217,8 +218,8 @@ If refreshing the MCPB bundle:
 ```powershell
 mcpb validate mcpb\manifest.json
 Push-Location mcpb
-mcpb pack . deal-intel-mcp-0.2.3.mcpb
-mcpb info deal-intel-mcp-0.2.3.mcpb
+mcpb pack . recruit-ai-mcp-0.2.3.mcpb
+mcpb info recruit-ai-mcp-0.2.3.mcpb
 Pop-Location
 ```
 

@@ -24,8 +24,8 @@ jobs:
     name: Installed package smoke
     runs-on: ubuntu-latest
     env:
-      DEAL_INTEL_STORAGE_BACKEND: local_sample
-      DEAL_INTEL_TOOLS_SURFACE: sample
+      RECRUIT_AI_STORAGE_BACKEND: local_sample
+      RECRUIT_AI_TOOLS_SURFACE: sample
       PACKAGE_SOURCE: ${{ inputs.source }}
       PACKAGE_VERSION: ${{ inputs.version }}
     steps:
@@ -49,7 +49,7 @@ jobs:
           . .venv-smoke/bin/activate
           python -m pip install --upgrade pip
 
-          package_spec="deal-intel-mcp[embedding]==${PACKAGE_VERSION}"
+          package_spec="recruit-ai-mcp[embedding]==${PACKAGE_VERSION}"
           if [[ "$PACKAGE_SOURCE" == "testpypi" ]]; then
             python -m pip install \
               --index-url https://test.pypi.org/simple/ \
@@ -72,7 +72,7 @@ jobs:
           import sys
 
           requested = os.environ["PACKAGE_VERSION"]
-          installed = metadata.version("deal-intel-mcp")
+          installed = metadata.version("recruit-ai-mcp")
           payload = {
               "ok": installed == requested,
               "source": os.environ["PACKAGE_SOURCE"],
@@ -97,9 +97,10 @@ jobs:
           REQUIRED_TOOLS = {
               "config_doctor",
               "get_tool_catalog",
-              "create_deal",
-              "add_interaction",
-              "get_deal_review",
+              "create_candidate",
+              "add_recruiting_interaction",
+              "recommend_candidates_for_position",
+              "get_recruiting_metrics",
           }
 
           async def main() -> int:
