@@ -72,9 +72,11 @@ def test_config_doctor_sample_profile_passes_without_mongodb_uri(
     assert _status(result, "sample_storage") == "pass"
     assert _status(result, "llm_provider") == "warn"
     assert [step["tool"] for step in result["first_data_next_steps"]] == [
-        "create_deal",
-        "add_interaction",
-        "get_deal_review",
+        "create_client_company",
+        "create_position",
+        "create_candidate",
+        "add_recruiting_interaction",
+        "recommend_candidates_for_position",
     ]
 
 
@@ -250,14 +252,14 @@ def test_config_doctor_cli_json_and_text_are_secret_safe(monkeypatch, tmp_path) 
     assert "version_mismatch" in payload["runtime"]
     assert payload["runtime"]["python_executable"]
     assert payload["runtime"]["package_location"]
-    assert payload["first_data_next_steps"][0]["tool"] == "create_deal"
-    assert payload["first_data_next_steps"][1]["tool"] == "add_interaction"
+    assert payload["first_data_next_steps"][0]["tool"] == "create_client_company"
+    assert payload["first_data_next_steps"][1]["tool"] == "create_position"
     assert "Runtime:" in text_result.stdout
     assert "source=" in text_result.stdout
     assert "Python:" in text_result.stdout
     assert "Module:" in text_result.stdout
     assert "First data flow:" in text_result.stdout
-    assert "add_interaction" in text_result.stdout
+    assert "recommend_candidates_for_position" in text_result.stdout
 
 
 def test_config_doctor_cli_exits_nonzero_on_fail(monkeypatch, tmp_path) -> None:

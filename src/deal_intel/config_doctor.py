@@ -556,28 +556,43 @@ def _first_data_next_steps(*, failed: int, backend: str) -> list[dict[str, str]]
 
     steps = [
         {
-            "step": "create_or_choose_deal",
-            "tool": "create_deal",
+            "step": "create_client_company",
+            "tool": "create_client_company",
             "message": (
-                "For a real workspace, create the first customer/deal before "
-                "asking analytics questions. In sample mode, you can either "
-                "use the bundled fictional deals or create your own local deal."
+                "Create the hiring customer or search-firm client before "
+                "asking for recruiting recommendations."
             ),
         },
         {
-            "step": "add_customer_evidence",
-            "tool": "add_interaction",
+            "step": "create_position",
+            "tool": "create_position",
             "message": (
-                "Paste the first meeting note, customer email reply, interview, "
-                "call summary, or internal note with the matching interaction_type."
+                "Create the first open role or search mandate with must-have "
+                "skills, seniority, location, and compensation when known."
             ),
         },
         {
-            "step": "review_first_deal",
-            "tool": "get_deal_review",
+            "step": "create_candidate",
+            "tool": "create_candidate",
             "message": (
-                "Review that deal for health, qualification gaps, uncertainty, "
-                "risk signals, and next questions before moving to pipeline KPIs."
+                "Add a candidate profile with skills, domains, seniority, "
+                "availability, location, and evidence-backed constraints."
+            ),
+        },
+        {
+            "step": "add_recruiting_evidence",
+            "tool": "add_recruiting_interaction",
+            "message": (
+                "Store the first candidate screen, client intake note, interview "
+                "summary, or internal recruiting note as recruiting evidence."
+            ),
+        },
+        {
+            "step": "run_first_recommendation",
+            "tool": "recommend_candidates_for_position",
+            "message": (
+                "Run the first position-to-candidate recommendation, then use "
+                "client feedback to improve future fit scoring."
             ),
         },
     ]
@@ -585,11 +600,11 @@ def _first_data_next_steps(*, failed: int, backend: str) -> list[dict[str, str]]
         steps.insert(
             0,
             {
-                "step": "start_with_evidence",
-                "tool": "create_deal + add_interaction",
+                "step": "start_recruiting_workspace",
+                "tool": "create_client_company + create_position + create_candidate",
                 "message": (
                     "A new full workspace starts empty. The first useful action "
-                    "is to add a real prospect and at least one customer evidence item."
+                    "is to add one real client, one role, and one candidate."
                 ),
             },
         )

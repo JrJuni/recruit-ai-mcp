@@ -120,6 +120,13 @@ Completed:
   now introduces client, position, candidate, recruiting interaction, feedback,
   recommendation, metrics, report export, and recruiting demo workflows before
   the inherited deal-intelligence compatibility guide.
+- Added Work 7E config-doctor first-data cleanup. `config_doctor`
+  `first_data_next_steps` now points new ready workspaces toward
+  `create_client_company`, `create_position`, `create_candidate`,
+  `add_recruiting_interaction`, and `recommend_candidates_for_position`
+  instead of the inherited deal-first workflow. README and baseline docs now
+  match that recruit-first contract while retaining the legacy deal path as
+  compatibility guidance.
 
 Validation:
 
@@ -190,6 +197,10 @@ Validation:
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-7d-docs tests\test_tool_surfaces.py tests\test_mcpb_manifest.py tests\test_recruiting_mcp_tools.py tests\test_sample_data.py`
   -> 75 passed, 1 third-party warning.
 - `ruff check src tests` -> passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-config-doctor tests\test_config_doctor.py tests\test_cli_config_profiles.py tests\test_profile_smoke_cli.py tests\test_profile_smoke_matrix.py`
+  -> 32 passed, 1 third-party warning.
+- `ruff check src\deal_intel\config_doctor.py tests\test_config_doctor.py`
+  -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2c tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py`

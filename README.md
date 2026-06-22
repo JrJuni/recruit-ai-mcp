@@ -418,10 +418,12 @@ recruit-ai storage-status
 
 Use `config_doctor` from the MCP host after installing the bundle. It is the
 first recovery tool when paths, profiles, MongoDB, or LLM readiness are unclear.
-When `config_doctor` is OK, add the first customer evidence before expecting
-meaningful analytics: create or select a deal, paste a meeting note, customer
-email reply, call summary, user interview, or internal sales note, store it with
-`add_interaction`, then run `get_deal_review`.
+When `config_doctor` is OK, add the first recruiting records before expecting
+meaningful recommendations: create a client company, create a position, create
+a candidate, add recruiting evidence with `add_recruiting_interaction`, then
+run `recommend_candidates_for_position`. Inherited deal-intelligence workflows
+are still available for compatibility; for those, create or select a deal,
+store customer evidence with `add_interaction`, then run `get_deal_review`.
 
 ### Optional zero-config smoke
 
@@ -473,7 +475,7 @@ skips embedding storage and does not expose raw content in list/BI/report
 paths. Semantic `search_deals`, Atlas Charts, and shared team operation still
 belong to MongoDB-backed `full` or `pro` mode.
 
-Local personal data defaults to `~/.deal-intel/local-data` and can be changed
+Local personal data defaults to `~/.recruit-ai/local-data` and can be changed
 with `storage.local_data_dir`.
 
 Useful local-data commands:
