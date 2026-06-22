@@ -60,6 +60,11 @@ Yellow:
 - Claude Desktop MCPB reinstall should be smoked after manifest or bundle
   changes. Current package build is available, but each external evaluator's
   install still needs a quick `config_doctor` check.
+- Public registry `npx recruit-ai-mcp@0.1.0` readiness remains pending until
+  PyPI/npm publication is complete and the post-publish fresh smoke passes from
+  a disposable `RECRUIT_AI_HOME`.
+- macOS fresh-machine smoke remains external-machine evidence, not a blocker
+  for the local Windows pre-publish gate.
 - Full MongoDB mode has passed bounded live smoke, but each external evaluator
   should still run `config_doctor` against their own Atlas project.
 - Pro mode has passed the first Atlas Vector Search smoke, but remains a paid
@@ -70,7 +75,8 @@ Yellow:
 
 Not MVP-blocking:
 
-- Additional npx polish and future uvx support.
+- Additional npx/uvx distribution polish beyond the current local
+  pre-publish bootstrapper gate.
 - Signed MCPB bundles.
 - Pro-scale Atlas Vector Search hardening beyond the current live smoke.
 - OpenAI API live smoke with paid credits.
@@ -332,7 +338,8 @@ Optional zero-config demo script:
 
 Do not block the first MVP on these:
 
-- Additional npx/uvx distribution polish beyond the current public npx path.
+- Additional npx/uvx distribution polish after public registry smoke evidence
+  exists.
 - Pro-grade Atlas Vector Search scale validation beyond the current live smoke.
 - MongoDB Change Streams and Time Series Collections.
 - Full customer/account people graph.

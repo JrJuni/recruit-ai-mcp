@@ -378,9 +378,19 @@ Completed:
   concrete `npx recruit-ai-mcp@0.1.0` commands and pass criteria. The
   distribution plan now labels macOS smoke as non-blocking for the local
   pre-publish gate.
+- Added Work 7BH MVP readiness public-registry boundary cleanup.
+  `docs/mvp-readiness.md` now separates Recruit AI product/MVP readiness from
+  public registry readiness: `npx recruit-ai-mcp@0.1.0` remains pending until
+  PyPI/npm publication and post-publish fresh smoke pass, while macOS
+  fresh-machine smoke is tracked as external-machine evidence outside the local
+  Windows pre-publish gate.
 
 Validation:
 
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-mvp-readiness-public-gate tests\test_docs_recruit_ai_current.py`
+  -> 12 passed.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-external-machine-smoke-docs tests\test_docs_recruit_ai_current.py`
   -> 12 passed.
 - `ruff check src tests` -> passed.

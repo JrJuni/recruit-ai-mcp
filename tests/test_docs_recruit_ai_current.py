@@ -18,6 +18,11 @@ def test_mvp_readiness_is_recruit_ai_current() -> None:
     assert "add_recruiting_interaction" in docs
     assert "recommend_candidates_for_position" in docs
     assert "smoke-natural-questions --pack recruiting --as-of 2026-06-22" in docs
+    assert "Public registry `npx recruit-ai-mcp@0.1.0` readiness remains pending" in docs
+    assert "disposable `RECRUIT_AI_HOME`" in docs
+    assert "macOS fresh-machine smoke remains external-machine evidence" in docs
+    assert "current local\n  pre-publish bootstrapper gate" in docs
+    assert "after public registry smoke evidence\n  exists" in docs
 
     assert "sales/deal-intelligence" not in docs
     assert "deal-intel usage" not in docs
@@ -27,6 +32,7 @@ def test_mvp_readiness_is_recruit_ai_current() -> None:
     assert "developer=42" not in docs
     assert "deal-intel-mcp-0.2.1.mcpb" not in docs
     assert "mcpb pack . deal-intel" not in docs
+    assert "current public npx path" not in docs
 
 
 def test_release_docs_and_workflows_use_recruit_ai_package_name() -> None:
