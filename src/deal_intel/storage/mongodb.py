@@ -24,6 +24,17 @@ from deal_intel.storage.diagnostics import (
     missing_mongodb_uri_message,
     missing_mongodb_uri_ping,
 )
+from deal_intel.storage.recruiting_collections import (
+    CANDIDATES,
+    CLIENT_COMPANIES,
+    FEEDBACK,
+    INTERACTIONS,
+    POSITIONS,
+    RECOMMENDATION_RUNS,
+    SUBMISSIONS,
+    recruiting_id_field,
+    recruiting_safe_projection,
+)
 
 
 def unarchived_deal_filter() -> dict[str, Any]:
@@ -331,6 +342,90 @@ class MongoDBClient:
 
     def aggregate_analytics_snapshots(self, pipeline: list[dict]) -> list[dict]:
         return list(self._get_db().analytics_snapshots.aggregate(pipeline))
+
+    # --- recruiting collections ---
+
+    def upsert_recruiting_record(self, collection: str, record: dict) -> bool:
+        id_field = recruiting_id_field(collection)
+        record_id = record.get(id_field)
+        if not record_id:
+            raise ValueError(f"{collection} record must include {id_field}")
+        result = _get_collection(self._get_db(), collection).replace_one(
+            {id_field: record_id},
+            record,
+            upsert=True,
+        )
+        return bool(getattr(result, "upserted_id", None) or getattr(result, "matched_count", 0))
+
+    def get_recruiting_record(
+        self,
+        collection: str,
+        record_id: str,
+        *,
+        include_raw: bool = False,
+    ) -> dict | None:
+        id_field = recruiting_id_field(collection)
+        target = _get_collection(self._get_db(), collection)
+        return target.find_one(
+            {id_field: record_id},
+            recruiting_safe_projection(collection, include_raw=include_raw),
+        )
+
+    def list_recruiting_records(
+        self,
+        collection: str,
+        *,
+        query: dict | None = None,
+        limit: int = 50,
+        include_raw: bool = False,
+        sort: list[tuple[str, int]] | None = None,
+    ) -> list[dict]:
+        target = _get_collection(self._get_db(), collection)
+        cursor = target.find(
+            dict(query or {}),
+            recruiting_safe_projection(collection, include_raw=include_raw),
+        )
+        if sort:
+            cursor = cursor.sort(sort)
+        if limit > 0:
+            cursor = cursor.limit(limit)
+        return list(cursor)
+
+    def upsert_candidate(self, candidate: dict) -> bool:
+        return self.upsert_recruiting_record(CANDIDATES, candidate)
+
+    def get_candidate(self, candidate_id: str, *, include_raw: bool = False) -> dict | None:
+        return self.get_recruiting_record(
+            CANDIDATES,
+            candidate_id,
+            include_raw=include_raw,
+        )
+
+    def list_candidates(self, *, query: dict | None = None, limit: int = 50) -> list[dict]:
+        return self.list_recruiting_records(
+            CANDIDATES,
+            query=query,
+            limit=limit,
+            sort=[("updated_at", -1)],
+        )
+
+    def upsert_client_company(self, client_company: dict) -> bool:
+        return self.upsert_recruiting_record(CLIENT_COMPANIES, client_company)
+
+    def upsert_position(self, position: dict) -> bool:
+        return self.upsert_recruiting_record(POSITIONS, position)
+
+    def upsert_submission(self, submission: dict) -> bool:
+        return self.upsert_recruiting_record(SUBMISSIONS, submission)
+
+    def add_client_feedback(self, feedback: dict) -> bool:
+        return self.upsert_recruiting_record(FEEDBACK, feedback)
+
+    def append_recruiting_interaction(self, interaction: dict) -> bool:
+        return self.upsert_recruiting_record(INTERACTIONS, interaction)
+
+    def save_recommendation_run(self, recommendation_run: dict) -> bool:
+        return self.upsert_recruiting_record(RECOMMENDATION_RUNS, recommendation_run)
 
     def replace_chart_ready_rows(
         self,

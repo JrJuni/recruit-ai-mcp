@@ -10,7 +10,42 @@ Read the newest section first. Older sections are retained as an archive for
 traceability and should be searched by topic, milestone, or file path rather
 than loaded wholesale.
 
-## Latest Update - 2026-06-21
+## Latest Update - 2026-06-22
+
+### Recruiting domain model and Mongo storage contract
+
+Completed:
+
+- Added the recruiting Work 1 domain contract for candidates, client
+  companies, positions, submissions, feedback, interactions, and recommendation
+  runs.
+- Added draft Pydantic recruiting models with the default fit rubric:
+  `skill_fit`, `domain_fit`, `seniority_fit`, `compensation_fit`,
+  `location_fit`, `availability_fit`, `client_preference_fit`, and `risk`.
+- Added Mongo-managed recruiting collection contracts beside the inherited
+  deal collections, including regular indexes and permissive `warn` /
+  `moderate` schema validators.
+- Added internal `MongoDBClient` recruiting wrappers for upsert/get/list paths.
+  Default reads exclude Mongo `_id`; default recruiting interaction reads also
+  exclude `raw_content`.
+- Kept MCP tool registration, recommendation ranking, migration, and Atlas
+  Vector Search out of scope for this step. M0 remains on `python_cosine`.
+
+Validation:
+
+- `ruff check src tests` -> passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2a tests\test_recruiting_schema.py tests\test_recruiting_storage_contract.py tests\test_mongo_contracts.py`
+  -> 36 passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2a-regression tests\test_mcpb_manifest.py tests\test_storage_backend_selection.py`
+  -> 18 passed.
+- `PYTHONPATH=src python -m deal_intel.cli mongo apply-indexes --json`
+  -> dry-run passed for `recruit_ai`, including recruiting collections.
+- `PYTHONPATH=src python -m deal_intel.cli mongo apply-schema --collection all --json`
+  -> dry-run passed for `recruit_ai`, including recruiting schemas.
+- `PYTHONPATH=src python -m deal_intel.cli mongo doctor --offline --json`
+  -> passed with `recruit_ai` and `python_cosine`.
+
+## Previous Update - 2026-06-21
 
 ### MongoDB Atlas Terraform PoC template
 

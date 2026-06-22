@@ -1,0 +1,34 @@
+{
+  "id": "recruit-ai.candidates.v1",
+  "version": 1,
+  "database": "recruit_ai",
+  "collection": "candidates",
+  "validation_action": "warn",
+  "validation_level": "moderate",
+  "validator": {
+    "$jsonSchema": {
+      "bsonType": "object",
+      "additionalProperties": true,
+      "required": ["candidate_id", "name"],
+      "properties": {
+        "candidate_id": {"bsonType": "string"},
+        "name": {"bsonType": "string"},
+        "headline": {"bsonType": ["string", "null"]},
+        "current_company": {"bsonType": ["string", "null"]},
+        "current_title": {"bsonType": ["string", "null"]},
+        "skills": {"bsonType": ["array", "null"]},
+        "domains": {"bsonType": ["array", "null"]},
+        "seniority": {"bsonType": ["string", "null"]},
+        "compensation_expectation": {"bsonType": ["object", "null"]},
+        "locations": {"bsonType": ["array", "null"]},
+        "work_authorization": {"bsonType": ["string", "null"]},
+        "availability": {"bsonType": ["string", "null"]},
+        "preferences": {"bsonType": ["object", "null"]},
+        "risk_flags": {"bsonType": ["array", "null"]},
+        "evidence": {"bsonType": ["array", "null"]},
+        "created_at": {"bsonType": ["string", "date", "null"]},
+        "updated_at": {"bsonType": ["string", "date", "null"]}
+      }
+    }
+  }
+}

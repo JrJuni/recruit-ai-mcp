@@ -7,6 +7,16 @@ from importlib import resources
 from pathlib import Path
 from typing import Any
 
+from deal_intel.storage.recruiting_collections import (
+    CANDIDATES,
+    CLIENT_COMPANIES,
+    FEEDBACK,
+    INTERACTIONS,
+    POSITIONS,
+    RECOMMENDATION_RUNS,
+    SUBMISSIONS,
+)
+
 ASC = 1
 DESC = -1
 
@@ -14,6 +24,13 @@ MONGO_SCHEMA_FILES = {
     "deals": "deals.v1.json",
     "analytics_snapshots": "analytics_snapshots.v1.json",
     "delete_audit_logs": "delete_audit_logs.v1.json",
+    CANDIDATES: "candidates.v1.json",
+    CLIENT_COMPANIES: "client_companies.v1.json",
+    POSITIONS: "positions.v1.json",
+    SUBMISSIONS: "submissions.v1.json",
+    FEEDBACK: "feedback.v1.json",
+    INTERACTIONS: "interactions.v1.json",
+    RECOMMENDATION_RUNS: "recommendation_runs.v1.json",
 }
 DEALS_SCHEMA_FILE = MONGO_SCHEMA_FILES["deals"]
 DEFAULT_DEALS_SCHEMA_SPEC = (
@@ -110,6 +127,106 @@ def expected_mongo_indexes() -> dict[str, list[MongoIndexSpec]]:
                 collection="analytics_snapshots",
                 name="analytics_snapshot_as_of_occurred_created",
                 keys=(("as_of", ASC), ("occurred_at", ASC), ("created_at", ASC)),
+            ),
+        ],
+        CANDIDATES: [
+            MongoIndexSpec(
+                collection=CANDIDATES,
+                name="candidate_id_unique",
+                keys=(("candidate_id", ASC),),
+                unique=True,
+            ),
+            MongoIndexSpec(
+                collection=CANDIDATES,
+                name="candidate_updated",
+                keys=(("updated_at", DESC),),
+            ),
+        ],
+        CLIENT_COMPANIES: [
+            MongoIndexSpec(
+                collection=CLIENT_COMPANIES,
+                name="client_company_id_unique",
+                keys=(("client_company_id", ASC),),
+                unique=True,
+            ),
+            MongoIndexSpec(
+                collection=CLIENT_COMPANIES,
+                name="client_company_name",
+                keys=(("name", ASC),),
+            ),
+        ],
+        POSITIONS: [
+            MongoIndexSpec(
+                collection=POSITIONS,
+                name="position_id_unique",
+                keys=(("position_id", ASC),),
+                unique=True,
+            ),
+            MongoIndexSpec(
+                collection=POSITIONS,
+                name="position_client_status_updated",
+                keys=(
+                    ("client_company_id", ASC),
+                    ("status", ASC),
+                    ("updated_at", DESC),
+                ),
+            ),
+        ],
+        SUBMISSIONS: [
+            MongoIndexSpec(
+                collection=SUBMISSIONS,
+                name="submission_id_unique",
+                keys=(("submission_id", ASC),),
+                unique=True,
+            ),
+            MongoIndexSpec(
+                collection=SUBMISSIONS,
+                name="submission_candidate_position",
+                keys=(("candidate_id", ASC), ("position_id", ASC)),
+            ),
+            MongoIndexSpec(
+                collection=SUBMISSIONS,
+                name="submission_position_status_updated",
+                keys=(("position_id", ASC), ("status", ASC), ("updated_at", DESC)),
+            ),
+        ],
+        FEEDBACK: [
+            MongoIndexSpec(
+                collection=FEEDBACK,
+                name="feedback_id_unique",
+                keys=(("feedback_id", ASC),),
+                unique=True,
+            ),
+            MongoIndexSpec(
+                collection=FEEDBACK,
+                name="feedback_position_candidate_created",
+                keys=(("position_id", ASC), ("candidate_id", ASC), ("created_at", DESC)),
+            ),
+        ],
+        INTERACTIONS: [
+            MongoIndexSpec(
+                collection=INTERACTIONS,
+                name="interaction_id_unique",
+                keys=(("interaction_id", ASC),),
+                unique=True,
+            ),
+            MongoIndexSpec(
+                collection=INTERACTIONS,
+                name="interaction_subject_occurred",
+                keys=(("subject_type", ASC), ("subject_id", ASC), ("occurred_at", DESC)),
+            ),
+        ],
+        RECOMMENDATION_RUNS: [
+            MongoIndexSpec(
+                collection=RECOMMENDATION_RUNS,
+                name="recommendation_run_id_unique",
+                keys=(("recommendation_run_id", ASC),),
+                unique=True,
+            ),
+            MongoIndexSpec(
+                collection=RECOMMENDATION_RUNS,
+                name="recommendation_run_anchor_created",
+                keys=(("anchor_type", ASC), ("anchor_id", ASC), ("created_at", DESC)),
             ),
         ],
     }

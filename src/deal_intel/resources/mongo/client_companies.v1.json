@@ -1,0 +1,27 @@
+{
+  "id": "recruit-ai.client-companies.v1",
+  "version": 1,
+  "database": "recruit_ai",
+  "collection": "client_companies",
+  "validation_action": "warn",
+  "validation_level": "moderate",
+  "validator": {
+    "$jsonSchema": {
+      "bsonType": "object",
+      "additionalProperties": true,
+      "required": ["client_company_id", "name"],
+      "properties": {
+        "client_company_id": {"bsonType": "string"},
+        "name": {"bsonType": "string"},
+        "industry": {"bsonType": ["string", "null"]},
+        "stage": {"bsonType": ["string", "null"]},
+        "locations": {"bsonType": ["array", "null"]},
+        "hiring_preferences": {"bsonType": ["array", "null"]},
+        "feedback_patterns": {"bsonType": ["array", "null"]},
+        "risk_notes": {"bsonType": ["array", "null"]},
+        "created_at": {"bsonType": ["string", "date", "null"]},
+        "updated_at": {"bsonType": ["string", "date", "null"]}
+      }
+    }
+  }
+}

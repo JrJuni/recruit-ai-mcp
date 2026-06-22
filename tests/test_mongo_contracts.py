@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from typing import get_args
 
 from typer.testing import CliRunner
 
@@ -20,8 +21,15 @@ from deal_intel.mongo_contracts import (
     mongo_schema_collections,
 )
 from deal_intel.mongo_doctor import build_mongo_doctor_report
+from deal_intel.schema.recruiting import (
+    DecisionSignal,
+    PositionStatus,
+    SourceConfidence,
+    SubmissionStatus,
+)
 from deal_intel.storage import mongodb as storage_mongodb
 from deal_intel.storage.mongodb import MongoDBClient
+from deal_intel.storage.recruiting_collections import recruiting_collections
 
 
 def _full_cfg() -> dict:
@@ -38,10 +46,17 @@ def _full_cfg() -> dict:
 def test_expected_mongo_indexes_are_named_and_grouped() -> None:
     indexes = expected_mongo_indexes()
 
-    assert set(indexes) == {"deals", "delete_audit_logs", "analytics_snapshots"}
+    assert set(indexes) == {
+        "deals",
+        "delete_audit_logs",
+        "analytics_snapshots",
+        *recruiting_collections(),
+    }
     assert indexes["deals"][0].name == "deal_id_unique"
     assert indexes["deals"][0].unique is True
     assert indexes["analytics_snapshots"][0].name == "analytics_snapshot_event_id_unique"
+    assert indexes["candidates"][0].name == "candidate_id_unique"
+    assert indexes["positions"][1].name == "position_client_status_updated"
 
 
 def test_compare_mongo_indexes_detects_key_mismatch() -> None:
@@ -80,7 +95,12 @@ def test_deals_schema_command_is_warn_moderate_and_permissive() -> None:
 def test_managed_schema_commands_are_warn_moderate_and_permissive() -> None:
     collections = mongo_schema_collections()
 
-    assert collections == ("deals", "analytics_snapshots", "delete_audit_logs")
+    assert collections == (
+        "deals",
+        "analytics_snapshots",
+        "delete_audit_logs",
+        *recruiting_collections(),
+    )
     for collection in collections:
         command = build_collection_schema_command(collection)
         summary = collection_schema_contract_summary(collection)
@@ -95,6 +115,24 @@ def test_managed_schema_commands_are_warn_moderate_and_permissive() -> None:
             properties = command["validator"]["$jsonSchema"]["properties"]
             assert properties["industry_tags"]["bsonType"] == ["array", "null"]
             assert properties["customer_segment"]["bsonType"] == ["string", "null"]
+        if collection == "interactions":
+            properties = command["validator"]["$jsonSchema"]["properties"]
+            assert properties["raw_content"]["bsonType"] == ["string", "null"]
+            assert set(properties["source_confidence"]["enum"]) == {
+                *get_args(SourceConfidence),
+                None,
+            }
+        if collection == "positions":
+            properties = command["validator"]["$jsonSchema"]["properties"]
+            assert set(properties["status"]["enum"]) == set(get_args(PositionStatus))
+        if collection == "submissions":
+            properties = command["validator"]["$jsonSchema"]["properties"]
+            assert set(properties["status"]["enum"]) == set(get_args(SubmissionStatus))
+        if collection == "feedback":
+            properties = command["validator"]["$jsonSchema"]["properties"]
+            assert set(properties["decision_signal"]["enum"]) == set(
+                get_args(DecisionSignal)
+            )
 
 
 class FakeSchemaDB:
@@ -291,8 +329,10 @@ def test_mongo_doctor_reports_auxiliary_schema_checks(monkeypatch) -> None:
 
     assert report["ok"] is True
     assert _status(report, "deals_schema") == "pass"
-    assert _status(report, "analytics_snapshots_schema") == "warn"
-    assert _status(report, "delete_audit_logs_schema") == "warn"
+    for collection in mongo_schema_collections():
+        if collection == "deals":
+            continue
+        assert _status(report, f"{collection}_schema") == "warn"
     assert _status(report, "dashboard_weekly_pipeline_chart_ready") == "pass"
     assert "configured-mongodb-uri-sentinel" not in json.dumps(report)
 
@@ -377,8 +417,10 @@ def test_mongo_doctor_offline_skips_live_checks(monkeypatch) -> None:
     assert report["ok"] is True
     assert _status(report, "mongodb_uri") == "pass"
     assert _status(report, "storage_ping") == "skipped"
-    assert _status(report, "analytics_snapshots_schema") == "skipped"
-    assert _status(report, "delete_audit_logs_schema") == "skipped"
+    for collection in mongo_schema_collections():
+        if collection == "deals":
+            continue
+        assert _status(report, f"{collection}_schema") == "skipped"
     assert _status(report, "dashboard_weekly_pipeline_chart_ready") == "skipped"
     assert "configured-mongodb-uri-sentinel" not in json.dumps(report)
 

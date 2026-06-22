@@ -1,0 +1,51 @@
+{
+  "id": "recruit-ai.interactions.v1",
+  "version": 1,
+  "database": "recruit_ai",
+  "collection": "interactions",
+  "validation_action": "warn",
+  "validation_level": "moderate",
+  "validator": {
+    "$jsonSchema": {
+      "bsonType": "object",
+      "additionalProperties": true,
+      "required": ["interaction_id", "subject_type", "subject_id", "interaction_type"],
+      "properties": {
+        "interaction_id": {"bsonType": "string"},
+        "subject_type": {
+          "enum": ["candidate", "client_company", "position", "submission"]
+        },
+        "subject_id": {"bsonType": "string"},
+        "interaction_type": {
+          "enum": [
+            "candidate_screen",
+            "client_intake",
+            "interview",
+            "email_thread",
+            "call_summary",
+            "internal_note"
+          ]
+        },
+        "direction": {"enum": ["inbound", "outbound", "internal", "mixed", null]},
+        "source_confidence": {
+          "enum": [
+            "candidate_stated",
+            "client_stated",
+            "mixed",
+            "internal",
+            "outbound_unconfirmed",
+            "unknown",
+            null
+          ]
+        },
+        "participants": {"bsonType": ["array", "null"]},
+        "occurred_at": {"bsonType": ["string", "date", "null"]},
+        "summary": {"bsonType": ["string", "null"]},
+        "raw_content": {"bsonType": ["string", "null"]},
+        "evidence_refs": {"bsonType": ["array", "null"]},
+        "created_at": {"bsonType": ["string", "date", "null"]},
+        "updated_at": {"bsonType": ["string", "date", "null"]}
+      }
+    }
+  }
+}

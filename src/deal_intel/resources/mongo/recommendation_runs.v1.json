@@ -1,0 +1,28 @@
+{
+  "id": "recruit-ai.recommendation-runs.v1",
+  "version": 1,
+  "database": "recruit_ai",
+  "collection": "recommendation_runs",
+  "validation_action": "warn",
+  "validation_level": "moderate",
+  "validator": {
+    "$jsonSchema": {
+      "bsonType": "object",
+      "additionalProperties": true,
+      "required": ["recommendation_run_id", "mode", "anchor_type", "anchor_id"],
+      "properties": {
+        "recommendation_run_id": {"bsonType": "string"},
+        "mode": {
+          "enum": ["position_to_candidates", "candidate_to_positions"]
+        },
+        "anchor_type": {"enum": ["position", "candidate"]},
+        "anchor_id": {"bsonType": "string"},
+        "query": {"bsonType": ["object", "null"]},
+        "rubric": {"bsonType": ["object", "null"]},
+        "results": {"bsonType": ["array", "null"]},
+        "created_at": {"bsonType": ["string", "date", "null"]},
+        "updated_at": {"bsonType": ["string", "date", "null"]}
+      }
+    }
+  }
+}

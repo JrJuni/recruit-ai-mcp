@@ -37,6 +37,52 @@ Avoid hardcoding tool counts in docs. Use `get_tool_catalog`,
 `config_doctor`, or `deal-intel config show` to inspect the current visible
 surface.
 
+## Recruiting Fork Model
+
+`recruit-ai-mcp` is currently in a staged fork from the inherited deal
+intelligence codebase. Work 0 isolated public package/config/runtime defaults;
+Work 1 added the recruiting domain contract; Work 2A adds Mongo-managed
+recruiting collections beside the inherited deal collections without changing
+MCP tool registration.
+
+The recruiting schema source is:
+
+- data contract: `docs/recruiting-domain-model.md`
+- draft Pydantic models: `src/deal_intel/schema/recruiting.py`
+- Mongo collection contract: `src/deal_intel/storage/recruiting_collections.py`
+
+The first recruiting model is evidence-first:
+
+- `candidate` stores verified candidate profile facts, preferences, constraints,
+  risk flags, and evidence references.
+- `client_company` stores the hiring customer and reusable preference memory.
+- `position` stores the search hypothesis: requirements, constraints, ideal
+  candidate examples, and a role-specific fit rubric.
+- `interaction` is the canonical evidence store for candidate screens, client
+  intake, interviews, email threads, call summaries, and internal notes.
+- `submission` snapshots a candidate-position match at the moment of client
+  presentation.
+- `feedback` captures client or candidate response and converts repeated
+  patterns into preference-learning signals.
+- `recommendation_run` records the query, rubric, ranked results, rationale,
+  rejected reasons, and missing-information questions for either
+  `position_to_candidates` or `candidate_to_positions`.
+
+Storage cutover is incremental. Work 2A adds regular Mongo indexes,
+permissive schema validators, and internal `MongoDBClient` wrappers for:
+
+- `candidates`
+- `client_companies`
+- `positions`
+- `submissions`
+- `feedback`
+- `interactions`
+- `recommendation_runs`
+
+Default recruiting read paths exclude Mongo `_id`, and default `interactions`
+reads also exclude `raw_content`. Public MCP tool changes and recommendation
+scoring remain deferred.
+
 ## Product Profiles
 
 The project uses one repository and one package with three profiles:

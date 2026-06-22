@@ -1,0 +1,39 @@
+{
+  "id": "recruit-ai.feedback.v1",
+  "version": 1,
+  "database": "recruit_ai",
+  "collection": "feedback",
+  "validation_action": "warn",
+  "validation_level": "moderate",
+  "validator": {
+    "$jsonSchema": {
+      "bsonType": "object",
+      "additionalProperties": true,
+      "required": ["feedback_id", "subject_type", "subject_id", "sentiment", "decision_signal"],
+      "properties": {
+        "feedback_id": {"bsonType": "string"},
+        "subject_type": {
+          "enum": ["candidate", "client_company", "position", "submission"]
+        },
+        "subject_id": {"bsonType": "string"},
+        "position_id": {"bsonType": ["string", "null"]},
+        "candidate_id": {"bsonType": ["string", "null"]},
+        "sentiment": {"enum": ["positive", "neutral", "negative", "mixed"]},
+        "decision_signal": {
+          "enum": [
+            "advance",
+            "hold",
+            "reject",
+            "needs_more_info",
+            "preference_update"
+          ]
+        },
+        "rubric_deltas": {"bsonType": ["object", "null"]},
+        "evidence_refs": {"bsonType": ["array", "null"]},
+        "preference_learning": {"bsonType": ["array", "null"]},
+        "created_at": {"bsonType": ["string", "date", "null"]},
+        "updated_at": {"bsonType": ["string", "date", "null"]}
+      }
+    }
+  }
+}

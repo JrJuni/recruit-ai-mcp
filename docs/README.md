@@ -38,6 +38,7 @@ These are active source-adjacent contracts.
 | `reports.md` | Changing CSV/Markdown exports or report row shapes |
 | `storage-backends.md` | Changing Mongo/local sample storage behavior |
 | `config-profiles.md` | Changing `sample`, `full`, or `pro` profile behavior |
+| `recruiting-domain-model.md` | Designing the recruiting fork data model, fit rubric, or recommendation records |
 | `tool-surfaces.md` | Changing which MCP tools appear in sample, standard, or developer surfaces |
 | `mvp-readiness.md` | Checking whether the package is ready for full-by-default external MVP trials |
 | `distribution-plan.md` | Planning git clone, uvx, npx, and MCPB distribution paths |
@@ -137,6 +138,9 @@ If archived content conflicts with code or active contract docs, prefer:
 - Full mode: Atlas-backed real team data.
 - Pro mode: paid-infrastructure path for API-key LLM providers and Atlas Vector
   Search.
+- Recruiting fork: candidate, client, position, submission, feedback,
+  interaction, and recommendation-run contracts beside the inherited deal
+  storage.
 - Deal review quality: separate evidence coverage, health quality, confirmed
   risks, and uncertainty.
 - Reporting/BI: shared metric engine feeding MCP answers, CSV/Markdown, and

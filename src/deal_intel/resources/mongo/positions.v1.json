@@ -1,0 +1,31 @@
+{
+  "id": "recruit-ai.positions.v1",
+  "version": 1,
+  "database": "recruit_ai",
+  "collection": "positions",
+  "validation_action": "warn",
+  "validation_level": "moderate",
+  "validator": {
+    "$jsonSchema": {
+      "bsonType": "object",
+      "additionalProperties": true,
+      "required": ["position_id", "client_company_id", "title", "status"],
+      "properties": {
+        "position_id": {"bsonType": "string"},
+        "client_company_id": {"bsonType": "string"},
+        "title": {"bsonType": "string"},
+        "status": {"enum": ["draft", "open", "paused", "filled", "closed", "cancelled"]},
+        "seniority": {"bsonType": ["string", "null"]},
+        "must_have": {"bsonType": ["array", "null"]},
+        "nice_to_have": {"bsonType": ["array", "null"]},
+        "target_compensation": {"bsonType": ["object", "null"]},
+        "locations": {"bsonType": ["array", "null"]},
+        "remote_policy": {"bsonType": ["string", "null"]},
+        "ideal_candidate_examples": {"bsonType": ["array", "null"]},
+        "rubric": {"bsonType": ["object", "null"]},
+        "created_at": {"bsonType": ["string", "date", "null"]},
+        "updated_at": {"bsonType": ["string", "date", "null"]}
+      }
+    }
+  }
+}

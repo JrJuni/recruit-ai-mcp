@@ -1,0 +1,39 @@
+{
+  "id": "recruit-ai.submissions.v1",
+  "version": 1,
+  "database": "recruit_ai",
+  "collection": "submissions",
+  "validation_action": "warn",
+  "validation_level": "moderate",
+  "validator": {
+    "$jsonSchema": {
+      "bsonType": "object",
+      "additionalProperties": true,
+      "required": ["submission_id", "candidate_id", "position_id", "status"],
+      "properties": {
+        "submission_id": {"bsonType": "string"},
+        "candidate_id": {"bsonType": "string"},
+        "position_id": {"bsonType": "string"},
+        "status": {
+          "enum": [
+            "draft",
+            "submitted",
+            "client_review",
+            "interviewing",
+            "offer",
+            "placed",
+            "rejected",
+            "withdrawn",
+            "paused"
+          ]
+        },
+        "submitted_at": {"bsonType": ["string", "date", "null"]},
+        "fit_snapshot": {"bsonType": ["object", "null"]},
+        "client_feedback_ids": {"bsonType": ["array", "null"]},
+        "next_step": {"bsonType": ["string", "null"]},
+        "created_at": {"bsonType": ["string", "date", "null"]},
+        "updated_at": {"bsonType": ["string", "date", "null"]}
+      }
+    }
+  }
+}
