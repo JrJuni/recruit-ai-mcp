@@ -18,7 +18,7 @@ from deal_intel.storage.recruiting_collections import (
 DATASET_WEEKLY_PIPELINE = "weekly_pipeline_demo"
 DATASET_RECRUITING_PIPELINE = "recruiting_pipeline_demo"
 DEAL_DATASET_VERSION = "2026-06-14.v2"
-RECRUITING_DATASET_VERSION = "2026-06-22.v1"
+RECRUITING_DATASET_VERSION = "2026-06-22.v2"
 SAMPLE_BATCH_ID = f"{DATASET_WEEKLY_PIPELINE}:{DEAL_DATASET_VERSION}"
 RECRUITING_SAMPLE_BATCH_ID = (
     f"{DATASET_RECRUITING_PIPELINE}:{RECRUITING_DATASET_VERSION}"
@@ -365,6 +365,51 @@ def _base_recruiting_records(*, loaded_at: str) -> dict[str, list[dict]]:
             "created_at": loaded_at,
             "updated_at": loaded_at,
         },
+        {
+            "candidate_id": "cand_nora_weiss",
+            "name": "Nora Weiss",
+            "headline": "Healthcare platform architect with relocation constraints",
+            "current_company": "MedLedger Labs",
+            "current_title": "Principal Platform Engineer",
+            "skills": ["Python", "Kafka", "HIPAA", "Data Platforms", "Healthcare"],
+            "domains": ["healthcare", "data platforms", "regulated infrastructure"],
+            "seniority": "principal",
+            "compensation_expectation": {
+                "currency": "USD",
+                "minimum": 260000,
+                "target": 290000,
+                "maximum": 320000,
+                "period": "annual",
+                "note": "Requires premium package and relocation support.",
+            },
+            "locations": ["London"],
+            "work_authorization": "UK authorized",
+            "availability": "90 days",
+            "preferences": {
+                "desired_titles": ["Principal Platform Engineer", "Architect"],
+                "preferred_domains": ["healthcare", "regulated infrastructure"],
+                "preferred_locations": ["London", "Remote Europe"],
+                "remote_preference": "remote Europe only",
+                "excluded_companies": [],
+                "notes": "Open only for architect scope with relocation support.",
+            },
+            "risk_flags": [
+                "compensation above current budget",
+                "requires UK remote exception",
+                "late availability",
+            ],
+            "evidence": [
+                {
+                    "evidence_id": "ev_nora_profile",
+                    "source_type": "profile",
+                    "source_id": "cand_nora_weiss",
+                    "summary": "Architected regulated healthcare event platforms.",
+                    "confidence": "candidate_stated",
+                }
+            ],
+            "created_at": loaded_at,
+            "updated_at": loaded_at,
+        },
     ]
     positions = [
         {
@@ -556,6 +601,22 @@ def _base_recruiting_records(*, loaded_at: str) -> dict[str, list[dict]]:
             "participants": ["Mateo Rivera", "Recruiter"],
             "occurred_at": "2026-06-10T19:00:00+00:00",
             "summary": "Mateo is strongest in payments, Kafka, and risk workflows.",
+            "raw_content": "",
+            "evidence_refs": [],
+        },
+        {
+            "interaction_id": "int_nora_screen",
+            "subject_type": "candidate",
+            "subject_id": "cand_nora_weiss",
+            "interaction_type": "candidate_screen",
+            "direction": "inbound",
+            "source_confidence": "candidate_stated",
+            "participants": ["Nora Weiss", "Recruiter"],
+            "occurred_at": "2026-06-19T17:00:00+00:00",
+            "summary": (
+                "Nora has deep healthcare platform experience but needs premium "
+                "compensation, UK remote approval, and a later start date."
+            ),
             "raw_content": "",
             "evidence_refs": [],
         },

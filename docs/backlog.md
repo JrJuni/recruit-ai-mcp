@@ -86,9 +86,12 @@ Immediate quality order:
    - Record fresh public `npx recruit-ai-mcp@0.1.0` smoke evidence before
      claiming public registry readiness for this fork.
 4. Improve recruiting recommendation quality with realistic fixtures.
-   - Add synthetic client/candidate examples that stress skills, domain,
-     seniority, compensation, location, availability, client preferences, and
-     risk.
+   - Initial stress coverage now includes a strong healthcare platform
+     candidate whose compensation, location, availability, and risk constraints
+     should prevent a naive keyword match from outranking the aligned candidate.
+   - Continue adding synthetic client/candidate examples that stress skills,
+     domain, seniority, compensation, location, availability, client
+     preferences, and risk.
    - Keep scoring deterministic and inspectable before adding optional LLM
      narrative layers.
 5. Add recruiting workflow observability only after the core path is stable.

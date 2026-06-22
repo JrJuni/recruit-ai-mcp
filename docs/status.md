@@ -262,9 +262,23 @@ Completed:
   `deal-intel-mcp-0.2.x` / `recruit-ai-mcp-0.2.3` MCPB artifacts were removed.
   Public npm registry evidence remains pending because
   `npm view recruit-ai-mcp@0.1.0 version` currently returns 404.
+- Added Work 7AL recruiting recommendation stress fixture.
+  The fictional recruiting sample dataset now includes Nora Weiss, a strong
+  healthcare platform candidate with compensation, location, availability, and
+  risk constraints. Recommendation tests verify that this high-keyword-match
+  candidate does not outrank the aligned Northstar match and carries the
+  expected `high_match_risk` signal.
 
 Validation:
 
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-quality-fixture tests\test_sample_data.py tests\test_recruiting_recommendation.py tests\test_recruiting_metrics.py tests\test_cli_deal_review_smoke.py`
+  -> 41 passed, 1 warning.
+- `PYTHONPATH=src python -m deal_intel.cli smoke-natural-questions --pack recruiting --as-of 2026-06-22 --output-dir .tmp\recruiting-quality-fixture-smoke --json`
+  -> passed with `ok=true`, `question_count=11`, no blocked questions, and no
+  sensitive failures; the recruiting pack now reports `candidate_count=5` and
+  local recruiting persistence `written=21`, `reloaded=21`.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `mcpb validate mcpb\manifest.json` -> passed.
 - From `mcpb/`, `mcpb pack . recruit-ai-mcp-0.1.0.mcpb` -> passed.
 - `mcpb info mcpb\recruit-ai-mcp-0.1.0.mcpb` -> passed with unsigned warning

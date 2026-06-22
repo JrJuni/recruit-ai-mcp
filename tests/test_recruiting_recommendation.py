@@ -10,6 +10,8 @@ from deal_intel.schema.recruiting_recommendation import (
     build_candidate_position_recommendation_run,
     build_position_candidate_recommendation_run,
 )
+from deal_intel.storage.recruiting_collections import CANDIDATES, FEEDBACK, POSITIONS
+from deal_intel.tools.sample_dataset import build_sample_recruiting_records
 
 
 def _evidence(candidate_id: str) -> EvidenceReference:
@@ -172,3 +174,29 @@ def test_recommendation_run_accepts_mongo_style_dict_inputs() -> None:
 
     assert run.results[0].target_id == "cand_avery"
     assert run.results[0].fit_snapshot.rubric_key == "recruiting_fit"
+
+
+def test_recruiting_sample_stress_candidate_does_not_outrank_aligned_match() -> None:
+    records = build_sample_recruiting_records(loaded_at="2026-06-22T00:00:00+00:00")
+    positions = {row["position_id"]: row for row in records[POSITIONS]}
+
+    run = build_position_candidate_recommendation_run(
+        position=positions["pos_northstar_backend_lead"],
+        candidates=records[CANDIDATES],
+        client_feedback=records[FEEDBACK],
+        limit=5,
+    )
+
+    results = {result.target_id: result for result in run.results}
+
+    assert run.results[0].target_id == "cand_avery_chen"
+    assert results["cand_nora_weiss"].rank > results["cand_avery_chen"].rank
+    assert results["cand_nora_weiss"].fit_snapshot.overall_score < (
+        results["cand_avery_chen"].fit_snapshot.overall_score
+    )
+    assert results["cand_nora_weiss"].risk_flags == [
+        "compensation above current budget",
+        "requires UK remote exception",
+        "late availability",
+        "high_match_risk",
+    ]
