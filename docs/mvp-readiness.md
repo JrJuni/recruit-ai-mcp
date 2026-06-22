@@ -5,10 +5,10 @@ This checklist answers one question:
 > Is the current package ready for a first external MVP trial without pretending
 > that every future feature is finished?
 
-The MVP target is a MongoDB-backed, AI-assisted sales/deal-intelligence
-workflow. Humans should start with the `full` profile by default. The
-zero-config `sample` mode remains available for AI agents, demos, and users who
-explicitly want to evaluate the workflow before configuring MongoDB.
+The MVP target is a MongoDB-backed, AI-assisted recruiting/search-firm
+intelligence workflow. Humans should start with the `full` profile by default.
+The zero-config `sample` mode remains available for AI agents, demos, and users
+who explicitly want to evaluate the workflow before configuring MongoDB.
 
 This checklist is not the validation gate for MongoDB-backed feature work. When
 changing MongoDB storage, indexes, schema validation, change streams, time
@@ -18,32 +18,38 @@ experience.
 
 ## Release Position
 
-Current position: **v2 public-trial ready, full-by-default with optional zero-config sample**.
+Current position: **Recruit AI bootstrap public-trial ready, full-by-default with optional zero-config sample**.
 
 Green:
 
-- V2 polish close-out has passed with no release blocker. Remaining deal-review
-  and report-quality improvements are usage-driven post-v2 work, not install
-  or first-answer blockers.
+- The recruit-ai bootstrap fork is isolated for public metadata, config paths,
+  env prefix, MongoDB defaults, MCPB metadata, and first recruiting workflows.
+  Remaining recommendation quality improvements are usage-driven follow-up
+  work, not install or first-answer blockers.
 - `full` profile is the default real-data operating path.
-- Zero-config sample/local mode works without MongoDB.
+- Zero-config sample/local mode works without MongoDB and now includes the safe
+  recruiting workflow.
 - MCP tool surfaces are filtered by profile.
 - User-memory tools are available for safe repo-local operating preferences,
   scoring feedback, taxonomy notes, report feedback, and evidence-policy notes.
-- Industry metadata now separates primary industry, industry tags, and customer
-  segment instead of overloading one mixed `industry` string.
-- Deal review v2 separates evidence coverage, uncertainty, confirmed risks,
-  objective actions, and judgment-sensitive observations.
-- Customer interaction intake supports meeting notes, email threads, user
-  interviews, call summaries, and internal notes through one public tool:
-  `add_interaction`.
+- Recruiting records cover candidates, client companies, positions,
+  submissions, client feedback, interactions, and recommendation runs.
+- Recruiting recommendations use deterministic M0-safe lexical retrieval and
+  fit scoring. Atlas Vector Search remains a pro/paid-infrastructure path.
+- Recruiting interaction intake supports screens, client intake notes,
+  interviews, call summaries, and internal notes through
+  `add_recruiting_interaction`.
+- Inherited deal-intelligence compatibility remains available during the staged
+  cutover, including deal review, customer-theme, and pipeline-health tools.
 - LLM usage/cost visibility is available through `get_usage` and
-  `deal-intel usage` so users can see estimated provider spend from the MCP
+  `recruit-ai usage` so users can see estimated provider spend from the MCP
   surface.
-- Local mode can create/update/stage/archive/delete local personal deals, then
-  export, reset, or migrate them to MongoDB through dry-run-first commands.
-- Natural-question smoke has a deterministic 12-question pack.
-- Claude Desktop MCPB `0.2.1` packs successfully and reflects the current
+- Local mode can create, export, reset, or migrate local personal recruiting
+  records and inherited deal records through dry-run-first commands.
+- Natural-question smoke still covers the inherited deal-intelligence
+  compatibility path; recruiting-first smoke is covered by targeted recruiting
+  tool and sample tests until a dedicated natural-question pack is added.
+- Claude Desktop MCPB `0.2.3` packs successfully and reflects the current
   installer fields.
 
 Yellow:
@@ -73,10 +79,10 @@ Not MVP-blocking:
 
 Remaining post-v2 quality candidates:
 
-- Keep validating tool-selection descriptions through natural-question smoke
-  traces and real host usage.
-- Improve report and deal-review quality with real user traces and synthetic
-  corner-case datasets.
+- Keep validating recruiting tool-selection descriptions through real host
+  usage and add a recruiting-first natural-question smoke pack.
+- Improve recruiting recommendation, report, and inherited deal-review quality
+  with real user traces and synthetic corner-case datasets.
 
 Post-v2 tool design cleanup:
 
@@ -139,9 +145,9 @@ Pass criteria:
 ### 2. Full Profile Smoke
 
 ```powershell
-& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli config profiles
-& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli config doctor --offline
-& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli smoke-profile --profile full --offline
+recruit-ai config profiles
+recruit-ai config doctor --offline
+recruit-ai smoke-profile --profile full --offline
 ```
 
 Pass criteria:
@@ -157,8 +163,8 @@ Pass criteria:
 Run this only for AI-first evaluation, demos, or no-MongoDB environments.
 
 ```powershell
-& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli config init --profile sample --dry-run
-& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli smoke-profile --profile sample
+recruit-ai config init --profile sample --dry-run
+recruit-ai smoke-profile --profile sample
 ```
 
 Pass criteria:
@@ -173,8 +179,8 @@ Run this when the change touches MongoDB-backed behavior. Do not substitute the
 sample smoke for this gate.
 
 ```powershell
-& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli smoke-profile --profile full --offline
-& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli config doctor --offline
+recruit-ai smoke-profile --profile full --offline
+recruit-ai config doctor --offline
 ```
 
 Pass criteria:
@@ -185,12 +191,12 @@ Pass criteria:
 - If the feature requires live reads or writes, run a bounded Atlas smoke in a
   disposable database or record why it was deferred.
 
-### 3. Natural Question Smoke
+### 3. Inherited Deal Natural Question Smoke
 
 ```powershell
-$env:DEAL_INTEL_STORAGE_BACKEND='local_sample'
-$env:DEAL_INTEL_TOOLS_SURFACE='auto'
-& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli smoke-natural-questions --as-of 2026-06-10
+$env:RECRUIT_AI_STORAGE_BACKEND='local_sample'
+$env:RECRUIT_AI_TOOLS_SURFACE='auto'
+recruit-ai smoke-natural-questions --as-of 2026-06-10
 ```
 
 Pass criteria:
@@ -199,16 +205,34 @@ Pass criteria:
 - `OK: True`.
 - No blocked questions.
 - No sensitive failures.
-- The pack covers pipeline health, company status, riskiest deals, uncertainty,
-  closing gaps, closed-deal postmortem gaps, decision criteria, evidence
-  drill-down, email/interview-backed evidence, pipeline trend, actionability
-  separation, and interaction source coverage.
+- The compatibility pack covers pipeline health, company status, riskiest
+  deals, uncertainty, closing gaps, closed-deal postmortem gaps, decision
+  criteria, evidence drill-down, email/interview-backed evidence, pipeline
+  trend, actionability separation, and interaction source coverage.
 
-### 4. Deal Review QA
+### 3b. Recruiting Workflow Smoke
+
+Run the targeted recruiting tests until the dedicated natural-question smoke
+pack exists:
 
 ```powershell
-$env:DEAL_INTEL_STORAGE_BACKEND='local_sample'
-& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli smoke-deal-review-audit --as-of 2026-06-10 --limit 20
+& "$HOME\miniconda3\envs\deal-intel\python.exe" -m pytest tests\test_recruiting_mcp_tools.py tests\test_recruiting_recommendations_service.py tests\test_local_sample_backend.py -q
+```
+
+Pass criteria:
+
+- Candidate, client-company, position, interaction, feedback, submission, and
+  recommendation paths pass.
+- Sample/local mode can persist recruiting records without raw interaction
+  content in local sample storage.
+- Recommendation runs remain deterministic and M0-safe without Atlas Vector
+  Search.
+
+### 4. Inherited Deal Review QA
+
+```powershell
+$env:RECRUIT_AI_STORAGE_BACKEND='local_sample'
+recruit-ai smoke-deal-review-audit --as-of 2026-06-10 --limit 20
 ```
 
 Pass criteria:
@@ -229,19 +253,21 @@ Run the relevant tests:
 Pass criteria:
 
 - `sample`, `standard`, and `developer` tool counts match the documented
-  contract: `sample=24`, `standard=38`, `developer=42`.
-- `add_interaction` is visible on sample/standard.
-- Deprecated `add_meeting` is hidden from sample/standard and only visible on
-  developer.
+  contract: `sample=34`, `standard=48`, `developer=52`.
+- Recruiting tools such as `create_candidate`,
+  `add_recruiting_interaction`, and `recommend_candidates_for_position` are
+  present on the expected surfaces.
+- Deprecated `add_meeting` remains hidden from sample/standard and only visible
+  on developer.
 - MCPB manifest tool metadata matches the runtime contract.
 
 ### 6. Local Personal Data Safety
 
 ```powershell
-& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli local-data status
-& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli local-data export
-& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli local-data reset
-& "$HOME\miniconda3\envs\deal-intel\python.exe" -m deal_intel.cli local-data migrate-to-mongo
+recruit-ai local-data status
+recruit-ai local-data export
+recruit-ai local-data reset
+recruit-ai local-data migrate-to-mongo
 ```
 
 Pass criteria:
@@ -257,8 +283,8 @@ From `mcpb/`:
 
 ```powershell
 mcpb validate manifest.json
-mcpb pack . deal-intel-mcp-0.2.1.mcpb
-mcpb info deal-intel-mcp-0.2.1.mcpb
+mcpb pack . recruit-ai-mcp-0.2.3.mcpb
+mcpb info recruit-ai-mcp-0.2.3.mcpb
 ```
 
 Pass criteria:
@@ -268,8 +294,8 @@ Pass criteria:
 - The bundle remains unsigned unless a signing decision has been made.
 - Reinstall smoke in Claude Desktop should show the expected sample or standard
   surface based on selected config.
-- For the current package, the latest known build is
-  `deal-intel-mcp-0.2.1.mcpb` with an unsigned-package warning only.
+- For the current package, the latest known npm-bundled build is
+  `npm/mcpb/recruit-ai-mcp-0.2.3.mcpb` with an unsigned-package warning only.
 
 ## User Trial Script
 
@@ -279,22 +305,22 @@ Use this lightweight script for a friend or first external evaluator:
 2. Install or reconnect the MCPB with `storage_backend=mongo` and
    `tools_surface=auto`.
 3. Run `config_doctor`.
-4. Ask: "What is the current pipeline health?"
-5. Ask: "Which deals need attention first?"
-6. Ask: "Tell me the status of one specific deal."
-7. Ask: "What themes are backed by email or interview evidence?"
-8. Create one real or test deal in the configured MongoDB database.
-9. Add one meeting or email reply through `add_interaction`.
-10. Confirm the result explains `source_policy` and does not silently change
-   stage.
+4. Create one client company with `create_client_company`.
+5. Create one open search with `create_position`.
+6. Create one test candidate with `create_candidate`.
+7. Add one screen or client-intake note through `add_recruiting_interaction`.
+8. Run `recommend_candidates_for_position` for the created position.
+9. Add one structured client response through `add_client_feedback`.
+10. Re-run the recommendation and confirm the feedback signal is visible.
 11. Record one reporting/scoring preference through `record_user_memory`, then
     read it back with `get_user_memory`.
 
 Optional zero-config demo script:
 
-1. Set `DEAL_INTEL_STORAGE_BACKEND=local_sample`.
+1. Set `RECRUIT_AI_STORAGE_BACKEND=local_sample`.
 2. Run `smoke-profile --profile sample`.
-3. Run `smoke-natural-questions --as-of 2026-06-10`.
+3. Create fictional recruiting sample data with `create_sample_data` using the
+   `recruiting_pipeline_demo` dataset.
 4. Show `local-data export` and `local-data reset` dry-run behavior.
 5. Explain that this is a demo/evaluation path, not the default team-storage
    path.

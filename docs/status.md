@@ -206,6 +206,11 @@ Completed:
   now uses `recruit_ai` Atlas database paths and the `recruit-ai` CLI alias for
   dashboard refresh, render, and cross-check commands, while retaining the
   inherited internal renderer module name during the staged package cutover.
+- Added Work 7AA MVP readiness recruit-ai cleanup. `docs/mvp-readiness.md`
+  now presents the release gate as a recruiting/search-firm trial, uses
+  `RECRUIT_AI_*`, `recruit-ai`, current MCP surface counts, recruiting workflow
+  smoke coverage, and the recruit-ai MCPB package naming for current public
+  handoff guidance.
 
 Validation:
 
@@ -348,6 +353,9 @@ Validation:
 - `git diff --check` -> passed; Windows line-ending warnings only.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-atlas-docs tests\test_atlas_charts.py tests\test_chart_ready_contracts.py tests\test_mongo_contracts.py`
   -> 52 passed.
+- `ruff check src tests` -> passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-mvp-readiness tests\test_docs_recruit_ai_current.py tests\test_tool_surfaces.py tests\test_mcpb_manifest.py tests\test_local_sample_backend.py tests\test_recruiting_mcp_tools.py`
+  -> 72 passed, 1 third-party warning.
 - `ruff check src tests` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
