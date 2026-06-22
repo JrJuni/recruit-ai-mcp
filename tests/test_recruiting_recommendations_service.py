@@ -188,6 +188,39 @@ def test_recommend_positions_for_candidate_filters_open_positions() -> None:
     ]
 
 
+def test_recommend_positions_for_candidate_respects_excluded_company() -> None:
+    storage = FakeRecommendationStorage()
+    storage.candidates["cand_avery"] = _candidate(
+        "cand_avery",
+        preferences={"excluded_companies": ["Acme"]},
+    )
+    storage.positions["pos_acme_backend"] = _position(
+        "pos_acme_backend",
+        client_company_id="client_acme",
+    )
+    storage.positions["pos_beta_backend"] = _position(
+        "pos_beta_backend",
+        client_company_id="client_beta",
+    )
+
+    result = recruiting_recommendations.recommend_positions_for_candidate(
+        storage,
+        candidate_id="cand_avery",
+    )
+
+    rows = result["record"]["results"]
+    acme = next(row for row in rows if row["target_id"] == "pos_acme_backend")
+
+    assert [row["target_id"] for row in rows] == [
+        "pos_beta_backend",
+        "pos_acme_backend",
+    ]
+    assert acme["risk_flags"] == ["review_match_risk"]
+    assert "Confirm whether the candidate exclusion can be revisited." in (
+        acme["next_questions"]
+    )
+
+
 def test_recommend_positions_for_candidate_defaults_to_open_sample_roles() -> None:
     records = build_sample_recruiting_records(loaded_at="2026-06-22T00:00:00+00:00")
     storage = FakeRecommendationStorage()
