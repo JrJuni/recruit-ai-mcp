@@ -1,6 +1,8 @@
 ﻿from __future__ import annotations
 
 import json
+from contextvars import ContextVar
+from time import perf_counter
 
 from fastmcp import FastMCP
 from fastmcp.exceptions import NotFoundError
@@ -10,6 +12,7 @@ from deal_intel.errors import ErrorCode, MCPError, Stage, envelope_from_exceptio
 
 app = FastMCP("recruit-ai")
 _MAX_EMBEDDING_WARMUP_SECONDS = 30
+_TRACE_CALL_DEPTH: ContextVar[int] = ContextVar("workflow_trace_call_depth", default=0)
 
 
 def _enabled_mcp_tool_names() -> set[str]:
@@ -42,16 +45,66 @@ def _install_tool_surface_filter(server: FastMCP) -> None:
     ):
         if name not in _enabled_mcp_tool_names():
             raise NotFoundError(f"Unknown tool: {name!r}")
-        return await original_call_tool(
-            name,
-            arguments,
-            version=version,
-            run_middleware=run_middleware,
-            task_meta=task_meta,
-        )
+        started = perf_counter()
+        trace_depth = _TRACE_CALL_DEPTH.get()
+        trace_token = _TRACE_CALL_DEPTH.set(trace_depth + 1)
+        try:
+            result = await original_call_tool(
+                name,
+                arguments,
+                version=version,
+                run_middleware=run_middleware,
+                task_meta=task_meta,
+            )
+        except Exception as exc:
+            _TRACE_CALL_DEPTH.reset(trace_token)
+            if trace_depth == 0:
+                _record_workflow_trace(
+                    name=name,
+                    arguments=arguments,
+                    result=None,
+                    error=exc,
+                    duration_ms=(perf_counter() - started) * 1000,
+                )
+            raise
+        _TRACE_CALL_DEPTH.reset(trace_token)
+        if trace_depth == 0:
+            _record_workflow_trace(
+                name=name,
+                arguments=arguments,
+                result=result,
+                error=None,
+                duration_ms=(perf_counter() - started) * 1000,
+            )
+        return result
 
     server.list_tools = list_tools
     server.call_tool = call_tool
+
+
+def _record_workflow_trace(
+    *,
+    name: str,
+    arguments: dict | None,
+    result: object,
+    error: BaseException | None,
+    duration_ms: float,
+) -> None:
+    try:
+        from deal_intel import _context
+        from deal_intel.workflow_trace import append_workflow_trace
+
+        append_workflow_trace(
+            _context.config(),
+            tool_name=name,
+            arguments=arguments or {},
+            result=result,
+            error=error,
+            duration_ms=duration_ms,
+        )
+    except Exception:
+        # Observability must never break MCP tool execution.
+        return
 
 
 _install_tool_surface_filter(app)

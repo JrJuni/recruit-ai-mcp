@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import asyncio
 import json
 
+from deal_intel import _context, mcp_server
 from deal_intel.workflow_trace import (
     append_workflow_trace,
     build_workflow_trace_event,
@@ -117,3 +119,29 @@ def test_workflow_trace_can_be_enabled_by_env_and_is_bounded(tmp_path) -> None:
     ]
     assert events[1]["success"] is False
     assert events[1]["error_category"] == "TEST"
+
+
+def test_mcp_call_tool_writes_opt_in_workflow_trace(monkeypatch, tmp_path) -> None:
+    trace_path = tmp_path / "workflow_traces.jsonl"
+    monkeypatch.setenv("RECRUIT_AI_WORKFLOW_TRACE", "1")
+    monkeypatch.setenv("RECRUIT_AI_WORKFLOW_TRACE_PATH", str(trace_path))
+    monkeypatch.setattr(
+        _context,
+        "config",
+        lambda: {
+            "tools": {"surface": "developer"},
+            "storage": {"local_data_dir": str(tmp_path)},
+        },
+    )
+
+    result = asyncio.run(
+        mcp_server.app.call_tool("get_tool_catalog", {"include_hidden": False})
+    )
+    events = read_workflow_traces(trace_path)
+
+    assert result is not None
+    assert len(events) == 1
+    assert events[0]["tool_name"] == "get_tool_catalog"
+    assert events[0]["success"] is True
+    assert events[0]["argument_summary"] == {"include_hidden": False}
+    assert events[0]["duration_ms"] >= 0

@@ -280,9 +280,18 @@ Completed:
   `storage.local_data_dir/workflow_traces.jsonl` placement, and redacted
   argument/result summaries that avoid raw content, contacts, embeddings,
   API keys, OAuth tokens, and MongoDB URIs.
+- Added Work 7AO MCP workflow trace wiring.
+  The MCP `call_tool` wrapper now records one opt-in workflow trace event per
+  host tool call, with a reentrancy guard to avoid duplicate FastMCP internal
+  calls. Trace failures are swallowed so observability cannot break tool
+  execution.
 
 Validation:
 
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-workflow-trace-mcp-final tests\test_workflow_trace.py tests\test_tool_surfaces.py tests\test_mcpb_manifest.py`
+  -> 49 passed, 1 warning.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-workflow-trace-final tests\test_workflow_trace.py tests\test_config_doctor.py tests\test_profile_smoke_cli.py tests\test_storage_backend_selection.py`
   -> 33 passed, 1 warning.
 - `ruff check src tests` -> passed.
