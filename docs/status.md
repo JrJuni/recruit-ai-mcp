@@ -296,9 +296,21 @@ Completed:
   outrank the aligned matches for Northstar or OrbitPay. This protects
   compensation, location, availability, seniority, and scope risk behavior in
   the end-to-end smoke path.
+- Added Work 7AR release/latest recruit-ai artifact alignment.
+  `release/latest` now points at `recruit-ai-mcp-0.1.0.mcpb` with matching
+  `VERSION` and SHA256 checksum, removes the stale inherited
+  `deal-intel-mcp-0.2.3.mcpb` artifact, and has a bootstrapper regression test
+  that fails if latest drifts back to inherited package names.
 
 Validation:
 
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-release-latest tests\test_bootstrapper_skeleton.py tests\test_mcpb_manifest.py`
+  -> 21 passed.
+- `npm pack --dry-run` from `npm/`
+  -> produced `recruit-ai-mcp-0.1.0.tgz` preview containing
+  `mcpb/recruit-ai-mcp-0.1.0.mcpb`.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-smoke-guardrails tests\test_cli_deal_review_smoke.py tests\test_recruiting_recommendation.py tests\test_sample_data.py`
   -> 38 passed, 1 warning.
 - `PYTHONPATH=src python -m deal_intel.cli smoke-natural-questions --pack recruiting --as-of 2026-06-22 --output-dir .tmp\recruiting-smoke-guardrails --json`

@@ -1,16 +1,16 @@
 # Release Artifacts
 
-This folder contains ready-to-install release artifacts for users who should not
-have to rebuild the MCPB package locally.
+This folder contains ready-to-install Recruit AI release artifacts for users who
+should not have to rebuild the MCPB package locally.
 
 ## Latest
 
-- `latest/deal-intel-mcp-0.2.1.mcpb`
+- `latest/recruit-ai-mcp-0.1.0.mcpb`
 
 The MCPB installs the Claude Desktop extension manifest and launcher. It does
 not bundle the Python package or dependencies. Users still need to install this
-repository into a Python environment first, then provide that interpreter path
-in the MCPB install form.
+repository or the `recruit-ai-mcp` package into a Python environment first,
+then provide that interpreter path in the MCPB install form.
 
 Use `latest/VERSION` and `latest/checksums.txt` to confirm the artifact version
 and checksum before handing it to a tester.

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import subprocess
@@ -71,6 +72,24 @@ def test_release_package_metadata_stays_aligned() -> None:
     assert "npm publish --access public" in release_workflow
     assert 'package_spec="recruit-ai-mcp[embedding]==${PACKAGE_VERSION}"' in staging_workflow
     assert 'metadata.version("recruit-ai-mcp")' in staging_workflow
+
+
+def test_release_latest_artifact_matches_recruit_ai_version() -> None:
+    package = json.loads((ROOT / "npm" / "package.json").read_text(encoding="utf-8"))
+    version = package["version"]
+    latest_dir = ROOT / "release" / "latest"
+    artifact = latest_dir / f"recruit-ai-mcp-{version}.mcpb"
+
+    assert (latest_dir / "VERSION").read_text(encoding="utf-8").strip() == version
+    assert artifact.exists()
+    assert not list(latest_dir.glob("deal-intel-mcp-*.mcpb"))
+    assert sorted(path.name for path in latest_dir.glob("*.mcpb")) == [
+        f"recruit-ai-mcp-{version}.mcpb"
+    ]
+    checksum = hashlib.sha256(artifact.read_bytes()).hexdigest().upper()
+    assert (latest_dir / "checksums.txt").read_text(encoding="utf-8").strip() == (
+        f"SHA256  recruit-ai-mcp-{version}.mcpb  {checksum}"
+    )
 
 
 def test_bootstrapper_where_uses_recruit_ai_home(tmp_path: Path) -> None:
