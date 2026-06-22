@@ -403,6 +403,8 @@ MCP tools:
 - `add_client_feedback`
 - `recommend_candidates_for_position`
 - `recommend_positions_for_candidate`
+- `get_recruiting_metrics`
+- `export_recruiting_report`
 
 Surface policy:
 
@@ -417,6 +419,8 @@ Surface policy:
   when `save_run=true`.
 - `get_recruiting_metrics` reads recruiting collection wrappers and returns
   read-only pipeline metrics.
+- `export_recruiting_report` reuses the same metrics path and writes local
+  Markdown/CSV recruiting pipeline artifacts.
 - All tools are deterministic and do not call LLMs, embeddings, or Atlas
   Vector Search.
 - List-like MCP inputs use comma-separated strings; rubric deltas and candidate
@@ -445,6 +449,24 @@ Metrics policy:
 Work 6B exposes those metrics through the internal service and MCP tool
 `get_recruiting_metrics`. The tool is read-only and uses storage list wrappers
 only; it does not call LLMs, embeddings, or Atlas Vector Search.
+
+## Work 6C Recruiting Pipeline Report Export
+
+Work 6C exposes deterministic local report artifacts for the recruiting
+pipeline. It does not create or update recruiting records.
+
+Report policy:
+
+- `export_recruiting_report` reads safe recruiting records through the Work 6B
+  metrics service.
+- The report builder flattens summary, position, submission, feedback, and
+  data-quality metrics into a CSV ledger.
+- The Markdown artifact gives a compact recruiting pipeline summary, funnel,
+  rates, and data-quality section.
+- Output defaults to the configured reporting directory and can be overridden
+  per call with `output_dir`.
+- The tool is deterministic and does not call LLMs, embeddings, or Atlas
+  Vector Search.
 
 ## Collections For Work 2
 

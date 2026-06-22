@@ -42,6 +42,7 @@
     {"name": "recommend_candidates_for_position", "description": "Recommend candidates for one position using M0-safe lexical retrieval and deterministic fit scoring."},
     {"name": "recommend_positions_for_candidate", "description": "Recommend positions for one candidate using M0-safe lexical retrieval and deterministic fit scoring."},
     {"name": "get_recruiting_metrics", "description": "Return read-only recruiting pipeline metrics, funnel rates, feedback signals, and data-quality counters."},
+    {"name": "export_recruiting_report", "description": "Export recruiting pipeline Markdown and CSV artifacts from safe recruiting records."},
     {"name": "add_meeting",   "description": "Deprecated developer-surface alias for add_interaction with interaction_type=meeting."},
     {"name": "add_interaction", "description": "Add a meeting, email, interview, call summary, or internal note with source-aware active-framework qualification extraction; MEDDPICC is the default."},
     {"name": "update_stage",  "description": "Move a deal to a new pipeline stage and log it to stage history."},

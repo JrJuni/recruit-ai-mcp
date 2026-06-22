@@ -92,6 +92,7 @@ TOOL_INTENT_GROUPS: dict[str, dict] = {
             "recommend_candidates_for_position",
             "recommend_positions_for_candidate",
             "get_recruiting_metrics",
+            "export_recruiting_report",
         ),
     },
     "product_context": {
@@ -303,6 +304,7 @@ TOOL_INTENT_ALIASES: dict[str, tuple[str, str]] = {
     "recommend_candidates_for_position": ("recruit", "recruit.recommend.candidates"),
     "recommend_positions_for_candidate": ("recruit", "recruit.recommend.positions"),
     "get_recruiting_metrics": ("recruit", "recruit.metrics"),
+    "export_recruiting_report": ("recruit", "recruit.report.export"),
 }
 
 
@@ -606,6 +608,19 @@ MCP_TOOL_SURFACE_CONTRACTS: tuple[MCPToolSurfaceContract, ...] = (
         db_writes=False,
         llm_calls=False,
         notes="Read-only recruiting pipeline metrics and data-quality counters.",
+    ),
+    MCPToolSurfaceContract(
+        name="export_recruiting_report",
+        category="local_artifact",
+        surfaces=_STANDARD,
+        user_facing=True,
+        db_writes=False,
+        llm_calls=False,
+        local_file_writes=True,
+        notes=(
+            "Writes local recruiting pipeline Markdown and CSV artifacts from "
+            "safe recruiting records."
+        ),
     ),
     MCPToolSurfaceContract(
         name="add_meeting",

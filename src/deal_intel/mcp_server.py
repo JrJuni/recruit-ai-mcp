@@ -1093,6 +1093,43 @@ def get_recruiting_metrics(
 
 
 @app.tool()
+def export_recruiting_report(
+    output_dir: str = "",
+    as_of: str = "",
+    candidate_limit: int = 500,
+    position_limit: int = 500,
+    submission_limit: int = 1000,
+    feedback_limit: int = 1000,
+    position_status: str = "",
+) -> dict:
+    """Export recruiting pipeline report artifacts.
+
+    Use this for a human-readable recruiting pipeline summary plus CSV metric
+    ledger. Intent alias: recruit.report.export.
+
+    Read-only over recruiting records. Writes local CSV and Markdown artifacts
+    only; does not call LLMs, embeddings, or Atlas Vector Search.
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.tools import export_recruiting_report as _t
+
+        return _t.handle(
+            mongo=_context.mongo(),
+            cfg=_context.config(),
+            output_dir=output_dir or None,
+            as_of=as_of or None,
+            candidate_limit=candidate_limit,
+            position_limit=position_limit,
+            submission_limit=submission_limit,
+            feedback_limit=feedback_limit,
+            position_status=position_status or None,
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.STORAGE)
+
+
+@app.tool()
 def add_meeting(deal_id: str, date: str, raw_notes: str) -> dict:
     """Deprecated alias for add_interaction with interaction_type=meeting.
 

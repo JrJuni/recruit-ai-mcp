@@ -178,6 +178,13 @@ Work 6B adds `src/deal_intel/tools/recruiting_metrics.py` and exposes
 wrappers, delegates calculation to Work 6A, and returns read-only recruiting
 pipeline KPIs without LLMs, embeddings, or writes.
 
+Work 6C adds deterministic recruiting pipeline report artifacts through
+`src/deal_intel/reports/recruiting_pipeline.py` and
+`src/deal_intel/tools/export_recruiting_report.py`. The tool delegates record
+reads and KPI calculation to `get_recruiting_metrics`, then writes local
+Markdown and CSV files under the configured reporting directory. It is read
+only over MongoDB and does not call LLMs, embeddings, or Atlas Vector Search.
+
 ## Product Profiles
 
 The project uses one repository and one package with three profiles:

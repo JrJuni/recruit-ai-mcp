@@ -97,6 +97,10 @@ Completed:
   now reads recruiting collection wrappers and returns read-only pipeline
   metrics using the Work 6A calculator. It is visible on `standard`/`developer`,
   hidden from `sample`, and does not call LLMs, embeddings, or writes.
+- Added Work 6C recruiting report export. `export_recruiting_report` now
+  reuses the read-only metrics path to write local Markdown and CSV recruiting
+  pipeline artifacts, with no recruiting storage writes, LLMs, embeddings, or
+  Atlas Vector Search.
 
 Validation:
 
@@ -136,6 +140,12 @@ Validation:
   -> 156 passed, 1 third-party warning.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-6b-final tests\test_recruiting_metrics_service.py tests\test_recruiting_metrics.py tests\test_recruiting_mcp_tools.py tests\test_recruiting_recommendations_service.py tests\test_recruiting_retrieval.py tests\test_recruiting_recommendation.py tests\test_recruiting_match.py tests\test_recruiting_fit.py tests\test_recruiting_schema.py tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_mongo_contracts.py tests\test_tool_surfaces.py tests\test_mcpb_manifest.py tests\test_storage_backend_selection.py`
   -> 161 passed, 1 third-party warning.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-6c-target tests\test_export_recruiting_report.py tests\test_recruiting_metrics_service.py tests\test_recruiting_metrics.py tests\test_tool_surfaces.py tests\test_mcpb_manifest.py`
+  -> 67 passed, 1 third-party warning.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-6c-final tests\test_export_recruiting_report.py tests\test_recruiting_metrics_service.py tests\test_recruiting_metrics.py tests\test_recruiting_mcp_tools.py tests\test_recruiting_recommendations_service.py tests\test_recruiting_retrieval.py tests\test_recruiting_recommendation.py tests\test_recruiting_match.py tests\test_recruiting_fit.py tests\test_recruiting_schema.py tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_mongo_contracts.py tests\test_tool_surfaces.py tests\test_mcpb_manifest.py tests\test_storage_backend_selection.py`
+  -> 167 passed, 1 third-party warning.
+- `ruff check src tests` -> passed.
+- `mcpb validate mcpb\manifest.json` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2c tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py`
