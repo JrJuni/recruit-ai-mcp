@@ -144,6 +144,9 @@ Completed:
 - Added recruiting metrics/report guardrails for storage-managed feedback
   metadata, confirming KPI and export paths accept feedback rows with Mongo
   `_id` stripped and `updated_at` preserved.
+- Added local-to-Mongo migration coverage for saved recommendation runs with
+  nested `feedback_adjustments`, confirming dry-run classification and apply
+  writes preserve the nested adjustment ledger.
 - Hardened local workflow trace observability. Trace status and reset payloads
   now report invalid JSONL trace line counts while preserving the redacted
   event-only read path.
@@ -478,6 +481,10 @@ Validation:
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-feedback-metadata-metrics tests\test_recruiting_metrics.py tests\test_recruiting_metrics_service.py tests\test_export_recruiting_report.py tests\test_recruiting_schema.py`
   -> 22 passed, 1 external deprecation warning.
 - `ruff check tests\test_recruiting_metrics.py tests\test_recruiting_metrics_service.py tests\test_export_recruiting_report.py`
+  -> passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recommendation-run-migration tests\test_local_data_migration.py tests\test_recruiting_storage_contract.py tests\test_local_sample_backend.py`
+  -> 42 passed, 1 external deprecation warning.
+- `ruff check tests\test_local_data_migration.py`
   -> passed.
 - `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-user-test-guide-recruit-ai tests\test_docs_recruit_ai_current.py`

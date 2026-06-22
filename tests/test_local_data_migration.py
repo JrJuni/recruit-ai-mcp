@@ -221,6 +221,71 @@ def test_migration_apply_writes_local_deals_to_mongo(tmp_path) -> None:
     }
 
 
+def test_migration_preserves_recommendation_run_feedback_adjustments(tmp_path) -> None:
+    store = LocalPersonalStore(tmp_path / "local-data")
+    store.upsert_recruiting_record(
+        "recommendation_runs",
+        {
+            "recommendation_run_id": "rec_local_feedback",
+            "mode": "position_to_candidates",
+            "anchor_type": "position",
+            "anchor_id": "pos_local_migrate",
+            "results": [
+                {
+                    "target_id": "cand_local_migrate",
+                    "rank": 1,
+                    "fit_snapshot": {
+                        "overall_score": 80,
+                        "dimensions": {"skill_fit": {"score": 4}},
+                    },
+                    "feedback_adjustments": [
+                        {
+                            "feedback_id": "fb_local_skill_boost",
+                            "dimension": "skill_fit",
+                            "delta": 1,
+                            "original_score": 3,
+                            "adjusted_score": 4,
+                            "reason": "Applied client feedback delta.",
+                        }
+                    ],
+                }
+            ],
+        },
+    )
+    mongo = FakeMongo()
+
+    dry_run = migrate_local_data.handle(source_store=store, target_mongo=mongo)
+    applied = migrate_local_data.handle(
+        source_store=store,
+        target_mongo=mongo,
+        dry_run=False,
+        confirmed_by_user=True,
+    )
+
+    assert dry_run["counts"]["would_create"] == 1
+    assert dry_run["recruiting"] == [
+        {
+            "record_type": "recruiting",
+            "collection": "recommendation_runs",
+            "record_id": "rec_local_feedback",
+            "action": "create",
+            "reason": "target_recruiting_record_missing",
+        }
+    ]
+    assert applied["counts"]["migrated"] == 1
+    assert mongo.upserted_recruiting[0][0] == "recommendation_runs"
+    assert mongo.upserted_recruiting[0][1]["results"][0]["feedback_adjustments"] == [
+        {
+            "feedback_id": "fb_local_skill_boost",
+            "dimension": "skill_fit",
+            "delta": 1,
+            "original_score": 3,
+            "adjusted_score": 4,
+            "reason": "Applied client feedback delta.",
+        }
+    ]
+
+
 def test_migration_skips_existing_by_default_and_overwrites_when_enabled(
     tmp_path,
 ) -> None:
