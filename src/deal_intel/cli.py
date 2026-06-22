@@ -4446,7 +4446,8 @@ def _natural_question_quick_read(question_id: str, payload: dict) -> str:
         return (
             f"open_positions={summary.get('open_position_count')}, "
             f"shortlists={summary.get('positions_with_shortlist')}, "
-            f"risk_reviews={summary.get('positions_with_review_risks')}"
+            f"risk_reviews={summary.get('positions_with_review_risks')}, "
+            f"question_reviews={summary.get('positions_with_next_questions')}"
         )
     if question_id == "q01_pipeline_health":
         kpis = payload.get("kpis") or {}
