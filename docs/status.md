@@ -129,6 +129,10 @@ Completed:
   includes an OrbitPay payments candidate with a strong stack match but a
   heavy-role-shaping conflict, and the scoring layer penalizes applicable
   negative preference learning before shortlist ranking.
+- Added a candidate excluded-company recommendation guardrail. Candidate
+  `preferences.excluded_companies` now suppresses client preference fit for a
+  matching position client, raises review-level match risk, and can move an
+  otherwise strong excluded-company position below an equivalent allowed one.
 - Hardened local workflow trace observability. Trace status and reset payloads
   now report invalid JSONL trace line counts while preserving the redacted
   event-only read path.
@@ -446,6 +450,13 @@ Completed:
 
 Validation:
 
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-excluded-company-recommendation tests\test_recruiting_match.py tests\test_recruiting_recommendation.py tests\test_recruiting_recommendations_service.py`
+  -> 27 passed.
+- `ruff check src\deal_intel\schema\recruiting_match.py tests\test_recruiting_match.py tests\test_recruiting_recommendation.py tests\test_recruiting_recommendations_service.py`
+  -> passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-excluded-company-smoke tests\test_cli_deal_review_smoke.py::test_smoke_natural_questions_recruiting_pack_writes_artifacts tests\test_validate_recruiting_smoke.py`
+  -> 5 passed.
+- `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-user-test-guide-recruit-ai tests\test_docs_recruit_ai_current.py`
   -> 14 passed.
 - `ruff check src tests` -> passed.

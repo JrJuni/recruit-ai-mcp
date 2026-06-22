@@ -118,6 +118,30 @@ def test_candidate_position_recommendation_run_ranks_positions() -> None:
     assert run.results[0].rank == 1
 
 
+def test_candidate_position_recommendation_respects_excluded_company() -> None:
+    run = build_candidate_position_recommendation_run(
+        candidate=_candidate(
+            "cand_avery",
+            preferences={"excluded_companies": ["Acme"]},
+        ),
+        positions=[
+            _position("pos_acme_backend", client_company_id="client_acme"),
+            _position("pos_beta_backend", client_company_id="client_beta"),
+        ],
+    )
+
+    results = {result.target_id: result for result in run.results}
+
+    assert [result.target_id for result in run.results] == [
+        "pos_beta_backend",
+        "pos_acme_backend",
+    ]
+    assert results["pos_acme_backend"].risk_flags == ["review_match_risk"]
+    assert "Confirm whether the candidate exclusion can be revisited." in (
+        results["pos_acme_backend"].next_questions
+    )
+
+
 def test_recommendation_result_exposes_low_fit_reason_and_questions() -> None:
     run = build_position_candidate_recommendation_run(
         position=_position(ideal_candidate_examples=[]),

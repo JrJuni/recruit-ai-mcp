@@ -424,6 +424,13 @@ def _client_preference_signal(
         for item in applicable_feedback
         for ref in item.evidence_refs[:3]
     ]
+    if _candidate_excludes_position_client(candidate, position):
+        return FitSignal(
+            score=0,
+            rationale="Candidate excluded this client company from target searches.",
+            evidence_refs=[*evidence, *feedback_evidence],
+            missing_info=["Confirm whether the candidate exclusion can be revisited."],
+        )
     if candidate.candidate_id in position.ideal_candidate_examples:
         return FitSignal(
             score=5,
@@ -499,6 +506,8 @@ def _risk_signal(
             risk_score += 2
         elif item.sentiment == "mixed" or item.decision_signal == "hold":
             risk_score += 1
+    if _candidate_excludes_position_client(candidate, position):
+        risk_score += 2
 
     risk_score = _clamp_score(risk_score)
     if risk_score == 0:
@@ -586,6 +595,16 @@ def _matches_negative_preference(
             if len(overlap) >= 2:
                 return True
     return False
+
+
+def _candidate_excludes_position_client(
+    candidate: CandidateProfile,
+    position: Position,
+) -> bool:
+    excluded = candidate.preferences.excluded_companies
+    if not excluded or not position.client_company_id:
+        return False
+    return bool(_matched_items(excluded, [position.client_company_id]))
 
 
 def _content_tokens(value: str) -> set[str]:
