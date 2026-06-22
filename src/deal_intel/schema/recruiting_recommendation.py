@@ -169,6 +169,8 @@ def _risk_flags(
     flags = list(candidate_risk_flags[:20])
     if _has_work_authorization_mismatch(fit) and "work_authorization_mismatch" not in flags:
         flags.append("work_authorization_mismatch")
+    if _has_compensation_mismatch(fit) and not _has_existing_compensation_flag(flags):
+        flags.append("compensation_mismatch")
     if _has_availability_timing_risk(fit) and not _has_existing_availability_flag(flags):
         flags.append("availability_timing_risk")
     if _has_role_scope_mismatch(fit) and not _has_existing_scope_flag(flags):
@@ -187,6 +189,24 @@ def _has_work_authorization_mismatch(fit: CandidatePositionFitResult) -> bool:
         "work authorization is not US-aligned" in location_signal.rationale
         or "Confirm work authorization or sponsorship feasibility."
         in location_signal.missing_info
+    )
+
+
+def _has_compensation_mismatch(fit: CandidatePositionFitResult) -> bool:
+    compensation_signal = fit.signals["compensation_fit"]
+    return (
+        compensation_signal.score <= 2
+        and compensation_signal.rationale
+        == "Compared candidate expectation with the role compensation ceiling."
+    )
+
+
+def _has_existing_compensation_flag(flags: list[str]) -> bool:
+    return any(
+        "compensation" in flag.lower()
+        or "salary" in flag.lower()
+        or "budget" in flag.lower()
+        for flag in flags
     )
 
 

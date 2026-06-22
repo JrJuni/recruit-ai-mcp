@@ -240,6 +240,30 @@ def test_recommendation_result_surfaces_work_authorization_mismatch() -> None:
     )
 
 
+def test_recommendation_result_surfaces_compensation_mismatch() -> None:
+    run = build_position_candidate_recommendation_run(
+        position=_position(),
+        candidates=[
+            _candidate(
+                "cand_blake",
+                compensation_expectation=CompensationExpectation(
+                    currency="USD",
+                    minimum=275000,
+                    target=295000,
+                    maximum=320000,
+                    period="annual",
+                ),
+            )
+        ],
+    )
+
+    result = run.results[0]
+
+    assert result.fit_snapshot.dimensions["compensation_fit"].score == 1
+    assert result.risk_flags == ["compensation_mismatch"]
+    assert "Confirm compensation flexibility." in result.next_questions
+
+
 def test_recommendation_result_surfaces_late_availability_risk() -> None:
     run = build_position_candidate_recommendation_run(
         position=_position(),

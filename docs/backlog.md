@@ -112,6 +112,10 @@ Immediate quality order:
    - Additional stress coverage now includes a candidate-side client exclusion
      that lowers client-preference fit, raises match risk, and asks whether
      the exclusion can be revisited before shortlisting.
+   - Recommendation rows now surface inferred `compensation_mismatch` risk
+     flags when a candidate expectation is materially above the role ceiling
+     even if the candidate profile did not already carry a compensation risk
+     note.
    - Continue adding synthetic client/candidate examples that stress skills,
      domain, seniority, compensation, location, availability, client
      preferences, and risk.

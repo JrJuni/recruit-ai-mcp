@@ -156,6 +156,10 @@ Completed:
   exclusion. The smoke evidence now shows lower client-preference fit, higher
   match risk, and an explicit question about whether the exclusion can be
   revisited before shortlisting.
+- Added an inferred `compensation_mismatch` recommendation risk flag. Result
+  rows now expose materially over-budget candidate expectations even when the
+  candidate profile does not already include a compensation risk note; existing
+  compensation risk notes are not duplicated.
 - Tightened candidate-to-position smoke evidence. `rq03_positions_for_avery`
   now records the default open-role filter, the two open roles available for
   first-pass matching, and the paused sample role excluded from the recommendation
