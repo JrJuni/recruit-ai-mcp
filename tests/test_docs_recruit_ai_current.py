@@ -21,7 +21,10 @@ def test_mvp_readiness_is_recruit_ai_current() -> None:
     assert "recommend_candidates_for_position" in docs
     assert "smoke-natural-questions --pack recruiting --as-of 2026-06-22" in docs
     assert "`questions=13`" in docs
-    assert "client shortlist\n  readiness for open sample positions" in docs
+    assert (
+        "must-have skill evidence gaps, and client shortlist readiness for open sample"
+        in normalized
+    )
     assert "Public registry `npx recruit-ai-mcp@0.1.0` readiness remains pending" in docs
     assert "disposable `RECRUIT_AI_HOME`" in docs
     assert "macOS fresh-machine smoke remains external-machine evidence" in docs

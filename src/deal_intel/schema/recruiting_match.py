@@ -156,9 +156,10 @@ def _skill_signal(
             missing_info=["Capture candidate skills with source evidence."],
         )
 
-    matched_must = _matched_items(requirements, candidate.skills)
+    observed_capabilities = [*candidate.skills, *candidate.domains]
+    matched_must = _matched_items(requirements, observed_capabilities)
     unmatched_must = [item for item in requirements if item not in matched_must]
-    matched_nice = _matched_items(nice_to_have, candidate.skills)
+    matched_nice = _matched_items(nice_to_have, observed_capabilities)
 
     if requirements:
         coverage = len(matched_must) / len(requirements)

@@ -525,7 +525,7 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     assert result.exit_code == 0
     assert "Natural Question Smoke (as_of=2026-06-22, questions=13)" in result.output
     assert "OK: True" in result.output
-    assert "candidates=8, open_positions=2, submissions=4" in result.output
+    assert "candidates=9, open_positions=2, submissions=4" in result.output
     assert "open_positions=2, shortlists=2, risk_reviews=2" in result.output
     assert (output_dir / "summary.md").exists()
     summary = json.loads((output_dir / "summary.json").read_text(encoding="utf-8"))
@@ -571,13 +571,14 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
         )
     )
     assert guardrails["summary"] == {
-        "guardrail_candidate_count": 4,
+        "guardrail_candidate_count": 5,
         "ranking_guardrails_passed": True,
     }
     assert {
         row["guardrail_candidate_id"] for row in guardrails["guardrails"]
     } == {
         "cand_nora_weiss",
+        "cand_jordan_lee",
         "cand_iris_kim",
         "cand_eli_brooks",
         "cand_sam_taylor",
@@ -594,6 +595,14 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     )
     assert "Confirm whether timing fits the search plan." in (
         nora_guardrail["guardrail_next_questions"]
+    )
+    jordan_guardrail = guardrail_by_candidate["cand_jordan_lee"]
+    assert jordan_guardrail["guardrail_dimension_scores"]["skill_fit"] == 2
+    assert "Confirm required skill: Python" in (
+        jordan_guardrail["guardrail_next_questions"]
+    )
+    assert "Confirm required skill: data platforms" in (
+        jordan_guardrail["guardrail_next_questions"]
     )
     eli_guardrail = guardrail_by_candidate["cand_eli_brooks"]
     assert eli_guardrail["guardrail_dimension_scores"]["client_preference_fit"] == 1

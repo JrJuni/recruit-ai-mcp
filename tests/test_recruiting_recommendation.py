@@ -332,6 +332,34 @@ def test_recruiting_sample_stress_candidate_does_not_outrank_aligned_match() -> 
     ]
 
 
+def test_recruiting_sample_missing_must_have_does_not_outrank_match() -> None:
+    records = build_sample_recruiting_records(loaded_at="2026-06-22T00:00:00+00:00")
+    positions = {row["position_id"]: row for row in records[POSITIONS]}
+
+    run = build_position_candidate_recommendation_run(
+        position=positions["pos_northstar_backend_lead"],
+        candidates=records[CANDIDATES],
+        client_feedback=records[FEEDBACK],
+        limit=9,
+    )
+
+    results = {result.target_id: result for result in run.results}
+    jordan = results["cand_jordan_lee"]
+
+    assert run.results[0].target_id == "cand_avery_chen"
+    assert jordan.rank > results["cand_avery_chen"].rank
+    assert jordan.fit_snapshot.overall_score < (
+        results["cand_avery_chen"].fit_snapshot.overall_score
+    )
+    assert jordan.fit_snapshot.dimensions["skill_fit"].score == 2
+    assert "Confirm required skill: Python" in jordan.next_questions
+    assert "Confirm required skill: data platforms" in jordan.next_questions
+    assert jordan.risk_flags == [
+        "missing production Python evidence",
+        "review_match_risk",
+    ]
+
+
 def test_recruiting_sample_manager_only_keyword_match_does_not_outrank_ic_fit() -> None:
     records = build_sample_recruiting_records(loaded_at="2026-06-22T00:00:00+00:00")
     positions = {row["position_id"]: row for row in records[POSITIONS]}

@@ -285,7 +285,8 @@ Builder policy:
   `skill_fit`, `domain_fit`, `seniority_fit`, `compensation_fit`,
   `location_fit`, `availability_fit`, `client_preference_fit`, and `risk`.
 - Skill fit is based on must-have and nice-to-have coverage against captured
-  candidate skills.
+  candidate skills plus candidate domain terms, because recruiter intake often
+  mixes hard skills and domain requirements in `must_have`.
 - Domain fit compares candidate domain history with role context and learned
   preference text.
 - Seniority, compensation, location, and availability use deterministic

@@ -9,10 +9,10 @@ from typing import Any
 EXPECTED_CONTRACT = {
     "ok": True,
     "question_count": 13,
-    "candidate_count": 8,
-    "written_record_count": 27,
-    "reloaded_record_count": 27,
-    "guardrail_candidate_count": 4,
+    "candidate_count": 9,
+    "written_record_count": 29,
+    "reloaded_record_count": 29,
+    "guardrail_candidate_count": 5,
     "open_position_count": 2,
     "positions_with_shortlist": 2,
 }

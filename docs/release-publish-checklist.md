@@ -166,9 +166,9 @@ Installed-package smoke passes when:
 - `smoke-profile --profile sample --json` exits successfully;
 - `smoke-natural-questions --pack recruiting --as-of 2026-06-22 --json` exits
   successfully with the current 13-question recruiting pack;
-- the recruiting smoke contract verifies `candidate_count=8`,
-  `written_record_count=27`, `reloaded_record_count=27`, and
-  `guardrail_candidate_count=4`;
+- the recruiting smoke contract verifies `candidate_count=9`,
+  `written_record_count=29`, `reloaded_record_count=29`, and
+  `guardrail_candidate_count=5`;
 - `deal_intel.mcp_server.app.list_tools()` returns the sample MCP surface;
 - the core tools `config_doctor`, `get_tool_catalog`, `create_candidate`,
   `add_recruiting_interaction`, `recommend_candidates_for_position`, and

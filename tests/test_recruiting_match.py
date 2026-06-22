@@ -118,6 +118,23 @@ def test_candidate_position_fit_scores_partial_must_have_coverage() -> None:
     assert "skill_fit" in low_dimensions
 
 
+def test_candidate_position_fit_matches_domain_terms_in_must_have() -> None:
+    result = build_candidate_position_fit(
+        candidate=_candidate(
+            skills=["Python"],
+            domains=["healthcare", "data platforms"],
+        ),
+        position=_position(
+            must_have=["Python", "data platforms", "healthcare"],
+            nice_to_have=[],
+            ideal_candidate_examples=[],
+        ),
+    )
+
+    assert result.signals["skill_fit"].score == 5
+    assert result.signals["skill_fit"].missing_info == []
+
+
 def test_candidate_position_fit_applies_feedback_rubric_delta_to_any_dimension() -> None:
     result = build_candidate_position_fit(
         candidate=_candidate(skills=["Python"]),

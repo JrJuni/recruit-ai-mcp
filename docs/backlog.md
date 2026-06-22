@@ -102,6 +102,9 @@ Immediate quality order:
    - Additional stress coverage now includes an OrbitPay payments candidate
      whose strong stack match is outweighed by a learned negative client
      preference for candidates who need heavy role shaping before interviews.
+   - Additional stress coverage now includes a Northstar healthcare workflow
+     candidate whose adjacent domain fit should not outrank the aligned staff
+     candidate while required Python and data-platform evidence is missing.
    - Continue adding synthetic client/candidate examples that stress skills,
      domain, seniority, compensation, location, availability, client
      preferences, and risk.

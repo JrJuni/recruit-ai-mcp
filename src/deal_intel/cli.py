@@ -3779,6 +3779,11 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
                 "cand_nora_weiss",
             ),
             (
+                "pos_northstar_backend_lead",
+                "cand_avery_chen",
+                "cand_jordan_lee",
+            ),
+            (
                 "pos_orbitpay_payments_lead",
                 "cand_mateo_rivera",
                 "cand_iris_kim",
@@ -3800,7 +3805,7 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
                 position=positions_by_id[position_id],
                 candidates=candidates,
                 client_feedback=feedback,
-                limit=6,
+                limit=len(candidates),
                 created_at=loaded_at,
             )
             results = {result.target_id: result for result in run.results}

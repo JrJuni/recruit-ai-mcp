@@ -145,6 +145,13 @@ Completed:
   a saved recommendation run with fit snapshots, risk flags, next questions,
   and feedback-adjustment ledgers. Current profile-filtered counts are now
   `sample=35`, `standard=49`, and `developer=53`.
+- Added a Northstar must-have evidence recommendation guardrail. The sample now
+  includes a healthcare workflow candidate with adjacent domain strength but
+  missing required Python and data-platform evidence, and the recruiting smoke
+  contract now tracks 9 candidates, 29 local persistence records, and 5
+  recommendation guardrail candidates. Skill-fit scoring now checks
+  `must_have` and `nice_to_have` terms against both candidate skills and
+  domains so mixed recruiter intake lists do not create false domain gaps.
 - Added a realistic Northstar recommendation stress fixture for a healthcare
   platform manager-only candidate. The sample recommendation tests and natural
   question guardrails now ensure this keyword-strong but constraint-heavy

@@ -236,8 +236,9 @@ Pass criteria:
   submissions, learned client preferences, candidate risk flags, raw-content
   safety, intake coverage, recruiting report preview readiness, and local
   personal recruiting persistence.
-- The pack also covers realistic recommendation guardrails and client shortlist
-  readiness for open sample positions.
+- The pack also covers realistic recommendation guardrails, including
+  must-have skill evidence gaps, and client shortlist readiness for open sample
+  positions.
 
 ### 4. Inherited Deal Review QA
 

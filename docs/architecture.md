@@ -122,6 +122,9 @@ Work 3B adds the candidate-position fit builder in
 `src/deal_intel/schema/recruiting_match.py`. It validates candidate, position,
 and optional feedback inputs, derives all eight recruiting fit signals with
 deterministic heuristics, and delegates aggregate scoring to the Work 3A engine.
+Skill fit checks role `must_have` / `nice_to_have` terms against candidate
+skills and candidate domains so mixed recruiter intake lists do not create
+false gaps for domain requirements.
 It is the reusable pre-ranking layer for future recommendation tools; it does
 not call storage, embeddings, LLMs, or MCP registration.
 

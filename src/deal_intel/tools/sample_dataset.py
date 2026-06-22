@@ -18,7 +18,7 @@ from deal_intel.storage.recruiting_collections import (
 DATASET_WEEKLY_PIPELINE = "weekly_pipeline_demo"
 DATASET_RECRUITING_PIPELINE = "recruiting_pipeline_demo"
 DEAL_DATASET_VERSION = "2026-06-14.v2"
-RECRUITING_DATASET_VERSION = "2026-06-22.v4"
+RECRUITING_DATASET_VERSION = "2026-06-22.v5"
 SAMPLE_BATCH_ID = f"{DATASET_WEEKLY_PIPELINE}:{DEAL_DATASET_VERSION}"
 RECRUITING_SAMPLE_BATCH_ID = (
     f"{DATASET_RECRUITING_PIPELINE}:{RECRUITING_DATASET_VERSION}"
@@ -411,6 +411,50 @@ def _base_recruiting_records(*, loaded_at: str) -> dict[str, list[dict]]:
             "updated_at": loaded_at,
         },
         {
+            "candidate_id": "cand_jordan_lee",
+            "name": "Jordan Lee",
+            "headline": "Healthcare workflow platform engineer from the Node ecosystem",
+            "current_company": "ClinicFlow",
+            "current_title": "Staff Software Engineer",
+            "skills": ["TypeScript", "Node.js", "Kafka", "HIPAA", "Healthcare"],
+            "domains": ["healthcare", "workflow automation"],
+            "seniority": "staff",
+            "compensation_expectation": {
+                "currency": "USD",
+                "minimum": 180000,
+                "target": 198000,
+                "maximum": 215000,
+                "period": "annual",
+                "note": "Aligned if the role can use healthcare workflow depth.",
+            },
+            "locations": ["Boston", "Remote US"],
+            "work_authorization": "US authorized",
+            "availability": "30 days",
+            "preferences": {
+                "desired_titles": ["Staff Software Engineer", "Platform Engineer"],
+                "preferred_domains": ["healthcare", "workflow automation"],
+                "preferred_locations": ["Boston", "Remote US"],
+                "remote_preference": "hybrid or remote",
+                "excluded_companies": [],
+                "notes": "Needs confirmation on production Python and data platform depth.",
+            },
+            "risk_flags": ["missing production Python evidence"],
+            "evidence": [
+                {
+                    "evidence_id": "ev_jordan_profile",
+                    "source_type": "profile",
+                    "source_id": "cand_jordan_lee",
+                    "summary": (
+                        "Strong healthcare workflow background, but captured "
+                        "backend evidence is TypeScript/Node rather than Python."
+                    ),
+                    "confidence": "candidate_stated",
+                }
+            ],
+            "created_at": loaded_at,
+            "updated_at": loaded_at,
+        },
+        {
             "candidate_id": "cand_eli_brooks",
             "name": "Eli Brooks",
             "headline": "Healthcare data platform manager seeking org ownership",
@@ -766,6 +810,22 @@ def _base_recruiting_records(*, loaded_at: str) -> dict[str, list[dict]]:
             "summary": (
                 "Nora has deep healthcare platform experience but needs premium "
                 "compensation, UK remote approval, and a later start date."
+            ),
+            "raw_content": "",
+            "evidence_refs": [],
+        },
+        {
+            "interaction_id": "int_jordan_screen",
+            "subject_type": "candidate",
+            "subject_id": "cand_jordan_lee",
+            "interaction_type": "candidate_screen",
+            "direction": "inbound",
+            "source_confidence": "candidate_stated",
+            "participants": ["Jordan Lee", "Recruiter"],
+            "occurred_at": "2026-06-19T18:00:00+00:00",
+            "summary": (
+                "Jordan is strong in healthcare workflow systems but still needs "
+                "production Python and data platform evidence confirmed."
             ),
             "raw_content": "",
             "evidence_refs": [],
