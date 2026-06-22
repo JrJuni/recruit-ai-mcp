@@ -38,7 +38,7 @@ def test_mcpb_manifest_tools_match_registered_surface_contracts() -> None:
     contract_tool_names = [contract.name for contract in list_tool_surface_contracts()]
 
     assert manifest_tool_names == contract_tool_names
-    assert len(manifest_tool_names) == 42
+    assert len(manifest_tool_names) == 48
 
 
 def test_mcpb_manifest_describes_recruit_ai_bootstrap_surface() -> None:
@@ -51,13 +51,18 @@ def test_mcpb_manifest_describes_recruit_ai_bootstrap_surface() -> None:
     assert manifest["name"] == "recruit-ai-mcp"
     assert manifest["display_name"] == "Recruit AI MCP"
     assert "bootstrap fork" in manifest["description"].lower()
-    assert "inherited deal-intel tools" in manifest["description"].lower()
+    assert "first recruiting workflows" in manifest["description"].lower()
+    assert "inherited deal-intel tools remain" in manifest["description"].lower()
     assert "candidate, client-company, position, feedback" in manifest_text
+    assert "recommend_candidates_for_position" in tool_descriptions
+    assert "deterministic fit scoring" in tool_descriptions[
+        "recommend_candidates_for_position"
+    ]
     assert "meddpicc-structured" not in manifest_text
     assert "source-aware meddpicc extraction" not in manifest_text
     assert "meddpicc scores" not in manifest_text
-    # Work 0 only isolates package/config/runtime surfaces. The inherited MCP
-    # tools still expose deal terminology until the later tool-surface cutover.
+    # The staged cutover still retains inherited deal tools alongside the first
+    # recruiting workflows.
     assert "active-framework qualification extraction" in tool_descriptions[
         "add_interaction"
     ]

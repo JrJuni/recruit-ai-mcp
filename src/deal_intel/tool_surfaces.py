@@ -14,6 +14,7 @@ ToolCategory = Literal[
     "local_artifact",
     "user_memory",
     "product_context",
+    "recruiting",
     "llm_agent",
     "semantic_search",
     "demo_seed",
@@ -23,6 +24,7 @@ TOOL_INTENT_GROUP_ORDER: tuple[str, ...] = (
     "setup_and_diagnostics",
     "intake_and_deal_updates",
     "deal_review_and_pipeline",
+    "recruiting_workflow",
     "product_context",
     "customer_theme_analysis",
     "reports_and_data_exports",
@@ -72,6 +74,21 @@ TOOL_INTENT_GROUPS: dict[str, dict] = {
             "get_deal_gaps",
             "get_deal_review",
             "get_insights",
+        ),
+    },
+    "recruiting_workflow": {
+        "label": "Recruiting workflow",
+        "purpose": (
+            "Create candidates, client companies, positions, feedback, and "
+            "run deterministic recruiting recommendations."
+        ),
+        "tools": (
+            "create_candidate",
+            "create_client_company",
+            "create_position",
+            "add_client_feedback",
+            "recommend_candidates_for_position",
+            "recommend_positions_for_candidate",
         ),
     },
     "product_context": {
@@ -274,6 +291,12 @@ TOOL_INTENT_ALIASES: dict[str, tuple[str, str]] = {
     "get_customer_theme_evidence": ("theme", "theme.evidence"),
     "search_deals": ("search", "search.deals"),
     "analyze_deal": ("strategy", "strategy.analyze"),
+    "create_candidate": ("recruit", "recruit.candidate.create"),
+    "create_client_company": ("recruit", "recruit.client.create"),
+    "create_position": ("recruit", "recruit.position.create"),
+    "add_client_feedback": ("recruit", "recruit.feedback.add"),
+    "recommend_candidates_for_position": ("recruit", "recruit.recommend.candidates"),
+    "recommend_positions_for_candidate": ("recruit", "recruit.recommend.positions"),
 }
 
 
@@ -487,6 +510,66 @@ MCP_TOOL_SURFACE_CONTRACTS: tuple[MCPToolSurfaceContract, ...] = (
         db_writes=True,
         llm_calls=False,
         notes="Safe in sample after local personal storage is active.",
+    ),
+    MCPToolSurfaceContract(
+        name="create_candidate",
+        category="recruiting",
+        surfaces=_STANDARD,
+        user_facing=True,
+        db_writes=True,
+        llm_calls=False,
+        notes="Creates or updates a candidate profile for recruiting recommendations.",
+    ),
+    MCPToolSurfaceContract(
+        name="create_client_company",
+        category="recruiting",
+        surfaces=_STANDARD,
+        user_facing=True,
+        db_writes=True,
+        llm_calls=False,
+        notes="Creates or updates a hiring client company for recruiting positions.",
+    ),
+    MCPToolSurfaceContract(
+        name="create_position",
+        category="recruiting",
+        surfaces=_STANDARD,
+        user_facing=True,
+        db_writes=True,
+        llm_calls=False,
+        notes="Creates or updates a recruiting position/search mandate.",
+    ),
+    MCPToolSurfaceContract(
+        name="add_client_feedback",
+        category="recruiting",
+        surfaces=_STANDARD,
+        user_facing=True,
+        db_writes=True,
+        llm_calls=False,
+        notes="Adds structured client feedback and optional rubric deltas.",
+    ),
+    MCPToolSurfaceContract(
+        name="recommend_candidates_for_position",
+        category="recruiting",
+        surfaces=_STANDARD,
+        user_facing=True,
+        db_writes=True,
+        llm_calls=False,
+        notes=(
+            "Ranks candidates for a position using M0-safe lexical retrieval "
+            "and deterministic fit scoring; persistence is optional."
+        ),
+    ),
+    MCPToolSurfaceContract(
+        name="recommend_positions_for_candidate",
+        category="recruiting",
+        surfaces=_STANDARD,
+        user_facing=True,
+        db_writes=True,
+        llm_calls=False,
+        notes=(
+            "Ranks positions for a candidate using M0-safe lexical retrieval "
+            "and deterministic fit scoring; persistence is optional."
+        ),
     ),
     MCPToolSurfaceContract(
         name="add_meeting",

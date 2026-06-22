@@ -1,10 +1,12 @@
 ﻿from __future__ import annotations
 
+import json
+
 from fastmcp import FastMCP
 from fastmcp.exceptions import NotFoundError
 
 import deal_intel._env  # noqa: F401 - triggers dotenv load at import time
-from deal_intel.errors import Stage, envelope_from_exception
+from deal_intel.errors import ErrorCode, MCPError, Stage, envelope_from_exception
 
 app = FastMCP("deal-intel")
 _MAX_EMBEDDING_WARMUP_SECONDS = 30
@@ -710,6 +712,268 @@ def create_deal(
             deal_size_currency=deal_size_currency or None,
             deal_size_note=deal_size_note or None,
             expected_close_date=expected_close_date or None,
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.STORAGE)
+
+
+@app.tool()
+def create_candidate(
+    name: str,
+    candidate_id: str = "",
+    headline: str = "",
+    current_company: str = "",
+    current_title: str = "",
+    skills: str = "",
+    domains: str = "",
+    seniority: str = "",
+    locations: str = "",
+    work_authorization: str = "",
+    availability: str = "",
+) -> dict:
+    """Create or update a recruiting candidate profile.
+
+    Use this for candidate intake before recommendation. Intent alias:
+    recruit.candidate.create.
+
+    skills, domains, and locations are comma-separated lists. This is a
+    deterministic recruiting write path: no LLM calls, embeddings, or Atlas
+    Vector Search.
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.tools import recruiting_records as _t
+
+        return _t.create_candidate(
+            _context.mongo(),
+            name=name,
+            candidate_id=candidate_id or None,
+            headline=headline,
+            current_company=current_company,
+            current_title=current_title,
+            skills=_split_csv(skills),
+            domains=_split_csv(domains),
+            seniority=seniority,
+            locations=_split_csv(locations),
+            work_authorization=work_authorization,
+            availability=availability,
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.STORAGE)
+
+
+@app.tool()
+def create_client_company(
+    name: str,
+    client_company_id: str = "",
+    industry: str = "",
+    stage: str = "",
+    locations: str = "",
+    hiring_preferences: str = "",
+    risk_notes: str = "",
+) -> dict:
+    """Create or update a recruiting client company.
+
+    Use this to capture a hiring customer before creating positions. Intent
+    alias: recruit.client.create.
+
+    locations, hiring_preferences, and risk_notes are comma-separated lists.
+    This path is deterministic and does not call LLMs or embeddings.
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.tools import recruiting_records as _t
+
+        return _t.create_client_company(
+            _context.mongo(),
+            name=name,
+            client_company_id=client_company_id or None,
+            industry=industry,
+            stage=stage,
+            locations=_split_csv(locations),
+            hiring_preferences=_split_csv(hiring_preferences),
+            risk_notes=_split_csv(risk_notes),
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.STORAGE)
+
+
+@app.tool()
+def create_position(
+    client_company_id: str,
+    title: str,
+    position_id: str = "",
+    status: str = "draft",
+    seniority: str = "",
+    must_have: str = "",
+    nice_to_have: str = "",
+    target_compensation_minimum: int | None = None,
+    target_compensation_target: int | None = None,
+    target_compensation_maximum: int | None = None,
+    target_compensation_currency: str = "USD",
+    target_compensation_period: str = "annual",
+    locations: str = "",
+    remote_policy: str = "",
+    ideal_candidate_examples: str = "",
+) -> dict:
+    """Create or update a recruiting position/search mandate.
+
+    Use this to define role requirements, constraints, and ideal examples
+    before running recommendations. Intent alias: recruit.position.create.
+
+    must_have, nice_to_have, locations, and ideal_candidate_examples are
+    comma-separated lists. Compensation fields are optional. This path does not
+    call LLMs, embeddings, or Atlas Vector Search.
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.tools import recruiting_records as _t
+
+        compensation = _compensation_payload(
+            minimum=target_compensation_minimum,
+            target=target_compensation_target,
+            maximum=target_compensation_maximum,
+            currency=target_compensation_currency,
+            period=target_compensation_period,
+        )
+        return _t.create_position(
+            _context.mongo(),
+            client_company_id=client_company_id,
+            title=title,
+            position_id=position_id or None,
+            status=status,
+            seniority=seniority,
+            must_have=_split_csv(must_have),
+            nice_to_have=_split_csv(nice_to_have),
+            target_compensation=compensation,
+            locations=_split_csv(locations),
+            remote_policy=remote_policy,
+            ideal_candidate_examples=_split_csv(ideal_candidate_examples),
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.STORAGE)
+
+
+@app.tool()
+def add_client_feedback(
+    subject_type: str,
+    subject_id: str,
+    feedback_id: str = "",
+    position_id: str = "",
+    candidate_id: str = "",
+    sentiment: str = "neutral",
+    decision_signal: str = "needs_more_info",
+    rubric_deltas_json: str = "",
+    preference_learning: str = "",
+    summary: str = "",
+    link_submission: bool = True,
+) -> dict:
+    """Add structured client or hiring-manager feedback for recruiting.
+
+    Use this after submission reviews, interviews, or client preference updates.
+    Intent alias: recruit.feedback.add.
+
+    rubric_deltas_json is an optional JSON object keyed by fit dimensions, such
+    as {"skill_fit": 1, "risk": 2}. preference_learning is a comma-separated
+    list. This path is deterministic and does not call LLMs or embeddings.
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.tools import recruiting_records as _t
+
+        return _t.add_client_feedback(
+            _context.mongo(),
+            subject_type=subject_type,
+            subject_id=subject_id,
+            feedback_id=feedback_id or None,
+            position_id=position_id or None,
+            candidate_id=candidate_id or None,
+            sentiment=sentiment,
+            decision_signal=decision_signal,
+            rubric_deltas=_json_object(rubric_deltas_json, field="rubric_deltas_json"),
+            preference_learning=_split_csv(preference_learning),
+            summary=summary,
+            link_submission=link_submission,
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.STORAGE)
+
+
+@app.tool()
+def recommend_candidates_for_position(
+    position_id: str,
+    candidate_query_json: str = "",
+    candidate_limit: int = 50,
+    retrieval_limit: int | None = None,
+    result_limit: int = 10,
+    feedback_limit: int = 200,
+    recommendation_run_id: str = "",
+    save_run: bool = False,
+) -> dict:
+    """Recommend candidates for one recruiting position.
+
+    Use this after creating a position and candidate profiles. Intent alias:
+    recruit.recommend.candidates.
+
+    This uses deterministic lexical retrieval plus fit scoring on Atlas M0; it
+    does not call LLMs, embeddings, or Atlas Vector Search. save_run=false
+    previews the recommendation run without writing it.
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.tools import recruiting_recommendations as _t
+
+        return _t.recommend_candidates_for_position(
+            _context.mongo(),
+            position_id=position_id,
+            candidate_query=_json_object(candidate_query_json, field="candidate_query_json"),
+            candidate_limit=candidate_limit,
+            retrieval_limit=retrieval_limit,
+            result_limit=result_limit,
+            feedback_limit=feedback_limit,
+            recommendation_run_id=recommendation_run_id or None,
+            save_run=save_run,
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.STORAGE)
+
+
+@app.tool()
+def recommend_positions_for_candidate(
+    candidate_id: str,
+    client_company_id: str = "",
+    position_status: str = "open",
+    position_limit: int = 50,
+    retrieval_limit: int | None = None,
+    result_limit: int = 10,
+    feedback_limit: int = 200,
+    recommendation_run_id: str = "",
+    save_run: bool = False,
+) -> dict:
+    """Recommend open positions for one recruiting candidate.
+
+    Use this after creating a candidate profile and positions. Intent alias:
+    recruit.recommend.positions.
+
+    This uses deterministic lexical retrieval plus fit scoring on Atlas M0; it
+    does not call LLMs, embeddings, or Atlas Vector Search. save_run=false
+    previews the recommendation run without writing it.
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.tools import recruiting_recommendations as _t
+
+        return _t.recommend_positions_for_candidate(
+            _context.mongo(),
+            candidate_id=candidate_id,
+            client_company_id=client_company_id or None,
+            position_status=position_status or None,
+            position_limit=position_limit,
+            retrieval_limit=retrieval_limit,
+            result_limit=result_limit,
+            feedback_limit=feedback_limit,
+            recommendation_run_id=recommendation_run_id or None,
+            save_run=save_run,
         )
     except Exception as exc:
         return envelope_from_exception(exc, stage=Stage.STORAGE)
@@ -1780,6 +2044,53 @@ def analyze_deal(
         )
     except Exception as exc:
         return envelope_from_exception(exc, stage=Stage.ANALYSIS)
+
+
+def _split_csv(value: str) -> list[str]:
+    return [item.strip() for item in str(value or "").split(",") if item.strip()]
+
+
+def _json_object(value: str, *, field: str) -> dict | None:
+    if not str(value or "").strip():
+        return None
+    try:
+        parsed = json.loads(value)
+    except json.JSONDecodeError as exc:
+        raise MCPError(
+            error_code=ErrorCode.INVALID_INPUT,
+            stage=Stage.PREFLIGHT,
+            message=f"invalid {field}",
+            hint=f"{field} must be a JSON object.",
+            retryable=False,
+        ) from exc
+    if not isinstance(parsed, dict):
+        raise MCPError(
+            error_code=ErrorCode.INVALID_INPUT,
+            stage=Stage.PREFLIGHT,
+            message=f"invalid {field}",
+            hint=f"{field} must be a JSON object.",
+            retryable=False,
+        )
+    return parsed
+
+
+def _compensation_payload(
+    *,
+    minimum: int | None,
+    target: int | None,
+    maximum: int | None,
+    currency: str,
+    period: str,
+) -> dict | None:
+    if minimum is None and target is None and maximum is None:
+        return None
+    return {
+        "currency": currency,
+        "minimum": minimum,
+        "target": target,
+        "maximum": maximum,
+        "period": period,
+    }
 
 
 def main() -> None:

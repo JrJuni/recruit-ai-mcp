@@ -78,6 +78,12 @@ Completed:
   pools can now be ordered or limited by deterministic token overlap before
   final fit scoring. This keeps retrieval usable on Atlas M0 without Atlas
   Vector Search; final ranking still comes from the Work 3D recommendation run.
+- Added Work 5A first recruiting MCP tools. `create_candidate`,
+  `create_client_company`, `create_position`, `add_client_feedback`,
+  `recommend_candidates_for_position`, and `recommend_positions_for_candidate`
+  are now registered in the MCP server, catalog, tool surfaces, and MCPB
+  manifest. They are visible on `standard`/`developer`, hidden from `sample`,
+  and remain deterministic: no LLMs, embeddings, or Atlas Vector Search.
 
 Validation:
 
@@ -108,6 +114,9 @@ Validation:
   -> 98 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-4b-final tests\test_recruiting_retrieval.py tests\test_recruiting_recommendations_service.py tests\test_recruiting_recommendation.py tests\test_recruiting_match.py tests\test_recruiting_fit.py tests\test_recruiting_schema.py tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_mongo_contracts.py tests\test_mcpb_manifest.py tests\test_storage_backend_selection.py`
   -> 102 passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-5a-final tests\test_recruiting_mcp_tools.py tests\test_recruiting_recommendations_service.py tests\test_recruiting_retrieval.py tests\test_recruiting_recommendation.py tests\test_recruiting_match.py tests\test_recruiting_fit.py tests\test_recruiting_schema.py tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_mongo_contracts.py tests\test_tool_surfaces.py tests\test_mcpb_manifest.py tests\test_storage_backend_selection.py`
+  -> 148 passed, 1 third-party warning.
+- `mcpb validate mcpb\manifest.json` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2c tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py`

@@ -3,10 +3,11 @@
 This is the canonical first-run guide for an AI agent helping a new user set up
 `recruit-ai-mcp`. Use it before reading deeper install docs.
 
-Bootstrap note: this repo is currently a recruiting fork in Work 0. Public
-metadata, config paths, env prefix, and MongoDB defaults are isolated for
-`recruit-ai-mcp`, but Python imports and MCP tools still use the inherited
-`deal_intel` / deal-intelligence surface until the recruiting model cutover.
+Bootstrap note: this repo is a recruiting fork. Public metadata, config paths,
+env prefix, and MongoDB defaults are isolated for `recruit-ai-mcp`, while the
+Python package still uses `deal_intel` internals during the staged cutover. The
+first recruiting MCP tools now coexist with inherited deal-intelligence
+compatibility tools.
 
 For a step-by-step walkthrough for non-developer full-mode setup, read
 [`AI_FULL_INSTALL_GUIDE.md`](AI_FULL_INSTALL_GUIDE.md). For Korean users, use

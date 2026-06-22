@@ -386,6 +386,34 @@ Retrieval policy:
   `RecommendationRun` from Work 3D.
 - Atlas Vector Search remains deferred to paid M10+ infrastructure.
 
+## Work 5A First Recruiting MCP Tools
+
+Work 5A exposes the first recruiting workflows through the public MCP tool
+surface. It keeps the inherited deal tools during the staged cutover and does
+not register the full future recruiting lifecycle surface yet.
+
+MCP tools:
+
+- `create_candidate`
+- `create_client_company`
+- `create_position`
+- `add_client_feedback`
+- `recommend_candidates_for_position`
+- `recommend_positions_for_candidate`
+
+Surface policy:
+
+- Tools are visible on `standard` and `developer`.
+- Tools are hidden from `sample` because local sample storage does not yet
+  implement recruiting write/read wrappers.
+- Create and feedback tools write recruiting collection records.
+- Recommendation tools preview by default and persist a recommendation run only
+  when `save_run=true`.
+- All six tools are deterministic and do not call LLMs, embeddings, or Atlas
+  Vector Search.
+- List-like MCP inputs use comma-separated strings; rubric deltas and candidate
+  query filters use JSON object strings.
+
 ## Collections For Work 2
 
 Recommended Mongo collections:

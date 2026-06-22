@@ -82,8 +82,10 @@ permissive schema validators, and internal `MongoDBClient` wrappers for:
 - `recommendation_runs`
 
 Default recruiting read paths exclude Mongo `_id`, and default `interactions`
-reads also exclude `raw_content`. Public MCP tool changes and recommendation
-scoring remain deferred.
+reads also exclude `raw_content`. The first public recruiting MCP tools are
+now exposed for candidate, client-company, position, feedback, and
+recommendation workflows while the broader inherited deal surface remains
+during the staged cutover.
 
 The Work 2B storage normalization source is
 `src/deal_intel/storage/recruiting_records.py`. It converts Pydantic recruiting
@@ -148,6 +150,15 @@ Work 4B adds M0-safe lexical retrieval helpers in
 candidate/position pools by deterministic token overlap before Work 4A services
 run fit scoring. This is a prefilter only; final ranking still comes from the
 fit-scored recommendation run. Atlas Vector Search remains out of scope for M0.
+
+Work 5A exposes the first recruiting MCP tools through
+`src/deal_intel/mcp_server.py` and `src/deal_intel/tool_surfaces.py`:
+`create_candidate`, `create_client_company`, `create_position`,
+`add_client_feedback`, `recommend_candidates_for_position`, and
+`recommend_positions_for_candidate`. They are visible on the `standard` and
+`developer` surfaces, hidden from `sample`, and use deterministic storage,
+lexical retrieval, and fit scoring only. They do not call LLMs, embeddings, or
+Atlas Vector Search.
 
 ## Product Profiles
 

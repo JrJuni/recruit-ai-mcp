@@ -8,7 +8,8 @@ this repository. Keep it current and compact. Put long history in `docs/`.
 `recruit-ai-mcp` is a bootstrap fork of `deal-intel-mcp` for recruiter and
 search-firm intelligence. Work 0 isolates public metadata, CLI alias, config
 paths, env prefix, local paths, and MongoDB defaults while the Python package
-and inherited MCP tools still use `deal_intel` deal-intelligence internals.
+still uses `deal_intel` internals. The first recruiting MCP tools now coexist
+with inherited deal-intelligence compatibility tools during the staged cutover.
 
 Default MongoDB databases are `recruit_ai` and `recruit_ai_demo`. Atlas M0 uses
 the existing Python cosine search path; do not apply Atlas Vector Search unless
@@ -131,7 +132,10 @@ the number in the same change.
 
 - Config/readiness: `config_doctor`, `update_config`
 - Discovery: `get_tool_catalog`
-- Write/lifecycle: `create_deal`, `add_interaction`, `update_stage`,
+- Recruiting write/recommendation: `create_candidate`,
+  `create_client_company`, `create_position`, `add_client_feedback`,
+  `recommend_candidates_for_position`, `recommend_positions_for_candidate`
+- Deal write/lifecycle compatibility: `create_deal`, `add_interaction`, `update_stage`,
   `update_deal`, `archive_deal`, `restore_deal`, `delete_deal`
 - Deprecated compatibility: `add_meeting` (developer surface only; use
   `add_interaction` with `interaction_type: meeting` for new work)
