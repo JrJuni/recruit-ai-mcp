@@ -368,7 +368,8 @@ Current status:
   explicit Python 3.11+ interpreter path and local wheel source.
 - Public registry `npx recruit-ai-mcp@0.1.0` smoke remains pending until
   PyPI/npm publication is complete.
-- macOS fresh-machine smoke remains pending.
+- macOS fresh-machine smoke remains pending as external-machine evidence, not
+  as a blocker for the local Windows pre-publish gate.
 - Keep the detailed checklist in
   [bootstrapper-fresh-smoke.md](bootstrapper-fresh-smoke.md).
 - Keep maintainer registry publication steps in

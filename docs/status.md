@@ -372,9 +372,19 @@ Completed:
   latest public registry check date. npm still returns `E404` for
   `recruit-ai-mcp@0.1.0`, and PyPI still has no matching distribution for
   `recruit-ai-mcp`, so public `npx` readiness remains pending.
+- Added Work 7BG external-machine smoke boundary cleanup.
+  `docs/bootstrapper-fresh-smoke.md` now separates macOS fresh-machine smoke as
+  external-machine evidence outside the local Windows release gate, with
+  concrete `npx recruit-ai-mcp@0.1.0` commands and pass criteria. The
+  distribution plan now labels macOS smoke as non-blocking for the local
+  pre-publish gate.
 
 Validation:
 
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-external-machine-smoke-docs tests\test_docs_recruit_ai_current.py`
+  -> 12 passed.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `npm view recruit-ai-mcp@0.1.0 version` -> npm `E404`.
 - `python -m pip index versions recruit-ai-mcp`
   -> `No matching distribution found for recruit-ai-mcp`.

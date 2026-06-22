@@ -105,9 +105,27 @@ Pass criteria:
 - `mcp-config --json` returns the MCPB/manual host Python interpreter path and
   Claude Desktop snippet.
 
-Still worth checking on a separate machine:
+## External-Machine Evidence
 
-- macOS fresh-machine smoke.
+This evidence is outside the local Windows release gate. Collect it before a
+broader external announcement, or after any bootstrapper/platform change that
+could affect shell path handling:
+
+```bash
+export RECRUIT_AI_HOME="$(pwd)/.tmp/recruit-macos-home"
+npx --yes recruit-ai-mcp@0.1.0 setup --python /path/to/python3.11
+npx --yes recruit-ai-mcp@0.1.0 smoke --profile-only
+npx --yes recruit-ai-mcp@0.1.0 mcp-config --json
+```
+
+Pass criteria:
+
+- commands run on a clean macOS user account or fresh machine;
+- runtime paths stay under the selected `RECRUIT_AI_HOME`;
+- sample profile smoke passes;
+- MCP config output uses the macOS/Linux venv interpreter path shape
+  `~/.recruit-ai/runtime/venv/bin/python`;
+- no secrets are printed.
 
 ## Current Public Registry Evidence
 

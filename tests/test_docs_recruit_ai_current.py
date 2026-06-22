@@ -90,6 +90,10 @@ def test_bootstrapper_fresh_smoke_uses_recruit_ai_public_package() -> None:
     assert "Do not mark the public `npx recruit-ai-mcp@0.1.0` path ready" in docs
     assert "node npm\\bin\\recruit-ai-mcp.js setup" in docs
     assert "node npm\\bin\\recruit-ai-mcp.js setup" in npm_readme
+    assert "## External-Machine Evidence" in docs
+    assert "outside the local Windows release gate" in docs
+    assert "npx --yes recruit-ai-mcp@0.1.0 setup --python /path/to/python3.11" in docs
+    assert "`~/.recruit-ai/runtime/venv/bin/python`" in docs
 
     assert "deal-intel-mcp@0.2.1" not in docs
     assert "deal-intel-mcp[embedding]" not in docs
@@ -111,6 +115,8 @@ def test_distribution_plan_lists_current_bootstrapper_handoff_commands() -> None
     assert "`sample=34`, `standard=48`, `developer=52`" in docs
     assert "Local pre-publish npm/PyPI bootstrapper smoke passed" in docs
     assert "Public registry `npx recruit-ai-mcp@0.1.0` smoke remains pending" in docs
+    assert "macOS fresh-machine smoke remains pending as external-machine evidence" in docs
+    assert "not\n  as a blocker for the local Windows pre-publish gate" in docs
 
     assert "npx recruit-ai-mcp smoke\nnpx recruit-ai-mcp mcp" not in docs
     assert "`sample=24`, `standard=38`, `developer=42`" not in docs
