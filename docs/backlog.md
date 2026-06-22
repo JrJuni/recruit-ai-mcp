@@ -97,6 +97,8 @@ Immediate quality order:
    - Keep scoring deterministic and inspectable before adding optional LLM
      narrative layers.
 5. Add recruiting workflow observability only after the core path is stable.
+   - Foundation is in place for opt-in local workflow trace files with bounded
+     retention and secret-safe argument/result summaries.
    - If added, store secret-safe local metadata only: timestamp, tool name,
      duration, success/error category, redacted argument summary, and compact
      result summary.

@@ -120,3 +120,11 @@ deal_review:
 # estimate because it does not bill through an API key.
 usage:
   pricing: {}
+
+# Optional local-only MCP workflow trace. Disabled by default. When enabled,
+# only compact redacted metadata is written; raw content, contacts, embeddings,
+# API keys, OAuth tokens, and MongoDB URIs must never be persisted here.
+observability:
+  workflow_trace:
+    enabled: false
+    max_events: 500

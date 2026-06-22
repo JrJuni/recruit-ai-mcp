@@ -273,9 +273,20 @@ Completed:
   payments engineer whose stack/domain fit is strong for OrbitPay but whose
   seniority and scope risk should not outrank Mateo Rivera for the payments
   platform lead role.
+- Added Work 7AN workflow trace foundation.
+  `workflow_trace.py` now provides an opt-in local-only workflow trace helper
+  with bounded JSONL retention, `RECRUIT_AI_WORKFLOW_TRACE` /
+  `DEAL_INTEL_WORKFLOW_TRACE` env support, default
+  `storage.local_data_dir/workflow_traces.jsonl` placement, and redacted
+  argument/result summaries that avoid raw content, contacts, embeddings,
+  API keys, OAuth tokens, and MongoDB URIs.
 
 Validation:
 
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-workflow-trace-final tests\test_workflow_trace.py tests\test_config_doctor.py tests\test_profile_smoke_cli.py tests\test_storage_backend_selection.py`
+  -> 33 passed, 1 warning.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-quality-fixture-2 tests\test_sample_data.py tests\test_recruiting_recommendation.py tests\test_recruiting_metrics.py tests\test_cli_deal_review_smoke.py`
   -> 42 passed, 1 warning.
 - `PYTHONPATH=src python -m deal_intel.cli smoke-natural-questions --pack recruiting --as-of 2026-06-22 --output-dir .tmp\recruiting-quality-fixture-2-smoke --json`
