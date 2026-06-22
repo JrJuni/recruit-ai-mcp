@@ -103,6 +103,10 @@ Completed:
   `docs/extending.md` now describes recruiting schemas, fit scoring,
   recommendation services, reports, storage, and inherited deal workflows as
   compatibility surfaces.
+- Cleaned the README's top-level product copy so the primary example questions
+  and hosted-SaaS boundary describe recruiting/team data and recruiting
+  recommendations first, while inherited deal-intelligence stays framed as
+  compatibility.
 - Added Work 6A recruiting pipeline metrics calculator. It computes summary
   counts, position status rates, submission funnel rates, feedback signal
   rates, and data-quality counters from safe recruiting records without

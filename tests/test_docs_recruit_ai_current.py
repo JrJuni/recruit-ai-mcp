@@ -193,6 +193,23 @@ def test_first_run_docs_gate_npx_until_publication() -> None:
     assert "Until public registry smoke passes" in ai_start
 
 
+def test_readme_top_copy_is_recruiting_first() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    top_copy = readme.split("## Architecture At A Glance", maxsplit=1)[0]
+
+    assert "normal recruiting questions" in top_copy
+    assert "which candidates\n  best match this role?" in top_copy
+    assert "which roles fit this candidate?" in top_copy
+    assert "generate a\n  recruiting pipeline report" in top_copy
+    assert "not a hosted SaaS that owns your recruiting/team data" in top_copy
+    assert "Preserves inherited deal-intelligence compatibility" in top_copy
+
+    assert "which deal needs attention\n  first?" not in top_copy
+    assert "what are customers worried about?" not in top_copy
+    assert "make this week's pipeline\n  report" not in top_copy
+    assert "not a hosted SaaS that owns your deal data" not in top_copy
+
+
 def test_external_user_test_guide_is_recruit_ai_current() -> None:
     docs = (ROOT / "AI_USER_TEST_GUIDE.md").read_text(encoding="utf-8")
 

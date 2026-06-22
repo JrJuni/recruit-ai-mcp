@@ -65,14 +65,15 @@ Start here:
 - Keeps inherited deal records and customer evidence available in your MongoDB
   Atlas database, or in local sample/personal storage for zero-config trials
   during the staged cutover.
-- Converts messy customer evidence into structured deal fields, health signals,
-  follow-up gaps, customer themes, and weekly review artifacts.
+- Preserves inherited deal-intelligence compatibility for structured deal
+  fields, health signals, follow-up gaps, customer themes, and weekly review
+  artifacts.
 - Lets you add seller-side product/solution context, such as ICP notes,
   positioning, pricing notes, security claims, integrations, and competitor
   notes, so interaction extraction can understand your product better.
-- Lets an AI host answer normal questions such as "which deal needs attention
-  first?", "what are customers worried about?", or "make this week's pipeline
-  report".
+- Lets an AI host answer normal recruiting questions such as "which candidates
+  best match this role?", "which roles fit this candidate?", or "generate a
+  recruiting pipeline report".
 - Keeps read-only BI, review, reporting, and export paths deterministic and
   LLM-free, so the host app can narrate results without extra server-side model
   calls.
@@ -85,8 +86,8 @@ Start here:
   sales judgment.
 - It is not yet a mature CRM suite with permissions, contact ownership,
   calendar/email sync, workflow automation, or enterprise integrations.
-- It is not a hosted SaaS that owns your deal data. The normal full path uses
-  your MongoDB Atlas project and your selected LLM provider.
+- It is not a hosted SaaS that owns your recruiting/team data. The normal full
+  path uses your MongoDB Atlas project and your selected LLM provider.
 - It does not claim revenue lift numbers. If the data is incomplete, it says so.
 
 ## Architecture At A Glance
