@@ -119,3 +119,17 @@ def test_tool_surface_docs_match_current_counts_and_env_prefix() -> None:
     assert "`sample`: 24 tools" not in docs
     assert "`standard`: 38 tools" not in docs
     assert "`developer`: 42 tools" not in docs
+
+
+def test_storage_backend_docs_describe_local_recruiting_persistence() -> None:
+    docs = (ROOT / "docs" / "storage-backends.md").read_text(encoding="utf-8")
+    normalized = " ".join(docs.split())
+
+    assert "`RECRUIT_AI_STORAGE_BACKEND=local_sample`" in docs
+    assert "`recruiting.json`" in docs
+    assert "`upsert_recruiting_record`" in docs
+    assert "`create_candidate`" in docs
+    assert "`add_recruiting_interaction`" in docs
+    assert "`recommend_candidates_for_position`" in docs
+    assert "strips `raw_content` before persistence" in docs
+    assert "DEAL_INTEL_STORAGE_BACKEND` remains a compatibility fallback" in normalized

@@ -85,9 +85,23 @@ small dataset without MongoDB. Implemented methods:
 - `insert_delete_audit_log` (implemented for local personal
   `delete_audit_logs.json`)
 - `hard_delete_deal` (implemented for local personal `deals.json`)
+- `load_recruiting_records`, `save_recruiting_records`,
+  `upsert_recruiting_record`, `get_recruiting_record`, and
+  `list_recruiting_records` (implemented for local personal `recruiting.json`)
 
 Supported safe mutation tools:
 
+- `create_candidate` (supported by local personal recruiting records)
+- `create_client_company` (supported by local personal recruiting records)
+- `create_position` (supported by local personal recruiting records)
+- `add_recruiting_interaction` (supported by local personal recruiting records;
+  strips `raw_content` before persistence)
+- `create_submission` (supported by local personal recruiting records)
+- `add_client_feedback` (supported by local personal recruiting records)
+- `recommend_candidates_for_position` and `recommend_positions_for_candidate`
+  (read local recruiting records and optionally save recommendation runs)
+- `get_recruiting_metrics` and `export_recruiting_report` (read safe local
+  recruiting records without writes, LLMs, embeddings, or Atlas Vector Search)
 - `create_deal` (supported by local personal `upsert_deal`)
 - `add_interaction` (supported by local personal `upsert_deal`; requires a
   ready LLM provider, stores source metadata, skips embeddings in local sample
