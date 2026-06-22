@@ -169,6 +169,8 @@ def _risk_flags(
     flags = list(candidate_risk_flags[:20])
     if _has_work_authorization_mismatch(fit) and "work_authorization_mismatch" not in flags:
         flags.append("work_authorization_mismatch")
+    if _has_availability_timing_risk(fit) and not _has_existing_availability_flag(flags):
+        flags.append("availability_timing_risk")
     risk_score = fit.signals["risk"].score
     if risk_score >= 4 and "high_match_risk" not in flags:
         flags.append("high_match_risk")
@@ -183,6 +185,20 @@ def _has_work_authorization_mismatch(fit: CandidatePositionFitResult) -> bool:
         "work authorization is not US-aligned" in location_signal.rationale
         or "Confirm work authorization or sponsorship feasibility."
         in location_signal.missing_info
+    )
+
+
+def _has_availability_timing_risk(fit: CandidatePositionFitResult) -> bool:
+    availability_signal = fit.signals["availability_fit"]
+    return availability_signal.score <= 2 and bool(availability_signal.rationale)
+
+
+def _has_existing_availability_flag(flags: list[str]) -> bool:
+    return any(
+        "availability" in flag.lower()
+        or "passive" in flag.lower()
+        or "not actively" in flag.lower()
+        for flag in flags
     )
 
 

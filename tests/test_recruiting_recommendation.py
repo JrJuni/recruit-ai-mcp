@@ -240,6 +240,22 @@ def test_recommendation_result_surfaces_work_authorization_mismatch() -> None:
     )
 
 
+def test_recommendation_result_surfaces_late_availability_risk() -> None:
+    run = build_position_candidate_recommendation_run(
+        position=_position(),
+        candidates=[_candidate("cand_blake", availability="90 days")],
+    )
+
+    result = run.results[0]
+
+    assert result.fit_snapshot.dimensions["availability_fit"].score == 2
+    assert result.risk_flags == [
+        "availability_timing_risk",
+        "review_match_risk",
+    ]
+    assert "Confirm whether timing fits the search plan." in result.next_questions
+
+
 def test_recommendation_run_accepts_mongo_style_dict_inputs() -> None:
     candidate = _candidate("cand_avery").model_dump(mode="json")
     candidate["_id"] = "mongo-candidate-id"

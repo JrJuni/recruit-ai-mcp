@@ -518,6 +518,7 @@ def _risk_signal(
         risk_score += 2
     if _requires_us_authorization(position) and not _has_us_authorization(candidate):
         risk_score += 2
+    risk_score += _availability_risk_increment(candidate)
 
     risk_score = _clamp_score(risk_score)
     if risk_score == 0:
@@ -650,6 +651,22 @@ def _has_us_authorization(candidate: CandidateProfile) -> bool:
     ):
         return True
     return False
+
+
+def _availability_risk_increment(candidate: CandidateProfile) -> int:
+    availability = candidate.availability.lower()
+    if not availability:
+        return 0
+    if any(term in availability for term in ("not actively", "passive", "not looking")):
+        return 2
+    days = _first_number(availability)
+    if days is None:
+        return 0
+    if days > 60:
+        return 2
+    if days > 30:
+        return 1
+    return 0
 
 
 def _content_tokens(value: str) -> set[str]:

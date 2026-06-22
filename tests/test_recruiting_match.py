@@ -182,6 +182,19 @@ def test_candidate_position_fit_inverts_candidate_risk_flags() -> None:
     }
 
 
+def test_candidate_position_fit_treats_late_availability_as_match_risk() -> None:
+    result = build_candidate_position_fit(
+        candidate=_candidate(availability="90 days"),
+        position=_position(),
+    )
+
+    assert result.signals["availability_fit"].score == 2
+    assert result.signals["risk"].score == 2
+    assert "Confirm whether timing fits the search plan." in (
+        result.snapshot.missing_info
+    )
+
+
 def test_candidate_position_fit_penalizes_learned_negative_client_preference() -> None:
     result = build_candidate_position_fit(
         candidate=_candidate(
