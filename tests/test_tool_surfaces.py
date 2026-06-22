@@ -31,7 +31,7 @@ def test_tool_surface_contract_covers_registered_mcp_tools(monkeypatch) -> None:
     contracted = {contract.name for contract in list_tool_surface_contracts()}
 
     assert registered == contracted
-    assert len(contracted) == 52
+    assert len(contracted) == 53
 
 
 def test_tool_intent_aliases_cover_every_registered_tool() -> None:
@@ -56,6 +56,7 @@ def test_tool_intent_aliases_cover_every_registered_tool() -> None:
     assert aliases["recruit.feedback.add"] == "add_client_feedback"
     assert aliases["recruit.recommend.candidates"] == "recommend_candidates_for_position"
     assert aliases["recruit.recommend.positions"] == "recommend_positions_for_candidate"
+    assert aliases["recruit.recommendation.get"] == "get_recruiting_recommendation_run"
     assert aliases["recruit.metrics"] == "get_recruiting_metrics"
     assert aliases["recruit.report.export"] == "export_recruiting_report"
 
@@ -98,6 +99,7 @@ def test_sample_surface_is_zero_config_safe_local_personal() -> None:
         "add_client_feedback",
         "recommend_candidates_for_position",
         "recommend_positions_for_candidate",
+        "get_recruiting_recommendation_run",
         "get_recruiting_metrics",
         "export_recruiting_report",
         "migrate_local_data",
@@ -194,6 +196,7 @@ def test_sample_local_personal_target_promotes_safe_non_llm_writes() -> None:
         "add_client_feedback",
         "recommend_candidates_for_position",
         "recommend_positions_for_candidate",
+        "get_recruiting_recommendation_run",
         "get_recruiting_metrics",
         "export_recruiting_report",
     }.issubset(target_tools)
@@ -255,6 +258,7 @@ def test_standard_surface_keeps_real_operator_admin_tools() -> None:
         "add_client_feedback",
         "recommend_candidates_for_position",
         "recommend_positions_for_candidate",
+        "get_recruiting_recommendation_run",
         "get_recruiting_metrics",
         "export_recruiting_report",
     }.issubset(standard_tools)
@@ -436,6 +440,11 @@ def test_high_traffic_tool_descriptions_guide_tool_selection(monkeypatch) -> Non
             "atlas vector search",
             "recruit.recommend.positions",
         ],
+        "get_recruiting_recommendation_run": [
+            "saved recruiting recommendation run",
+            "feedback adjustment",
+            "recruit.recommendation.get",
+        ],
         "get_recruiting_metrics": [
             "recruiting kpi",
             "read-only",
@@ -495,6 +504,7 @@ def test_get_tool_catalog_reports_visible_surface(monkeypatch) -> None:
         "add_client_feedback",
         "recommend_candidates_for_position",
         "recommend_positions_for_candidate",
+        "get_recruiting_recommendation_run",
         "get_recruiting_metrics",
         "export_recruiting_report",
     ]
@@ -556,6 +566,7 @@ def test_get_tool_catalog_can_include_hidden_tools(monkeypatch) -> None:
         "add_client_feedback",
         "recommend_candidates_for_position",
         "recommend_positions_for_candidate",
+        "get_recruiting_recommendation_run",
         "get_recruiting_metrics",
         "export_recruiting_report",
     ]

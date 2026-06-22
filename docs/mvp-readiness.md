@@ -264,7 +264,7 @@ Run the relevant tests:
 Pass criteria:
 
 - `sample`, `standard`, and `developer` tool counts match the documented
-  contract: `sample=34`, `standard=48`, `developer=52`.
+  contract: `sample=35`, `standard=49`, `developer=53`.
 - Recruiting tools such as `create_candidate`,
   `add_recruiting_interaction`, and `recommend_candidates_for_position` are
   present on the expected surfaces.

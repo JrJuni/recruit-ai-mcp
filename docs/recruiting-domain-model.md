@@ -417,6 +417,7 @@ MCP tools:
 - `add_client_feedback`
 - `recommend_candidates_for_position`
 - `recommend_positions_for_candidate`
+- `get_recruiting_recommendation_run`
 - `get_recruiting_metrics`
 - `export_recruiting_report`
 
@@ -432,6 +433,8 @@ Surface policy:
   time.
 - Recommendation tools preview by default and persist a recommendation run only
   when `save_run=true`.
+- `get_recruiting_recommendation_run` reads one saved recommendation run for
+  review without writing or recomputing the ranking.
 - `get_recruiting_metrics` reads recruiting collection wrappers and returns
   read-only pipeline metrics.
 - `export_recruiting_report` reuses the same metrics path and writes local

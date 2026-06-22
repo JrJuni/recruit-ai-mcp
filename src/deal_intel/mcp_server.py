@@ -1114,6 +1114,30 @@ def recommend_positions_for_candidate(
 
 
 @app.tool()
+def get_recruiting_recommendation_run(
+    recommendation_run_id: str,
+) -> dict:
+    """Read a saved recruiting recommendation run.
+
+    Use this after running a recommendation with save_run=true to review the
+    stored ranked results, fit snapshots, risk flags, next questions, and
+    feedback adjustment ledger. Intent alias: recruit.recommendation.get.
+
+    Read-only. Does not call LLMs, embeddings, writes, or Atlas Vector Search.
+    """
+    try:
+        from deal_intel import _context
+        from deal_intel.tools import recruiting_recommendations as _t
+
+        return _t.get_recommendation_run(
+            _context.mongo(),
+            recommendation_run_id=recommendation_run_id,
+        )
+    except Exception as exc:
+        return envelope_from_exception(exc, stage=Stage.STORAGE)
+
+
+@app.tool()
 def get_recruiting_metrics(
     candidate_limit: int = 500,
     position_limit: int = 500,

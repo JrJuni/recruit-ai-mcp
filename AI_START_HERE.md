@@ -214,9 +214,9 @@ When installing the MCPB, recommend:
 
 Expected visible tool counts:
 
-- `sample`: 34 tools
-- `standard` / `full`: 48 tools
-- `developer`: 52 tools
+- `sample`: 35 tools
+- `standard` / `full`: 49 tools
+- `developer`: 53 tools
 
 If the host app's tool search shows only a handful of tools, that is usually a
 host-side search limit rather than a server loading failure. Ask it to call
@@ -238,7 +238,7 @@ For a new recruiting `full` workspace, the first value path is:
 4. Add useful evidence with `add_recruiting_interaction` or
    `add_client_feedback`.
 5. Run `recommend_candidates_for_position`, `recommend_positions_for_candidate`,
-   or `get_recruiting_metrics`.
+   `get_recruiting_recommendation_run`, or `get_recruiting_metrics`.
 
 Use this prompt after a successful first `config_doctor`:
 
@@ -316,6 +316,7 @@ Prefer deterministic read tools for normal questions:
 
 - Candidate recommendations for a role -> `recommend_candidates_for_position`
 - Open-position recommendations for a candidate -> `recommend_positions_for_candidate`
+- Saved recommendation review -> `get_recruiting_recommendation_run`
 - Recruiting KPI / funnel / feedback metrics -> `get_recruiting_metrics`
 - Recruiting Markdown/CSV pipeline report -> `export_recruiting_report`
 - Server-side LLM usage / rough cost check -> `get_usage`

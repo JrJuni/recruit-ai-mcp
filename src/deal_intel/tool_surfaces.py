@@ -91,6 +91,7 @@ TOOL_INTENT_GROUPS: dict[str, dict] = {
             "add_client_feedback",
             "recommend_candidates_for_position",
             "recommend_positions_for_candidate",
+            "get_recruiting_recommendation_run",
             "get_recruiting_metrics",
             "export_recruiting_report",
         ),
@@ -306,6 +307,7 @@ TOOL_INTENT_ALIASES: dict[str, tuple[str, str]] = {
     "add_client_feedback": ("recruit", "recruit.feedback.add"),
     "recommend_candidates_for_position": ("recruit", "recruit.recommend.candidates"),
     "recommend_positions_for_candidate": ("recruit", "recruit.recommend.positions"),
+    "get_recruiting_recommendation_run": ("recruit", "recruit.recommendation.get"),
     "get_recruiting_metrics": ("recruit", "recruit.metrics"),
     "export_recruiting_report": ("recruit", "recruit.report.export"),
 }
@@ -601,6 +603,19 @@ MCP_TOOL_SURFACE_CONTRACTS: tuple[MCPToolSurfaceContract, ...] = (
         notes=(
             "Ranks positions for a candidate using M0-safe lexical retrieval "
             "and deterministic fit scoring; persistence is optional."
+        ),
+    ),
+    MCPToolSurfaceContract(
+        name="get_recruiting_recommendation_run",
+        category="recruiting",
+        surfaces=_SAMPLE,
+        user_facing=True,
+        db_writes=False,
+        llm_calls=False,
+        notes=(
+            "Read-only review of a saved recruiting recommendation run, "
+            "including fit snapshots, risk flags, next questions, and "
+            "feedback-adjustment ledgers."
         ),
     ),
     MCPToolSurfaceContract(

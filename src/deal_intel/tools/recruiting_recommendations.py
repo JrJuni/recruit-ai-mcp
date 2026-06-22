@@ -5,6 +5,7 @@ from typing import Any
 from pydantic import ValidationError
 
 from deal_intel.errors import ErrorCode, MCPError, Stage
+from deal_intel.schema.recruiting import RecommendationRun
 from deal_intel.schema.recruiting_recommendation import (
     build_candidate_position_recommendation_run,
     build_position_candidate_recommendation_run,
@@ -138,6 +139,33 @@ def recommend_positions_for_candidate(
         run=run,
         storage_written=stored,
         warnings=[] if positions else [_warning("no_positions", "No positions were available.")],
+    )
+
+
+def get_recommendation_run(
+    mongo: Any,
+    *,
+    recommendation_run_id: str,
+) -> dict[str, Any]:
+    record = _read_one_or_raise(
+        mongo.get_recommendation_run,
+        recommendation_run_id,
+        entity="recommendation_run",
+    )
+    try:
+        run = RecommendationRun.model_validate(record)
+    except ValidationError as exc:
+        raise MCPError(
+            error_code=ErrorCode.STORAGE_ERROR,
+            stage=Stage.STORAGE,
+            message="stored recommendation run is invalid",
+            hint={"errors": exc.errors(include_input=False)},
+            retryable=False,
+        ) from exc
+    return _recommendation_response(
+        run=run,
+        storage_written=False,
+        warnings=[],
     )
 
 

@@ -56,6 +56,7 @@ without MongoDB today. It is not the full operating surface:
 - `add_client_feedback`
 - `recommend_candidates_for_position`
 - `recommend_positions_for_candidate`
+- `get_recruiting_recommendation_run`
 - `get_recruiting_metrics`
 - `export_recruiting_report`
 - `migrate_local_data`
@@ -172,9 +173,9 @@ Behavior:
 
 Current exposed counts:
 
-- `sample`: 34 tools
-- `standard`: 48 tools
-- `developer`: 52 tools
+- `sample`: 35 tools
+- `standard`: 49 tools
+- `developer`: 53 tools
 
 Implementation notes:
 

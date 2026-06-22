@@ -41,6 +41,7 @@
     {"name": "add_client_feedback", "description": "Add structured client feedback, preference learning, and optional recruiting fit rubric deltas."},
     {"name": "recommend_candidates_for_position", "description": "Recommend candidates for one position using M0-safe lexical retrieval and deterministic fit scoring."},
     {"name": "recommend_positions_for_candidate", "description": "Recommend positions for one candidate using M0-safe lexical retrieval and deterministic fit scoring."},
+    {"name": "get_recruiting_recommendation_run", "description": "Read a saved recruiting recommendation run with fit snapshots, risk flags, next questions, and feedback-adjustment ledgers."},
     {"name": "get_recruiting_metrics", "description": "Return read-only recruiting pipeline metrics, funnel rates, feedback signals, and data-quality counters."},
     {"name": "export_recruiting_report", "description": "Export recruiting pipeline Markdown and CSV artifacts from safe recruiting records."},
     {"name": "add_meeting",   "description": "Deprecated developer-surface alias for add_interaction with interaction_type=meeting."},

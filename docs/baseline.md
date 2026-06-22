@@ -61,13 +61,13 @@ available.
 
 ### MCP Tool Contracts
 
-The Python server keeps all 52 handler functions available internally, but MCP
+The Python server keeps all 53 handler functions available internally, but MCP
 clients see a config-filtered tool surface:
 
 - `tools.surface: auto` resolves from the effective profile.
-- `sample` exposes 34 tools for bundled/local personal sample mode.
-- `standard` exposes 48 tools for normal MongoDB-backed operation.
-- `developer` exposes all 52 tools, including demo database seed/cleanup.
+- `sample` exposes 35 tools for bundled/local personal sample mode.
+- `standard` exposes 49 tools for normal MongoDB-backed operation.
+- `developer` exposes all 53 tools, including demo database seed/cleanup.
 - Invalid `tools.surface` config exposes only `config_doctor` and
   `update_config` so setup can be diagnosed and repaired.
 
@@ -96,6 +96,7 @@ clients see a config-filtered tool surface:
 | `add_client_feedback` | `subject_type`, `subject_id` | `feedback_id`, `position_id`, `candidate_id`, `sentiment`, `decision_signal`, `rubric_deltas_json`, `preference_learning`, `summary`, `link_submission` | `ok`, `entity`, `feedback_id`, `record`, `warnings`, `submission_link` | Adds structured recruiting feedback and optional rubric deltas. Writes to the recruiting `feedback` collection and may link a submission feedback id when the submission exists. Does not call LLMs, embeddings, or Atlas Vector Search |
 | `recommend_candidates_for_position` | `position_id` | `candidate_query_json`, `candidate_limit`, `retrieval_limit`, `result_limit`, `feedback_limit`, `recommendation_run_id`, `save_run` | `ok`, `entity`, `recommendation_run_id`, `mode`, `anchor_type`, `anchor_id`, `result_count`, `storage_written`, `record`, `warnings` | Recommends candidates for one position using M0-safe lexical retrieval and deterministic fit scoring. `record.results[]` includes fit snapshots, recommendation reasons, risk flags, next questions, and `feedback_adjustments` showing any client-feedback rubric deltas that changed a dimension score. Preview mode is default; writes a `recommendation_runs` record only when `save_run=true`. Does not call LLMs, embeddings, or Atlas Vector Search |
 | `recommend_positions_for_candidate` | `candidate_id` | `client_company_id`, `position_status`, `position_limit`, `retrieval_limit`, `result_limit`, `feedback_limit`, `recommendation_run_id`, `save_run` | `ok`, `entity`, `recommendation_run_id`, `mode`, `anchor_type`, `anchor_id`, `result_count`, `storage_written`, `record`, `warnings` | Recommends positions for one candidate using M0-safe lexical retrieval and deterministic fit scoring. `record.results[]` includes fit snapshots, recommendation reasons, risk flags, next questions, and `feedback_adjustments` showing any client-feedback rubric deltas that changed a dimension score. Preview mode is default; writes a `recommendation_runs` record only when `save_run=true`. Does not call LLMs, embeddings, or Atlas Vector Search |
+| `get_recruiting_recommendation_run` | `recommendation_run_id` | None | `ok`, `entity`, `recommendation_run_id`, `mode`, `anchor_type`, `anchor_id`, `result_count`, `storage_written`, `record`, `warnings` | Read-only review of one saved recruiting recommendation run. Returns the stored fit snapshots, recommendation reasons, risk flags, next questions, and feedback-adjustment ledgers. Does not call LLMs, embeddings, writes, or Atlas Vector Search |
 | `get_recruiting_metrics` | None | `candidate_limit`, `position_limit`, `submission_limit`, `feedback_limit`, `position_status` | `ok`, `summary`, `positions`, `submissions`, `feedback`, `data_quality`, `filters`, `limits`, `storage_written` | Read-only recruiting KPI tool. Reads recruiting collection wrappers and returns pipeline counts, funnel rates, feedback signal rates, and data-quality counters. Does not call LLMs, embeddings, writes, or Atlas Vector Search |
 | `export_recruiting_report` | None | `output_dir`, `as_of`, `candidate_limit`, `position_limit`, `submission_limit`, `feedback_limit`, `position_status` | `ok`, `report_type`, `as_of`, `timezone`, `generated_at`, `filters`, `limits`, `row_count`, `warnings`, `metrics`, `briefing`, `output_dir`, `artifacts`, `csv_path`, `markdown_path` | Read-only over recruiting storage and writes local Markdown/CSV recruiting pipeline artifacts. It delegates metrics calculation to `get_recruiting_metrics`, uses safe recruiting records only, and does not call LLMs, embeddings, or Atlas Vector Search |
 | `add_meeting` | `deal_id`, `date`, `raw_notes` | None | `ok`, `interaction_id`, `meeting_id`, `summary`, `meddpicc`, `meddpicc_latest`, `customer_themes`, `stage_suggestion`, `embedding_stored`, `usage`, `usage_summary`, optional `analytics_snapshot` | Deprecated developer-surface compatibility alias over `add_interaction` with `interaction_type: meeting`. Calls LLM, writes an `interaction_type: meeting` record under `deal.interactions`, stores `llm_usage` metadata, recalculates deal signals, optionally stores an embedding for MongoDB-backed data, upserts the deal, and attempts a non-blocking analytics snapshot. New clients should call `add_interaction` directly |
@@ -384,8 +385,8 @@ Before Milestone 1 started, all 28 findings were resolved. The current gate is:
 pytest -> 128 passed
 ruff check . -> All checks passed
 wheel build -> passed
-FastMCP runtime surface exposure -> sample 34 tools, standard 48 tools,
-developer 52 tools
+FastMCP runtime surface exposure -> sample 35 tools, standard 49 tools,
+developer 53 tools
 MongoDB Atlas read smoke -> passed
 ```
 

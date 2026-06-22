@@ -259,7 +259,7 @@ Implemented behavior:
 - Pro requirements are clearly labeled as paid-infra opt-in.
 - `mcpb/manifest.json` exposes `storage_backend`; the installer default is
   `mongo`, while `local_sample` remains available for zero-config demos.
-- The MCP bundle metadata reflects the current 52-tool internal registration
+- The MCP bundle metadata reflects the current 53-tool internal registration
   with profile-filtered surfaces.
 - The current bundle manifest version is `0.1.0`.
 - `mcpb/README.md` now documents `tools_surface=auto`, mutable local personal
@@ -317,7 +317,8 @@ Implemented:
   `create_candidate`, `create_client_company`, `create_position`,
   `add_recruiting_interaction`, `create_submission`, `add_client_feedback`,
   `recommend_candidates_for_position`, `recommend_positions_for_candidate`,
-  `get_recruiting_metrics`, and `export_recruiting_report`.
+  `get_recruiting_recommendation_run`, `get_recruiting_metrics`, and
+  `export_recruiting_report`.
 - `standard` is the normal real-data operating surface for `full`, `pro`, and
   custom Mongo-backed configs.
 - `developer` contains every MCP tool, including Atlas demo-database seed and

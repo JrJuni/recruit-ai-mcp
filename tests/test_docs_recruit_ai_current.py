@@ -12,9 +12,9 @@ def test_mvp_readiness_is_recruit_ai_current() -> None:
     assert "recruiting/search-firm intelligence workflow" in normalized
     assert "recruit-ai usage" in docs
     assert "RECRUIT_AI_STORAGE_BACKEND" in docs
-    assert "sample=34" in docs
-    assert "standard=48" in docs
-    assert "developer=52" in docs
+    assert "sample=35" in docs
+    assert "standard=49" in docs
+    assert "developer=53" in docs
     assert "recruit-ai-mcp-0.1.0.mcpb" in docs
     assert "create_candidate" in docs
     assert "add_recruiting_interaction" in docs
@@ -154,7 +154,7 @@ def test_distribution_plan_lists_current_bootstrapper_handoff_commands() -> None
     assert "npx recruit-ai-mcp mcp-config" in docs
     assert "npx recruit-ai-mcp mcp" in docs
     assert "public registry smoke is\npending" in docs
-    assert "`sample=34`, `standard=48`, `developer=52`" in docs
+    assert "`sample=35`, `standard=49`, `developer=53`" in docs
     assert "Local pre-publish npm/PyPI bootstrapper smoke passed" in docs
     assert "Public registry `npx recruit-ai-mcp@0.1.0` smoke remains pending" in docs
     assert "macOS fresh-machine smoke remains pending as external-machine evidence" in docs
@@ -214,9 +214,9 @@ def test_agent_entry_docs_are_recruit_ai_first() -> None:
 def test_ai_start_here_matches_current_tool_counts() -> None:
     docs = (ROOT / "AI_START_HERE.md").read_text(encoding="utf-8")
 
-    assert "`sample`: 34 tools" in docs
-    assert "`standard` / `full`: 48 tools" in docs
-    assert "`developer`: 52 tools" in docs
+    assert "`sample`: 35 tools" in docs
+    assert "`standard` / `full`: 49 tools" in docs
+    assert "`developer`: 53 tools" in docs
     assert "get_tool_catalog" in docs
 
     assert "`sample`: 24 tools" not in docs
@@ -349,9 +349,9 @@ def test_tool_surface_docs_match_current_counts_and_env_prefix() -> None:
     docs = (ROOT / "docs" / "tool-surfaces.md").read_text(encoding="utf-8")
     normalized = " ".join(docs.split())
 
-    assert "`sample`: 34 tools" in docs
-    assert "`standard`: 48 tools" in docs
-    assert "`developer`: 52 tools" in docs
+    assert "`sample`: 35 tools" in docs
+    assert "`standard`: 49 tools" in docs
+    assert "`developer`: 53 tools" in docs
     assert "RECRUIT_AI_TOOLS_SURFACE" in docs
     assert "DEAL_INTEL_TOOLS_SURFACE` remains a compatibility fallback" in normalized
 
@@ -404,8 +404,8 @@ def test_baseline_distinguishes_historical_smoke_from_current_surface() -> None:
     assert "Historical Runtime Snapshot" in docs
     assert "traceability only" in docs
     assert "FastMCP runtime registration at historical smoke time: 9 tools" in docs
-    assert "The Python server keeps all 52 handler functions available internally" in docs
-    assert "sample 34 tools, standard 48 tools, developer 52 tools" in normalized
+    assert "The Python server keeps all 53 handler functions available internally" in docs
+    assert "sample 35 tools, standard 49 tools, developer 53 tools" in normalized
 
     assert "- FastMCP runtime registration: 9 tools" not in docs
     assert "sample 24 tools" not in docs

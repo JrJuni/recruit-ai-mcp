@@ -86,6 +86,11 @@ class FakeRecommendationStorage:
         self.recommendation_runs[record["recommendation_run_id"]] = record
         return True
 
+    def get_recommendation_run(self, recommendation_run_id: str) -> dict | None:
+        if self.fail:
+            raise RuntimeError("database unavailable")
+        return deepcopy(self.recommendation_runs.get(recommendation_run_id))
+
 
 def _candidate(candidate_id: str, **updates: object) -> dict:
     payload = {
@@ -169,6 +174,26 @@ def test_recommend_candidates_for_position_ranks_and_optionally_saves() -> None:
     assert result["storage_written"] is True
     assert result["record"]["results"][0]["target_id"] == "cand_avery"
     assert result["recommendation_run_id"] in storage.recommendation_runs
+
+
+def test_get_recommendation_run_reads_saved_record() -> None:
+    storage = _storage()
+    saved = recruiting_recommendations.recommend_candidates_for_position(
+        storage,
+        position_id="pos_backend_lead",
+        save_run=True,
+    )
+
+    result = recruiting_recommendations.get_recommendation_run(
+        storage,
+        recommendation_run_id=saved["recommendation_run_id"],
+    )
+
+    assert result["ok"] is True
+    assert result["entity"] == "recommendation_run"
+    assert result["storage_written"] is False
+    assert result["recommendation_run_id"] == saved["recommendation_run_id"]
+    assert result["record"]["results"][0]["target_id"] == "cand_avery"
 
 
 def test_recommend_positions_for_candidate_filters_open_positions() -> None:
@@ -322,3 +347,18 @@ def test_recommendation_service_wraps_storage_failure() -> None:
     assert exc.error_code == ErrorCode.STORAGE_ERROR
     assert exc.stage == Stage.STORAGE
     assert exc.retryable is True
+
+
+def test_get_recommendation_run_raises_not_found() -> None:
+    storage = _storage()
+
+    with pytest.raises(MCPError) as exc_info:
+        recruiting_recommendations.get_recommendation_run(
+            storage,
+            recommendation_run_id="rec_missing",
+        )
+
+    exc = exc_info.value
+    assert exc.error_code == ErrorCode.NOT_FOUND
+    assert exc.stage == Stage.STORAGE
+    assert exc.retryable is False

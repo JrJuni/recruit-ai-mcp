@@ -114,6 +114,9 @@ class FakeRecruitingMCPStorage:
         self.recommendation_runs[record["recommendation_run_id"]] = record
         return True
 
+    def get_recommendation_run(self, recommendation_run_id: str) -> dict | None:
+        return deepcopy(self.recommendation_runs.get(recommendation_run_id))
+
 
 def test_mcp_recruiting_create_and_recommend_flow(monkeypatch) -> None:
     storage = FakeRecruitingMCPStorage()
@@ -148,12 +151,21 @@ def test_mcp_recruiting_create_and_recommend_flow(monkeypatch) -> None:
         position_id=position["position_id"],
         retrieval_limit=5,
         result_limit=3,
+        save_run=True,
     )
 
     assert result["ok"] is True
-    assert result["storage_written"] is False
+    assert result["storage_written"] is True
     assert result["record"]["results"][0]["target_id"] == candidate["candidate_id"]
     assert result["record"]["query"]["retrieval_limit"] == 5
+
+    saved = mcp_server.get_recruiting_recommendation_run(
+        recommendation_run_id=result["recommendation_run_id"],
+    )
+
+    assert saved["ok"] is True
+    assert saved["storage_written"] is False
+    assert saved["record"]["results"][0]["target_id"] == candidate["candidate_id"]
 
 
 def test_mcp_add_client_feedback_parses_rubric_delta_json(monkeypatch) -> None:

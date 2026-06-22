@@ -141,6 +141,10 @@ Completed:
 - Added deterministic role-scope mismatch handling. Manager-scope candidate
   preferences now lower `client_preference_fit`, raise match risk, and can
   surface a `role_scope_mismatch` recommendation flag for IC-looking roles.
+- Added `get_recruiting_recommendation_run`, a read-only MCP tool for reviewing
+  a saved recommendation run with fit snapshots, risk flags, next questions,
+  and feedback-adjustment ledgers. Current profile-filtered counts are now
+  `sample=35`, `standard=49`, and `developer=53`.
 - Added a realistic Northstar recommendation stress fixture for a healthcare
   platform manager-only candidate. The sample recommendation tests and natural
   question guardrails now ensure this keyword-strong but constraint-heavy
@@ -322,8 +326,8 @@ Completed:
   MCP surface orientation, and no-hardcoded-tool-count rule already used by
   `AGENTS.md`.
 - Added Work 7AF tool-surface docs count cleanup. `docs/tool-surfaces.md` now
-  reflects the current profile-filtered counts, `sample=34`, `standard=48`,
-  and `developer=52`, and documents `RECRUIT_AI_TOOLS_SURFACE` as the primary
+  reflects the current profile-filtered counts, `sample=35`, `standard=49`,
+  and `developer=53`, and documents `RECRUIT_AI_TOOLS_SURFACE` as the primary
   runtime override with `DEAL_INTEL_TOOLS_SURFACE` as a compatibility fallback.
 - Added Work 7AG storage docs local recruiting cleanup.
   `docs/storage-backends.md` now lists the local personal recruiting record
@@ -405,12 +409,12 @@ Completed:
   patterns, including defaults, Mongo validators, Atlas specs, and bundled
   sample datasets before a wheel/sdist is treated as release-ready.
 - Added Work 7AU first-run tool-count doc cleanup.
-  `AI_START_HERE.md` now reports the current sample MCP surface as 34 tools,
+  `AI_START_HERE.md` now reports the current sample MCP surface as 35 tools,
   matching the source tool-surface contract, and docs regression tests now pin
   the first-run guide's sample/standard/developer counts.
 - Added Work 7AV baseline historical-count clarification.
   `docs/baseline.md` now labels the old 9-tool Milestone 0.1 runtime smoke as
-  a historical snapshot while keeping the current 52-handler, 34/48/52
+  a historical snapshot while keeping the current 53-handler, 35/49/53
   profile-filtered MCP surface contract as the active baseline.
 - Added Work 7AW bootstrapper handoff doc cleanup.
   `docs/distribution-plan.md` now lists the current first-run bootstrapper
@@ -456,7 +460,7 @@ Completed:
   `recruit-ai-mcp-0.1.0.mcpb`.
 - Added Work 7BE distribution pending-state cleanup.
   `docs/distribution-plan.md` now uses the current MCP surface counts
-  (`sample=34`, `standard=48`, `developer=52`) and distinguishes completed
+  (`sample=35`, `standard=49`, `developer=53`) and distinguishes completed
   local pre-publish bootstrapper smoke from still-pending public registry
   `npx recruit-ai-mcp@0.1.0` smoke.
 - Added Work 7BF public registry evidence refresh.
