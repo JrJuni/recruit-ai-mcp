@@ -1,6 +1,8 @@
 ﻿from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from copy import deepcopy
 from pathlib import Path
 
@@ -530,6 +532,18 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     assert summary["pack"] == "recruiting"
     assert summary["question_count"] == 13
     assert summary["answerability_counts"] == {"derived": 9, "direct": 4}
+    validator = Path(__file__).resolve().parents[1] / "scripts" / (
+        "validate_recruiting_smoke.py"
+    )
+    contract = subprocess.run(
+        [sys.executable, str(validator), str(output_dir / "summary.json")],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    contract_payload = json.loads(contract.stdout)
+    assert contract_payload["contract"]["candidate_count"] == 8
+    assert contract_payload["contract"]["guardrail_candidate_count"] == 4
     assert (output_dir / "rq01_recruiting_pipeline_metrics.json").exists()
     assert (output_dir / "rq02_candidates_for_northstar_backend.json").exists()
     assert (output_dir / "rq08_local_recruiting_data_safety.json").exists()
