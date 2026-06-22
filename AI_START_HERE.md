@@ -210,7 +210,7 @@ When installing the MCPB, recommend:
 
 Expected visible tool counts:
 
-- `sample`: 24 tools
+- `sample`: 34 tools
 - `standard` / `full`: 48 tools
 - `developer`: 52 tools
 

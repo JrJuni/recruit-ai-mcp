@@ -312,9 +312,17 @@ Completed:
   under `src/deal_intel/resources` is covered by `pyproject.toml` package-data
   patterns, including defaults, Mongo validators, Atlas specs, and bundled
   sample datasets before a wheel/sdist is treated as release-ready.
+- Added Work 7AU first-run tool-count doc cleanup.
+  `AI_START_HERE.md` now reports the current sample MCP surface as 34 tools,
+  matching the source tool-surface contract, and docs regression tests now pin
+  the first-run guide's sample/standard/developer counts.
 
 Validation:
 
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-ai-start-counts tests\test_docs_recruit_ai_current.py tests\test_tool_surfaces.py`
+  -> 46 passed, 1 warning.
+- `ruff check src tests` -> passed.
+- `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-package-data-gate tests\test_bootstrapper_skeleton.py tests\test_env_config.py tests\test_sample_data.py tests\test_atlas_charts.py tests\test_atlas_vector_indexes.py tests\test_mongo_contracts.py`
   -> 93 passed, 1 warning.
 - `python -m build --no-isolation --outdir .tmp\release-build-gate`

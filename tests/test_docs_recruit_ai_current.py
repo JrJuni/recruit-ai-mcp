@@ -116,6 +116,19 @@ def test_agent_entry_docs_are_recruit_ai_first() -> None:
         assert "DEAL_INTEL_STORAGE_BACKEND='local_sample'" not in docs
 
 
+def test_ai_start_here_matches_current_tool_counts() -> None:
+    docs = (ROOT / "AI_START_HERE.md").read_text(encoding="utf-8")
+
+    assert "`sample`: 34 tools" in docs
+    assert "`standard` / `full`: 48 tools" in docs
+    assert "`developer`: 52 tools" in docs
+    assert "get_tool_catalog" in docs
+
+    assert "`sample`: 24 tools" not in docs
+    assert "`standard` / `full`: 38 tools" not in docs
+    assert "`developer`: 42 tools" not in docs
+
+
 def test_tool_surface_docs_match_current_counts_and_env_prefix() -> None:
     docs = (ROOT / "docs" / "tool-surfaces.md").read_text(encoding="utf-8")
     normalized = " ".join(docs.split())
