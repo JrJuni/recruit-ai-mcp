@@ -170,6 +170,9 @@ Completed:
   now presents itself as the current Work 1-7 recruiting contract instead of a
   Work 1-only planning note, while preserving the original Work 1 deferral
   list as historical context.
+- Added Work 7R full-mode copy cleanup. Active onboarding/profile docs now
+  describe `full` as MongoDB-backed real recruiting/team data rather than only
+  real deal data.
 
 Validation:
 
@@ -273,6 +276,8 @@ Validation:
 - `mcpb validate mcpb\manifest.json` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-domain-doc tests\test_recruiting_schema.py tests\test_recruiting_storage_contract.py tests\test_recruiting_recommendation.py tests\test_recruiting_mcp_tools.py tests\test_sample_data.py`
   -> 45 passed, 1 third-party warning.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-full-copy tests\test_config_profiles.py tests\test_profile_smoke_cli.py tests\test_profile_smoke_matrix.py tests\test_cli_config_profiles.py`
+  -> 31 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2c tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py`

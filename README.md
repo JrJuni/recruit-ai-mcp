@@ -328,8 +328,8 @@ For implementation entry points, read:
 
 ## Install Overview
 
-The normal product path is `full`: MongoDB Atlas-backed real deal data, an MCP
-host, and one LLM credential path for extraction.
+The normal product path is `full`: MongoDB Atlas-backed real recruiting/team
+data, an MCP host, and one LLM credential path for extraction.
 
 If you are a non-developer, the easiest route is to ask your AI assistant to
 read [`AI_START_HERE.md`](AI_START_HERE.md). It will walk you through Python,
@@ -1518,8 +1518,8 @@ No. A rough memo of the essentials is fine. The LLM just skips dimensions with n
 Yes. Mixed English/Korean works too.
 
 **Q. Do I need MongoDB at all?**
-Not for `sample`. You need MongoDB only when you want persistent real deal data
-or Atlas Charts against your own database.
+Not for `sample`. You need MongoDB only when you want persistent real
+recruiting/deal data or Atlas Charts against your own database.
 
 **Q. Do I need a paid MongoDB Atlas plan?**
 No. The default `full` profile works on the free M0 plan today. `sample` does

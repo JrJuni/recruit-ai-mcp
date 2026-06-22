@@ -9,7 +9,7 @@ first-run guidance.
 
 - `sample`: safe feature-test mode with bundled fictional data and optional
   lightweight local personal data.
-- `full`: normal Atlas-backed operating mode for real team data.
+- `full`: normal Atlas-backed operating mode for real recruiting/team data.
 - `pro`: paid-infrastructure upgrade path with Atlas Vector Search and API-key
   LLM providers.
 
@@ -37,7 +37,7 @@ The source contract lives in `src/deal_intel/config_profiles.py`.
 | Profile | Storage | Vector Search | Default LLM Provider | Primary Use |
 |---|---|---|---|---|
 | `sample` | `local_sample` | `python_cosine` | `chatgpt_oauth` | Zero-config feature test |
-| `full` | `mongo` | `python_cosine` | `chatgpt_oauth` | Real team data on Atlas |
+| `full` | `mongo` | `python_cosine` | `chatgpt_oauth` | Real recruiting/team data on Atlas |
 | `pro` | `mongo` | `atlas` | `openai_api` (`gpt-5.4-mini` default) | Paid infra and vector search |
 
 Notes:
@@ -47,8 +47,8 @@ Notes:
   `local-data reset/export` gives users a recovery path for messy testing.
 - The default local personal data directory is `~/.recruit-ai/local-data`, and
   users should be able to override it through config as `storage.local_data_dir`.
-- `full` should remain the operational default for real customer data and the
-  default human-facing install path.
+- `full` should remain the operational default for real recruiting/team data
+  and the default human-facing install path.
 - MongoDB features that work on Atlas Free/M0 and improve normal real-data
   operation belong in `full`, not `pro`. Examples include schema validation,
   ordinary indexes, bounded change-stream consumers, and time-series collections

@@ -27,8 +27,8 @@ then [`docs/architecture.md`](docs/architecture.md) for the deeper module map.
 
 Start human users in **`full`** mode.
 
-- `full` = normal product path, MongoDB Atlas-backed real deal data. Atlas M0
-  is enough.
+- `full` = normal product path, MongoDB Atlas-backed real recruiting/team data.
+  Atlas M0 is enough.
 - `sample` = optional zero-config trial for AI evaluation, demos, or users who
   explicitly do not want MongoDB yet.
 - `pro` = paid-infra upgrade path for Atlas Vector Search and API-key LLM
@@ -52,7 +52,7 @@ default as `full`; the route only decides how the package gets installed.
 Before asking the user to run commands, explain the required pieces in plain
 language:
 
-- MongoDB Atlas account and a Free/M0 cluster for real deal storage.
+- MongoDB Atlas account and a Free/M0 cluster for real recruiting/team storage.
 - A MongoDB connection string (`MONGODB_URI`) from that cluster.
 - One chat surface:
   - Claude Desktop with the MCPB extension, or
