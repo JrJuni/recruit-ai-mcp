@@ -118,6 +118,10 @@ Completed:
   and installed-package staging smoke run the recruiting natural-question pack;
   staging now uploads `recruiting-natural-questions.json` with the
   smoke-evidence artifact.
+- Added a realistic Northstar recommendation stress fixture for a healthcare
+  platform manager-only candidate. The sample recommendation tests and natural
+  question guardrails now ensure this keyword-strong but constraint-heavy
+  candidate does not outrank the aligned staff IC match.
 - Added Work 6A recruiting pipeline metrics calculator. It computes summary
   counts, position status rates, submission funnel rates, feedback signal
   rates, and data-quality counters from safe recruiting records without

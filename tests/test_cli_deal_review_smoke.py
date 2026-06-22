@@ -522,7 +522,7 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     assert result.exit_code == 0
     assert "Natural Question Smoke (as_of=2026-06-22, questions=13)" in result.output
     assert "OK: True" in result.output
-    assert "candidates=6, open_positions=2, submissions=4" in result.output
+    assert "candidates=7, open_positions=2, submissions=4" in result.output
     assert "open_positions=2, shortlists=2, risk_reviews=2" in result.output
     assert (output_dir / "summary.md").exists()
     summary = json.loads((output_dir / "summary.json").read_text(encoding="utf-8"))
@@ -537,6 +537,18 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     assert (output_dir / "rq10_recruiting_report_preview.json").exists()
     assert (output_dir / "rq11_local_recruiting_persistence.json").exists()
     assert (output_dir / "rq12_recommendation_guardrails.json").exists()
+    guardrails = json.loads(
+        (output_dir / "rq12_recommendation_guardrails.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert guardrails["summary"] == {
+        "guardrail_candidate_count": 3,
+        "ranking_guardrails_passed": True,
+    }
+    assert {
+        row["guardrail_candidate_id"] for row in guardrails["guardrails"]
+    } == {"cand_nora_weiss", "cand_iris_kim", "cand_eli_brooks"}
     assert (output_dir / "rq13_client_shortlist_readiness.json").exists()
     shortlist = json.loads(
         (output_dir / "rq13_client_shortlist_readiness.json").read_text(

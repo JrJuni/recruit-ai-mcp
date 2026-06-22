@@ -202,6 +202,32 @@ def test_recruiting_sample_stress_candidate_does_not_outrank_aligned_match() -> 
     ]
 
 
+def test_recruiting_sample_manager_only_keyword_match_does_not_outrank_ic_fit() -> None:
+    records = build_sample_recruiting_records(loaded_at="2026-06-22T00:00:00+00:00")
+    positions = {row["position_id"]: row for row in records[POSITIONS]}
+
+    run = build_position_candidate_recommendation_run(
+        position=positions["pos_northstar_backend_lead"],
+        candidates=records[CANDIDATES],
+        client_feedback=records[FEEDBACK],
+        limit=7,
+    )
+
+    results = {result.target_id: result for result in run.results}
+
+    assert run.results[0].target_id == "cand_avery_chen"
+    assert results["cand_eli_brooks"].rank > results["cand_avery_chen"].rank
+    assert results["cand_eli_brooks"].fit_snapshot.overall_score < (
+        results["cand_avery_chen"].fit_snapshot.overall_score
+    )
+    assert results["cand_eli_brooks"].risk_flags == [
+        "requires manager scope",
+        "compensation above current budget",
+        "passive candidate",
+        "high_match_risk",
+    ]
+
+
 def test_recruiting_sample_junior_keyword_match_does_not_outrank_senior_fit() -> None:
     records = build_sample_recruiting_records(loaded_at="2026-06-22T00:00:00+00:00")
     positions = {row["position_id"]: row for row in records[POSITIONS]}

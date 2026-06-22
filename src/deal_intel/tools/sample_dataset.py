@@ -411,6 +411,54 @@ def _base_recruiting_records(*, loaded_at: str) -> dict[str, list[dict]]:
             "updated_at": loaded_at,
         },
         {
+            "candidate_id": "cand_eli_brooks",
+            "name": "Eli Brooks",
+            "headline": "Healthcare data platform manager seeking org ownership",
+            "current_company": "CareGrid",
+            "current_title": "Engineering Manager",
+            "skills": ["Python", "Kafka", "HIPAA", "Data Platforms", "Healthcare"],
+            "domains": ["healthcare", "data platforms", "regulated infrastructure"],
+            "seniority": "manager",
+            "compensation_expectation": {
+                "currency": "USD",
+                "minimum": 245000,
+                "target": 270000,
+                "maximum": 300000,
+                "period": "annual",
+                "note": "Only interested in manager scope with team ownership.",
+            },
+            "locations": ["Remote US"],
+            "work_authorization": "US authorized",
+            "availability": "not actively looking",
+            "preferences": {
+                "desired_titles": ["Engineering Manager", "Head of Platform"],
+                "preferred_domains": ["healthcare", "data platforms"],
+                "preferred_locations": ["Remote US"],
+                "remote_preference": "remote",
+                "excluded_companies": [],
+                "notes": "Would decline a staff IC mandate without direct reports.",
+            },
+            "risk_flags": [
+                "requires manager scope",
+                "compensation above current budget",
+                "passive candidate",
+            ],
+            "evidence": [
+                {
+                    "evidence_id": "ev_eli_profile",
+                    "source_type": "profile",
+                    "source_id": "cand_eli_brooks",
+                    "summary": (
+                        "Healthcare platform background is strong, but Eli wants "
+                        "management ownership rather than a staff IC mandate."
+                    ),
+                    "confidence": "candidate_stated",
+                }
+            ],
+            "created_at": loaded_at,
+            "updated_at": loaded_at,
+        },
+        {
             "candidate_id": "cand_iris_kim",
             "name": "Iris Kim",
             "headline": "Payments engineer ready for larger ownership",

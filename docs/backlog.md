@@ -96,6 +96,9 @@ Immediate quality order:
      should prevent a naive keyword match from outranking the aligned candidate.
    - Additional stress coverage now includes a junior OrbitPay keyword match
      whose payments stack fit should not outrank the senior aligned candidate.
+   - Additional stress coverage now includes a Northstar healthcare platform
+     keyword match whose manager-only scope, passive availability, and
+     compensation constraints should not outrank the aligned staff IC match.
    - Continue adding synthetic client/candidate examples that stress skills,
      domain, seniority, compensation, location, availability, client
      preferences, and risk.
