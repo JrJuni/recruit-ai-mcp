@@ -112,6 +112,14 @@ jobs:
             | tee smoke-evidence/recruiting-natural-questions.json
           python scripts/validate_recruiting_smoke.py smoke-evidence/recruiting-natural-questions.json
 
+      - name: Upload release smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-smoke-evidence-${{ needs.validate-release.outputs.version }}
+          path: smoke-evidence/
+          if-no-files-found: warn
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:

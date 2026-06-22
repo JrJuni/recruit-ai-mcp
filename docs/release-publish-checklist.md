@@ -73,6 +73,10 @@ The release workflow in `.github/workflows/release.yml` enforces this order:
 3. Publish the Python package to PyPI.
 4. Publish or promote the npm bootstrapper package.
 
+The release test job uploads `release-smoke-evidence-<version>` so the
+recruiting natural-question JSON used by the validator is retained with the
+workflow run.
+
 Before using it, configure trusted publishers on both registries.
 
 PyPI trusted publisher values:

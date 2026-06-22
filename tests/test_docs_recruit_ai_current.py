@@ -59,6 +59,12 @@ def test_release_docs_and_workflows_use_recruit_ai_package_name() -> None:
     assert 'metadata.version("recruit-ai-mcp")' in staging_workflow
     assert "RECRUIT_AI_STORAGE_BACKEND" in staging_workflow
     assert "actions/checkout@v4" in staging_workflow
+    assert "actions/upload-artifact@v4" in release_workflow
+    assert (
+        "release-smoke-evidence-${{ needs.validate-release.outputs.version }}"
+        in release_workflow
+    )
+    assert "path: smoke-evidence/" in release_workflow
     assert (
         "python -m deal_intel.cli smoke-natural-questions --pack recruiting "
         "--as-of 2026-06-22 --json"

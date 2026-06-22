@@ -118,6 +118,9 @@ Completed:
   and installed-package staging smoke run the recruiting natural-question pack;
   staging now uploads `recruiting-natural-questions.json` with the
   smoke-evidence artifact.
+- Added release workflow smoke-evidence upload so the `0.1.0` release job
+  retains the validated recruiting natural-question JSON as
+  `release-smoke-evidence-<version>`.
 - Added a realistic Northstar recommendation stress fixture for a healthcare
   platform manager-only candidate. The sample recommendation tests and natural
   question guardrails now ensure this keyword-strong but constraint-heavy
