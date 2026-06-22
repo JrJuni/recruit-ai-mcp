@@ -42,6 +42,18 @@ CUSTOMER_THEME_CHART_IDS = {
 }
 
 
+def test_atlas_charts_docs_use_recruit_ai_database_and_cli() -> None:
+    docs = (ROOT / "docs" / "atlas-charts.md").read_text(encoding="utf-8")
+
+    assert "`recruit_ai.dashboard_weekly_pipeline`" in docs
+    assert "`recruit_ai.dashboard_pipeline_trend`" in docs
+    assert "`recruit_ai.dashboard_customer_themes`" in docs
+    assert "recruit-ai render-atlas-dashboard" in docs
+    assert "`deal_intel.dashboard_" not in docs
+    assert "/ `deal_intel` /" not in docs
+    assert "deal-intel render-atlas-dashboard" not in docs
+
+
 def test_weekly_pipeline_dashboard_spec_is_versioned_and_complete() -> None:
     spec = load_weekly_pipeline_dashboard_spec()
 

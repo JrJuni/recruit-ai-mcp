@@ -15,12 +15,12 @@ remain in [reports.md](reports.md).
   - `Customer Themes Review`
 - Data sources:
   - recommended chart-ready collections:
-    - `<your cluster>` / `deal_intel` / `dashboard_weekly_pipeline`
-    - `<your cluster>` / `deal_intel` / `dashboard_customer_themes`
-    - `<your cluster>` / `deal_intel` / `dashboard_pipeline_trend`
+    - `<your cluster>` / `recruit_ai` / `dashboard_weekly_pipeline`
+    - `<your cluster>` / `recruit_ai` / `dashboard_customer_themes`
+    - `<your cluster>` / `recruit_ai` / `dashboard_pipeline_trend`
   - raw reference sources:
-    - `<your cluster>` / `deal_intel` / `deals`
-    - `<your cluster>` / `deal_intel` / `analytics_snapshots`
+    - `<your cluster>` / `recruit_ai` / `deals`
+    - `<your cluster>` / `recruit_ai` / `analytics_snapshots`
 - Versioned specs:
   - chart-ready:
     - [weekly_pipeline_review.v1.json](../atlas/chart_ready/weekly_pipeline_review.v1.json)
@@ -31,7 +31,7 @@ remain in [reports.md](reports.md).
     - [pipeline_trend.v1.json](../atlas/charts/pipeline_trend.v1.json)
     - [customer_themes.v1.json](../atlas/charts/customer_themes.v1.json)
 - Renderer: `deal_intel.reports.atlas_charts`
-- CLI helper: `deal-intel render-atlas-dashboard`
+- CLI helper: `recruit-ai render-atlas-dashboard`
 - LLM / embedding: none
 - MongoDB writes: none from this repository
 
@@ -58,30 +58,30 @@ selection and encoding.
 1. Refresh the dashboard collections in dry-run mode:
 
 ```bash
-~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli mongo refresh-chart-ready --target all --as-of 2026-06-10 --lookback-days 7
+recruit-ai mongo refresh-chart-ready --target all --as-of 2026-06-10 --lookback-days 7
 ```
 
 2. If the dry-run row counts look right, apply the refresh:
 
 ```bash
-~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli mongo refresh-chart-ready --target all --as-of 2026-06-10 --lookback-days 7 --apply
+recruit-ai mongo refresh-chart-ready --target all --as-of 2026-06-10 --lookback-days 7 --apply
 ```
 
 3. Render the chart-ready specs:
 
 ```bash
-~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --source chart-ready --as-of 2026-06-10 --output outputs/atlas_charts/weekly_pipeline_review_chart_ready_20260610.json
-~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --source chart-ready --dashboard pipeline_trend --as-of 2026-06-10 --lookback-days 7 --output outputs/atlas_charts/pipeline_trend_chart_ready_20260610.json
-~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --source chart-ready --dashboard customer_themes --as-of 2026-06-10 --output outputs/atlas_charts/customer_themes_chart_ready_20260610.json
+recruit-ai render-atlas-dashboard --source chart-ready --as-of 2026-06-10 --output outputs/atlas_charts/weekly_pipeline_review_chart_ready_20260610.json
+recruit-ai render-atlas-dashboard --source chart-ready --dashboard pipeline_trend --as-of 2026-06-10 --lookback-days 7 --output outputs/atlas_charts/pipeline_trend_chart_ready_20260610.json
+recruit-ai render-atlas-dashboard --source chart-ready --dashboard customer_themes --as-of 2026-06-10 --output outputs/atlas_charts/customer_themes_chart_ready_20260610.json
 ```
 
 4. In Atlas Charts, use the dashboard collections as data sources:
 
 | Dashboard | Data Source |
 |---|---|
-| `Weekly Pipeline Review` | `deal_intel.dashboard_weekly_pipeline` |
-| `Pipeline Trend Review` | `deal_intel.dashboard_pipeline_trend` |
-| `Customer Themes Review` | `deal_intel.dashboard_customer_themes` |
+| `Weekly Pipeline Review` | `recruit_ai.dashboard_weekly_pipeline` |
+| `Pipeline Trend Review` | `recruit_ai.dashboard_pipeline_trend` |
+| `Customer Themes Review` | `recruit_ai.dashboard_customer_themes` |
 
 5. For each chart, either paste the short rendered chart-ready pipeline or use
    Atlas field encoding directly with the `chart_id`/date filters shown in the
@@ -90,7 +90,7 @@ selection and encoding.
 Single chart-ready pipeline example:
 
 ```bash
-~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --source chart-ready --as-of 2026-06-10 --chart-id pipeline_kpis
+recruit-ai render-atlas-dashboard --source chart-ready --as-of 2026-06-10 --chart-id pipeline_kpis
 ```
 
 The rendered JSON files are operator helpers only. They do not create or update
@@ -111,7 +111,7 @@ Use these chart-ready filters unless you intentionally render/paste a pipeline:
 
 ### Weekly Pipeline Review
 
-Create charts from `deal_intel.dashboard_weekly_pipeline`.
+Create charts from `recruit_ai.dashboard_weekly_pipeline`.
 
 | Card | Chart ID Filter | Chart Type | Encoding |
 |---|---|---|---|
@@ -132,7 +132,7 @@ Notes:
 
 ### Customer Themes Review
 
-Create charts from `deal_intel.dashboard_customer_themes`.
+Create charts from `recruit_ai.dashboard_customer_themes`.
 
 | Card | Chart ID Filter | Chart Type | Encoding |
 |---|---|---|---|
@@ -146,7 +146,7 @@ stable enough for decision-making.
 
 ### Pipeline Trend Review
 
-Create charts from `deal_intel.dashboard_pipeline_trend`.
+Create charts from `recruit_ai.dashboard_pipeline_trend`.
 
 | Card | Chart ID Filter | Chart Type | Encoding |
 |---|---|---|---|
@@ -168,37 +168,37 @@ Always render placeholders before pasting a pipeline into Atlas Charts.
 Full dashboard spec:
 
 ```bash
-~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --as-of 2026-06-09 --output outputs/atlas_charts/weekly_pipeline_review_20260609.json
+recruit-ai render-atlas-dashboard --as-of 2026-06-09 --output outputs/atlas_charts/weekly_pipeline_review_20260609.json
 ```
 
 Pipeline trend dashboard spec:
 
 ```bash
-~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --dashboard pipeline_trend --as-of 2026-06-10 --lookback-days 7 --output outputs/atlas_charts/pipeline_trend_20260610.json
+recruit-ai render-atlas-dashboard --dashboard pipeline_trend --as-of 2026-06-10 --lookback-days 7 --output outputs/atlas_charts/pipeline_trend_20260610.json
 ```
 
 Customer themes dashboard spec:
 
 ```bash
-~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --dashboard customer_themes --as-of 2026-06-10 --output outputs/atlas_charts/customer_themes_20260610.json
+recruit-ai render-atlas-dashboard --dashboard customer_themes --as-of 2026-06-10 --output outputs/atlas_charts/customer_themes_20260610.json
 ```
 
 Single chart pipeline:
 
 ```bash
-~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --as-of 2026-06-09 --chart-id pipeline_kpis
+recruit-ai render-atlas-dashboard --as-of 2026-06-09 --chart-id pipeline_kpis
 ```
 
 Pipeline trend single chart pipeline:
 
 ```bash
-~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --dashboard pipeline_trend --as-of 2026-06-10 --lookback-days 7 --chart-id trend_kpis
+recruit-ai render-atlas-dashboard --dashboard pipeline_trend --as-of 2026-06-10 --lookback-days 7 --chart-id trend_kpis
 ```
 
 Customer themes single chart pipeline:
 
 ```bash
-~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli render-atlas-dashboard --dashboard customer_themes --as-of 2026-06-10 --chart-id theme_overview
+recruit-ai render-atlas-dashboard --dashboard customer_themes --as-of 2026-06-10 --chart-id theme_overview
 ```
 
 The single-chart output is already a JSON array, so it can be pasted directly
@@ -223,15 +223,15 @@ Rendered defaults on 2026-06-09:
 
 ## Create The Dashboard
 
-1. In MongoDB Atlas, open the project that contains your `deal_intel`
+1. In MongoDB Atlas, open the project that contains your `recruit_ai`
    database.
 2. Open Atlas Charts:
-   - From Data Explorer, select `deal_intel.dashboard_weekly_pipeline` and
+   - From Data Explorer, select `recruit_ai.dashboard_weekly_pipeline` and
      click `Visualize Your Data`; or
    - From the Atlas sidebar, open `Visualization`, then `Project Dashboards`.
 3. Create a dashboard named `Weekly Pipeline Review`.
 4. Add each chart below using data source
-   `deal_intel.dashboard_weekly_pipeline`.
+   `recruit_ai.dashboard_weekly_pipeline`.
 5. Prefer direct field encoding from the chart-ready rows. Use the rendered
    query only when you need to pre-filter to one `chart_id`.
 6. Save each chart back to the `Weekly Pipeline Review` dashboard.
@@ -241,12 +241,12 @@ blocker for this MVP dashboard.
 
 ## Create The Trend Dashboard
 
-1. In MongoDB Atlas, open the project that contains your `deal_intel`
+1. In MongoDB Atlas, open the project that contains your `recruit_ai`
    database.
 2. Open Atlas Charts.
 3. Create a dashboard named `Pipeline Trend Review`.
 4. Add each chart below using data source
-   `deal_intel.dashboard_pipeline_trend`.
+   `recruit_ai.dashboard_pipeline_trend`.
 5. Prefer direct field encoding from the chart-ready rows. Use the rendered
    query only when you need to pre-filter to one `chart_id`.
 6. Save each chart back to the `Pipeline Trend Review` dashboard.
@@ -257,12 +257,12 @@ delta rows. That is expected until enough deal events create snapshots.
 
 ## Create The Customer Themes Dashboard
 
-1. In MongoDB Atlas, open the project that contains your `deal_intel`
+1. In MongoDB Atlas, open the project that contains your `recruit_ai`
    database.
 2. Open Atlas Charts.
 3. Create a dashboard named `Customer Themes Review`.
 4. Add each chart below using data source
-   `deal_intel.dashboard_customer_themes`.
+   `recruit_ai.dashboard_customer_themes`.
 5. Prefer direct field encoding from the chart-ready rows. Use the rendered
    query only when you need to pre-filter to one `chart_id`.
 6. Save each chart back to the `Customer Themes Review` dashboard.
@@ -383,7 +383,7 @@ Milestone 3.3 is the formal cross-check between:
 Run it with:
 
 ```bash
-~/miniconda3/envs/deal-intel/python.exe -m deal_intel.cli crosscheck-weekly-dashboard --as-of 2026-06-09 --output-dir outputs/m3_3_crosscheck
+recruit-ai crosscheck-weekly-dashboard --as-of 2026-06-09 --output-dir outputs/m3_3_crosscheck
 ```
 
 The command uses the same versioned aggregation pipelines as the dashboard, so a

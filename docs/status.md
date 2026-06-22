@@ -202,6 +202,10 @@ Completed:
   `local-data migrate-to-mongo` now migrate user-created local recruiting
   records from `recruiting.json` alongside local deals, with dry-run/apply,
   skip-existing, and overwrite behavior preserved for all migrated records.
+- Added Work 7Z Atlas Charts docs recruit-ai cleanup. `docs/atlas-charts.md`
+  now uses `recruit_ai` Atlas database paths and the `recruit-ai` CLI alias for
+  dashboard refresh, render, and cross-check commands, while retaining the
+  inherited internal renderer module name during the staged package cutover.
 
 Validation:
 
@@ -342,6 +346,9 @@ Validation:
   -> passed.
 - `mcpb validate mcpb\manifest.json` -> passed.
 - `git diff --check` -> passed; Windows line-ending warnings only.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-atlas-docs tests\test_atlas_charts.py tests\test_chart_ready_contracts.py tests\test_mongo_contracts.py`
+  -> 52 passed.
+- `ruff check src tests` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2b tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py tests\test_mongo_contracts.py`
   -> 45 passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recruiting-2c tests\test_recruiting_records_service.py tests\test_recruiting_records.py tests\test_recruiting_storage_contract.py tests\test_recruiting_schema.py`
