@@ -147,11 +147,15 @@ Completed:
   `sample=35`, `standard=49`, and `developer=53`.
 - Added a Northstar must-have evidence recommendation guardrail. The sample now
   includes a healthcare workflow candidate with adjacent domain strength but
-  missing required Python and data-platform evidence, and the recruiting smoke
+  missing required Python and data-platform evidence. The recruiting smoke
   contract now tracks 9 candidates, 29 local persistence records, and 5
   recommendation guardrail candidates. Skill-fit scoring now checks
   `must_have` and `nice_to_have` terms against both candidate skills and
   domains so mixed recruiter intake lists do not create false domain gaps.
+- Expanded that Northstar stress fixture with a candidate-side client
+  exclusion. The smoke evidence now shows lower client-preference fit, higher
+  match risk, and an explicit question about whether the exclusion can be
+  revisited before shortlisting.
 - Tightened candidate-to-position smoke evidence. `rq03_positions_for_avery`
   now records the default open-role filter, the two open roles available for
   first-pass matching, and the paused sample role excluded from the recommendation

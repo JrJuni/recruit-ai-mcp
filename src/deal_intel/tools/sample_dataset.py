@@ -435,8 +435,11 @@ def _base_recruiting_records(*, loaded_at: str) -> dict[str, list[dict]]:
                 "preferred_domains": ["healthcare", "workflow automation"],
                 "preferred_locations": ["Boston", "Remote US"],
                 "remote_preference": "hybrid or remote",
-                "excluded_companies": [],
-                "notes": "Needs confirmation on production Python and data platform depth.",
+                "excluded_companies": ["client_northstar_health"],
+                "notes": (
+                    "Needs confirmation on production Python and data platform "
+                    "depth, and asked not to be resubmitted to Northstar."
+                ),
             },
             "risk_flags": ["missing production Python evidence"],
             "evidence": [

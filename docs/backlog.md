@@ -109,6 +109,9 @@ Immediate quality order:
    - Additional stress coverage now includes a Northstar healthcare workflow
      candidate whose adjacent domain fit should not outrank the aligned staff
      candidate while required Python and data-platform evidence is missing.
+   - Additional stress coverage now includes a candidate-side client exclusion
+     that lowers client-preference fit, raises match risk, and asks whether
+     the exclusion can be revisited before shortlisting.
    - Continue adding synthetic client/candidate examples that stress skills,
      domain, seniority, compensation, location, availability, client
      preferences, and risk.

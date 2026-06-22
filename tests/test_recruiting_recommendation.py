@@ -354,9 +354,14 @@ def test_recruiting_sample_missing_must_have_does_not_outrank_match() -> None:
     assert jordan.fit_snapshot.dimensions["skill_fit"].score == 2
     assert "Confirm required skill: Python" in jordan.next_questions
     assert "Confirm required skill: data platforms" in jordan.next_questions
+    assert "Confirm whether the candidate exclusion can be revisited." in (
+        jordan.next_questions
+    )
+    assert jordan.fit_snapshot.dimensions["client_preference_fit"].score == 0
+    assert jordan.fit_snapshot.dimensions["risk"].score == 4
     assert jordan.risk_flags == [
         "missing production Python evidence",
-        "review_match_risk",
+        "high_match_risk",
     ]
 
 
