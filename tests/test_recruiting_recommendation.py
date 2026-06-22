@@ -142,6 +142,34 @@ def test_candidate_position_recommendation_respects_excluded_company() -> None:
     )
 
 
+def test_recommendation_result_exposes_feedback_adjustment_ledger() -> None:
+    run = build_position_candidate_recommendation_run(
+        position=_position(ideal_candidate_examples=[]),
+        candidates=[_candidate("cand_blake", skills=["Python"])],
+        client_feedback=[
+            {
+                "feedback_id": "fb_blake_skill",
+                "subject_type": "submission",
+                "subject_id": "sub_blake_backend",
+                "candidate_id": "cand_blake",
+                "position_id": "pos_backend_lead",
+                "sentiment": "positive",
+                "decision_signal": "advance",
+                "rubric_deltas": {"skill_fit": 2},
+            }
+        ],
+    )
+
+    assert run.results[0].feedback_adjustments[0].model_dump() == {
+        "feedback_id": "fb_blake_skill",
+        "dimension": "skill_fit",
+        "delta": 2,
+        "original_score": 3,
+        "adjusted_score": 5,
+        "reason": "Applied client feedback delta +2 from fb_blake_skill to skill_fit.",
+    }
+
+
 def test_recommendation_result_exposes_low_fit_reason_and_questions() -> None:
     run = build_position_candidate_recommendation_run(
         position=_position(ideal_candidate_examples=[]),

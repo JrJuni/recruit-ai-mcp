@@ -500,6 +500,32 @@ class Submission(RecruitingModel):
         return _clean_optional_text(value, max_length=500)
 
 
+class RecommendationFeedbackAdjustment(RecruitingModel):
+    feedback_id: str
+    dimension: str
+    delta: int = Field(ge=-5, le=5)
+    original_score: int = Field(ge=0, le=5)
+    adjusted_score: int = Field(ge=0, le=5)
+    reason: str = ""
+
+    @field_validator("feedback_id")
+    @classmethod
+    def _feedback_id(cls, value: str) -> str:
+        return _clean_id(value)
+
+    @field_validator("dimension")
+    @classmethod
+    def _dimension(cls, value: str) -> str:
+        if value not in _FIT_DIMENSION_SET:
+            raise ValueError("unknown fit dimension: " + str(value))
+        return value
+
+    @field_validator("reason")
+    @classmethod
+    def _safe_reason(cls, value: str) -> str:
+        return _clean_optional_text(value, max_length=1200)
+
+
 class RecommendationResult(RecruitingModel):
     target_id: str
     rank: int = Field(ge=1)
@@ -508,6 +534,9 @@ class RecommendationResult(RecruitingModel):
     risk_flags: list[str] = Field(default_factory=list)
     rejected_reason: str = ""
     next_questions: list[str] = Field(default_factory=list)
+    feedback_adjustments: list[RecommendationFeedbackAdjustment] = Field(
+        default_factory=list
+    )
 
     @field_validator("target_id")
     @classmethod

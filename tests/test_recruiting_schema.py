@@ -157,6 +157,24 @@ def test_schema_rejects_unknown_fit_dimension() -> None:
         )
 
 
+def test_recommendation_result_rejects_unknown_feedback_adjustment_dimension() -> None:
+    with pytest.raises(ValidationError, match="unknown fit dimension"):
+        RecommendationResult(
+            target_id="cand_jordan_lee",
+            rank=1,
+            fit_snapshot=_fit_snapshot(),
+            feedback_adjustments=[
+                {
+                    "feedback_id": "fb_001",
+                    "dimension": "vibes",
+                    "delta": 1,
+                    "original_score": 2,
+                    "adjusted_score": 3,
+                }
+            ],
+        )
+
+
 def test_schema_rejects_secret_like_metadata_without_echoing_secret() -> None:
     secret = "mongodb+srv://user:pass@example.mongodb.net/recruit_ai"
 

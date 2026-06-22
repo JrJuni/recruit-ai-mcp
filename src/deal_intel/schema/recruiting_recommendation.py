@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from dataclasses import asdict
 from typing import Any
 
 from deal_intel.schema.recruiting import (
@@ -148,6 +149,7 @@ def _recommendation_result(
         risk_flags=_risk_flags(risk_flags, fit),
         rejected_reason=_rejected_reason(fit),
         next_questions=_next_questions(fit),
+        feedback_adjustments=[asdict(item) for item in fit.feedback_adjustments],
     )
 
 

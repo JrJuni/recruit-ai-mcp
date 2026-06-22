@@ -290,6 +290,8 @@ def test_recommendation_service_applies_feedback_deltas() -> None:
         row for row in result["record"]["results"] if row["target_id"] == "cand_blake"
     )
     assert blake["fit_snapshot"]["dimensions"]["skill_fit"]["score"] == 3
+    assert blake["feedback_adjustments"][0]["dimension"] == "skill_fit"
+    assert blake["feedback_adjustments"][0]["adjusted_score"] == 3
 
 
 def test_recommendation_service_raises_not_found_for_missing_anchor() -> None:

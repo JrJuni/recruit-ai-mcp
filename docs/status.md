@@ -133,6 +133,10 @@ Completed:
   `preferences.excluded_companies` now suppresses client preference fit for a
   matching position client, raises review-level match risk, and can move an
   otherwise strong excluded-company position below an equivalent allowed one.
+- Added recommendation feedback-adjustment output tracing. Recommendation
+  result rows now preserve Work 3C `feedback_adjustments`, so service/MCP
+  responses can show which client-feedback rubric delta changed a fit
+  dimension score.
 - Hardened local workflow trace observability. Trace status and reset payloads
   now report invalid JSONL trace line counts while preserving the redacted
   event-only read path.
@@ -456,6 +460,10 @@ Validation:
   -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-excluded-company-smoke tests\test_cli_deal_review_smoke.py::test_smoke_natural_questions_recruiting_pack_writes_artifacts tests\test_validate_recruiting_smoke.py`
   -> 5 passed.
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-recommendation-feedback-ledger tests\test_recruiting_schema.py tests\test_recruiting_match.py tests\test_recruiting_recommendation.py tests\test_recruiting_recommendations_service.py tests\test_recruiting_mcp_tools.py`
+  -> 45 passed, 1 external deprecation warning.
+- `ruff check src\deal_intel\schema\recruiting.py src\deal_intel\schema\recruiting_recommendation.py tests\test_recruiting_schema.py tests\test_recruiting_recommendation.py tests\test_recruiting_recommendations_service.py`
+  -> passed.
 - `git diff --check` -> passed.
 - `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-user-test-guide-recruit-ai tests\test_docs_recruit_ai_current.py`
   -> 14 passed.

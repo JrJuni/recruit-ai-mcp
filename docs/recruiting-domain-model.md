@@ -342,6 +342,9 @@ Builder policy:
 - `next_questions` are derived from missing information and low-dimension
   warnings.
 - Candidate risk flags and high raw risk scores are surfaced on the result.
+- Feedback adjustment ledgers from Work 3C are preserved on each
+  `RecommendationResult` as `feedback_adjustments`, so operators can see which
+  client feedback changed a dimension score.
 
 ## Work 4A Internal Recommendation Services
 
