@@ -131,6 +131,9 @@ Completed:
 - Expanded the recruiting natural-question recommendation guardrail artifact
   with per-dimension guardrail scores and next questions, so authorization,
   risk, and preference penalties remain visible in release smoke evidence.
+- Added a specific `work_authorization_mismatch` recommendation risk flag so
+  shortlist rows expose authorization conflicts directly instead of only
+  generic review/high-risk labels.
 - Added a realistic Northstar recommendation stress fixture for a healthcare
   platform manager-only candidate. The sample recommendation tests and natural
   question guardrails now ensure this keyword-strong but constraint-heavy

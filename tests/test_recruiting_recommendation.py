@@ -213,6 +213,33 @@ def test_recommendation_result_carries_risk_flags_from_candidate_and_fit() -> No
     ]
 
 
+def test_recommendation_result_surfaces_work_authorization_mismatch() -> None:
+    run = build_position_candidate_recommendation_run(
+        position=_position(locations=["Boston", "Remote US"], remote_policy="Remote US only"),
+        candidates=[
+            _candidate(
+                "cand_blake",
+                locations=["London"],
+                work_authorization="UK authorized",
+                preferences={
+                    "preferred_locations": ["London"],
+                    "remote_preference": "remote Europe",
+                },
+            )
+        ],
+    )
+
+    result = run.results[0]
+
+    assert result.risk_flags == [
+        "work_authorization_mismatch",
+        "review_match_risk",
+    ]
+    assert "Confirm work authorization or sponsorship feasibility." in (
+        result.next_questions
+    )
+
+
 def test_recommendation_run_accepts_mongo_style_dict_inputs() -> None:
     candidate = _candidate("cand_avery").model_dump(mode="json")
     candidate["_id"] = "mongo-candidate-id"
@@ -252,6 +279,7 @@ def test_recruiting_sample_stress_candidate_does_not_outrank_aligned_match() -> 
         "compensation above current budget",
         "requires UK remote exception",
         "late availability",
+        "work_authorization_mismatch",
         "high_match_risk",
     ]
 

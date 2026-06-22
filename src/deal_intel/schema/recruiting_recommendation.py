@@ -167,12 +167,23 @@ def _risk_flags(
     fit: CandidatePositionFitResult,
 ) -> list[str]:
     flags = list(candidate_risk_flags[:20])
+    if _has_work_authorization_mismatch(fit) and "work_authorization_mismatch" not in flags:
+        flags.append("work_authorization_mismatch")
     risk_score = fit.signals["risk"].score
     if risk_score >= 4 and "high_match_risk" not in flags:
         flags.append("high_match_risk")
     elif risk_score >= 2 and "review_match_risk" not in flags:
         flags.append("review_match_risk")
     return flags[:30]
+
+
+def _has_work_authorization_mismatch(fit: CandidatePositionFitResult) -> bool:
+    location_signal = fit.signals["location_fit"]
+    return (
+        "work authorization is not US-aligned" in location_signal.rationale
+        or "Confirm work authorization or sponsorship feasibility."
+        in location_signal.missing_info
+    )
 
 
 def _rejected_reason(fit: CandidatePositionFitResult) -> str:
