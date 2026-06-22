@@ -235,6 +235,32 @@ def test_candidate_position_fit_penalizes_candidate_excluded_company() -> None:
     )
 
 
+def test_candidate_position_fit_penalizes_work_authorization_mismatch() -> None:
+    result = build_candidate_position_fit(
+        candidate=_candidate(
+            locations=["London"],
+            work_authorization="UK authorized",
+            preferences={
+                "preferred_locations": ["London"],
+                "remote_preference": "remote Europe",
+            },
+        ),
+        position=_position(
+            locations=["Boston", "Remote US"],
+            remote_policy="Remote US only",
+        ),
+    )
+
+    assert result.signals["location_fit"].score == 1
+    assert result.signals["location_fit"].rationale == (
+        "Role appears US-bound but candidate work authorization is not US-aligned."
+    )
+    assert result.signals["risk"].score == 2
+    assert "Confirm work authorization or sponsorship feasibility." in (
+        result.snapshot.missing_info
+    )
+
+
 def test_candidate_position_fit_ignores_unrelated_feedback_for_risk() -> None:
     result = build_candidate_position_fit(
         candidate=_candidate(),

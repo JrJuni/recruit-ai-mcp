@@ -349,6 +349,14 @@ def _location_signal(
             missing_info=["Confirm candidate location and remote preference."],
         )
 
+    if _requires_us_authorization(position) and not _has_us_authorization(candidate):
+        return FitSignal(
+            score=1,
+            rationale="Role appears US-bound but candidate work authorization is not US-aligned.",
+            evidence_refs=evidence,
+            missing_info=["Confirm work authorization or sponsorship feasibility."],
+        )
+
     role_remote = _mentions_remote(role_locations)
     candidate_remote = _mentions_remote(candidate_locations)
     if _matched_items(role_locations, candidate_locations):
@@ -508,6 +516,8 @@ def _risk_signal(
             risk_score += 1
     if _candidate_excludes_position_client(candidate, position):
         risk_score += 2
+    if _requires_us_authorization(position) and not _has_us_authorization(candidate):
+        risk_score += 2
 
     risk_score = _clamp_score(risk_score)
     if risk_score == 0:
@@ -605,6 +615,41 @@ def _candidate_excludes_position_client(
     if not excluded or not position.client_company_id:
         return False
     return bool(_matched_items(excluded, [position.client_company_id]))
+
+
+def _requires_us_authorization(position: Position) -> bool:
+    role_text = " ".join([*position.locations, position.remote_policy]).lower()
+    if not role_text:
+        return False
+    return any(
+        term in role_text
+        for term in (
+            "us",
+            "u.s.",
+            "usa",
+            "united states",
+            "remote us",
+            "new york",
+            "boston",
+            "austin",
+            "seattle",
+            "san francisco",
+        )
+    )
+
+
+def _has_us_authorization(candidate: CandidateProfile) -> bool:
+    authorization = candidate.work_authorization.lower()
+    if not authorization:
+        return False
+    if any(term in authorization for term in ("us authorized", "u.s. authorized")):
+        return True
+    if "authorized" in authorization and any(
+        term in authorization
+        for term in ("us", "u.s.", "usa", "united states", "green card", "citizen")
+    ):
+        return True
+    return False
 
 
 def _content_tokens(value: str) -> set[str]:

@@ -124,6 +124,10 @@ Completed:
 - Cleaned architecture and recruiting-domain docs so they no longer describe
   current recruiting MCP, recommendation, metrics, or sample-surface paths as
   deferred after those paths are implemented.
+- Added a deterministic work-authorization guardrail to candidate-position fit
+  scoring. US-bound roles now lower `location_fit`, raise match risk, and ask
+  for sponsorship/authorization confirmation when a candidate is not
+  US-authorized.
 - Added a realistic Northstar recommendation stress fixture for a healthcare
   platform manager-only candidate. The sample recommendation tests and natural
   question guardrails now ensure this keyword-strong but constraint-heavy

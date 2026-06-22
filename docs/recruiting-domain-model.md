@@ -291,6 +291,8 @@ Builder policy:
 - Seniority, compensation, location, and availability use deterministic
   field-to-field comparisons and expose missing-information questions when the
   comparison is under-specified.
+- Location fit also accounts for basic work-authorization mismatch when a role
+  appears US-bound and the candidate is not US-authorized.
 - Client preference fit uses ideal-candidate examples first, then applicable
   feedback and learned preference text.
 - Risk remains directionally inverted by the Work 3A rubric. Candidate risk

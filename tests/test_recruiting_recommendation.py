@@ -236,7 +236,7 @@ def test_recruiting_sample_stress_candidate_does_not_outrank_aligned_match() -> 
         position=positions["pos_northstar_backend_lead"],
         candidates=records[CANDIDATES],
         client_feedback=records[FEEDBACK],
-        limit=5,
+        limit=8,
     )
 
     results = {result.target_id: result for result in run.results}
@@ -246,6 +246,8 @@ def test_recruiting_sample_stress_candidate_does_not_outrank_aligned_match() -> 
     assert results["cand_nora_weiss"].fit_snapshot.overall_score < (
         results["cand_avery_chen"].fit_snapshot.overall_score
     )
+    assert results["cand_nora_weiss"].fit_snapshot.dimensions["location_fit"].score == 1
+    assert results["cand_nora_weiss"].fit_snapshot.dimensions["risk"].score == 5
     assert results["cand_nora_weiss"].risk_flags == [
         "compensation above current budget",
         "requires UK remote exception",
