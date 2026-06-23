@@ -364,7 +364,7 @@ Current status:
   MCPB validate/pack/info, npm dry-run packing, and Python wheel/sdist build
   passed. The root, npm-bundled, and `release/latest` MCPB artifacts share
   SHA256
-  `3C183B78F5EDABE221FC993D3CD54302D25FCEA53F21A3C75A9723B386755936`.
+  `369CA162C1290D9427F0A0A8FAB9C9E816A9BD4F3EA1B3E04B26684B5007BD11`.
 - PyPI and npm registry publication are pending for `0.1.0`.
 - `setup` now runs `smoke-profile --profile sample` as the post-install check
   so missing MongoDB/API values do not make the first install look broken.

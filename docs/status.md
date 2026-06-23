@@ -12,6 +12,25 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Local package artifact refresh after evidence-gap guardrail
+
+Completed:
+
+- Rebuilt `mcpb/recruit-ai-mcp-0.1.0.mcpb` after the recruiting evidence-gap
+  guardrail and smoke-contract update.
+- Copied the refreshed MCPB artifact into `npm/mcpb/` and `release/latest/`,
+  then updated `release/latest/checksums.txt`. The three MCPB copies now share
+  SHA256
+  `369CA162C1290D9427F0A0A8FAB9C9E816A9BD4F3EA1B3E04B26684B5007BD11`.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-package-refresh tests\test_bootstrapper_skeleton.py tests\test_mcpb_manifest.py tests\test_docs_recruit_ai_current.py tests\test_validate_recruiting_smoke.py`
+- `mcpb validate manifest.json` from `mcpb/`
+- `mcpb pack . recruit-ai-mcp-0.1.0.mcpb` from `mcpb/`
+- `mcpb info recruit-ai-mcp-0.1.0.mcpb` from `mcpb/`
+- `npm pack .\npm --dry-run --cache .tmp\npm-cache`
+
 ### Recruiting evidence-gap recommendation guardrail
 
 Completed:
@@ -110,7 +129,7 @@ Completed:
   `npm/mcpb/` and `release/latest/`, and updated
   `release/latest/checksums.txt`. The three MCPB copies now share the same
   SHA256:
-  `3C183B78F5EDABE221FC993D3CD54302D25FCEA53F21A3C75A9723B386755936`.
+  `369CA162C1290D9427F0A0A8FAB9C9E816A9BD4F3EA1B3E04B26684B5007BD11`.
 - Tightened `docs/release-publish-checklist.md` so the pre-publish local gate
   explicitly rebuilds the MCPB artifact before inspecting it.
 
