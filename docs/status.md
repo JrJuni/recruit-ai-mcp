@@ -12,23 +12,22 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
-### Release checklist smoke-contract alignment
+### Restart handoff checkpoint
 
 Completed:
 
-- Updated `docs/release-publish-checklist.md` so installed-package smoke pass
-  criteria include the current stricter recruiting smoke validator contract.
-- The checklist now calls out saved recommendation feedback/risk/question
-  counts, workflow trace enabled/written/recent-tool evidence, report export
-  row/line/briefing evidence, and candidate exclusion evidence before public
-  package readiness can be claimed.
-- Added docs-current assertions so future release-doc edits do not drift behind
-  `scripts/validate_recruiting_smoke.py`.
+- Restored the release checklist smoke-contract alignment in the working tree
+  and prepared a restart-safe checkpoint.
+- The active backlog now records the remaining local work before any external
+  publish action: align MVP readiness with the stricter recruiting smoke
+  validator, then run the final local release/package gate, then stop for
+  maintainer approval before any PyPI/npm/tag/push action.
 
 Verification:
 
-- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-release-contract-docs tests\test_docs_recruit_ai_current.py`
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-restart-handoff tests\test_docs_recruit_ai_current.py`
 - `ruff check tests\test_docs_recruit_ai_current.py`
+- `git diff --check`
 
 ### Public registry evidence refresh
 
