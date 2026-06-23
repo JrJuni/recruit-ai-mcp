@@ -20,6 +20,38 @@ Related: files or docs
 
 ---
 
+## [2026-06-23] Keep smoke verification high-signal during autonomous loops
+
+Tried: During the Recruit AI recommendation-quality loop, repeatedly run the
+recruiting natural-question smoke pack with full JSON output printed to the
+terminal while also making small one-flag-at-a-time commits.
+
+Result: The implementation stayed on scope and the verification discipline was
+useful, but the full smoke JSON output consumed unnecessary context and was
+truncated several times. Some related risk-flag changes could have been batched
+into one implementation and verification pass without losing safety.
+
+Lesson:
+
+- Keep the smoke pack as a release-quality gate, but avoid printing full JSON
+  payloads unless the output shape itself is under review.
+- Prefer writing smoke artifacts to `.tmp/...`, validating the generated
+  summary with `scripts/validate_recruiting_smoke.py`, and inspecting only the
+  specific fields needed with a narrow JSON query or `Select-String`.
+- Batch tightly related recommendation-quality changes, such as adjacent risk
+  flags or fixture stress cases, into one scoped commit with one targeted
+  pytest/Ruff/smoke/validator pass.
+- Continue using `PYTHONPATH=src` for targeted tests and CLI smoke so the local
+  source tree wins over any stale editable install.
+- Use full smoke reruns when payload contracts, sample data, or release gates
+  change. For validator-only edits, test the validator directly first.
+
+Related: `scripts/validate_recruiting_smoke.py`,
+`tests/test_cli_deal_review_smoke.py`, `tests/test_validate_recruiting_smoke.py`,
+`docs/status.md`.
+
+---
+
 ## [2026-06-19] Avoid full CI log ingestion during PR merge loops
 
 Tried: During a `commit -> push -> PR -> merge` loop, inspect failing GitHub

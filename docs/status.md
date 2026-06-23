@@ -12,6 +12,18 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Agent loop hygiene note
+
+Completed:
+
+- Added a lessons-learned entry for the Recruit AI recommendation-quality loop:
+  keep full smoke verification, but do not print large natural-question JSON
+  payloads into the agent context by default.
+- Updated `AGENTS.md` so future loops prefer workspace-local smoke artifacts,
+  `PYTHONPATH=src`, validator scripts, narrow field inspection, and batching
+  related risk-flag or fixture changes into one verification pass when they
+  share the same safety boundary.
+
 ### Recruiting domain model and Mongo storage contract
 
 Completed:
