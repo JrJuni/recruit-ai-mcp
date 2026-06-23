@@ -352,8 +352,17 @@ Builder policy:
 - `next_questions` are derived from missing information and low-dimension
   warnings.
 - Candidate risk flags and high raw risk scores are surfaced on the result.
-- Authorization mismatches add a specific `work_authorization_mismatch` result
-  risk flag in addition to the generic review/high-risk flag.
+- Recommendation results can also add normalized inferred risk flags when the
+  fit evidence shows a specific issue and the candidate profile does not
+  already carry an equivalent human-written risk note:
+  `work_authorization_mismatch`, `location_policy_mismatch`, `skill_gap`,
+  `compensation_mismatch`, `domain_mismatch`, `availability_timing_risk`,
+  `seniority_mismatch`, `role_scope_mismatch`, `client_exclusion`,
+  `client_preference_conflict`, `retention_risk`, `process_conflict`,
+  `evidence_gap`, and `low_confidence_evidence`.
+- Generic `review_match_risk` or `high_match_risk` flags are still added when
+  the raw risk dimension is elevated and no equivalent generic flag is already
+  present.
 - Feedback adjustment ledgers from Work 3C are preserved on each
   `RecommendationResult` as `feedback_adjustments`, so operators can see which
   client feedback changed a dimension score.

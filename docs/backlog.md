@@ -166,6 +166,8 @@ Immediate quality order:
    - Recommendation rows now surface inferred `skill_gap` flags when a
      candidate covers only a small portion of role must-have skills and missing
      required-skill follow-up questions are present.
+   - The recruiting domain-model contract now documents the normalized
+     inferred recommendation risk flags emitted by the deterministic builder.
    - Recommendation rows now surface inferred `domain_mismatch` flags when
      candidate skills are aligned but captured domain history does not clearly
      transfer to the role context.

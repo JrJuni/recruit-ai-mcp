@@ -469,6 +469,31 @@ def test_extending_doc_is_recruit_ai_current() -> None:
     )
 
 
+def test_recruiting_domain_model_documents_inferred_risk_flags() -> None:
+    docs = (ROOT / "docs" / "recruiting-domain-model.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert "normalized inferred risk flags" in docs
+    for flag in [
+        "work_authorization_mismatch",
+        "location_policy_mismatch",
+        "skill_gap",
+        "compensation_mismatch",
+        "domain_mismatch",
+        "availability_timing_risk",
+        "seniority_mismatch",
+        "role_scope_mismatch",
+        "client_exclusion",
+        "client_preference_conflict",
+        "retention_risk",
+        "process_conflict",
+        "evidence_gap",
+        "low_confidence_evidence",
+    ]:
+        assert flag in docs
+
+
 def test_docs_map_current_streams_are_recruit_ai_current() -> None:
     docs = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
     current_streams = docs.split("## Current Product Streams", maxsplit=1)[1]

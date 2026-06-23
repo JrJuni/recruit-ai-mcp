@@ -12,6 +12,21 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruiting domain-model inferred-risk docs guard
+
+Completed:
+
+- Updated `docs/recruiting-domain-model.md` so the Work 3D recommendation
+  result contract documents the normalized inferred risk flags currently
+  emitted by the deterministic recommendation builder.
+- Added docs-current coverage for the inferred risk flag list so future
+  recommendation changes are less likely to leave the domain model stale.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-domain-model-flags tests\test_docs_recruit_ai_current.py`
+- `ruff check tests\test_docs_recruit_ai_current.py`
+
 ### Release docs required-risk smoke contract guard
 
 Completed:
