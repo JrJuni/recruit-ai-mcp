@@ -30,8 +30,14 @@ def test_mvp_readiness_is_recruit_ai_current() -> None:
     assert "macOS fresh-machine smoke remains external-machine evidence" in docs
     assert "current local\n  pre-publish bootstrapper gate" in docs
     assert "after public registry smoke evidence\n  exists" in docs
+    assert "Remaining post-bootstrap quality candidates" in docs
+    assert "Post-bootstrap tool design cleanup" in docs
+    assert "Post-bootstrap tool design candidates" in docs
 
     assert "sales/deal-intelligence" not in docs
+    assert "Remaining post-v2 quality candidates" not in docs
+    assert "Post-v2 tool design cleanup" not in docs
+    assert "Post-v2 tool design candidates" not in docs
     assert "deal-intel usage" not in docs
     assert "DEAL_INTEL_STORAGE_BACKEND" not in docs
     assert "sample=24" not in docs

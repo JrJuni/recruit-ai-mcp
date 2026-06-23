@@ -86,14 +86,14 @@ Not MVP-blocking:
 - OpenAI API live smoke with paid credits.
 - Deep account people graph / CRM-like contact model.
 
-Remaining post-v2 quality candidates:
+Remaining post-bootstrap quality candidates:
 
 - Keep validating recruiting tool-selection descriptions through the
   recruiting-first natural-question smoke pack and real host usage.
 - Improve recruiting recommendation, report, and inherited deal-review quality
   with real user traces and synthetic corner-case datasets.
 
-Post-v2 tool design cleanup:
+Post-bootstrap tool design cleanup:
 
 - Consolidate customer-theme analysis after real host usage is observed.
   Ranking, breakdown, and evidence are one user workflow today, but this is not
@@ -102,12 +102,12 @@ Post-v2 tool design cleanup:
   remains one coherent "confirmed metadata correction" workflow; split only if
   unrelated decision types enter the tool.
 
-Post-v2 tool design candidates:
+Post-bootstrap tool design candidates:
 
 - Add response verbosity controls such as `response_format=concise|detailed`
   only if real traces show meaningful token pressure.
 - Consider broad tool namespace changes only as a breaking-version cleanup, not
-  as a v2 patch.
+  as a `0.1.x` patch.
 
 ## Required Gates
 
