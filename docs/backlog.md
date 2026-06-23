@@ -149,12 +149,11 @@ Immediate quality order:
      matching `recruit-ai-mcp` distribution.
    - Release docs now require the current recruiting smoke contract's
      `skill_gap` surfaced-risk checks for guardrail and shortlist payloads.
-   - Next local unit after restart: align `docs/mvp-readiness.md` Required
-     Gates with the stricter `rq14`-`rq17` recruiting smoke validator contract
-     and add docs-current guards.
-   - Then run one final local release/package gate refresh. Stop for maintainer
-     approval before any external action: push, tag, PyPI upload, npm publish,
-     dist-tag change, or publish workflow trigger.
+   - MVP readiness Required Gates now require the stricter `rq14`-`rq17`
+     recruiting smoke validator evidence and have docs-current guards.
+   - Next local unit: run one final local release/package gate refresh. Stop
+     for maintainer approval before any external action: push, tag, PyPI
+     upload, npm publish, dist-tag change, or publish workflow trigger.
    - Record fresh public `npx recruit-ai-mcp@0.1.0` smoke evidence before
      claiming public registry readiness for this fork.
 4. Improve recruiting recommendation quality with realistic fixtures.

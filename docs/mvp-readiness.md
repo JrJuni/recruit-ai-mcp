@@ -249,6 +249,29 @@ Pass criteria:
 - The pack also covers realistic recommendation guardrails, including
   must-have skill evidence gaps, and client shortlist readiness for open sample
   positions.
+- Validate the generated summary with
+  `scripts\validate_recruiting_smoke.py`.
+- The validator contract must confirm saved recommendation-run review evidence:
+  `saved_run_result_count=3`, `saved_run_feedback_adjustment_row_count=2`,
+  `saved_run_risk_row_count=2`, and
+  `saved_run_next_question_row_count=2`.
+- The validator contract must confirm opt-in workflow trace evidence:
+  `trace_written=True`, `trace_enabled=True`, `trace_exists=True`,
+  `trace_event_count=1`,
+  `trace_recent_tool_names=['add_recruiting_interaction']`,
+  `trace_redacted_marker_count=3`, and
+  `trace_forbidden_value_present=False`.
+- The validator contract must confirm report export evidence:
+  `report_export_artifact_count=2`, `report_export_csv_exists=True`,
+  `report_export_markdown_exists=True`, `report_export_csv_row_count=49`,
+  `report_export_markdown_line_count=40`, `report_export_row_count=48`,
+  and
+  `report_export_briefing=2 open positions, 3 active submissions, 1 placements.`
+- The validator contract must confirm candidate-side exclusion evidence:
+  `candidate_exclusion_result_count=2`,
+  `candidate_exclusion_top_position_id=pos_orbitpay_payments_lead`,
+  `candidate_exclusion_flagged_count=1`, and
+  `candidate_exclusion_question_count=1`.
 
 ### 4. Inherited Deal Review QA
 

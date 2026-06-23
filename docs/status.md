@@ -12,6 +12,24 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### MVP readiness smoke-contract alignment
+
+Completed:
+
+- Updated `docs/mvp-readiness.md` so the Recruiting Workflow Smoke Required
+  Gate explicitly requires `scripts\validate_recruiting_smoke.py`.
+- The MVP gate now names the stricter `rq14`-`rq17` evidence required by the
+  current validator: saved recommendation-run rows, workflow trace evidence,
+  report export row/line/briefing evidence, and candidate-side exclusion
+  evidence.
+- Added docs-current assertions so the MVP readiness gate stays aligned with
+  `EXPECTED_CONTRACT`.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-mvp-readiness-contract tests\test_docs_recruit_ai_current.py`
+- `ruff check tests\test_docs_recruit_ai_current.py`
+
 ### Restart handoff checkpoint
 
 Completed:

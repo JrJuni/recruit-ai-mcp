@@ -22,10 +22,66 @@ def test_mvp_readiness_is_recruit_ai_current() -> None:
     assert "recommend_candidates_for_position" in docs
     assert "smoke-natural-questions --pack recruiting --as-of 2026-06-22" in docs
     assert "`questions=17`" in docs
+    assert "scripts\\validate_recruiting_smoke.py" in docs
     assert "recruiting pipeline CSV and Markdown report" in docs
     assert (
         "must-have skill evidence gaps, and client shortlist readiness for open sample"
         in normalized
+    )
+    assert f"`saved_run_result_count={EXPECTED_CONTRACT['saved_run_result_count']}`" in docs
+    assert (
+        "`saved_run_feedback_adjustment_row_count="
+        f"{EXPECTED_CONTRACT['saved_run_feedback_adjustment_row_count']}`"
+        in docs
+    )
+    assert (
+        f"`saved_run_risk_row_count={EXPECTED_CONTRACT['saved_run_risk_row_count']}`"
+        in docs
+    )
+    assert (
+        "`saved_run_next_question_row_count="
+        f"{EXPECTED_CONTRACT['saved_run_next_question_row_count']}`"
+        in docs
+    )
+    assert f"`trace_written={EXPECTED_CONTRACT['trace_written']}`" in docs
+    assert f"`trace_enabled={EXPECTED_CONTRACT['trace_enabled']}`" in docs
+    assert f"`trace_exists={EXPECTED_CONTRACT['trace_exists']}`" in docs
+    assert f"`trace_event_count={EXPECTED_CONTRACT['trace_event_count']}`" in docs
+    assert (
+        "`trace_recent_tool_names="
+        f"{EXPECTED_CONTRACT['trace_recent_tool_names']}`"
+        in docs
+    )
+    assert (
+        "`trace_redacted_marker_count="
+        f"{EXPECTED_CONTRACT['trace_redacted_marker_count']}`"
+        in docs
+    )
+    assert (
+        "`trace_forbidden_value_present="
+        f"{EXPECTED_CONTRACT['trace_forbidden_value_present']}`"
+        in docs
+    )
+    assert (
+        "`report_export_csv_row_count="
+        f"{EXPECTED_CONTRACT['report_export_csv_row_count']}`"
+        in docs
+    )
+    assert (
+        "`report_export_markdown_line_count="
+        f"{EXPECTED_CONTRACT['report_export_markdown_line_count']}`"
+        in docs
+    )
+    assert f"`report_export_row_count={EXPECTED_CONTRACT['report_export_row_count']}`" in docs
+    assert (
+        "`report_export_briefing="
+        f"{EXPECTED_CONTRACT['report_export_briefing']}`"
+        in docs
+    )
+    assert (
+        "`candidate_exclusion_top_position_id="
+        f"{EXPECTED_CONTRACT['candidate_exclusion_top_position_id']}`"
+        in docs
     )
     assert "Public registry `npx recruit-ai-mcp@0.1.0` readiness remains pending" in docs
     assert "disposable `RECRUIT_AI_HOME`" in docs
