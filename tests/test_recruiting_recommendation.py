@@ -247,6 +247,33 @@ def test_recommendation_result_surfaces_work_authorization_mismatch() -> None:
     )
 
 
+def test_recommendation_result_surfaces_location_policy_mismatch() -> None:
+    run = build_position_candidate_recommendation_run(
+        position=_position(
+            locations=["London"],
+            remote_policy="onsite",
+        ),
+        candidates=[
+            _candidate(
+                "cand_blake",
+                locations=["Remote Europe"],
+                preferences={
+                    "preferred_locations": ["Remote Europe"],
+                    "remote_preference": "remote only",
+                },
+            )
+        ],
+    )
+
+    result = run.results[0]
+
+    assert result.fit_snapshot.dimensions["location_fit"].score == 1
+    assert result.risk_flags == ["location_policy_mismatch"]
+    assert "Confirm location, timezone, or relocation flexibility." in (
+        result.next_questions
+    )
+
+
 def test_recommendation_result_surfaces_compensation_mismatch() -> None:
     run = build_position_candidate_recommendation_run(
         position=_position(),

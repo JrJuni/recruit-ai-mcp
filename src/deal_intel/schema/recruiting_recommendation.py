@@ -169,6 +169,11 @@ def _risk_flags(
     flags = list(candidate_risk_flags[:20])
     if _has_work_authorization_mismatch(fit) and "work_authorization_mismatch" not in flags:
         flags.append("work_authorization_mismatch")
+    if (
+        _has_location_policy_mismatch(fit)
+        and "location_policy_mismatch" not in flags
+    ):
+        flags.append("location_policy_mismatch")
     if _has_compensation_mismatch(fit) and not _has_existing_compensation_flag(flags):
         flags.append("compensation_mismatch")
     if _has_client_exclusion(fit) and "client_exclusion" not in flags:
@@ -200,6 +205,16 @@ def _has_work_authorization_mismatch(fit: CandidatePositionFitResult) -> bool:
     return (
         "work authorization is not US-aligned" in location_signal.rationale
         or "Confirm work authorization or sponsorship feasibility."
+        in location_signal.missing_info
+    )
+
+
+def _has_location_policy_mismatch(fit: CandidatePositionFitResult) -> bool:
+    location_signal = fit.signals["location_fit"]
+    return (
+        location_signal.score <= 2
+        and not _has_work_authorization_mismatch(fit)
+        and "Confirm location, timezone, or relocation flexibility."
         in location_signal.missing_info
     )
 

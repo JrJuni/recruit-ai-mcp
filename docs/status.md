@@ -12,6 +12,21 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruiting location-policy mismatch flag
+
+Completed:
+
+- Added an inferred `location_policy_mismatch` recommendation risk flag for
+  candidates whose location or remote preference conflicts with a
+  location-bound role for reasons other than work authorization.
+- Kept existing work-authorization mismatch behavior separate so US-bound
+  authorization concerns still surface as `work_authorization_mismatch`.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-location-policy-2 tests\test_recruiting_recommendation.py`
+- `ruff check src\deal_intel\schema\recruiting_recommendation.py tests\test_recruiting_recommendation.py`
+
 ### Workflow trace reset CLI regression coverage
 
 Completed:

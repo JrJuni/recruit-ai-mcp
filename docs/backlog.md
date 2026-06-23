@@ -145,6 +145,9 @@ Immediate quality order:
    - Recommendation rows now surface inferred `low_confidence_evidence` flags
      and a direct-source confirmation question when a keyword-strong candidate
      is backed only by internal, unknown, or outbound-unconfirmed evidence.
+   - Recommendation rows now surface inferred `location_policy_mismatch` flags
+     when candidate remote/location preferences conflict with a location-bound
+     role for reasons other than work authorization.
    - Continue adding synthetic client/candidate examples that stress skills,
      domain, seniority, compensation, location, availability, client
      preferences, evidence quality, and risk.
