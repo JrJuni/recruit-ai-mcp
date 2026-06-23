@@ -212,8 +212,12 @@ def test_recommendation_result_carries_risk_flags_from_candidate_and_fit() -> No
     assert result.risk_flags == [
         "counteroffer risk",
         "limited availability",
+        "retention_risk",
         "high_match_risk",
     ]
+    assert "Confirm retention or counteroffer mitigation plan." in (
+        result.next_questions
+    )
 
 
 def test_recommendation_result_surfaces_work_authorization_mismatch() -> None:
@@ -472,3 +476,32 @@ def test_recruiting_sample_client_preference_conflict_does_not_outrank_match() -
         "client_preference_conflict",
         "review_match_risk",
     ]
+
+
+def test_recruiting_sample_retention_risk_does_not_outrank_match() -> None:
+    records = build_sample_recruiting_records(loaded_at="2026-06-22T00:00:00+00:00")
+    positions = {row["position_id"]: row for row in records[POSITIONS]}
+
+    run = build_position_candidate_recommendation_run(
+        position=positions["pos_orbitpay_payments_lead"],
+        candidates=records[CANDIDATES],
+        client_feedback=records[FEEDBACK],
+        limit=10,
+    )
+
+    results = {result.target_id: result for result in run.results}
+
+    assert run.results[0].target_id == "cand_mateo_rivera"
+    assert results["cand_riley_morgan"].rank > results["cand_mateo_rivera"].rank
+    assert results["cand_riley_morgan"].fit_snapshot.overall_score < (
+        results["cand_mateo_rivera"].fit_snapshot.overall_score
+    )
+    assert results["cand_riley_morgan"].fit_snapshot.dimensions["risk"].score == 3
+    assert results["cand_riley_morgan"].risk_flags == [
+        "counteroffer likely after final interview",
+        "retention_risk",
+        "review_match_risk",
+    ]
+    assert "Confirm retention or counteroffer mitigation plan." in (
+        results["cand_riley_morgan"].next_questions
+    )

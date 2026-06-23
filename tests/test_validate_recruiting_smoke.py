@@ -114,6 +114,14 @@ def _payload(
                                 "Review client preference conflict before shortlisting."
                             ],
                         },
+                        {
+                            "guardrail_candidate_id": "cand_riley_morgan",
+                            "guardrail_dimension_scores": dict(GUARDRAIL_DIMENSION_SCORES),
+                            "guardrail_risk_flags": ["retention_risk"],
+                            "guardrail_next_questions": [
+                                "Confirm retention or counteroffer mitigation plan."
+                            ],
+                        },
                     ],
                 },
             },
@@ -176,6 +184,16 @@ def _payload(
                                     ],
                                 },
                                 {
+                                    "candidate_id": "cand_riley_morgan",
+                                    "dimension_scores": dict(GUARDRAIL_DIMENSION_SCORES),
+                                    "risk_flags": [
+                                        "retention_risk"
+                                    ],
+                                    "next_questions": [
+                                        "Confirm retention or counteroffer mitigation plan."
+                                    ],
+                                },
+                                {
                                     "candidate_id": "cand_iris_kim",
                                     "dimension_scores": dict(GUARDRAIL_DIMENSION_SCORES),
                                     "risk_flags": [
@@ -183,14 +201,6 @@ def _payload(
                                     ],
                                     "next_questions": [
                                         "Improve evidence for seniority_fit."
-                                    ],
-                                },
-                                {
-                                    "candidate_id": "cand_sam_taylor",
-                                    "dimension_scores": dict(GUARDRAIL_DIMENSION_SCORES),
-                                    "risk_flags": ["needs heavy role shaping"],
-                                    "next_questions": [
-                                        "Review client preference conflict before shortlisting."
                                     ],
                                 },
                             ],
@@ -294,8 +304,8 @@ def test_validate_recruiting_smoke_cli_fails_without_guardrail_evidence(tmp_path
 
     assert result.returncode == 1
     assert "Recruiting natural-question smoke contract mismatch" in result.stderr
-    assert "'guardrail_risk_row_count': 5" in result.stderr
-    assert "'guardrail_next_question_row_count': 5" in result.stderr
+    assert "'guardrail_risk_row_count': 4" in result.stderr
+    assert "'guardrail_next_question_row_count': 4" in result.stderr
 
 
 def test_validate_recruiting_smoke_cli_fails_without_guardrail_dimensions(tmp_path) -> None:

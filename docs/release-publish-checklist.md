@@ -166,9 +166,9 @@ Installed-package smoke passes when:
 - `smoke-profile --profile sample --json` exits successfully;
 - `smoke-natural-questions --pack recruiting --as-of 2026-06-22 --json` exits
   successfully with the current 13-question recruiting pack;
-- the recruiting smoke contract verifies `candidate_count=9`,
-  `written_record_count=29`, `reloaded_record_count=29`, and
-  `guardrail_candidate_count=5`;
+- the recruiting smoke contract verifies `candidate_count=10`,
+  `written_record_count=30`, `reloaded_record_count=30`, and
+  `guardrail_candidate_count=6`;
 - the same contract verifies candidate-to-position smoke uses open-role
   defaults with `candidate_position_available_count=2` and
   `candidate_position_excluded_count=1`;

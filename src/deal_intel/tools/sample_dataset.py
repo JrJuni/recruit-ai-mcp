@@ -18,7 +18,7 @@ from deal_intel.storage.recruiting_collections import (
 DATASET_WEEKLY_PIPELINE = "weekly_pipeline_demo"
 DATASET_RECRUITING_PIPELINE = "recruiting_pipeline_demo"
 DEAL_DATASET_VERSION = "2026-06-14.v2"
-RECRUITING_DATASET_VERSION = "2026-06-22.v5"
+RECRUITING_DATASET_VERSION = "2026-06-22.v6"
 SAMPLE_BATCH_ID = f"{DATASET_WEEKLY_PIPELINE}:{DEAL_DATASET_VERSION}"
 RECRUITING_SAMPLE_BATCH_ID = (
     f"{DATASET_RECRUITING_PIPELINE}:{RECRUITING_DATASET_VERSION}"
@@ -583,6 +583,50 @@ def _base_recruiting_records(*, loaded_at: str) -> dict[str, list[dict]]:
                     "summary": (
                         "Sam has strong payments stack coverage but needs a "
                         "carefully shaped mandate before client interviews."
+                    ),
+                    "confidence": "candidate_stated",
+                }
+            ],
+            "created_at": loaded_at,
+            "updated_at": loaded_at,
+        },
+        {
+            "candidate_id": "cand_riley_morgan",
+            "name": "Riley Morgan",
+            "headline": "Payments platform engineer with a fragile close plan",
+            "current_company": "CardBridge",
+            "current_title": "Senior Payments Engineer",
+            "skills": ["Payments", "Kafka", "Risk", "Java", "Kotlin"],
+            "domains": ["fintech", "payments", "risk operations"],
+            "seniority": "senior",
+            "compensation_expectation": {
+                "currency": "USD",
+                "minimum": 175000,
+                "target": 190000,
+                "maximum": 215000,
+                "period": "annual",
+                "note": "Aligned if the close plan is handled carefully.",
+            },
+            "locations": ["New York", "Remote US"],
+            "work_authorization": "US authorized",
+            "availability": "30 days",
+            "preferences": {
+                "desired_titles": ["Payments Platform Lead", "Senior Payments Engineer"],
+                "preferred_domains": ["fintech", "payments"],
+                "preferred_locations": ["New York", "Remote US"],
+                "remote_preference": "remote-first",
+                "excluded_companies": [],
+                "notes": "Interested, but expects the recruiter to manage a counteroffer risk.",
+            },
+            "risk_flags": ["counteroffer likely after final interview"],
+            "evidence": [
+                {
+                    "evidence_id": "ev_riley_profile",
+                    "source_type": "profile",
+                    "source_id": "cand_riley_morgan",
+                    "summary": (
+                        "Strong payments platform profile, but current employer "
+                        "is expected to counter aggressively."
                     ),
                     "confidence": "candidate_stated",
                 }

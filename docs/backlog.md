@@ -124,6 +124,9 @@ Immediate quality order:
      flags when a candidate expectation is materially above the role ceiling
      even if the candidate profile did not already carry a compensation risk
      note.
+   - Recommendation rows now surface inferred `retention_risk` flags and a
+     counteroffer/retention mitigation question when captured candidate risk
+     notes mention counteroffers, retention, or close-plan fragility.
    - Continue adding synthetic client/candidate examples that stress skills,
      domain, seniority, compensation, location, availability, client
      preferences, and risk.

@@ -3816,6 +3816,11 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
                 "cand_mateo_rivera",
                 "cand_sam_taylor",
             ),
+            (
+                "pos_orbitpay_payments_lead",
+                "cand_mateo_rivera",
+                "cand_riley_morgan",
+            ),
         ]
         guardrails = []
         for position_id, aligned_candidate_id, guardrail_candidate_id in checks:

@@ -179,6 +179,8 @@ def _risk_flags(
         flags.append("availability_timing_risk")
     if _has_role_scope_mismatch(fit) and not _has_existing_scope_flag(flags):
         flags.append("role_scope_mismatch")
+    if _has_retention_risk(fit) and "retention_risk" not in flags:
+        flags.append("retention_risk")
     risk_score = fit.signals["risk"].score
     if risk_score >= 4 and "high_match_risk" not in flags:
         flags.append("high_match_risk")
@@ -265,6 +267,11 @@ def _has_existing_scope_flag(flags: list[str]) -> bool:
         or "direct report" in flag.lower()
         for flag in flags
     )
+
+
+def _has_retention_risk(fit: CandidatePositionFitResult) -> bool:
+    risk_signal = fit.signals["risk"]
+    return "Confirm retention or counteroffer mitigation plan." in risk_signal.missing_info
 
 
 def _rejected_reason(fit: CandidatePositionFitResult) -> str:

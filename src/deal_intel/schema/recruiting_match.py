@@ -530,6 +530,10 @@ def _risk_signal(
     if _candidate_prefers_manager_scope_for_ic_role(candidate, position):
         risk_score += 2
 
+    retention_risk = _has_retention_risk(candidate)
+    if retention_risk:
+        risk_score += 1
+
     risk_score = _clamp_score(risk_score)
     if risk_score == 0:
         rationale = "No candidate risk flags or negative feedback are recorded."
@@ -539,7 +543,11 @@ def _risk_signal(
         score=risk_score,
         rationale=rationale,
         evidence_refs=evidence,
-        missing_info=[] if candidate.risk_flags else [],
+        missing_info=(
+            ["Confirm retention or counteroffer mitigation plan."]
+            if retention_risk
+            else []
+        ),
     )
 
 
@@ -728,6 +736,21 @@ def _availability_risk_increment(candidate: CandidateProfile) -> int:
     if days > 30:
         return 1
     return 0
+
+
+def _has_retention_risk(candidate: CandidateProfile) -> bool:
+    text = " ".join(candidate.risk_flags).lower()
+    return any(
+        term in text
+        for term in (
+            "counteroffer",
+            "counter-offer",
+            "retention",
+            "retain",
+            "close plan",
+            "closing plan",
+        )
+    )
 
 
 def _content_tokens(value: str) -> set[str]:

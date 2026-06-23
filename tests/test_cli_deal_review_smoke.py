@@ -525,9 +525,9 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     assert result.exit_code == 0
     assert "Natural Question Smoke (as_of=2026-06-22, questions=13)" in result.output
     assert "OK: True" in result.output
-    assert "candidates=9, open_positions=2, submissions=4" in result.output
+    assert "candidates=10, open_positions=2, submissions=4" in result.output
     assert "open_available=2, excluded=1" in result.output
-    assert "guardrails=5, passed=True, risk_flags=5, questions=5" in result.output
+    assert "guardrails=6, passed=True, risk_flags=6, questions=6" in result.output
     assert (
         "open_positions=2, shortlists=2, risk_reviews=2, question_reviews=2"
         in result.output
@@ -600,10 +600,10 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
         )
     )
     assert guardrails["summary"] == {
-        "guardrail_candidate_count": 5,
+        "guardrail_candidate_count": 6,
         "ranking_guardrails_passed": True,
-        "guardrails_with_risk_flags": 5,
-        "guardrails_with_next_questions": 5,
+        "guardrails_with_risk_flags": 6,
+        "guardrails_with_next_questions": 6,
     }
     assert {
         row["guardrail_candidate_id"] for row in guardrails["guardrails"]
@@ -613,6 +613,7 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
         "cand_iris_kim",
         "cand_eli_brooks",
         "cand_sam_taylor",
+        "cand_riley_morgan",
     }
     guardrail_by_candidate = {
         row["guardrail_candidate_id"]: row for row in guardrails["guardrails"]
@@ -656,6 +657,16 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
         "client_preference_conflict",
         "review_match_risk",
     ]
+    riley_guardrail = guardrail_by_candidate["cand_riley_morgan"]
+    assert riley_guardrail["guardrail_dimension_scores"]["risk"] == 3
+    assert riley_guardrail["guardrail_risk_flags"] == [
+        "counteroffer likely after final interview",
+        "retention_risk",
+        "review_match_risk",
+    ]
+    assert "Confirm retention or counteroffer mitigation plan." in (
+        riley_guardrail["guardrail_next_questions"]
+    )
     assert (output_dir / "rq13_client_shortlist_readiness.json").exists()
     shortlist = json.loads(
         (output_dir / "rq13_client_shortlist_readiness.json").read_text(
@@ -689,17 +700,17 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
         jordan_shortlist["next_questions"]
     )
     orbitpay_candidates = shortlist["shortlists"][1]["candidates"]
-    sam_shortlist = next(
-        row for row in orbitpay_candidates if row["candidate_id"] == "cand_sam_taylor"
+    riley_shortlist = next(
+        row for row in orbitpay_candidates if row["candidate_id"] == "cand_riley_morgan"
     )
-    assert sam_shortlist["dimension_scores"]["client_preference_fit"] == 1
-    assert sam_shortlist["risk_flags"] == [
-        "needs heavy role shaping",
-        "client_preference_conflict",
+    assert riley_shortlist["dimension_scores"]["risk"] == 3
+    assert riley_shortlist["risk_flags"] == [
+        "counteroffer likely after final interview",
+        "retention_risk",
         "review_match_risk",
     ]
-    assert "Review client preference conflict before shortlisting." in (
-        sam_shortlist["next_questions"]
+    assert "Confirm retention or counteroffer mitigation plan." in (
+        riley_shortlist["next_questions"]
     )
     encoded = json.dumps(summary, ensure_ascii=False)
     assert "raw_content" not in encoded

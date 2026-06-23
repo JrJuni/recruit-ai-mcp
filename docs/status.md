@@ -12,6 +12,33 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruiting retention-risk recommendation guardrail
+
+Completed:
+
+- Added deterministic retention/counteroffer risk handling for recruiting
+  recommendations. Candidate risk notes that mention counteroffers, retention,
+  or close-plan fragility now raise match risk, add the normalized
+  `retention_risk` flag, and ask for a retention or counteroffer mitigation
+  plan before shortlisting.
+- Added Riley Morgan, a fictional OrbitPay payments candidate with a strong
+  stack match but fragile close plan, to the recruiting sample dataset. Mateo
+  remains the aligned OrbitPay top match, while Riley stays below him with
+  visible risk evidence and next questions.
+- Updated the recruiting natural-question smoke contract to
+  `candidate_count=10`, `written_record_count=30`, `reloaded_record_count=30`,
+  and `guardrail_candidate_count=6`. The guardrail artifact and validator now
+  include the retention-risk row.
+- Updated release checklist smoke contract numbers for the expanded recruiting
+  sample.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-retention-risk tests\test_recruiting_recommendation.py tests\test_sample_data.py tests\test_cli_deal_review_smoke.py::test_smoke_natural_questions_recruiting_pack_writes_artifacts tests\test_validate_recruiting_smoke.py`
+- `ruff check src\deal_intel\schema\recruiting_match.py src\deal_intel\schema\recruiting_recommendation.py src\deal_intel\tools\sample_dataset.py src\deal_intel\cli.py tests\test_recruiting_recommendation.py tests\test_sample_data.py tests\test_cli_deal_review_smoke.py tests\test_validate_recruiting_smoke.py scripts\validate_recruiting_smoke.py`
+- `PYTHONPATH=src python -m deal_intel.cli smoke-natural-questions --pack recruiting --as-of 2026-06-22 --output-dir .tmp\recruiting-retention-risk-smoke`
+- `PYTHONPATH=src python scripts\validate_recruiting_smoke.py .tmp\recruiting-retention-risk-smoke\summary.json`
+
 ### Agent loop hygiene note
 
 Completed:
