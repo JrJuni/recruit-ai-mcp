@@ -166,6 +166,8 @@ Immediate quality order:
    - Recommendation rows now surface inferred `skill_gap` flags when a
      candidate covers only a small portion of role must-have skills and missing
      required-skill follow-up questions are present.
+   - Recommendation tests now cover de-duplication when equivalent
+     human-written skill, domain, or seniority risk notes are already present.
    - The recruiting domain-model contract now documents the normalized
      inferred recommendation risk flags emitted by the deterministic builder.
    - Docs-current tests now compare the documented inferred-risk list with the

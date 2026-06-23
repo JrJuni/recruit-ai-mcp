@@ -379,6 +379,44 @@ def test_recommendation_result_surfaces_seniority_mismatch() -> None:
     assert "Improve evidence for seniority_fit." in result.next_questions
 
 
+def test_recommendation_result_deduplicates_equivalent_inferred_flags() -> None:
+    run = build_position_candidate_recommendation_run(
+        position=_position(
+            title="Healthcare Data Platform Staff Engineer",
+            seniority="staff",
+            must_have=["Python", "MongoDB", "data platforms"],
+            nice_to_have=["HIPAA", "clinical workflows"],
+        ),
+        candidates=[
+            _candidate(
+                "cand_blake",
+                skills=["Python"],
+                domains=["Retail analytics"],
+                seniority="junior",
+                risk_flags=[
+                    "technical gap: missing MongoDB",
+                    "limited healthcare industry depth",
+                    "too junior for staff-level ownership",
+                ],
+            )
+        ],
+    )
+
+    result = run.results[0]
+
+    assert result.fit_snapshot.dimensions["skill_fit"].score == 2
+    assert result.fit_snapshot.dimensions["domain_fit"].score == 2
+    assert result.fit_snapshot.dimensions["seniority_fit"].score == 1
+    assert "skill_gap" not in result.risk_flags
+    assert "domain_mismatch" not in result.risk_flags
+    assert "seniority_mismatch" not in result.risk_flags
+    assert result.risk_flags[:3] == [
+        "technical gap: missing MongoDB",
+        "limited healthcare industry depth",
+        "too junior for staff-level ownership",
+    ]
+
+
 def test_recommendation_result_surfaces_role_scope_mismatch() -> None:
     run = build_position_candidate_recommendation_run(
         position=_position(

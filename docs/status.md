@@ -12,6 +12,21 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruiting inferred-risk de-duplication coverage
+
+Completed:
+
+- Added targeted recommendation coverage proving `skill_gap`,
+  `domain_mismatch`, and `seniority_mismatch` are not duplicated when the
+  candidate already carries equivalent human-written risk notes.
+- The test also confirms the original candidate risk notes remain at the front
+  of the recommendation result risk flag list.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-risk-dedup tests\test_recruiting_recommendation.py`
+- `ruff check tests\test_recruiting_recommendation.py`
+
 ### Recruiting risk-flag source/docs alignment guard
 
 Completed:
