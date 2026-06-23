@@ -240,7 +240,7 @@ def test_recommend_positions_for_candidate_respects_excluded_company() -> None:
         "pos_beta_backend",
         "pos_acme_backend",
     ]
-    assert acme["risk_flags"] == ["review_match_risk"]
+    assert acme["risk_flags"] == ["client_exclusion", "review_match_risk"]
     assert "Confirm whether the candidate exclusion can be revisited." in (
         acme["next_questions"]
     )

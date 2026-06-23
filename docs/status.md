@@ -12,6 +12,25 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Final local gate before handoff
+
+Completed:
+
+- Ran the final local handoff gate for the current Recruit AI `0.1.0` working
+  tree.
+- Updated two regression expectations to match the current recommendation
+  contract: candidate-side client exclusions now expose the normalized
+  `client_exclusion` flag, and counteroffer-style risk notes now raise the
+  risk dimension to `5` with a retention/counteroffer mitigation question.
+
+Verification:
+
+- `ruff check .`
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-final-local-gate tests\test_bootstrapper_skeleton.py tests\test_mcpb_manifest.py tests\test_docs_recruit_ai_current.py tests\test_recruiting_recommendation.py tests\test_recruiting_recommendations_service.py tests\test_recruiting_match.py tests\test_recruiting_metrics.py tests\test_recruiting_metrics_service.py tests\test_export_recruiting_report.py tests\test_sample_data.py tests\test_cli_deal_review_smoke.py::test_smoke_natural_questions_recruiting_pack_writes_artifacts tests\test_validate_recruiting_smoke.py`
+- `PYTHONPATH=src python -m deal_intel.cli smoke-natural-questions --pack recruiting --as-of 2026-06-22 --output-dir .tmp\final-local-gate-recruiting-smoke`
+- `PYTHONPATH=src python scripts\validate_recruiting_smoke.py .tmp\final-local-gate-recruiting-smoke\summary.json`
+- `git diff --check`
+
 ### Current docs readiness sweep
 
 Completed:

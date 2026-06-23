@@ -192,8 +192,11 @@ def test_candidate_position_fit_inverts_candidate_risk_flags() -> None:
         position=_position(),
     )
 
-    assert result.signals["risk"].score == 4
-    assert result.dimension_scores["risk"] == 20.0
+    assert result.signals["risk"].score == 5
+    assert result.dimension_scores["risk"] == 0.0
+    assert "Confirm retention or counteroffer mitigation plan." in (
+        result.signals["risk"].missing_info
+    )
     assert ("low_dimension_score", "risk") in {
         (warning["code"], warning["dimension"]) for warning in result.warnings
     }
