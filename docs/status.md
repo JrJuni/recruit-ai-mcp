@@ -12,6 +12,28 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Post-candidate-exclusion-smoke local package gate refresh
+
+Completed:
+
+- Re-ran the local pre-publish package gate after adding the
+  candidate-side exclusion recommendation smoke and updating the recruiting
+  smoke contract to 17 questions.
+- Rebuilt `mcpb/recruit-ai-mcp-0.1.0.mcpb`, copied it to `npm/mcpb/` and
+  `release/latest/`, and updated `release/latest/checksums.txt`. The three
+  MCPB copies now share SHA256
+  `0A0AD46697D9FE79CF45CBA281C63160691D0395A704658F0AB530108D8B7AEA`.
+
+Verification:
+
+- `ruff check .`
+- `PYTHONPATH=src pytest tests\test_bootstrapper_skeleton.py tests\test_mcpb_manifest.py tests\test_docs_recruit_ai_current.py tests\test_validate_recruiting_smoke.py -q -p no:cacheprovider --basetemp .tmp\pytest-rq17-package-gate`
+- `python -m build --no-isolation --outdir .tmp\publish-dist-rq17`
+- `mcpb validate manifest.json` from `mcpb/`
+- `mcpb pack . recruit-ai-mcp-0.1.0.mcpb` from `mcpb/`
+- `mcpb info recruit-ai-mcp-0.1.0.mcpb` from `mcpb/`
+- `npm pack .\npm --dry-run --cache .tmp\npm-cache-rq17`
+
 ### Candidate-side exclusion recommendation smoke
 
 Completed:

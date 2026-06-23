@@ -190,11 +190,12 @@ def test_latest_status_records_current_smoke_contract_and_artifact_hash() -> Non
     docs = (ROOT / "docs" / "status.md").read_text(encoding="utf-8")
     latest = docs.split("### Docs-first pause checkpoint", maxsplit=1)[0]
 
+    assert "Post-candidate-exclusion-smoke local package gate refresh" in latest
     assert "Candidate-side exclusion recommendation smoke" in latest
     assert "Post-low-confidence-evidence local package gate refresh" in latest
     assert "Recruiting low-confidence evidence guardrail" in latest
     assert (
-        "8157F0B637EBF40CE8E576F2973D47B7F6DD9CA83C7995B7170FBB096583E58C"
+        "0A0AD46697D9FE79CF45CBA281C63160691D0395A704658F0AB530108D8B7AEA"
         in latest
     )
     assert f"`candidate_count={EXPECTED_CONTRACT['candidate_count']}`" in latest
