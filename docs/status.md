@@ -12,6 +12,23 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruiting seniority mismatch flag
+
+Completed:
+
+- Added an inferred `seniority_mismatch` recommendation risk flag when
+  `seniority_fit` is low because the candidate's captured seniority is below
+  the role's target seniority.
+- Kept the flag de-duplicated when the candidate profile already carries a
+  seniority-related risk note.
+- Added targeted recommendation coverage for a junior candidate evaluated
+  against a staff-level backend role.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-seniority-mismatch tests\test_recruiting_recommendation.py`
+- `ruff check src\deal_intel\schema\recruiting_recommendation.py tests\test_recruiting_recommendation.py`
+
 ### Docs-first pause checkpoint
 
 Completed:

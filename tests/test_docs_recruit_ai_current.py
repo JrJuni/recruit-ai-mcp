@@ -188,7 +188,8 @@ def test_release_docs_and_workflows_use_recruit_ai_package_name() -> None:
 
 def test_latest_status_records_current_smoke_contract_and_artifact_hash() -> None:
     docs = (ROOT / "docs" / "status.md").read_text(encoding="utf-8")
-    latest = docs.split("### Docs-first pause checkpoint", maxsplit=1)[0]
+    latest = docs.split("## Latest Update", maxsplit=1)[1]
+    latest = latest.split("\n## ", maxsplit=1)[0]
 
     assert "Post-candidate-exclusion-smoke local package gate refresh" in latest
     assert "Candidate-side exclusion recommendation smoke" in latest

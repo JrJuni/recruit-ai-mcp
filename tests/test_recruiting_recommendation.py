@@ -314,6 +314,22 @@ def test_recommendation_result_surfaces_late_availability_risk() -> None:
     assert "Confirm whether timing fits the search plan." in result.next_questions
 
 
+def test_recommendation_result_surfaces_seniority_mismatch() -> None:
+    run = build_position_candidate_recommendation_run(
+        position=_position(
+            title="Staff Backend Platform Engineer",
+            seniority="staff",
+        ),
+        candidates=[_candidate("cand_blake", seniority="junior")],
+    )
+
+    result = run.results[0]
+
+    assert result.fit_snapshot.dimensions["seniority_fit"].score == 1
+    assert result.risk_flags == ["seniority_mismatch"]
+    assert "Improve evidence for seniority_fit." in result.next_questions
+
+
 def test_recommendation_result_surfaces_role_scope_mismatch() -> None:
     run = build_position_candidate_recommendation_run(
         position=_position(

@@ -151,8 +151,8 @@ Immediate quality order:
    - Recommendation rows now surface inferred `location_policy_mismatch` flags
      when candidate remote/location preferences conflict with a location-bound
      role for reasons other than work authorization.
-   - Next small recommendation-quality candidate: infer a
-     `seniority_mismatch` risk flag when `seniority_fit` is low and no explicit
+   - Recommendation rows now surface inferred `seniority_mismatch` flags when
+     candidate seniority is below the role's target seniority and no explicit
      seniority-related risk note is already present.
    - Continue adding synthetic client/candidate examples that stress skills,
      domain, seniority, compensation, location, availability, client

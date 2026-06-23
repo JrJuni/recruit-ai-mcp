@@ -182,6 +182,8 @@ def _risk_flags(
         flags.append("client_preference_conflict")
     if _has_availability_timing_risk(fit) and not _has_existing_availability_flag(flags):
         flags.append("availability_timing_risk")
+    if _has_seniority_mismatch(fit) and not _has_existing_seniority_flag(flags):
+        flags.append("seniority_mismatch")
     if _has_role_scope_mismatch(fit) and not _has_existing_scope_flag(flags):
         flags.append("role_scope_mismatch")
     if _has_retention_risk(fit) and "retention_risk" not in flags:
@@ -267,6 +269,25 @@ def _has_existing_availability_flag(flags: list[str]) -> bool:
         "availability" in flag.lower()
         or "passive" in flag.lower()
         or "not actively" in flag.lower()
+        for flag in flags
+    )
+
+
+def _has_seniority_mismatch(fit: CandidatePositionFitResult) -> bool:
+    seniority_signal = fit.signals["seniority_fit"]
+    return (
+        seniority_signal.score <= 2
+        and seniority_signal.rationale.startswith("Candidate seniority ")
+    )
+
+
+def _has_existing_seniority_flag(flags: list[str]) -> bool:
+    return any(
+        "seniority" in flag.lower()
+        or "too junior" in flag.lower()
+        or "junior" in flag.lower()
+        or "senior mentorship" in flag.lower()
+        or "level" in flag.lower()
         for flag in flags
     )
 
