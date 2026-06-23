@@ -539,6 +539,9 @@ def _risk_signal(
     evidence_gap = not evidence
     if evidence_gap:
         risk_score += 2
+    low_confidence_evidence = _has_low_confidence_evidence(evidence)
+    if low_confidence_evidence:
+        risk_score += 2
 
     risk_score = _clamp_score(risk_score)
     if risk_score == 0:
@@ -562,6 +565,11 @@ def _risk_signal(
                     else []
                 ),
                 *(["Confirm source evidence before shortlisting."] if evidence_gap else []),
+                *(
+                    ["Confirm candidate evidence with a direct source before shortlisting."]
+                    if low_confidence_evidence
+                    else []
+                ),
             ]
         ),
     )
@@ -781,6 +789,13 @@ def _has_process_conflict(candidate: CandidateProfile) -> bool:
             "exploding offer",
         )
     )
+
+
+def _has_low_confidence_evidence(evidence: list[EvidenceReference]) -> bool:
+    if not evidence:
+        return False
+    direct_confidence = {"candidate_stated", "client_stated", "mixed"}
+    return all(item.confidence not in direct_confidence for item in evidence)
 
 
 def _content_tokens(value: str) -> set[str]:

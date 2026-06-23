@@ -525,9 +525,9 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     assert result.exit_code == 0
     assert "Natural Question Smoke (as_of=2026-06-22, questions=16)" in result.output
     assert "OK: True" in result.output
-    assert "candidates=12, open_positions=2, submissions=4" in result.output
+    assert "candidates=13, open_positions=2, submissions=4" in result.output
     assert "open_available=2, excluded=1" in result.output
-    assert "guardrails=8, passed=True, risk_flags=8, questions=8" in result.output
+    assert "guardrails=9, passed=True, risk_flags=9, questions=9" in result.output
     assert (
         "open_positions=2, shortlists=2, risk_reviews=2, question_reviews=2"
         in result.output
@@ -621,10 +621,10 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
         )
     )
     assert guardrails["summary"] == {
-        "guardrail_candidate_count": 8,
+        "guardrail_candidate_count": 9,
         "ranking_guardrails_passed": True,
-        "guardrails_with_risk_flags": 8,
-        "guardrails_with_next_questions": 8,
+        "guardrails_with_risk_flags": 9,
+        "guardrails_with_next_questions": 9,
     }
     assert {
         row["guardrail_candidate_id"] for row in guardrails["guardrails"]
@@ -637,6 +637,7 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
         "cand_riley_morgan",
         "cand_casey_stone",
         "cand_morgan_patel",
+        "cand_taylor_quinn",
     }
     guardrail_by_candidate = {
         row["guardrail_candidate_id"]: row for row in guardrails["guardrails"]
@@ -709,6 +710,16 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     assert "Confirm competing process or offer-deadline plan." in (
         morgan_guardrail["guardrail_next_questions"]
     )
+    taylor_guardrail = guardrail_by_candidate["cand_taylor_quinn"]
+    assert taylor_guardrail["guardrail_dimension_scores"]["risk"] == 2
+    assert taylor_guardrail["guardrail_risk_flags"] == [
+        "low_confidence_evidence",
+        "review_match_risk",
+    ]
+    assert (
+        "Confirm candidate evidence with a direct source before shortlisting."
+        in taylor_guardrail["guardrail_next_questions"]
+    )
     assert (output_dir / "rq13_client_shortlist_readiness.json").exists()
     shortlist = json.loads(
         (output_dir / "rq13_client_shortlist_readiness.json").read_text(
@@ -742,17 +753,17 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
         jordan_shortlist["next_questions"]
     )
     orbitpay_candidates = shortlist["shortlists"][1]["candidates"]
-    riley_shortlist = next(
-        row for row in orbitpay_candidates if row["candidate_id"] == "cand_riley_morgan"
+    taylor_shortlist = next(
+        row for row in orbitpay_candidates if row["candidate_id"] == "cand_taylor_quinn"
     )
-    assert riley_shortlist["dimension_scores"]["risk"] == 3
-    assert riley_shortlist["risk_flags"] == [
-        "counteroffer likely after final interview",
-        "retention_risk",
+    assert taylor_shortlist["dimension_scores"]["risk"] == 2
+    assert taylor_shortlist["risk_flags"] == [
+        "low_confidence_evidence",
         "review_match_risk",
     ]
-    assert "Confirm retention or counteroffer mitigation plan." in (
-        riley_shortlist["next_questions"]
+    assert (
+        "Confirm candidate evidence with a direct source before shortlisting."
+        in taylor_shortlist["next_questions"]
     )
     morgan_shortlist = next(
         row for row in orbitpay_candidates if row["candidate_id"] == "cand_morgan_patel"

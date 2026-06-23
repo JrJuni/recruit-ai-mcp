@@ -711,6 +711,50 @@ def _base_recruiting_records(*, loaded_at: str) -> dict[str, list[dict]]:
             "created_at": loaded_at,
             "updated_at": loaded_at,
         },
+        {
+            "candidate_id": "cand_taylor_quinn",
+            "name": "Taylor Quinn",
+            "headline": "Payments platform lead with unconfirmed profile evidence",
+            "current_company": "LedgerLane",
+            "current_title": "Senior Payments Engineer",
+            "skills": ["Payments", "Kafka", "Risk", "Java", "Kotlin"],
+            "domains": ["fintech", "payments", "risk operations"],
+            "seniority": "senior",
+            "compensation_expectation": {
+                "currency": "USD",
+                "minimum": 176000,
+                "target": 196000,
+                "maximum": 216000,
+                "period": "annual",
+                "note": "Appears aligned, pending direct candidate confirmation.",
+            },
+            "locations": ["New York", "Remote US"],
+            "work_authorization": "US authorized",
+            "availability": "30 days",
+            "preferences": {
+                "desired_titles": ["Payments Platform Lead", "Senior Payments Engineer"],
+                "preferred_domains": ["fintech", "payments"],
+                "preferred_locations": ["New York", "Remote US"],
+                "remote_preference": "remote-first",
+                "excluded_companies": [],
+                "notes": "Profile was sourced from internal notes and needs a direct screen.",
+            },
+            "risk_flags": [],
+            "evidence": [
+                {
+                    "evidence_id": "ev_taylor_internal_profile",
+                    "source_type": "manual_note",
+                    "source_id": "cand_taylor_quinn",
+                    "summary": (
+                        "Internal sourcing note says Taylor has payments, Kafka, and "
+                        "risk-operations depth, but the candidate has not confirmed it."
+                    ),
+                    "confidence": "internal",
+                }
+            ],
+            "created_at": loaded_at,
+            "updated_at": loaded_at,
+        },
     ]
     positions = [
         {

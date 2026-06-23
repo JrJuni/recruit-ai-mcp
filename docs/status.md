@@ -12,6 +12,31 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruiting low-confidence evidence guardrail
+
+Completed:
+
+- Added deterministic low-confidence evidence handling for recruiting
+  recommendations. Candidates whose only captured evidence is internal,
+  unknown, or outbound-unconfirmed now raise match risk, surface a
+  `low_confidence_evidence` risk flag, and ask for direct-source confirmation
+  before shortlisting.
+- Added Taylor Quinn, a fictional OrbitPay payments candidate whose stack,
+  seniority, compensation, location, and availability look strong but whose
+  evidence is only an internal sourcing note. Taylor stays below Mateo and
+  carries visible review questions in guardrail and shortlist smoke output.
+- Updated the current recruiting natural-question smoke contract to
+  `candidate_count=13`, `written_record_count=33`, `reloaded_record_count=33`,
+  and `guardrail_candidate_count=9`.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-low-confidence-3 tests\test_recruiting_recommendation.py tests\test_sample_data.py tests\test_validate_recruiting_smoke.py`
+- `PYTHONPATH=src python -m deal_intel.cli smoke-natural-questions --pack recruiting --as-of 2026-06-22 --output-dir .tmp\low-confidence-evidence-smoke`
+- `PYTHONPATH=src python scripts\validate_recruiting_smoke.py .tmp\low-confidence-evidence-smoke\summary.json`
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-low-confidence-cli-2 tests\test_cli_deal_review_smoke.py::test_smoke_natural_questions_recruiting_pack_writes_artifacts tests\test_cli_deal_review_smoke.py::test_smoke_natural_questions_recruiting_pack_json`
+- `ruff check` on the touched source, script, and test files.
+
 ### Docs-first pause checkpoint
 
 Completed:
@@ -30,13 +55,13 @@ Current baseline:
 
 - Branch `main` is ahead of `origin/main`; do not push without explicit
   maintainer approval.
-- The current recruiting smoke contract remains the 16-question pack with 12
-  sample candidates, 32 written/reloaded records, and 8 recommendation
-  guardrail candidates.
+- The current recruiting smoke contract was 16 questions with 12 sample
+  candidates, 32 written/reloaded records, and 8 recommendation guardrail
+  candidates before the next recommendation-quality guardrail.
 - The package line remains `recruit-ai-mcp` version `0.1.0`; keep release
   artifacts and docs on that version unless the maintainer asks to bump it.
 
-Next recommended unit:
+Next recommended unit at the pause:
 
 - Add a single recommendation-quality guardrail for low-confidence candidate
   evidence. The intended behavior is that a keyword-strong candidate backed
@@ -103,9 +128,8 @@ Completed:
   domain, seniority, compensation, location, and availability fit strongly but
   whose competing offer deadline should keep Mateo as the safer aligned top
   match.
-- Updated the recruiting natural-question smoke contract to
-  `candidate_count=12`, `written_record_count=32`, `reloaded_record_count=32`,
-  and `guardrail_candidate_count=8`.
+- Updated the then-current recruiting natural-question smoke contract for the
+  expanded process-conflict fixture.
 
 Verification:
 

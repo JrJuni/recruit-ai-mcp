@@ -185,6 +185,8 @@ def _risk_flags(
         flags.append("process_conflict")
     if _has_evidence_gap(fit) and "evidence_gap" not in flags:
         flags.append("evidence_gap")
+    if _has_low_confidence_evidence(fit) and "low_confidence_evidence" not in flags:
+        flags.append("low_confidence_evidence")
     risk_score = fit.signals["risk"].score
     if risk_score >= 4 and "high_match_risk" not in flags:
         flags.append("high_match_risk")
@@ -286,6 +288,14 @@ def _has_process_conflict(fit: CandidatePositionFitResult) -> bool:
 def _has_evidence_gap(fit: CandidatePositionFitResult) -> bool:
     risk_signal = fit.signals["risk"]
     return "Confirm source evidence before shortlisting." in risk_signal.missing_info
+
+
+def _has_low_confidence_evidence(fit: CandidatePositionFitResult) -> bool:
+    risk_signal = fit.signals["risk"]
+    return (
+        "Confirm candidate evidence with a direct source before shortlisting."
+        in risk_signal.missing_info
+    )
 
 
 def _rejected_reason(fit: CandidatePositionFitResult) -> str:

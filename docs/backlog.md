@@ -142,10 +142,9 @@ Immediate quality order:
    - Recommendation rows now surface inferred `process_conflict` flags and a
      competing-process or offer-deadline plan question when a strong candidate
      has an active competing process.
-   - Next recommended guardrail: low-confidence evidence. A keyword-strong
-     candidate backed only by internal, unknown, or outbound-unconfirmed
-     evidence should receive an inspectable review flag and a direct-source
-     confirmation question before shortlisting.
+   - Recommendation rows now surface inferred `low_confidence_evidence` flags
+     and a direct-source confirmation question when a keyword-strong candidate
+     is backed only by internal, unknown, or outbound-unconfirmed evidence.
    - Continue adding synthetic client/candidate examples that stress skills,
      domain, seniority, compensation, location, availability, client
      preferences, evidence quality, and risk.
