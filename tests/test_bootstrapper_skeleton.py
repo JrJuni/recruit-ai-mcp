@@ -153,6 +153,25 @@ def test_release_latest_artifact_matches_recruit_ai_version() -> None:
     )
 
 
+def test_mcpb_artifact_copies_share_same_checksum() -> None:
+    package = json.loads((ROOT / "npm" / "package.json").read_text(encoding="utf-8"))
+    version = package["version"]
+    artifact_name = f"recruit-ai-mcp-{version}.mcpb"
+    artifact_paths = [
+        ROOT / "mcpb" / artifact_name,
+        ROOT / "npm" / "mcpb" / artifact_name,
+        ROOT / "release" / "latest" / artifact_name,
+    ]
+
+    hashes = {
+        path.relative_to(ROOT).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest().upper()
+        for path in artifact_paths
+    }
+
+    assert all(path.exists() for path in artifact_paths)
+    assert len(set(hashes.values())) == 1, hashes
+
+
 def test_python_package_data_covers_runtime_resources() -> None:
     pyproject = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))
     package_data = pyproject["tool"]["setuptools"]["package-data"]

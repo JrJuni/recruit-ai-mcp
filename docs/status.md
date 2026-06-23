@@ -12,6 +12,21 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### MCPB artifact checksum alignment test
+
+Completed:
+
+- Added a release-artifact regression test that verifies the root `mcpb/`,
+  npm-bundled `npm/mcpb/`, and `release/latest/` MCPB copies share the same
+  SHA256 checksum for the current `recruit-ai-mcp` version.
+- This keeps the local release handoff honest when smoke-contract changes
+  require MCPB rebuilds.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-mcpb-artifact-alignment tests\test_bootstrapper_skeleton.py::test_release_latest_artifact_matches_recruit_ai_version tests\test_bootstrapper_skeleton.py::test_mcpb_artifact_copies_share_same_checksum`
+- `ruff check tests\test_bootstrapper_skeleton.py`
+
 ### Recruiting location-policy mismatch flag
 
 Completed:
