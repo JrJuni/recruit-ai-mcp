@@ -174,6 +174,8 @@ def _risk_flags(
         and "location_policy_mismatch" not in flags
     ):
         flags.append("location_policy_mismatch")
+    if _has_skill_gap(fit) and not _has_existing_skill_flag(flags):
+        flags.append("skill_gap")
     if _has_compensation_mismatch(fit) and not _has_existing_compensation_flag(flags):
         flags.append("compensation_mismatch")
     if _has_client_exclusion(fit) and "client_exclusion" not in flags:
@@ -220,6 +222,25 @@ def _has_location_policy_mismatch(fit: CandidatePositionFitResult) -> bool:
         and not _has_work_authorization_mismatch(fit)
         and "Confirm location, timezone, or relocation flexibility."
         in location_signal.missing_info
+    )
+
+
+def _has_skill_gap(fit: CandidatePositionFitResult) -> bool:
+    skill_signal = fit.signals["skill_fit"]
+    return skill_signal.score <= 2 and any(
+        item.startswith("Confirm required skill: ")
+        for item in skill_signal.missing_info
+    )
+
+
+def _has_existing_skill_flag(flags: list[str]) -> bool:
+    return any(
+        "skill" in flag.lower()
+        or "must-have" in flag.lower()
+        or "must have" in flag.lower()
+        or "capability" in flag.lower()
+        or "technical gap" in flag.lower()
+        for flag in flags
     )
 
 

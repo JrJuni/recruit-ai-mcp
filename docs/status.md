@@ -12,6 +12,26 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruiting skill gap flag
+
+Completed:
+
+- Added an inferred `skill_gap` recommendation risk flag when a candidate
+  covers only a small portion of role must-have skills and the fit snapshot
+  already asks to confirm missing required skills.
+- Kept the flag de-duplicated when the candidate profile already carries a
+  skill, must-have, capability, or technical-gap risk note.
+- Added targeted recommendation coverage for a candidate who matches Python
+  but misses MongoDB and data-platform must-haves.
+- Updated the existing Northstar sample guardrail expectation so Jordan Lee's
+  missing production Python/data-platform evidence now surfaces as
+  `skill_gap` alongside the client exclusion and high match risk.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-skill-gap tests\test_recruiting_recommendation.py`
+- `ruff check src\deal_intel\schema\recruiting_recommendation.py tests\test_recruiting_recommendation.py`
+
 ### Recruiting domain mismatch flag
 
 Completed:

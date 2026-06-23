@@ -151,6 +151,9 @@ Immediate quality order:
    - Recommendation rows now surface inferred `location_policy_mismatch` flags
      when candidate remote/location preferences conflict with a location-bound
      role for reasons other than work authorization.
+   - Recommendation rows now surface inferred `skill_gap` flags when a
+     candidate covers only a small portion of role must-have skills and missing
+     required-skill follow-up questions are present.
    - Recommendation rows now surface inferred `domain_mismatch` flags when
      candidate skills are aligned but captured domain history does not clearly
      transfer to the role context.

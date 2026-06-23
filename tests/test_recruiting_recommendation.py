@@ -298,6 +298,29 @@ def test_recommendation_result_surfaces_compensation_mismatch() -> None:
     assert "Confirm compensation flexibility." in result.next_questions
 
 
+def test_recommendation_result_surfaces_skill_gap() -> None:
+    run = build_position_candidate_recommendation_run(
+        position=_position(
+            must_have=["Python", "MongoDB", "data platforms"],
+            nice_to_have=[],
+        ),
+        candidates=[
+            _candidate(
+                "cand_blake",
+                skills=["Python"],
+                domains=[],
+            )
+        ],
+    )
+
+    result = run.results[0]
+
+    assert result.fit_snapshot.dimensions["skill_fit"].score == 2
+    assert result.risk_flags == ["skill_gap"]
+    assert "Confirm required skill: MongoDB" in result.next_questions
+    assert "Confirm required skill: data platforms" in result.next_questions
+
+
 def test_recommendation_result_surfaces_domain_mismatch() -> None:
     run = build_position_candidate_recommendation_run(
         position=_position(
@@ -477,6 +500,7 @@ def test_recruiting_sample_missing_must_have_does_not_outrank_match() -> None:
     assert jordan.fit_snapshot.dimensions["risk"].score == 4
     assert jordan.risk_flags == [
         "missing production Python evidence",
+        "skill_gap",
         "client_exclusion",
         "high_match_risk",
     ]
