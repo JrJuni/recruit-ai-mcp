@@ -298,6 +298,32 @@ def test_recommendation_result_surfaces_compensation_mismatch() -> None:
     assert "Confirm compensation flexibility." in result.next_questions
 
 
+def test_recommendation_result_surfaces_domain_mismatch() -> None:
+    run = build_position_candidate_recommendation_run(
+        position=_position(
+            title="Healthcare Data Platform Lead",
+            must_have=["Python", "MongoDB"],
+            nice_to_have=["HIPAA", "clinical workflows"],
+        ),
+        candidates=[
+            _candidate(
+                "cand_blake",
+                skills=["Python", "MongoDB", "distributed systems"],
+                domains=["Retail analytics"],
+            )
+        ],
+    )
+
+    result = run.results[0]
+
+    assert result.fit_snapshot.dimensions["skill_fit"].score == 5
+    assert result.fit_snapshot.dimensions["domain_fit"].score == 2
+    assert result.risk_flags == ["domain_mismatch"]
+    assert "Confirm whether candidate domain experience transfers to this role." in (
+        result.next_questions
+    )
+
+
 def test_recommendation_result_surfaces_late_availability_risk() -> None:
     run = build_position_candidate_recommendation_run(
         position=_position(),

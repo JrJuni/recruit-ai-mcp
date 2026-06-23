@@ -151,6 +151,9 @@ Immediate quality order:
    - Recommendation rows now surface inferred `location_policy_mismatch` flags
      when candidate remote/location preferences conflict with a location-bound
      role for reasons other than work authorization.
+   - Recommendation rows now surface inferred `domain_mismatch` flags when
+     candidate skills are aligned but captured domain history does not clearly
+     transfer to the role context.
    - Recommendation rows now surface inferred `seniority_mismatch` flags when
      candidate seniority is below the role's target seniority and no explicit
      seniority-related risk note is already present.

@@ -12,6 +12,23 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruiting domain mismatch flag
+
+Completed:
+
+- Added an inferred `domain_mismatch` recommendation risk flag when a
+  candidate has strong skill fit but captured domain history does not clearly
+  transfer to the role context.
+- Kept the flag de-duplicated when the candidate profile already carries a
+  domain, industry, sector, market, or vertical risk note.
+- Added targeted recommendation coverage for a retail analytics candidate
+  evaluated against a healthcare data-platform role.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-domain-mismatch tests\test_recruiting_recommendation.py`
+- `ruff check src\deal_intel\schema\recruiting_recommendation.py tests\test_recruiting_recommendation.py`
+
 ### Recruiting seniority mismatch flag
 
 Completed:

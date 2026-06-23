@@ -180,6 +180,8 @@ def _risk_flags(
         flags.append("client_exclusion")
     if _has_client_preference_conflict(fit) and "client_preference_conflict" not in flags:
         flags.append("client_preference_conflict")
+    if _has_domain_mismatch(fit) and not _has_existing_domain_flag(flags):
+        flags.append("domain_mismatch")
     if _has_availability_timing_risk(fit) and not _has_existing_availability_flag(flags):
         flags.append("availability_timing_risk")
     if _has_seniority_mismatch(fit) and not _has_existing_seniority_flag(flags):
@@ -256,6 +258,26 @@ def _has_client_preference_conflict(fit: CandidatePositionFitResult) -> bool:
         in preference_signal.rationale
         or "Review client preference conflict before shortlisting."
         in preference_signal.missing_info
+    )
+
+
+def _has_domain_mismatch(fit: CandidatePositionFitResult) -> bool:
+    domain_signal = fit.signals["domain_fit"]
+    return (
+        domain_signal.score <= 2
+        and "Confirm whether candidate domain experience transfers to this role."
+        in domain_signal.missing_info
+    )
+
+
+def _has_existing_domain_flag(flags: list[str]) -> bool:
+    return any(
+        "domain" in flag.lower()
+        or "industry" in flag.lower()
+        or "sector" in flag.lower()
+        or "market" in flag.lower()
+        or "vertical" in flag.lower()
+        for flag in flags
     )
 
 
