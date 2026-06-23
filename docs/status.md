@@ -12,6 +12,28 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Post-RQ16 local package gate refresh
+
+Completed:
+
+- Re-ran the local pre-publish package gate after adding the recruiting report
+  export smoke to the CLI source tree.
+- Rebuilt `mcpb/recruit-ai-mcp-0.1.0.mcpb`, copied it to `npm/mcpb/` and
+  `release/latest/`, and updated `release/latest/checksums.txt`. The three
+  MCPB copies now share SHA256
+  `5AE843A7F30B9269DDED2230677A10312D456D6D123FCA5EEC9833ABE83C70C5`.
+
+Verification:
+
+- `ruff check .`
+- `PYTHONPATH=src pytest tests\test_bootstrapper_skeleton.py tests\test_mcpb_manifest.py tests\test_docs_recruit_ai_current.py tests\test_validate_recruiting_smoke.py -q -p no:cacheprovider --basetemp .tmp\pytest-rq16-package-gate`
+- `python -m build --no-isolation --outdir .tmp\publish-dist-rq16`
+- `mcpb validate manifest.json` from `mcpb/`
+- `mcpb pack . recruit-ai-mcp-0.1.0.mcpb` from `mcpb/`
+- `mcpb info recruit-ai-mcp-0.1.0.mcpb` from `mcpb/`
+- `npm pack .\npm --dry-run --cache .tmp\npm-cache-rq16`
+- `git diff --check`
+
 ### Recruiting report export smoke coverage
 
 Completed:
