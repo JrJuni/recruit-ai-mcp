@@ -12,6 +12,26 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruit AI local package gate refresh
+
+Completed:
+
+- Re-ran the local release/package consistency gate for the current
+  `recruit-ai-mcp@0.1.0` line after the recruiting smoke validator hardening.
+- Confirmed Python package metadata, npm bootstrapper metadata, MCPB manifest
+  metadata, docs-current release checks, npm package dry-run contents, and MCPB
+  schema/info inspection remain aligned on `recruit-ai-mcp` and `0.1.0`.
+- Public registry `npx recruit-ai-mcp@0.1.0` readiness remains pending until
+  the PyPI/npm packages are actually published and fresh public smoke passes.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-package-local-gate tests\test_bootstrapper_skeleton.py tests\test_mcpb_manifest.py tests\test_docs_recruit_ai_current.py`
+- `ruff check tests\test_bootstrapper_skeleton.py tests\test_mcpb_manifest.py tests\test_docs_recruit_ai_current.py`
+- `npm.cmd pack --dry-run --json` from `npm\`
+- `mcpb validate mcpb\manifest.json`
+- `mcpb info npm\mcpb\recruit-ai-mcp-0.1.0.mcpb` passed with the expected unsigned warning.
+
 ### Recruiting smoke validator checkpoint
 
 Completed:
