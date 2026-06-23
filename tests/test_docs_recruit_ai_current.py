@@ -91,6 +91,16 @@ def test_release_docs_and_workflows_use_recruit_ai_package_name() -> None:
         in release_docs
     )
     assert (
+        "`guardrail_required_risk_flags="
+        f"{EXPECTED_CONTRACT['guardrail_required_risk_flags']}`"
+        in release_docs
+    )
+    assert (
+        "`shortlist_required_risk_flags="
+        f"{EXPECTED_CONTRACT['shortlist_required_risk_flags']}`"
+        in release_docs
+    )
+    assert (
         "`candidate_position_available_count="
         f"{EXPECTED_CONTRACT['candidate_position_available_count']}`"
         in release_docs

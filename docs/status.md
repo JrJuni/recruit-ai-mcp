@@ -12,6 +12,23 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Release docs required-risk smoke contract guard
+
+Completed:
+
+- Updated the release publish checklist so installed-package smoke criteria
+  include the new recruiting smoke contract keys
+  `guardrail_required_risk_flags=['skill_gap']` and
+  `shortlist_required_risk_flags=['skill_gap']`.
+- Added docs-current regression coverage so future changes to
+  `scripts/validate_recruiting_smoke.py` keep those required-risk contract
+  tokens aligned in release docs.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-docs-required-risk tests\test_docs_recruit_ai_current.py`
+- `ruff check tests\test_docs_recruit_ai_current.py`
+
 ### Recruiting report restricted-content guard
 
 Completed:

@@ -182,6 +182,9 @@ Installed-package smoke passes when:
 - the recruiting smoke contract verifies `candidate_count=13`,
   `written_record_count=33`, `reloaded_record_count=33`, and
   `guardrail_candidate_count=9`;
+- the same contract verifies inferred recommendation risks stay visible in
+  smoke payloads with `guardrail_required_risk_flags=['skill_gap']` and
+  `shortlist_required_risk_flags=['skill_gap']`;
 - the same contract verifies candidate-to-position smoke uses open-role
   defaults with `candidate_position_available_count=2` and
   `candidate_position_excluded_count=1`;
