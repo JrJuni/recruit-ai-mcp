@@ -50,6 +50,10 @@ Green:
   compatibility path and the recruiting-first smoke pack.
 - Claude Desktop MCPB `0.1.0` is the current release artifact target and
   reflects the current installer fields.
+- The current local package readiness refresh rebuilt
+  `recruit-ai-mcp-0.1.0.mcpb`; the root, npm-bundled, and `release/latest`
+  copies share SHA256
+  `3C183B78F5EDABE221FC993D3CD54302D25FCEA53F21A3C75A9723B386755936`.
 
 Yellow:
 
@@ -306,6 +310,8 @@ Pass criteria:
 - Manifest validation passes.
 - Pack succeeds.
 - The bundle remains unsigned unless a signing decision has been made.
+- The root, npm-bundled, and `release/latest` MCPB copies should have matching
+  SHA256 checksums.
 - Reinstall smoke in Claude Desktop should show the expected sample or standard
   surface based on selected config.
 - For the current package, the latest known npm-bundled build is

@@ -12,6 +12,26 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Current docs readiness sweep
+
+Completed:
+
+- Swept current Recruit AI first-run/release docs for stale smoke counts,
+  stale public-npx readiness wording, and inherited package references in the
+  active reading path.
+- Confirmed remaining `deal-intel-mcp@0.2.1` and old MCPB command references in
+  `docs/backlog.md` are below `Historical Planning Archive`, not the active
+  Recruit AI backlog.
+- Updated `docs/distribution-plan.md` and `docs/mvp-readiness.md` to record the
+  refreshed local package readiness evidence and matching MCPB artifact SHA256
+  across root, npm-bundled, and `release/latest` copies.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-current-doc-sweep tests\test_docs_recruit_ai_current.py`
+- `rg -n "candidate_count=9|guardrail_candidate_count=5|written_record_count=29|reloaded_record_count=29|guardrails=5|current public npx path" README.md AI_START_HERE.md AGENTS.md docs mcpb npm tests`
+- `git diff --check`
+
 ### Local package readiness gate refresh
 
 Completed:

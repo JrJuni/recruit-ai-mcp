@@ -360,6 +360,11 @@ Current status:
 - Windows local-wheel fresh-runtime smoke passed with an isolated
   `RECRUIT_AI_HOME`.
 - Python and npm package metadata are version-aligned at `0.1.0`.
+- Local package readiness was refreshed on 2026-06-23: package contract tests,
+  MCPB validate/pack/info, npm dry-run packing, and Python wheel/sdist build
+  passed. The root, npm-bundled, and `release/latest` MCPB artifacts share
+  SHA256
+  `3C183B78F5EDABE221FC993D3CD54302D25FCEA53F21A3C75A9723B386755936`.
 - PyPI and npm registry publication are pending for `0.1.0`.
 - `setup` now runs `smoke-profile --profile sample` as the post-install check
   so missing MongoDB/API values do not make the first install look broken.
