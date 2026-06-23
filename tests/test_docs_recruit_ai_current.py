@@ -299,6 +299,9 @@ def test_backlog_current_stream_is_recruit_ai_first() -> None:
     assert "deal-intel-mcp==0.2.1" not in current
     assert "deal-intel-mcp@0.2.1" not in current
     assert "mcpb pack . deal-intel-mcp" not in current
+    assert "deal-intel-mcp-0." not in current
+    assert "release/latest/` now points at MCPB `0.2." not in current
+    assert "current public npx path" not in current
 
 
 def test_agent_entry_docs_are_recruit_ai_first() -> None:

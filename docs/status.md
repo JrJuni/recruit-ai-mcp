@@ -12,6 +12,19 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Active backlog archive-boundary guard
+
+Completed:
+
+- Added a docs regression check that keeps inherited Deal Intel release package
+  names, old `0.2.x` MCPB references, and old public-npx wording out of the
+  active Recruit AI backlog section while preserving the historical archive.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-active-backlog-boundary-final tests\test_docs_recruit_ai_current.py`
+- `ruff check tests\test_docs_recruit_ai_current.py`
+
 ### MCPB artifact checksum alignment test
 
 Completed:
