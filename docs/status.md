@@ -12,6 +12,35 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Docs-first pause checkpoint
+
+Completed:
+
+- Paused before the next implementation unit to record the current state,
+  token-efficiency review, and recommended next step in source-controlled docs.
+- Current work through the latest commits has stayed on the intended
+  recruiting bootstrap track: recommendation guardrails, recruiting smoke
+  coverage, workflow-trace safety coverage, package-artifact checksum checks,
+  and bootstrapper MCPB handoff guards.
+- The high verification volume was mostly normal for a staged fork with
+  smoke-contract changes and package artifacts, but token use was higher than
+  necessary when full smoke JSON and broad terminal output were allowed into
+  context.
+
+Recommended next implementation unit:
+
+- Add one narrow recommendation-quality improvement before another smoke-pack
+  expansion. The next best small unit is an inferred `seniority_mismatch` risk
+  flag for low `seniority_fit` results when no explicit seniority risk note is
+  already present, with targeted recommendation tests and docs only.
+- Do not refresh MCPB artifacts for ordinary Python source or docs changes
+  unless launcher, manifest, README/package handoff, or tracked MCPB copies
+  change.
+
+Verification:
+
+- Documentation-only checkpoint. No code, artifact, or smoke behavior changed.
+
 ### Bootstrapper MCPB handoff payload guard
 
 Completed:

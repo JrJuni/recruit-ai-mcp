@@ -20,6 +20,38 @@ Related: files or docs
 
 ---
 
+## [2026-06-23] Separate necessary verification from noisy context
+
+Tried: Run a multi-step Recruit AI implementation loop with frequent commits,
+targeted tests, full recruiting smoke checks, package-artifact checks, and
+status updates after each small quality improvement.
+
+Result: The engineering path was mostly sound because each contract change was
+verified close to the code that changed. The inefficient part was not the tests
+themselves; it was letting broad smoke output, repeated status reconstruction,
+and small-but-related commit boundaries occupy more chat context than the
+decision required.
+
+Lesson:
+
+- Keep targeted tests close to each code change; that was normal and useful.
+- Use full smoke and package gates when sample data, public handoff artifacts,
+  or smoke contracts change. Otherwise prefer targeted pytest, Ruff, and the
+  smallest contract test that proves the behavior.
+- When smoke must run, write artifacts under `.tmp/...`, validate the summary,
+  and inspect only the fields that answer the current question.
+- Batch adjacent recommendation-risk improvements when they touch the same
+  scoring path and share the same verification surface.
+- After three or more small autonomous commits, pause for a docs checkpoint
+  before selecting the next unit, especially if the maintainer asks about
+  scope or token efficiency.
+
+Related: `docs/status.md`, `docs/backlog.md`,
+`tests/test_recruiting_recommendation.py`,
+`scripts/validate_recruiting_smoke.py`.
+
+---
+
 ## [2026-06-23] Make docs-first pauses explicit after long loops
 
 Tried: Continue a long implementation/verification loop after the maintainer
