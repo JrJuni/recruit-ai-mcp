@@ -127,6 +127,11 @@ def test_release_docs_and_workflows_use_recruit_ai_package_name() -> None:
         in release_docs
     )
     assert (
+        "`report_export_forbidden_term_present="
+        f"{EXPECTED_CONTRACT['report_export_forbidden_term_present']}`"
+        in release_docs
+    )
+    assert (
         "python scripts/validate_recruiting_smoke.py "
         "smoke-evidence/recruiting-natural-questions.json"
     ) in release_workflow

@@ -191,7 +191,8 @@ Installed-package smoke passes when:
 - the same contract verifies recruiting report export with
   `report_export_artifact_count=2`,
   `report_export_csv_exists=True`, and
-  `report_export_markdown_exists=True`;
+  `report_export_markdown_exists=True`, and
+  `report_export_forbidden_term_present=False`;
 - `deal_intel.mcp_server.app.list_tools()` returns the sample MCP surface;
 - the core tools `config_doctor`, `get_tool_catalog`, `create_candidate`,
   `add_recruiting_interaction`, `recommend_candidates_for_position`, and
