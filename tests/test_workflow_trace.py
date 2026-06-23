@@ -238,19 +238,23 @@ def test_workflow_trace_reset_is_dry_run_first(tmp_path) -> None:
         build_workflow_trace_event(tool_name="get_tool_catalog", result={"ok": True}),
         max_events=10,
     )
+    path.write_text(
+        path.read_text(encoding="utf-8") + "{not-json}\n",
+        encoding="utf-8",
+    )
 
     dry_run = reset_workflow_trace(cfg, force=False, environ={})
 
     assert dry_run["dry_run"] is True
     assert dry_run["storage_written"] is False
     assert dry_run["would_delete_event_count"] == 1
-    assert dry_run["invalid_event_count"] == 0
+    assert dry_run["invalid_event_count"] == 1
     assert path.exists()
     applied = reset_workflow_trace(cfg, force=True, environ={})
     assert applied["dry_run"] is False
     assert applied["storage_written"] is True
     assert applied["deleted_event_count"] == 1
-    assert applied["invalid_event_count"] == 0
+    assert applied["invalid_event_count"] == 1
     assert not path.exists()
 
 
