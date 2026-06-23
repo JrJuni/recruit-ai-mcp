@@ -12,6 +12,20 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Workflow trace reset CLI regression coverage
+
+Completed:
+
+- Tightened local workflow trace CLI coverage so `trace-reset` dry-run reports
+  invalid JSONL trace rows and `trace-reset --force` deletes the trace file even
+  when invalid rows are present.
+- This is a test-only observability hardening pass; no runtime behavior changed.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-trace-reset-invalid tests\test_local_data_cli.py::test_local_data_trace_reset_cli_is_dry_run_first tests\test_workflow_trace.py`
+- `ruff check tests\test_local_data_cli.py`
+
 ### Post-candidate-exclusion-smoke local package gate refresh
 
 Completed:

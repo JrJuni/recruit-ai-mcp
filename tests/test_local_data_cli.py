@@ -275,6 +275,10 @@ def test_local_data_trace_reset_cli_is_dry_run_first(
         build_workflow_trace_event(tool_name="get_tool_catalog", result={"ok": True}),
         max_events=10,
     )
+    path.write_text(
+        path.read_text(encoding="utf-8") + "{not-json}\n",
+        encoding="utf-8",
+    )
 
     dry_run = CliRunner().invoke(app, ["local-data", "trace-reset", "--json"])
 
@@ -283,7 +287,7 @@ def test_local_data_trace_reset_cli_is_dry_run_first(
     assert dry_run_payload["dry_run"] is True
     assert dry_run_payload["storage_written"] is False
     assert dry_run_payload["would_delete_event_count"] == 1
-    assert dry_run_payload["invalid_event_count"] == 0
+    assert dry_run_payload["invalid_event_count"] == 1
     assert path.exists()
     applied = CliRunner().invoke(
         app,
@@ -294,5 +298,5 @@ def test_local_data_trace_reset_cli_is_dry_run_first(
     assert applied_payload["dry_run"] is False
     assert applied_payload["storage_written"] is True
     assert applied_payload["deleted_event_count"] == 1
-    assert applied_payload["invalid_event_count"] == 0
+    assert applied_payload["invalid_event_count"] == 1
     assert not path.exists()
