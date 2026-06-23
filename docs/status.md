@@ -12,6 +12,21 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruiting evidence-gap recommendation guardrail
+
+Completed:
+
+- Added deterministic evidence-gap handling for recruiting recommendations.
+  Candidate profiles with no captured source evidence now raise match risk,
+  surface an `evidence_gap` risk flag, and ask the recruiter to confirm source
+  evidence before shortlisting.
+- Added Casey Stone, a fictional OrbitPay payments candidate whose profile is
+  keyword-strong and aligned on core role fields but lacks captured evidence.
+  Casey remains below Mateo and carries visible evidence-gap review questions.
+- Updated the recruiting natural-question smoke contract to
+  `candidate_count=11`, `written_record_count=31`, `reloaded_record_count=31`,
+  and `guardrail_candidate_count=7`.
+
 ### Workflow trace safety smoke coverage
 
 Completed:
@@ -121,10 +136,10 @@ Completed:
   stack match but fragile close plan, to the recruiting sample dataset. Mateo
   remains the aligned OrbitPay top match, while Riley stays below him with
   visible risk evidence and next questions.
-- Updated the recruiting natural-question smoke contract to
+- Updated the then-current recruiting natural-question smoke contract to
   `candidate_count=10`, `written_record_count=30`, `reloaded_record_count=30`,
-  and `guardrail_candidate_count=6`. The guardrail artifact and validator now
-  include the retention-risk row.
+  and `guardrail_candidate_count=6`. The guardrail artifact and validator then
+  included the retention-risk row.
 - Updated release checklist smoke contract numbers for the expanded recruiting
   sample.
 

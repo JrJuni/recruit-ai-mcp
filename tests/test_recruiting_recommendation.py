@@ -319,6 +319,22 @@ def test_recommendation_result_surfaces_role_scope_mismatch() -> None:
     )
 
 
+def test_recommendation_result_surfaces_evidence_gap() -> None:
+    run = build_position_candidate_recommendation_run(
+        position=_position(),
+        candidates=[_candidate("cand_blake", evidence=[])],
+    )
+
+    result = run.results[0]
+
+    assert result.fit_snapshot.dimensions["risk"].score == 2
+    assert result.risk_flags == [
+        "evidence_gap",
+        "review_match_risk",
+    ]
+    assert "Confirm source evidence before shortlisting." in result.next_questions
+
+
 def test_recommendation_run_accepts_mongo_style_dict_inputs() -> None:
     candidate = _candidate("cand_avery").model_dump(mode="json")
     candidate["_id"] = "mongo-candidate-id"
@@ -342,7 +358,7 @@ def test_recruiting_sample_stress_candidate_does_not_outrank_aligned_match() -> 
         position=positions["pos_northstar_backend_lead"],
         candidates=records[CANDIDATES],
         client_feedback=records[FEEDBACK],
-        limit=8,
+        limit=11,
     )
 
     results = {result.target_id: result for result in run.results}
@@ -504,4 +520,32 @@ def test_recruiting_sample_retention_risk_does_not_outrank_match() -> None:
     ]
     assert "Confirm retention or counteroffer mitigation plan." in (
         results["cand_riley_morgan"].next_questions
+    )
+
+
+def test_recruiting_sample_evidence_gap_does_not_outrank_match() -> None:
+    records = build_sample_recruiting_records(loaded_at="2026-06-22T00:00:00+00:00")
+    positions = {row["position_id"]: row for row in records[POSITIONS]}
+
+    run = build_position_candidate_recommendation_run(
+        position=positions["pos_orbitpay_payments_lead"],
+        candidates=records[CANDIDATES],
+        client_feedback=records[FEEDBACK],
+        limit=11,
+    )
+
+    results = {result.target_id: result for result in run.results}
+
+    assert run.results[0].target_id == "cand_mateo_rivera"
+    assert results["cand_casey_stone"].rank > results["cand_mateo_rivera"].rank
+    assert results["cand_casey_stone"].fit_snapshot.overall_score < (
+        results["cand_mateo_rivera"].fit_snapshot.overall_score
+    )
+    assert results["cand_casey_stone"].fit_snapshot.dimensions["risk"].score == 3
+    assert results["cand_casey_stone"].risk_flags == [
+        "evidence_gap",
+        "review_match_risk",
+    ]
+    assert "Confirm source evidence before shortlisting." in (
+        results["cand_casey_stone"].next_questions
     )

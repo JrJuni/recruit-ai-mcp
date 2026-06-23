@@ -133,9 +133,12 @@ Immediate quality order:
    - Recommendation rows now surface inferred `retention_risk` flags and a
      counteroffer/retention mitigation question when captured candidate risk
      notes mention counteroffers, retention, or close-plan fragility.
+   - Recommendation rows now surface inferred `evidence_gap` flags and a source
+     evidence confirmation question when a keyword-strong candidate has no
+     captured candidate evidence.
    - Continue adding synthetic client/candidate examples that stress skills,
      domain, seniority, compensation, location, availability, client
-     preferences, and risk.
+     preferences, evidence quality, and risk.
    - Keep scoring deterministic and inspectable before adding optional LLM
      narrative layers.
 5. Add recruiting workflow observability only after the core path is stable.

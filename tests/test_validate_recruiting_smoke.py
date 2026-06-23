@@ -122,6 +122,14 @@ def _payload(
                                 "Confirm retention or counteroffer mitigation plan."
                             ],
                         },
+                        {
+                            "guardrail_candidate_id": "cand_casey_stone",
+                            "guardrail_dimension_scores": dict(GUARDRAIL_DIMENSION_SCORES),
+                            "guardrail_risk_flags": ["evidence_gap"],
+                            "guardrail_next_questions": [
+                                "Confirm source evidence before shortlisting."
+                            ],
+                        },
                     ],
                 },
             },
@@ -340,8 +348,8 @@ def test_validate_recruiting_smoke_cli_fails_without_guardrail_evidence(tmp_path
 
     assert result.returncode == 1
     assert "Recruiting natural-question smoke contract mismatch" in result.stderr
-    assert "'guardrail_risk_row_count': 4" in result.stderr
-    assert "'guardrail_next_question_row_count': 4" in result.stderr
+    assert "'guardrail_risk_row_count': 5" in result.stderr
+    assert "'guardrail_next_question_row_count': 5" in result.stderr
 
 
 def test_validate_recruiting_smoke_cli_fails_without_guardrail_dimensions(tmp_path) -> None:

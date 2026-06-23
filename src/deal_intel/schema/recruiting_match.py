@@ -533,6 +533,9 @@ def _risk_signal(
     retention_risk = _has_retention_risk(candidate)
     if retention_risk:
         risk_score += 1
+    evidence_gap = not evidence
+    if evidence_gap:
+        risk_score += 2
 
     risk_score = _clamp_score(risk_score)
     if risk_score == 0:
@@ -544,9 +547,14 @@ def _risk_signal(
         rationale=rationale,
         evidence_refs=evidence,
         missing_info=(
-            ["Confirm retention or counteroffer mitigation plan."]
-            if retention_risk
-            else []
+            [
+                *(
+                    ["Confirm retention or counteroffer mitigation plan."]
+                    if retention_risk
+                    else []
+                ),
+                *(["Confirm source evidence before shortlisting."] if evidence_gap else []),
+            ]
         ),
     )
 
