@@ -12,6 +12,24 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruiting smoke report-export evidence guard
+
+Completed:
+
+- Tightened `scripts/validate_recruiting_smoke.py` so
+  `rq16_recruiting_report_export` validates CSV row count, Markdown line count,
+  generated report row count, and briefing text in addition to artifact
+  existence and forbidden-content status.
+- Added validator regression coverage for report-export evidence mismatches
+  and confirmed the latest generated recruiting smoke summary passes the
+  stricter contract.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-rq16-validator tests\test_validate_recruiting_smoke.py`
+- `ruff check scripts\validate_recruiting_smoke.py tests\test_validate_recruiting_smoke.py`
+- `PYTHONPATH=src python scripts\validate_recruiting_smoke.py .tmp\rq17-validator-smoke\summary.json`
+
 ### Recruiting smoke saved-run row guard
 
 Completed:

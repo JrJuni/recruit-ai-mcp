@@ -123,6 +123,9 @@ Immediate quality order:
    - Recruiting report export smoke now writes CSV and Markdown artifacts to a
      temporary directory and checks that restricted fields stay out of the
      smoke payload and generated files.
+   - Recruiting report export smoke validation now also checks generated row
+     counts, CSV row count, Markdown line count, and the quick briefing, instead
+     of only checking artifact existence.
    - `export_recruiting_report` unit coverage now also checks that candidate
      risk flags, preference notes, and evidence summaries do not leak into
      generated CSV or Markdown artifacts.

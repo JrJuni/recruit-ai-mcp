@@ -325,6 +325,18 @@ def _payload(
                         "markdown_exists": EXPECTED_CONTRACT[
                             "report_export_markdown_exists"
                         ],
+                        "csv_row_count": EXPECTED_CONTRACT[
+                            "report_export_csv_row_count"
+                        ],
+                        "markdown_line_count": EXPECTED_CONTRACT[
+                            "report_export_markdown_line_count"
+                        ],
+                        "row_count": EXPECTED_CONTRACT[
+                            "report_export_row_count"
+                        ],
+                        "briefing": EXPECTED_CONTRACT[
+                            "report_export_briefing"
+                        ],
                         "forbidden_term_present": EXPECTED_CONTRACT[
                             "report_export_forbidden_term_present"
                         ],
@@ -616,6 +628,36 @@ def test_validate_recruiting_smoke_cli_fails_without_candidate_exclusion_row_evi
 
     assert result.returncode == 1
     assert "rq17 excluded result missing required risk flags" in result.stderr
+
+
+def test_validate_recruiting_smoke_cli_fails_on_report_export_evidence_mismatch(
+    tmp_path,
+) -> None:
+    payload = _payload()
+    report_export = next(
+        question["payload"]["summary"]
+        for question in payload["questions"]
+        if question["id"] == "rq16_recruiting_report_export"
+    )
+    report_export["row_count"] = EXPECTED_CONTRACT["report_export_row_count"] - 1
+
+    path = tmp_path / "summary.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = subprocess.run(
+        [sys.executable, str(VALIDATOR), str(path)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 1
+    assert "Recruiting natural-question smoke contract mismatch" in result.stderr
+    assert (
+        f"'report_export_row_count': {EXPECTED_CONTRACT['report_export_row_count']}"
+        in result.stderr
+    )
 
 
 def test_validate_recruiting_smoke_cli_fails_without_candidate_exclusion_question(

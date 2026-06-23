@@ -40,6 +40,10 @@ EXPECTED_CONTRACT = {
     "report_export_artifact_count": 2,
     "report_export_csv_exists": True,
     "report_export_markdown_exists": True,
+    "report_export_csv_row_count": 49,
+    "report_export_markdown_line_count": 40,
+    "report_export_row_count": 48,
+    "report_export_briefing": "2 open positions, 3 active submissions, 1 placements.",
     "report_export_forbidden_term_present": False,
     "candidate_exclusion_result_count": 2,
     "candidate_exclusion_top_position_id": "pos_orbitpay_payments_lead",
@@ -263,6 +267,26 @@ def validate_payload(payload: dict[str, Any]) -> dict[str, Any]:
         "report_export_markdown_exists": _required_key(
             report_export,
             "markdown_exists",
+            scope="rq16_recruiting_report_export summary",
+        ),
+        "report_export_csv_row_count": _required_key(
+            report_export,
+            "csv_row_count",
+            scope="rq16_recruiting_report_export summary",
+        ),
+        "report_export_markdown_line_count": _required_key(
+            report_export,
+            "markdown_line_count",
+            scope="rq16_recruiting_report_export summary",
+        ),
+        "report_export_row_count": _required_key(
+            report_export,
+            "row_count",
+            scope="rq16_recruiting_report_export summary",
+        ),
+        "report_export_briefing": _required_key(
+            report_export,
+            "briefing",
             scope="rq16_recruiting_report_export summary",
         ),
         "report_export_forbidden_term_present": _required_key(
