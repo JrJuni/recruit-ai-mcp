@@ -523,7 +523,7 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     )
 
     assert result.exit_code == 0
-    assert "Natural Question Smoke (as_of=2026-06-22, questions=15)" in result.output
+    assert "Natural Question Smoke (as_of=2026-06-22, questions=16)" in result.output
     assert "OK: True" in result.output
     assert "candidates=11, open_positions=2, submissions=4" in result.output
     assert "open_available=2, excluded=1" in result.output
@@ -540,12 +540,16 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
         "written=True, events=1, redacted=3, forbidden_present=False"
         in result.output
     )
+    assert (
+        "artifacts=2, rows=48, csv=True, markdown=True, forbidden_present=False"
+        in result.output
+    )
     assert (output_dir / "summary.md").exists()
     summary = json.loads((output_dir / "summary.json").read_text(encoding="utf-8"))
     assert summary["ok"] is True
     assert summary["pack"] == "recruiting"
-    assert summary["question_count"] == 15
-    assert summary["answerability_counts"] == {"derived": 11, "direct": 4}
+    assert summary["question_count"] == 16
+    assert summary["answerability_counts"] == {"derived": 12, "direct": 4}
     questions_by_id = {row["id"]: row for row in summary["questions"]}
     assert "open_available=2, excluded=1" in (
         questions_by_id["rq03_positions_for_avery"]["quick_read"]
@@ -558,6 +562,9 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     )
     assert "forbidden_present=False" in (
         questions_by_id["rq15_workflow_trace_safety"]["quick_read"]
+    )
+    assert "artifacts=2" in (
+        questions_by_id["rq16_recruiting_report_export"]["quick_read"]
     )
     validator = Path(__file__).resolve().parents[1] / "scripts" / (
         "validate_recruiting_smoke.py"
@@ -794,6 +801,23 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
         "redacted_marker_count": 3,
         "forbidden_value_present": False,
     }
+    assert (output_dir / "rq16_recruiting_report_export.json").exists()
+    report_export = json.loads(
+        (output_dir / "rq16_recruiting_report_export.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert report_export["summary"] == {
+        "report_type": "recruiting_pipeline",
+        "artifact_count": 2,
+            "csv_exists": True,
+            "markdown_exists": True,
+            "csv_row_count": 49,
+            "markdown_line_count": 40,
+            "row_count": 48,
+            "briefing": "2 open positions, 3 active submissions, 1 placements.",
+            "forbidden_term_present": False,
+        }
     encoded = json.dumps(summary, ensure_ascii=False)
     assert "raw_content" not in encoded
     assert "contacts" not in encoded
@@ -844,6 +868,7 @@ def test_smoke_natural_questions_recruiting_pack_json(monkeypatch, tmp_path) -> 
         "rq13_client_shortlist_readiness",
         "rq14_recommendation_run_review",
         "rq15_workflow_trace_safety",
+        "rq16_recruiting_report_export",
     ]
 
 

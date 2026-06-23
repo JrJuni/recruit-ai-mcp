@@ -3486,6 +3486,7 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
         POSITIONS,
         SUBMISSIONS,
     )
+    from deal_intel.tools.export_recruiting_report import handle as export_recruiting_report
     from deal_intel.tools.recruiting_recommendations import get_recommendation_run
     from deal_intel.tools.sample_dataset import build_sample_recruiting_records
 
@@ -4057,6 +4058,69 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
             },
         }
 
+    def report_export_summary() -> dict:
+        class InMemoryRecruitingReportStore:
+            def list_candidates(self, *, query: dict | None = None, limit: int = 500) -> list[dict]:
+                rows = [
+                    row
+                    for row in candidates
+                    if all(row.get(key) == value for key, value in (query or {}).items())
+                ]
+                return deepcopy(rows[:limit])
+
+            def list_positions(self, *, status: str | None = None, limit: int = 500) -> list[dict]:
+                rows = [
+                    row for row in positions if status is None or row.get("status") == status
+                ]
+                return deepcopy(rows[:limit])
+
+            def list_submissions(self, *, limit: int = 1000) -> list[dict]:
+                return deepcopy(submissions[:limit])
+
+            def list_feedback(self, *, limit: int = 1000) -> list[dict]:
+                return deepcopy(feedback[:limit])
+
+        with tempfile.TemporaryDirectory(prefix="recruit-ai-report-smoke-") as output_dir:
+            result = export_recruiting_report(
+                mongo=InMemoryRecruitingReportStore(),
+                cfg={"reporting": {"recruiting_output_dir": output_dir}},
+                as_of=smoke_as_of,
+            )
+            csv_path = Path(result["csv_path"])
+            markdown_path = Path(result["markdown_path"])
+            csv_exists = csv_path.exists()
+            markdown_exists = markdown_path.exists()
+            csv_text = csv_path.read_text(encoding="utf-8-sig")
+            markdown_text = markdown_path.read_text(encoding="utf-8-sig")
+            serialized = json.dumps(result, ensure_ascii=False)
+
+        forbidden_terms = (
+            "raw_content",
+            "contacts",
+            "summary_embedding",
+            "mongodb+srv",
+            "openai_api_key",
+            "anthropic_api_key",
+        )
+        return {
+            "summary": {
+                "report_type": result["report_type"],
+                "artifact_count": len(result["artifacts"]),
+                "csv_exists": csv_exists,
+                "markdown_exists": markdown_exists,
+                "csv_row_count": len(csv_text.splitlines()),
+                "markdown_line_count": len(markdown_text.splitlines()),
+                "row_count": result["row_count"],
+                "briefing": result["briefing"],
+                "forbidden_term_present": any(
+                    term in serialized.lower()
+                    or term in csv_text.lower()
+                    or term in markdown_text.lower()
+                    for term in forbidden_terms
+                ),
+            },
+        }
+
     questions = [
         call(
             "rq01_recruiting_pipeline_metrics",
@@ -4147,6 +4211,12 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
             "Does opt-in workflow tracing avoid raw notes and secrets?",
             "derived",
             workflow_trace_safety_summary,
+        ),
+        call(
+            "rq16_recruiting_report_export",
+            "Can we export recruiting pipeline CSV and Markdown artifacts?",
+            "derived",
+            report_export_summary,
         ),
     ]
 
@@ -4610,6 +4680,15 @@ def _natural_question_quick_read(question_id: str, payload: dict) -> str:
             f"events={summary.get('event_count')}, "
             f"redacted={summary.get('redacted_marker_count')}, "
             f"forbidden_present={summary.get('forbidden_value_present')}"
+        )
+    if question_id == "rq16_recruiting_report_export":
+        summary = payload.get("summary") or {}
+        return (
+            f"artifacts={summary.get('artifact_count')}, "
+            f"rows={summary.get('row_count')}, "
+            f"csv={summary.get('csv_exists')}, "
+            f"markdown={summary.get('markdown_exists')}, "
+            f"forbidden_present={summary.get('forbidden_term_present')}"
         )
     if question_id == "q01_pipeline_health":
         kpis = payload.get("kpis") or {}

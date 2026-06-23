@@ -97,6 +97,9 @@ Immediate quality order:
    - Workflow trace safety smoke now checks that opt-in local trace events are
      written with redaction for raw recruiting notes, MongoDB URIs,
      API-key-shaped values, and raw result content.
+   - Recruiting report export smoke now writes CSV and Markdown artifacts to a
+     temporary directory and checks that restricted fields stay out of the
+     smoke payload and generated files.
    - Keep the inherited deal-intelligence natural-question pack as a
      compatibility smoke, not the primary Recruit AI user journey.
 3. Tighten release/package verification.

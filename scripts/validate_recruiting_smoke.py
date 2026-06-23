@@ -8,7 +8,7 @@ from typing import Any
 
 EXPECTED_CONTRACT = {
     "ok": True,
-    "question_count": 15,
+    "question_count": 16,
     "candidate_count": 11,
     "written_record_count": 31,
     "reloaded_record_count": 31,
@@ -35,6 +35,10 @@ EXPECTED_CONTRACT = {
     "trace_invalid_event_count": 0,
     "trace_redacted_marker_count": 3,
     "trace_forbidden_value_present": False,
+    "report_export_artifact_count": 2,
+    "report_export_csv_exists": True,
+    "report_export_markdown_exists": True,
+    "report_export_forbidden_term_present": False,
 }
 _REQUIRED_QUESTIONS = (
     "rq01_recruiting_pipeline_metrics",
@@ -44,6 +48,7 @@ _REQUIRED_QUESTIONS = (
     "rq13_client_shortlist_readiness",
     "rq14_recommendation_run_review",
     "rq15_workflow_trace_safety",
+    "rq16_recruiting_report_export",
 )
 _REQUIRED_FIT_DIMENSIONS = (
     "skill_fit",
@@ -74,6 +79,7 @@ def validate_payload(payload: dict[str, Any]) -> dict[str, Any]:
     )
     saved_run = _summary(questions, "rq14_recommendation_run_review")
     trace_safety = _summary(questions, "rq15_workflow_trace_safety")
+    report_export = _summary(questions, "rq16_recruiting_report_export")
     actual = {
         "ok": _required_key(payload, "ok", scope="top-level payload"),
         "question_count": _required_key(
@@ -202,6 +208,26 @@ def validate_payload(payload: dict[str, Any]) -> dict[str, Any]:
             trace_safety,
             "forbidden_value_present",
             scope="rq15_workflow_trace_safety summary",
+        ),
+        "report_export_artifact_count": _required_key(
+            report_export,
+            "artifact_count",
+            scope="rq16_recruiting_report_export summary",
+        ),
+        "report_export_csv_exists": _required_key(
+            report_export,
+            "csv_exists",
+            scope="rq16_recruiting_report_export summary",
+        ),
+        "report_export_markdown_exists": _required_key(
+            report_export,
+            "markdown_exists",
+            scope="rq16_recruiting_report_export summary",
+        ),
+        "report_export_forbidden_term_present": _required_key(
+            report_export,
+            "forbidden_term_present",
+            scope="rq16_recruiting_report_export summary",
         ),
     }
     if actual != EXPECTED_CONTRACT:

@@ -12,6 +12,17 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruiting report export smoke coverage
+
+Completed:
+
+- Broadened the recruiting-first natural-question smoke pack with
+  `rq16_recruiting_report_export`, which writes recruiting pipeline CSV and
+  Markdown artifacts to a temporary output directory and verifies the generated
+  report path stays free of restricted fields.
+- Updated the recruiting smoke validator and release/readiness docs to require
+  the current 16-question recruiting pack.
+
 ### Local package artifact refresh after evidence-gap guardrail
 
 Completed:
@@ -55,7 +66,7 @@ Completed:
   bounded local event while redacting raw recruiting notes, MongoDB URIs,
   API-key-shaped values, and raw result content.
 - Updated the recruiting smoke validator and release/readiness docs to require
-  the current 15-question recruiting pack.
+  the then-current workflow trace smoke pack.
 
 ### Saved recommendation-run smoke coverage
 

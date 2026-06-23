@@ -252,6 +252,25 @@ def _payload(
                     }
                 },
             },
+            {
+                "id": "rq16_recruiting_report_export",
+                "payload": {
+                    "summary": {
+                        "artifact_count": EXPECTED_CONTRACT[
+                            "report_export_artifact_count"
+                        ],
+                        "csv_exists": EXPECTED_CONTRACT[
+                            "report_export_csv_exists"
+                        ],
+                        "markdown_exists": EXPECTED_CONTRACT[
+                            "report_export_markdown_exists"
+                        ],
+                        "forbidden_term_present": EXPECTED_CONTRACT[
+                            "report_export_forbidden_term_present"
+                        ],
+                    }
+                },
+            },
         ],
     }
 

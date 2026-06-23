@@ -20,6 +20,33 @@ Related: files or docs
 
 ---
 
+## [2026-06-23] Make docs-first pauses explicit after long loops
+
+Tried: Continue a long implementation/verification loop after the maintainer
+asked for a pause, current-work briefing, and token-efficiency self-check.
+
+Result: The implementation work was still useful, but the handoff needed a
+clearer docs-first checkpoint so the next step could be chosen from a compact
+record instead of relying on chat history.
+
+Lesson:
+
+- When the maintainer asks to pause and review scope, update `docs/status.md`
+  and, if the issue is repeatable, this file before entering the next
+  implementation unit.
+- Keep the status entry short: completed work, verification commands, known
+  risk, and the next recommended work unit.
+- Treat high-volume command output as evidence to summarize, not context to
+  preserve verbatim. Prefer targeted tests, validator JSON, and `git diff
+  --stat` over broad terminal dumps.
+- Resume implementation only after the docs checkpoint is committed or the
+  maintainer explicitly redirects.
+
+Related: `docs/status.md`, `docs/backlog.md`,
+`scripts/validate_recruiting_smoke.py`.
+
+---
+
 ## [2026-06-23] Keep smoke verification high-signal during autonomous loops
 
 Tried: During the Recruit AI recommendation-quality loop, repeatedly run the

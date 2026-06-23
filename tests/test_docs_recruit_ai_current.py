@@ -20,7 +20,8 @@ def test_mvp_readiness_is_recruit_ai_current() -> None:
     assert "add_recruiting_interaction" in docs
     assert "recommend_candidates_for_position" in docs
     assert "smoke-natural-questions --pack recruiting --as-of 2026-06-22" in docs
-    assert "`questions=15`" in docs
+    assert "`questions=16`" in docs
+    assert "recruiting pipeline CSV and Markdown report" in docs
     assert (
         "must-have skill evidence gaps, and client shortlist readiness for open sample"
         in normalized
@@ -79,7 +80,7 @@ def test_release_docs_and_workflows_use_recruit_ai_package_name() -> None:
         "--as-of 2026-06-22 --json"
     ) in release_workflow
     assert "smoke-evidence/recruiting-natural-questions.json" in staging_workflow
-    assert "current 15-question recruiting pack" in release_docs
+    assert "current 16-question recruiting pack" in release_docs
     assert f"`candidate_count={EXPECTED_CONTRACT['candidate_count']}`" in release_docs
     assert (
         f"`written_record_count={EXPECTED_CONTRACT['written_record_count']}`"
@@ -108,6 +109,21 @@ def test_release_docs_and_workflows_use_recruit_ai_package_name() -> None:
     assert (
         "`trace_forbidden_value_present="
         f"{EXPECTED_CONTRACT['trace_forbidden_value_present']}`"
+        in release_docs
+    )
+    assert (
+        "`report_export_artifact_count="
+        f"{EXPECTED_CONTRACT['report_export_artifact_count']}`"
+        in release_docs
+    )
+    assert (
+        "`report_export_csv_exists="
+        f"{EXPECTED_CONTRACT['report_export_csv_exists']}`"
+        in release_docs
+    )
+    assert (
+        "`report_export_markdown_exists="
+        f"{EXPECTED_CONTRACT['report_export_markdown_exists']}`"
         in release_docs
     )
     assert (
