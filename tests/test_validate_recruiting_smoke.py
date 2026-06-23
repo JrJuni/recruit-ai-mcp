@@ -130,6 +130,14 @@ def _payload(
                                 "Confirm source evidence before shortlisting."
                             ],
                         },
+                        {
+                            "guardrail_candidate_id": "cand_morgan_patel",
+                            "guardrail_dimension_scores": dict(GUARDRAIL_DIMENSION_SCORES),
+                            "guardrail_risk_flags": ["process_conflict"],
+                            "guardrail_next_questions": [
+                                "Confirm competing process or offer-deadline plan."
+                            ],
+                        },
                     ],
                 },
             },
@@ -367,8 +375,8 @@ def test_validate_recruiting_smoke_cli_fails_without_guardrail_evidence(tmp_path
 
     assert result.returncode == 1
     assert "Recruiting natural-question smoke contract mismatch" in result.stderr
-    assert "'guardrail_risk_row_count': 5" in result.stderr
-    assert "'guardrail_next_question_row_count': 5" in result.stderr
+    assert "'guardrail_risk_row_count': 6" in result.stderr
+    assert "'guardrail_next_question_row_count': 6" in result.stderr
 
 
 def test_validate_recruiting_smoke_cli_fails_without_guardrail_dimensions(tmp_path) -> None:

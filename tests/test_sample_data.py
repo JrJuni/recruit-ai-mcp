@@ -155,7 +155,7 @@ def test_recruiting_sample_dataset_is_model_safe_and_metric_ready() -> None:
     serialized = json.dumps(records, ensure_ascii=False).lower()
 
     assert {collection: len(rows) for collection, rows in records.items()} == {
-        "candidates": 11,
+        "candidates": 12,
         "client_companies": 2,
         "positions": 3,
         "submissions": 4,
@@ -177,7 +177,7 @@ def test_recruiting_sample_dataset_is_model_safe_and_metric_ready() -> None:
         feedback=records["feedback"],
     )
 
-    assert metrics["summary"]["candidate_count"] == 11
+    assert metrics["summary"]["candidate_count"] == 12
     assert metrics["summary"]["open_position_count"] == 2
     assert metrics["summary"]["placed_count"] == 1
     for forbidden in [
@@ -222,8 +222,8 @@ def test_create_recruiting_sample_data_dry_run_previews_without_writing() -> Non
     assert result["sample_batch_id"] == RECRUITING_SAMPLE_BATCH_ID
     assert result["dry_run"] is True
     assert result["storage_written"] is False
-    assert result["record_count"] == 31
-    assert result["record_counts"]["candidates"] == 11
+    assert result["record_count"] == 32
+    assert result["record_counts"]["candidates"] == 12
     assert result["preview"]["positions"][0]["position_id"] == (
         "pos_northstar_backend_lead"
     )
@@ -293,8 +293,8 @@ def test_create_recruiting_sample_data_writes_multi_collection_records() -> None
     )
 
     assert result["storage_written"] is True
-    assert result["created_or_replaced_count"] == 31
-    assert len(mongo.recruiting["candidates"]) == 11
+    assert result["created_or_replaced_count"] == 32
+    assert len(mongo.recruiting["candidates"]) == 12
     assert len(mongo.recruiting["positions"]) == 3
     assert "cand_avery_chen" in mongo.recruiting["candidates"]
     assert "pos_northstar_backend_lead" in mongo.recruiting["positions"]
@@ -350,8 +350,8 @@ def test_create_recruiting_sample_data_overwrite_replaces_known_ids() -> None:
     )
 
     assert exc_info.value.error_code == ErrorCode.INVALID_INPUT
-    assert result["deleted_existing_count"] == 31
-    assert result["created_or_replaced_count"] == 31
+    assert result["deleted_existing_count"] == 32
+    assert result["created_or_replaced_count"] == 32
     assert result["record_counts"]["feedback"] == 4
     assert mongo.recruiting_delete_calls == 1
 
@@ -426,7 +426,7 @@ def test_delete_recruiting_sample_data_dry_run_and_actual_delete() -> None:
         dataset=DATASET_RECRUITING_PIPELINE,
     )
     assert dry_run["dry_run"] is True
-    assert dry_run["would_delete_count"] == 31
+    assert dry_run["would_delete_count"] == 32
     assert dry_run["storage_written"] is False
 
     with pytest.raises(MCPError) as missing_confirmation:
@@ -446,7 +446,7 @@ def test_delete_recruiting_sample_data_dry_run_and_actual_delete() -> None:
     )
 
     assert missing_confirmation.value.error_code == ErrorCode.INVALID_INPUT
-    assert actual["deleted_count"] == 31
+    assert actual["deleted_count"] == 32
     assert actual["storage_written"] is True
     assert all(not rows for rows in mongo.recruiting.values())
 

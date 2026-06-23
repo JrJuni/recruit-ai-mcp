@@ -139,6 +139,9 @@ Immediate quality order:
    - Recommendation rows now surface inferred `evidence_gap` flags and a source
      evidence confirmation question when a keyword-strong candidate has no
      captured candidate evidence.
+   - Recommendation rows now surface inferred `process_conflict` flags and a
+     competing-process or offer-deadline plan question when a strong candidate
+     has an active competing process.
    - Continue adding synthetic client/candidate examples that stress skills,
      domain, seniority, compensation, location, availability, client
      preferences, evidence quality, and risk.

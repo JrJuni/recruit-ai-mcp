@@ -667,6 +667,50 @@ def _base_recruiting_records(*, loaded_at: str) -> dict[str, list[dict]]:
             "created_at": loaded_at,
             "updated_at": loaded_at,
         },
+        {
+            "candidate_id": "cand_morgan_patel",
+            "name": "Morgan Patel",
+            "headline": "Payments platform lead with a competing offer deadline",
+            "current_company": "WireBridge",
+            "current_title": "Senior Payments Engineer",
+            "skills": ["Payments", "Kafka", "Risk", "Java", "Kotlin"],
+            "domains": ["fintech", "payments", "risk operations"],
+            "seniority": "senior",
+            "compensation_expectation": {
+                "currency": "USD",
+                "minimum": 178000,
+                "target": 198000,
+                "maximum": 220000,
+                "period": "annual",
+                "note": "Aligned if the client can move quickly.",
+            },
+            "locations": ["New York", "Remote US"],
+            "work_authorization": "US authorized",
+            "availability": "immediate",
+            "preferences": {
+                "desired_titles": ["Payments Platform Lead", "Senior Payments Engineer"],
+                "preferred_domains": ["fintech", "payments"],
+                "preferred_locations": ["New York", "Remote US"],
+                "remote_preference": "remote-first",
+                "excluded_companies": [],
+                "notes": "Has an active process and needs a quick client timeline.",
+            },
+            "risk_flags": ["competing offer deadline next week"],
+            "evidence": [
+                {
+                    "evidence_id": "ev_morgan_profile",
+                    "source_type": "profile",
+                    "source_id": "cand_morgan_patel",
+                    "summary": (
+                        "Strong payments and risk-operations profile, but another "
+                        "process has a near-term offer deadline."
+                    ),
+                    "confidence": "candidate_stated",
+                }
+            ],
+            "created_at": loaded_at,
+            "updated_at": loaded_at,
+        },
     ]
     positions = [
         {

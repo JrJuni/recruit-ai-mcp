@@ -533,6 +533,9 @@ def _risk_signal(
     retention_risk = _has_retention_risk(candidate)
     if retention_risk:
         risk_score += 1
+    process_conflict = _has_process_conflict(candidate)
+    if process_conflict:
+        risk_score += 1
     evidence_gap = not evidence
     if evidence_gap:
         risk_score += 2
@@ -551,6 +554,11 @@ def _risk_signal(
                 *(
                     ["Confirm retention or counteroffer mitigation plan."]
                     if retention_risk
+                    else []
+                ),
+                *(
+                    ["Confirm competing process or offer-deadline plan."]
+                    if process_conflict
                     else []
                 ),
                 *(["Confirm source evidence before shortlisting."] if evidence_gap else []),
@@ -757,6 +765,20 @@ def _has_retention_risk(candidate: CandidateProfile) -> bool:
             "retain",
             "close plan",
             "closing plan",
+        )
+    )
+
+
+def _has_process_conflict(candidate: CandidateProfile) -> bool:
+    text = " ".join([*candidate.risk_flags, candidate.preferences.notes]).lower()
+    return any(
+        term in text
+        for term in (
+            "competing offer",
+            "offer deadline",
+            "other process",
+            "active process",
+            "exploding offer",
         )
     )
 

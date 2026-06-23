@@ -549,3 +549,32 @@ def test_recruiting_sample_evidence_gap_does_not_outrank_match() -> None:
     assert "Confirm source evidence before shortlisting." in (
         results["cand_casey_stone"].next_questions
     )
+
+
+def test_recruiting_sample_process_conflict_does_not_outrank_match() -> None:
+    records = build_sample_recruiting_records(loaded_at="2026-06-22T00:00:00+00:00")
+    positions = {row["position_id"]: row for row in records[POSITIONS]}
+
+    run = build_position_candidate_recommendation_run(
+        position=positions["pos_orbitpay_payments_lead"],
+        candidates=records[CANDIDATES],
+        client_feedback=records[FEEDBACK],
+        limit=12,
+    )
+
+    results = {result.target_id: result for result in run.results}
+
+    assert run.results[0].target_id == "cand_mateo_rivera"
+    assert results["cand_morgan_patel"].rank > results["cand_mateo_rivera"].rank
+    assert results["cand_morgan_patel"].fit_snapshot.overall_score < (
+        results["cand_mateo_rivera"].fit_snapshot.overall_score
+    )
+    assert results["cand_morgan_patel"].fit_snapshot.dimensions["risk"].score == 3
+    assert results["cand_morgan_patel"].risk_flags == [
+        "competing offer deadline next week",
+        "process_conflict",
+        "review_match_risk",
+    ]
+    assert "Confirm competing process or offer-deadline plan." in (
+        results["cand_morgan_patel"].next_questions
+    )

@@ -12,6 +12,30 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruiting process-conflict recommendation guardrail
+
+Completed:
+
+- Added deterministic process-conflict handling for recruiting
+  recommendations. Candidate risk notes or preference notes that mention a
+  competing offer, active process, or offer deadline now raise match risk,
+  surface a normalized `process_conflict` flag, and ask the recruiter to
+  confirm the competing-process or offer-deadline plan before shortlisting.
+- Added Morgan Patel, a fictional OrbitPay payments candidate whose skills,
+  domain, seniority, compensation, location, and availability fit strongly but
+  whose competing offer deadline should keep Mateo as the safer aligned top
+  match.
+- Updated the recruiting natural-question smoke contract to
+  `candidate_count=12`, `written_record_count=32`, `reloaded_record_count=32`,
+  and `guardrail_candidate_count=8`.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-process-conflict-3 tests\test_recruiting_recommendation.py tests\test_sample_data.py tests\test_validate_recruiting_smoke.py`
+- `ruff check src\deal_intel\schema\recruiting_match.py src\deal_intel\schema\recruiting_recommendation.py src\deal_intel\tools\sample_dataset.py src\deal_intel\cli.py scripts\validate_recruiting_smoke.py tests\test_recruiting_recommendation.py tests\test_sample_data.py tests\test_validate_recruiting_smoke.py`
+- `PYTHONPATH=src python -m deal_intel.cli smoke-natural-questions --pack recruiting --as-of 2026-06-22 --output-dir .tmp\process-conflict-smoke`
+- `PYTHONPATH=src python scripts\validate_recruiting_smoke.py .tmp\process-conflict-smoke\summary.json`
+
 ### Post-RQ16 local package gate refresh
 
 Completed:
@@ -75,9 +99,8 @@ Completed:
 - Added Casey Stone, a fictional OrbitPay payments candidate whose profile is
   keyword-strong and aligned on core role fields but lacks captured evidence.
   Casey remains below Mateo and carries visible evidence-gap review questions.
-- Updated the recruiting natural-question smoke contract to
-  `candidate_count=11`, `written_record_count=31`, `reloaded_record_count=31`,
-  and `guardrail_candidate_count=7`.
+- Updated the then-current recruiting natural-question smoke contract for the
+  expanded evidence-gap fixture.
 
 ### Workflow trace safety smoke coverage
 

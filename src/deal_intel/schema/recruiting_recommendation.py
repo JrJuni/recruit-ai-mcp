@@ -181,6 +181,8 @@ def _risk_flags(
         flags.append("role_scope_mismatch")
     if _has_retention_risk(fit) and "retention_risk" not in flags:
         flags.append("retention_risk")
+    if _has_process_conflict(fit) and "process_conflict" not in flags:
+        flags.append("process_conflict")
     if _has_evidence_gap(fit) and "evidence_gap" not in flags:
         flags.append("evidence_gap")
     risk_score = fit.signals["risk"].score
@@ -274,6 +276,11 @@ def _has_existing_scope_flag(flags: list[str]) -> bool:
 def _has_retention_risk(fit: CandidatePositionFitResult) -> bool:
     risk_signal = fit.signals["risk"]
     return "Confirm retention or counteroffer mitigation plan." in risk_signal.missing_info
+
+
+def _has_process_conflict(fit: CandidatePositionFitResult) -> bool:
+    risk_signal = fit.signals["risk"]
+    return "Confirm competing process or offer-deadline plan." in risk_signal.missing_info
 
 
 def _has_evidence_gap(fit: CandidatePositionFitResult) -> bool:
