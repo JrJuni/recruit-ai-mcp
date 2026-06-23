@@ -53,7 +53,7 @@ Green:
 - The current local package readiness refresh rebuilt
   `recruit-ai-mcp-0.1.0.mcpb`; the root, npm-bundled, and `release/latest`
   copies share SHA256
-  `5AE843A7F30B9269DDED2230677A10312D456D6D123FCA5EEC9833ABE83C70C5`.
+  `CA6933AB6EC44C7DC1FBCAD3834744150F40ECB665DFE3A632A5122CAD428371`.
 
 Yellow:
 
