@@ -12,6 +12,16 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Release approval boundary clarification
+
+Completed:
+
+- Added an explicit AI-agent stop line to `docs/release-publish-checklist.md`.
+  Agents may run local gates, inspect registry state, and prepare docs, but
+  must ask the maintainer before pushing branches, creating or pushing release
+  tags, publishing to PyPI/npm, changing npm dist-tags, triggering publishing
+  workflows, or marking public `npx recruit-ai-mcp@0.1.0` readiness complete.
+
 ### Final local gate before handoff
 
 Completed:

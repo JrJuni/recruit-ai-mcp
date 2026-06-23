@@ -6,6 +6,17 @@ MCPB, and smoke checks pass.
 Actual npm/PyPI publication requires maintainer credentials and should not be
 performed by an AI agent without explicit approval.
 
+AI agents may run the local gates in this checklist, inspect public registry
+state, and prepare documentation. Stop and ask the maintainer before any action
+that changes external state:
+
+- pushing `main` or any release branch;
+- creating, moving, or pushing `v0.1.0` or another release tag;
+- running `twine upload`, `npm publish`, `npm dist-tag`, or registry
+  credential setup;
+- triggering a release workflow that publishes to PyPI or npm;
+- marking public `npx recruit-ai-mcp@0.1.0` readiness as complete.
+
 Preferred publication path: GitHub Actions trusted publishing. Local `twine`
 and `npm publish` remain fallback/debug paths only, because maintainer accounts
 may use security-key/WebAuthn authentication that does not expose a CLI OTP.
