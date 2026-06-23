@@ -435,6 +435,9 @@ def test_bootstrapper_mcpb_command_outputs_local_handoff(tmp_path: Path) -> None
 
     assert payload["ok"] is True
     assert payload["mcpb"]["filename"] == f"recruit-ai-mcp-{package['version']}.mcpb"
+    assert payload["mcpb"]["bundled_path"] == str(
+        ROOT / "npm" / "mcpb" / f"recruit-ai-mcp-{package['version']}.mcpb"
+    )
     assert payload["mcpb"]["bundled_exists"] is True
     assert payload["mcpb"]["local_path"] == str(
         tmp_path
@@ -442,6 +445,11 @@ def test_bootstrapper_mcpb_command_outputs_local_handoff(tmp_path: Path) -> None
         / "runtime"
         / "mcpb"
         / f"recruit-ai-mcp-{package['version']}.mcpb"
+    )
+    assert payload["mcpb"]["local_exists"] is False
+    assert payload["mcpb"]["fallback_download_url"] == (
+        "https://github.com/JrJuni/recruit-ai-mcp/raw/main/"
+        f"mcpb/recruit-ai-mcp-{package['version']}.mcpb"
     )
     assert "Install the local MCPB file" in payload["mcpb"]["install_summary"]
     assert any(

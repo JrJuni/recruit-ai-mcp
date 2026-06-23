@@ -12,6 +12,19 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Bootstrapper MCPB handoff payload guard
+
+Completed:
+
+- Tightened bootstrapper tests for `recruit-ai-mcp mcpb --json` so the payload
+  must point to the npm-bundled MCPB artifact, the fresh local runtime MCPB
+  target, and the current GitHub fallback download URL for the active version.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-mcpb-handoff-final tests\test_bootstrapper_skeleton.py`
+- `ruff check tests\test_bootstrapper_skeleton.py`
+
 ### Active backlog archive-boundary guard
 
 Completed:
