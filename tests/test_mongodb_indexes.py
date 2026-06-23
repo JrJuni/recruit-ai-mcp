@@ -28,6 +28,11 @@ class FakeIndexDB:
         self.delete_audit_logs = FakeCollection()
         self.analytics_snapshots = FakeCollection()
 
+    def __getitem__(self, name: str) -> FakeCollection:
+        if not hasattr(self, name):
+            setattr(self, name, FakeCollection())
+        return getattr(self, name)
+
 
 def _index_by_name(collection: FakeCollection, name: str) -> dict:
     for index in collection.indexes:
