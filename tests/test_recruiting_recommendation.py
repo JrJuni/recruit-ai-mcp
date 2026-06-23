@@ -220,6 +220,40 @@ def test_recommendation_result_carries_risk_flags_from_candidate_and_fit() -> No
     )
 
 
+def test_recommendation_result_deduplicates_generic_match_risk_flags() -> None:
+    high_risk_run = build_position_candidate_recommendation_run(
+        position=_position(),
+        candidates=[
+            _candidate(
+                "cand_avery",
+                risk_flags=[
+                    "counteroffer risk",
+                    "limited availability",
+                    "high_match_risk",
+                ],
+            )
+        ],
+    )
+    review_risk_run = build_position_candidate_recommendation_run(
+        position=_position(),
+        candidates=[
+            _candidate(
+                "cand_blake",
+                availability="90 days",
+                risk_flags=["review_match_risk"],
+            )
+        ],
+    )
+
+    high_risk_flags = high_risk_run.results[0].risk_flags
+    review_risk_flags = review_risk_run.results[0].risk_flags
+
+    assert high_risk_flags.count("high_match_risk") == 1
+    assert "review_match_risk" not in high_risk_flags
+    assert review_risk_flags.count("review_match_risk") == 1
+    assert review_risk_flags[0] == "review_match_risk"
+
+
 def test_recommendation_result_surfaces_work_authorization_mismatch() -> None:
     run = build_position_candidate_recommendation_run(
         position=_position(locations=["Boston", "Remote US"], remote_policy="Remote US only"),

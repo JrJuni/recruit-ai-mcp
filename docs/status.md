@@ -12,6 +12,21 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruiting generic match-risk de-duplication fix
+
+Completed:
+
+- Added targeted recommendation coverage for generic
+  `high_match_risk` / `review_match_risk` de-duplication.
+- Fixed the risk-flag branch so a candidate that already carries
+  `high_match_risk` does not receive an additional lower-severity
+  `review_match_risk` when raw match risk is high.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-generic-risk-dedup tests\test_recruiting_recommendation.py`
+- `ruff check src\deal_intel\schema\recruiting_recommendation.py tests\test_recruiting_recommendation.py`
+
 ### Recruiting inferred-risk de-duplication coverage
 
 Completed:

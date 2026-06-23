@@ -168,6 +168,8 @@ Immediate quality order:
      required-skill follow-up questions are present.
    - Recommendation tests now cover de-duplication when equivalent
      human-written skill, domain, or seniority risk notes are already present.
+   - Generic match-risk handling now avoids adding `review_match_risk` when an
+     existing `high_match_risk` already represents the elevated raw risk.
    - The recruiting domain-model contract now documents the normalized
      inferred recommendation risk flags emitted by the deterministic builder.
    - Docs-current tests now compare the documented inferred-risk list with the

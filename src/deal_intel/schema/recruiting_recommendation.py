@@ -199,8 +199,9 @@ def _risk_flags(
     if _has_low_confidence_evidence(fit) and "low_confidence_evidence" not in flags:
         flags.append("low_confidence_evidence")
     risk_score = fit.signals["risk"].score
-    if risk_score >= 4 and "high_match_risk" not in flags:
-        flags.append("high_match_risk")
+    if risk_score >= 4:
+        if "high_match_risk" not in flags:
+            flags.append("high_match_risk")
     elif risk_score >= 2 and "review_match_risk" not in flags:
         flags.append("review_match_risk")
     return flags[:30]
