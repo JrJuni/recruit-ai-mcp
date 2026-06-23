@@ -1,4 +1,5 @@
-﻿from pathlib import Path
+﻿import re
+from pathlib import Path
 
 from scripts.validate_recruiting_smoke import EXPECTED_CONTRACT
 
@@ -473,9 +474,11 @@ def test_recruiting_domain_model_documents_inferred_risk_flags() -> None:
     docs = (ROOT / "docs" / "recruiting-domain-model.md").read_text(
         encoding="utf-8"
     )
-
-    assert "normalized inferred risk flags" in docs
-    for flag in [
+    source = (
+        ROOT / "src" / "deal_intel" / "schema" / "recruiting_recommendation.py"
+    ).read_text(encoding="utf-8")
+    appended_flags = set(re.findall(r'flags\.append\("([^"]+)"\)', source))
+    inferred_flags = [
         "work_authorization_mismatch",
         "location_policy_mismatch",
         "skill_gap",
@@ -490,7 +493,12 @@ def test_recruiting_domain_model_documents_inferred_risk_flags() -> None:
         "process_conflict",
         "evidence_gap",
         "low_confidence_evidence",
-    ]:
+    ]
+
+    assert "normalized inferred risk flags" in docs
+    assert set(inferred_flags).issubset(appended_flags)
+    assert {"review_match_risk", "high_match_risk"}.issubset(appended_flags)
+    for flag in [*inferred_flags, "review_match_risk", "high_match_risk"]:
         assert flag in docs
 
 

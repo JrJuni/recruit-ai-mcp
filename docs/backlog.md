@@ -168,6 +168,8 @@ Immediate quality order:
      required-skill follow-up questions are present.
    - The recruiting domain-model contract now documents the normalized
      inferred recommendation risk flags emitted by the deterministic builder.
+   - Docs-current tests now compare the documented inferred-risk list with the
+     source `flags.append(...)` values in the recommendation builder.
    - Recommendation rows now surface inferred `domain_mismatch` flags when
      candidate skills are aligned but captured domain history does not clearly
      transfer to the role context.

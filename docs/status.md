@@ -12,6 +12,22 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruiting risk-flag source/docs alignment guard
+
+Completed:
+
+- Tightened docs-current coverage so the inferred risk flag list in
+  `docs/recruiting-domain-model.md` is checked against the literal
+  `flags.append(...)` values in
+  `src/deal_intel/schema/recruiting_recommendation.py`.
+- The guard now covers both normalized inferred flags and the generic
+  `review_match_risk` / `high_match_risk` flags.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-risk-source-docs tests\test_docs_recruit_ai_current.py`
+- `ruff check tests\test_docs_recruit_ai_current.py`
+
 ### Recruiting domain-model inferred-risk docs guard
 
 Completed:
