@@ -110,6 +110,15 @@ def _candidate(candidate_id: str, **updates: object) -> dict:
         "locations": ["Remote"],
         "availability": "30 days",
         "risk_flags": [],
+        "evidence": [
+            {
+                "evidence_id": f"ev_{candidate_id}",
+                "source_type": "profile",
+                "source_id": candidate_id,
+                "summary": "Candidate profile includes source-backed backend evidence.",
+                "confidence": "candidate_stated",
+            }
+        ],
     }
     payload.update(updates)
     return CandidateProfile.model_validate(payload).model_dump(mode="json")
