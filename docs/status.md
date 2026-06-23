@@ -12,6 +12,27 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Final local release/package gate refresh
+
+Completed:
+
+- Re-ran the final local release/package gate after aligning release and MVP
+  readiness docs with the stricter recruiting smoke validator contract.
+- Package/MCPB/docs tests, Ruff, npm package dry-run, MCPB manifest validation,
+  and MCPB info inspection all pass for the current `recruit-ai-mcp` `0.1.0`
+  line.
+- No external publish, push, tag, dist-tag, or release workflow action was run.
+  Public registry readiness still requires maintainer approval, package
+  publication, and post-publish `npx recruit-ai-mcp@0.1.0` fresh smoke.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-final-local-package-gate tests\test_bootstrapper_skeleton.py tests\test_mcpb_manifest.py tests\test_docs_recruit_ai_current.py`
+- `ruff check tests\test_bootstrapper_skeleton.py tests\test_mcpb_manifest.py tests\test_docs_recruit_ai_current.py`
+- `npm.cmd pack --dry-run --json` from `npm\`
+- `mcpb validate mcpb\manifest.json`
+- `mcpb info npm\mcpb\recruit-ai-mcp-0.1.0.mcpb` passed with the expected unsigned warning.
+
 ### MVP readiness smoke-contract alignment
 
 Completed:
