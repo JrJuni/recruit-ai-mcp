@@ -12,6 +12,27 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Candidate-side exclusion recommendation smoke
+
+Completed:
+
+- Broadened the recruiting-first natural-question smoke pack with
+  `rq17_candidate_exclusion_position_guardrail`, which checks that Jordan Lee's
+  candidate-side Northstar exclusion remains visible when recommending open
+  positions for that candidate.
+- The new smoke row verifies the excluded Northstar role does not outrank the
+  non-excluded OrbitPay role, and that the excluded role carries
+  `client_exclusion` risk plus a candidate-exclusion follow-up question.
+- Updated the recruiting smoke validator and release/readiness docs to require
+  the current 17-question recruiting pack.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-rq17-2 tests\test_validate_recruiting_smoke.py tests\test_cli_deal_review_smoke.py::test_smoke_natural_questions_recruiting_pack_writes_artifacts tests\test_cli_deal_review_smoke.py::test_smoke_natural_questions_recruiting_pack_json tests\test_docs_recruit_ai_current.py`
+- `ruff check` on the touched CLI, validator, and test files.
+- `PYTHONPATH=src python -m deal_intel.cli smoke-natural-questions --pack recruiting --as-of 2026-06-22 --output-dir .tmp\candidate-exclusion-position-smoke`
+- `PYTHONPATH=src python scripts\validate_recruiting_smoke.py .tmp\candidate-exclusion-position-smoke\summary.json`
+
 ### Post-low-confidence-evidence local package gate refresh
 
 Completed:
@@ -189,7 +210,7 @@ Completed:
   Markdown artifacts to a temporary output directory and verifies the generated
   report path stays free of restricted fields.
 - Updated the recruiting smoke validator and release/readiness docs to require
-  the current 16-question recruiting pack.
+  the then-current report-export recruiting pack.
 
 ### Local package artifact refresh after evidence-gap guardrail
 

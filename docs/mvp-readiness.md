@@ -231,7 +231,7 @@ recruit-ai smoke-natural-questions --pack recruiting --as-of 2026-06-22
 
 Pass criteria:
 
-- `questions=16`.
+- `questions=17`.
 - `OK: True`.
 - No blocked questions.
 - No sensitive failures.

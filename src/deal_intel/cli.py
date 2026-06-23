@@ -3576,6 +3576,40 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
             "run": run,
         }
 
+    def candidate_exclusion_position_guardrail_summary() -> dict:
+        open_positions = [
+            position for position in positions if position.get("status") == "open"
+        ]
+        run = build_candidate_position_recommendation_run(
+            candidate=candidates_by_id["cand_jordan_lee"],
+            positions=open_positions,
+            client_feedback=feedback,
+            limit=3,
+            created_at=loaded_at,
+        ).model_dump(mode="json")
+        results = run["results"]
+        flagged = [
+            result
+            for result in results
+            if "client_exclusion" in (result.get("risk_flags") or [])
+        ]
+        return {
+            "summary": {
+                "candidate_id": "cand_jordan_lee",
+                "result_count": len(results),
+                "top_position_id": results[0]["target_id"] if results else "",
+                "excluded_client_position_id": "pos_northstar_backend_lead",
+                "excluded_client_flagged_count": len(flagged),
+                "excluded_client_question_count": sum(
+                    1
+                    for result in flagged
+                    for question in result.get("next_questions") or []
+                    if "candidate exclusion" in question
+                ),
+            },
+            "run": run,
+        }
+
     def feedback_adjustment_summary() -> dict:
         from dataclasses import asdict
 
@@ -4228,6 +4262,12 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
             "derived",
             report_export_summary,
         ),
+        call(
+            "rq17_candidate_exclusion_position_guardrail",
+            "Do candidate-side client exclusions stay visible in role recommendations?",
+            "derived",
+            candidate_exclusion_position_guardrail_summary,
+        ),
     ]
 
     sensitive_failures = [
@@ -4699,6 +4739,13 @@ def _natural_question_quick_read(question_id: str, payload: dict) -> str:
             f"csv={summary.get('csv_exists')}, "
             f"markdown={summary.get('markdown_exists')}, "
             f"forbidden_present={summary.get('forbidden_term_present')}"
+        )
+    if question_id == "rq17_candidate_exclusion_position_guardrail":
+        summary = payload.get("summary") or {}
+        return (
+            f"top={summary.get('top_position_id')}, "
+            f"excluded_flagged={summary.get('excluded_client_flagged_count')}, "
+            f"questions={summary.get('excluded_client_question_count')}"
         )
     if question_id == "q01_pipeline_health":
         kpis = payload.get("kpis") or {}

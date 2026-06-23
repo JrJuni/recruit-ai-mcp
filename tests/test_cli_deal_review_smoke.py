@@ -523,7 +523,7 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     )
 
     assert result.exit_code == 0
-    assert "Natural Question Smoke (as_of=2026-06-22, questions=16)" in result.output
+    assert "Natural Question Smoke (as_of=2026-06-22, questions=17)" in result.output
     assert "OK: True" in result.output
     assert "candidates=13, open_positions=2, submissions=4" in result.output
     assert "open_available=2, excluded=1" in result.output
@@ -544,12 +544,16 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
         "artifacts=2, rows=48, csv=True, markdown=True, forbidden_present=False"
         in result.output
     )
+    assert (
+        "top=pos_orbitpay_payments_lead, excluded_flagged=1, questions=1"
+        in result.output
+    )
     assert (output_dir / "summary.md").exists()
     summary = json.loads((output_dir / "summary.json").read_text(encoding="utf-8"))
     assert summary["ok"] is True
     assert summary["pack"] == "recruiting"
-    assert summary["question_count"] == 16
-    assert summary["answerability_counts"] == {"derived": 12, "direct": 4}
+    assert summary["question_count"] == 17
+    assert summary["answerability_counts"] == {"derived": 13, "direct": 4}
     questions_by_id = {row["id"]: row for row in summary["questions"]}
     assert "open_available=2, excluded=1" in (
         questions_by_id["rq03_positions_for_avery"]["quick_read"]
@@ -565,6 +569,9 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     )
     assert "artifacts=2" in (
         questions_by_id["rq16_recruiting_report_export"]["quick_read"]
+    )
+    assert "excluded_flagged=1" in (
+        questions_by_id["rq17_candidate_exclusion_position_guardrail"]["quick_read"]
     )
     validator = Path(__file__).resolve().parents[1] / "scripts" / (
         "validate_recruiting_smoke.py"
@@ -615,6 +622,7 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     assert (output_dir / "rq10_recruiting_report_preview.json").exists()
     assert (output_dir / "rq11_local_recruiting_persistence.json").exists()
     assert (output_dir / "rq12_recommendation_guardrails.json").exists()
+    assert (output_dir / "rq17_candidate_exclusion_position_guardrail.json").exists()
     guardrails = json.loads(
         (output_dir / "rq12_recommendation_guardrails.json").read_text(
             encoding="utf-8"
@@ -796,6 +804,32 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
         "risk_row_count": 2,
         "next_question_row_count": 2,
     }
+    candidate_exclusion = json.loads(
+        (
+            output_dir / "rq17_candidate_exclusion_position_guardrail.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert candidate_exclusion["summary"] == {
+        "candidate_id": "cand_jordan_lee",
+        "result_count": 2,
+        "top_position_id": "pos_orbitpay_payments_lead",
+        "excluded_client_position_id": "pos_northstar_backend_lead",
+        "excluded_client_flagged_count": 1,
+        "excluded_client_question_count": 1,
+    }
+    candidate_exclusion_results = {
+        row["target_id"]: row for row in candidate_exclusion["run"]["results"]
+    }
+    excluded_position = candidate_exclusion_results["pos_northstar_backend_lead"]
+    assert excluded_position["rank"] == 2
+    assert excluded_position["risk_flags"] == [
+        "missing production Python evidence",
+        "client_exclusion",
+        "high_match_risk",
+    ]
+    assert "Confirm whether the candidate exclusion can be revisited." in (
+        excluded_position["next_questions"]
+    )
     saved_review_record = saved_run_review["review"]["record"]
     assert saved_review_record["recommendation_run_id"] == "rec_smoke_northstar_shortlist"
     assert saved_review_record["results"][0]["target_id"] == "cand_avery_chen"
@@ -892,6 +926,7 @@ def test_smoke_natural_questions_recruiting_pack_json(monkeypatch, tmp_path) -> 
         "rq14_recommendation_run_review",
         "rq15_workflow_trace_safety",
         "rq16_recruiting_report_export",
+        "rq17_candidate_exclusion_position_guardrail",
     ]
 
 

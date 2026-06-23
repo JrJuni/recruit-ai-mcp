@@ -290,6 +290,25 @@ def _payload(
                     }
                 },
             },
+            {
+                "id": "rq17_candidate_exclusion_position_guardrail",
+                "payload": {
+                    "summary": {
+                        "result_count": EXPECTED_CONTRACT[
+                            "candidate_exclusion_result_count"
+                        ],
+                        "top_position_id": EXPECTED_CONTRACT[
+                            "candidate_exclusion_top_position_id"
+                        ],
+                        "excluded_client_flagged_count": EXPECTED_CONTRACT[
+                            "candidate_exclusion_flagged_count"
+                        ],
+                        "excluded_client_question_count": EXPECTED_CONTRACT[
+                            "candidate_exclusion_question_count"
+                        ],
+                    }
+                },
+            },
         ],
     }
 

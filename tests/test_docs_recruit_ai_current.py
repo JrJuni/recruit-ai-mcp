@@ -20,7 +20,7 @@ def test_mvp_readiness_is_recruit_ai_current() -> None:
     assert "add_recruiting_interaction" in docs
     assert "recommend_candidates_for_position" in docs
     assert "smoke-natural-questions --pack recruiting --as-of 2026-06-22" in docs
-    assert "`questions=16`" in docs
+    assert "`questions=17`" in docs
     assert "recruiting pipeline CSV and Markdown report" in docs
     assert (
         "must-have skill evidence gaps, and client shortlist readiness for open sample"
@@ -80,7 +80,7 @@ def test_release_docs_and_workflows_use_recruit_ai_package_name() -> None:
         "--as-of 2026-06-22 --json"
     ) in release_workflow
     assert "smoke-evidence/recruiting-natural-questions.json" in staging_workflow
-    assert "current 16-question recruiting pack" in release_docs
+    assert "current 17-question recruiting pack" in release_docs
     assert f"`candidate_count={EXPECTED_CONTRACT['candidate_count']}`" in release_docs
     assert (
         f"`written_record_count={EXPECTED_CONTRACT['written_record_count']}`"
@@ -132,6 +132,26 @@ def test_release_docs_and_workflows_use_recruit_ai_package_name() -> None:
         in release_docs
     )
     assert (
+        "`candidate_exclusion_result_count="
+        f"{EXPECTED_CONTRACT['candidate_exclusion_result_count']}`"
+        in release_docs
+    )
+    assert (
+        "`candidate_exclusion_top_position_id="
+        f"{EXPECTED_CONTRACT['candidate_exclusion_top_position_id']}`"
+        in release_docs
+    )
+    assert (
+        "`candidate_exclusion_flagged_count="
+        f"{EXPECTED_CONTRACT['candidate_exclusion_flagged_count']}`"
+        in release_docs
+    )
+    assert (
+        "`candidate_exclusion_question_count="
+        f"{EXPECTED_CONTRACT['candidate_exclusion_question_count']}`"
+        in release_docs
+    )
+    assert (
         "python scripts/validate_recruiting_smoke.py "
         "smoke-evidence/recruiting-natural-questions.json"
     ) in release_workflow
@@ -170,6 +190,7 @@ def test_latest_status_records_current_smoke_contract_and_artifact_hash() -> Non
     docs = (ROOT / "docs" / "status.md").read_text(encoding="utf-8")
     latest = docs.split("### Docs-first pause checkpoint", maxsplit=1)[0]
 
+    assert "Candidate-side exclusion recommendation smoke" in latest
     assert "Post-low-confidence-evidence local package gate refresh" in latest
     assert "Recruiting low-confidence evidence guardrail" in latest
     assert (
@@ -189,6 +210,7 @@ def test_latest_status_records_current_smoke_contract_and_artifact_hash() -> Non
         f"`guardrail_candidate_count={EXPECTED_CONTRACT['guardrail_candidate_count']}`"
         in latest
     )
+    assert "rq17_candidate_exclusion_position_guardrail" in latest
 
     stale_contract_tokens = [
         ("candidate_count", 12),

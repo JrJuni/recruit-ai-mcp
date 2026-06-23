@@ -8,7 +8,7 @@ from typing import Any
 
 EXPECTED_CONTRACT = {
     "ok": True,
-    "question_count": 16,
+    "question_count": 17,
     "candidate_count": 13,
     "written_record_count": 33,
     "reloaded_record_count": 33,
@@ -39,6 +39,10 @@ EXPECTED_CONTRACT = {
     "report_export_csv_exists": True,
     "report_export_markdown_exists": True,
     "report_export_forbidden_term_present": False,
+    "candidate_exclusion_result_count": 2,
+    "candidate_exclusion_top_position_id": "pos_orbitpay_payments_lead",
+    "candidate_exclusion_flagged_count": 1,
+    "candidate_exclusion_question_count": 1,
 }
 _REQUIRED_QUESTIONS = (
     "rq01_recruiting_pipeline_metrics",
@@ -49,6 +53,7 @@ _REQUIRED_QUESTIONS = (
     "rq14_recommendation_run_review",
     "rq15_workflow_trace_safety",
     "rq16_recruiting_report_export",
+    "rq17_candidate_exclusion_position_guardrail",
 )
 _REQUIRED_FIT_DIMENSIONS = (
     "skill_fit",
@@ -80,6 +85,10 @@ def validate_payload(payload: dict[str, Any]) -> dict[str, Any]:
     saved_run = _summary(questions, "rq14_recommendation_run_review")
     trace_safety = _summary(questions, "rq15_workflow_trace_safety")
     report_export = _summary(questions, "rq16_recruiting_report_export")
+    candidate_exclusion = _summary(
+        questions,
+        "rq17_candidate_exclusion_position_guardrail",
+    )
     actual = {
         "ok": _required_key(payload, "ok", scope="top-level payload"),
         "question_count": _required_key(
@@ -228,6 +237,26 @@ def validate_payload(payload: dict[str, Any]) -> dict[str, Any]:
             report_export,
             "forbidden_term_present",
             scope="rq16_recruiting_report_export summary",
+        ),
+        "candidate_exclusion_result_count": _required_key(
+            candidate_exclusion,
+            "result_count",
+            scope="rq17_candidate_exclusion_position_guardrail summary",
+        ),
+        "candidate_exclusion_top_position_id": _required_key(
+            candidate_exclusion,
+            "top_position_id",
+            scope="rq17_candidate_exclusion_position_guardrail summary",
+        ),
+        "candidate_exclusion_flagged_count": _required_key(
+            candidate_exclusion,
+            "excluded_client_flagged_count",
+            scope="rq17_candidate_exclusion_position_guardrail summary",
+        ),
+        "candidate_exclusion_question_count": _required_key(
+            candidate_exclusion,
+            "excluded_client_question_count",
+            scope="rq17_candidate_exclusion_position_guardrail summary",
         ),
     }
     if actual != EXPECTED_CONTRACT:
