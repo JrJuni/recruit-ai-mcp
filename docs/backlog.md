@@ -110,6 +110,9 @@ Immediate quality order:
    - Recruiting report export smoke now writes CSV and Markdown artifacts to a
      temporary directory and checks that restricted fields stay out of the
      smoke payload and generated files.
+   - `export_recruiting_report` unit coverage now also checks that candidate
+     risk flags, preference notes, and evidence summaries do not leak into
+     generated CSV or Markdown artifacts.
    - Keep the inherited deal-intelligence natural-question pack as a
      compatibility smoke, not the primary Recruit AI user journey.
 3. Tighten release/package verification.

@@ -12,6 +12,21 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruiting report restricted-content guard
+
+Completed:
+
+- Tightened `export_recruiting_report` coverage so candidate-level
+  `risk_flags`, preference notes, and evidence summaries do not leak into the
+  generated recruiting CSV or Markdown artifacts.
+- This keeps recruiting report exports focused on aggregate metric rows while
+  preserving detailed candidate evidence for recommendation/review surfaces.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-report-safe-risk tests\test_export_recruiting_report.py`
+- `ruff check tests\test_export_recruiting_report.py`
+
 ### Recruiting service domain/seniority persistence guard
 
 Completed:

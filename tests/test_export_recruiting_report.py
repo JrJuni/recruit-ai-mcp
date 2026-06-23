@@ -20,6 +20,17 @@ class FakeRecruitingReportStorage:
                 "name": "Avery Chen",
                 "skills": ["Python"],
                 "availability": "30 days",
+                "risk_flags": ["never-export-this-risk-flag"],
+                "preferences": {"notes": "never-export-this-preference-note"},
+                "evidence": [
+                    {
+                        "evidence_id": "ev_never_export",
+                        "source_type": "interaction",
+                        "source_id": "int_never_export",
+                        "summary": "never-export-this-evidence-summary",
+                        "confidence": "candidate_stated",
+                    }
+                ],
             }
         ]
         self.positions = [
@@ -96,6 +107,13 @@ def test_export_recruiting_report_writes_csv_and_markdown(tmp_path) -> None:
     assert csv_path.read_bytes().startswith(b"\xef\xbb\xbf")
     assert markdown_path.read_bytes().startswith(b"\xef\xbb\xbf")
     assert "Recruiting Pipeline Report" in markdown_path.read_text(encoding="utf-8-sig")
+    combined_artifacts = (
+        csv_path.read_text(encoding="utf-8-sig")
+        + markdown_path.read_text(encoding="utf-8-sig")
+    )
+    assert "never-export-this-risk-flag" not in combined_artifacts
+    assert "never-export-this-preference-note" not in combined_artifacts
+    assert "never-export-this-evidence-summary" not in combined_artifacts
 
     with csv_path.open(encoding="utf-8-sig", newline="") as file:
         rows = list(csv.DictReader(file))
