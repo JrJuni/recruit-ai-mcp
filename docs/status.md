@@ -12,6 +12,24 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruiting skill-gap smoke surface guard
+
+Completed:
+
+- Tightened the recruiting natural-question smoke validator so `skill_gap`
+  must remain visible in both the recommendation-guardrail payload and the
+  client-shortlist payload.
+- Updated recruiting smoke artifact assertions so Jordan Lee's missing
+  required-skill evidence surfaces as `skill_gap` across position-to-candidate
+  and candidate-to-position review paths.
+- Added a validator negative test that fails when the required surfaced
+  `skill_gap` risk flag is removed from smoke payloads.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-risk-surface tests\test_validate_recruiting_smoke.py tests\test_cli_deal_review_smoke.py::test_smoke_natural_questions_recruiting_pack_writes_artifacts`
+- `ruff check scripts\validate_recruiting_smoke.py tests\test_validate_recruiting_smoke.py tests\test_cli_deal_review_smoke.py`
+
 ### Recruiting skill gap flag
 
 Completed:

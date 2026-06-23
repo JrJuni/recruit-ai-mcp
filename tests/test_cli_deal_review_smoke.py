@@ -666,6 +666,7 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     assert jordan_guardrail["guardrail_dimension_scores"]["risk"] == 4
     assert jordan_guardrail["guardrail_risk_flags"] == [
         "missing production Python evidence",
+        "skill_gap",
         "client_exclusion",
         "high_match_risk",
     ]
@@ -753,6 +754,7 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     assert jordan_shortlist["dimension_scores"]["risk"] == 4
     assert jordan_shortlist["risk_flags"] == [
         "missing production Python evidence",
+        "skill_gap",
         "client_exclusion",
         "high_match_risk",
     ]
@@ -824,6 +826,7 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     assert excluded_position["rank"] == 2
     assert excluded_position["risk_flags"] == [
         "missing production Python evidence",
+        "skill_gap",
         "client_exclusion",
         "high_match_risk",
     ]

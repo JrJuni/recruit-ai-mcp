@@ -87,6 +87,8 @@ Immediate quality order:
      next-question coverage counts, and the validator checks that guardrail
      evidence rows actually carry those fields plus all eight recruiting fit
      dimension scores.
+   - Recommendation guardrail and shortlist smoke now require the inferred
+     `skill_gap` flag to stay visible in generated payloads.
    - Candidate-to-position smoke now shows open-role defaults and the paused
      sample role excluded from first-pass recommendations, including a compact
      quick-read summary in CLI smoke output.

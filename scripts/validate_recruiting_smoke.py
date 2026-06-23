@@ -18,6 +18,7 @@ EXPECTED_CONTRACT = {
     "guardrail_risk_row_count": 9,
     "guardrail_next_question_row_count": 9,
     "guardrail_dimension_score_row_count": 9,
+    "guardrail_required_risk_flags": ["skill_gap"],
     "candidate_position_available_count": 2,
     "candidate_position_excluded_count": 1,
     "open_position_count": 2,
@@ -27,6 +28,7 @@ EXPECTED_CONTRACT = {
     "shortlist_risk_row_count": 4,
     "shortlist_next_question_row_count": 5,
     "shortlist_dimension_score_row_count": 6,
+    "shortlist_required_risk_flags": ["skill_gap"],
     "saved_run_result_count": 3,
     "saved_run_feedback_adjustment_row_count": 2,
     "saved_run_risk_row_count": 2,
@@ -137,6 +139,10 @@ def validate_payload(payload: dict[str, Any]) -> dict[str, Any]:
         "guardrail_dimension_score_row_count": _guardrail_dimension_score_row_count(
             guardrail_payload
         ),
+        "guardrail_required_risk_flags": _required_guardrail_risk_flags(
+            guardrail_payload,
+            flags=EXPECTED_CONTRACT["guardrail_required_risk_flags"],
+        ),
         "candidate_position_available_count": _required_key(
             candidate_positions,
             "available_position_count",
@@ -177,6 +183,10 @@ def validate_payload(payload: dict[str, Any]) -> dict[str, Any]:
         ),
         "shortlist_dimension_score_row_count": _shortlist_dimension_score_row_count(
             shortlist_payload
+        ),
+        "shortlist_required_risk_flags": _required_shortlist_risk_flags(
+            shortlist_payload,
+            flags=EXPECTED_CONTRACT["shortlist_required_risk_flags"],
         ),
         "saved_run_result_count": _required_key(
             saved_run,
@@ -407,6 +417,61 @@ def _shortlist_dimension_score_row_count(payload: dict[str, Any]) -> int:
     return count
 
 
+def _required_shortlist_risk_flags(
+    payload: dict[str, Any],
+    *,
+    flags: list[str],
+) -> list[str]:
+    shortlists = _required_key(
+        payload,
+        "shortlists",
+        scope="rq13_client_shortlist_readiness payload",
+    )
+    if not isinstance(shortlists, list):
+        raise ValueError("Recruiting smoke rq13 shortlists must be a list.")
+    observed: set[str] = set()
+    for shortlist_index, shortlist in enumerate(shortlists):
+        if not isinstance(shortlist, dict):
+            raise ValueError(
+                "Recruiting smoke rq13 shortlist rows must be mappings."
+            )
+        candidates = _required_key(
+            shortlist,
+            "candidates",
+            scope=f"rq13_client_shortlist_readiness shortlist {shortlist_index}",
+        )
+        if not isinstance(candidates, list):
+            raise ValueError(
+                "Recruiting smoke rq13 shortlist candidates must be a list."
+            )
+        for candidate_index, candidate in enumerate(candidates):
+            if not isinstance(candidate, dict):
+                raise ValueError(
+                    "Recruiting smoke rq13 candidate rows must be mappings."
+                )
+            values = _required_key(
+                candidate,
+                "risk_flags",
+                scope=(
+                    "rq13_client_shortlist_readiness "
+                    f"candidate {candidate_index}"
+                ),
+            )
+            if not isinstance(values, list):
+                raise ValueError(
+                    "Recruiting smoke rq13 candidate field 'risk_flags' "
+                    "must be a list."
+                )
+            observed.update(item for item in values if isinstance(item, str))
+    missing = [flag for flag in flags if flag not in observed]
+    if missing:
+        raise ValueError(
+            "Recruiting smoke rq13 missing required risk flags: "
+            + ", ".join(missing)
+        )
+    return [flag for flag in flags if flag in observed]
+
+
 def _guardrail_row_count(payload: dict[str, Any], *, field: str) -> int:
     guardrails = _required_key(
         payload,
@@ -432,6 +497,42 @@ def _guardrail_row_count(payload: dict[str, Any], *, field: str) -> int:
         if values:
             count += 1
     return count
+
+
+def _required_guardrail_risk_flags(
+    payload: dict[str, Any],
+    *,
+    flags: list[str],
+) -> list[str]:
+    guardrails = _required_key(
+        payload,
+        "guardrails",
+        scope="rq12_recommendation_guardrails payload",
+    )
+    if not isinstance(guardrails, list):
+        raise ValueError("Recruiting smoke rq12 guardrails must be a list.")
+    observed: set[str] = set()
+    for guardrail_index, guardrail in enumerate(guardrails):
+        if not isinstance(guardrail, dict):
+            raise ValueError("Recruiting smoke rq12 guardrail rows must be mappings.")
+        values = _required_key(
+            guardrail,
+            "guardrail_risk_flags",
+            scope=f"rq12_recommendation_guardrails guardrail {guardrail_index}",
+        )
+        if not isinstance(values, list):
+            raise ValueError(
+                "Recruiting smoke rq12 guardrail field "
+                "'guardrail_risk_flags' must be a list."
+            )
+        observed.update(item for item in values if isinstance(item, str))
+    missing = [flag for flag in flags if flag not in observed]
+    if missing:
+        raise ValueError(
+            "Recruiting smoke rq12 missing required risk flags: "
+            + ", ".join(missing)
+        )
+    return [flag for flag in flags if flag in observed]
 
 
 def _guardrail_dimension_score_row_count(payload: dict[str, Any]) -> int:

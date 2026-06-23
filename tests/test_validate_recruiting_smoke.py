@@ -85,7 +85,10 @@ def _payload(
                         {
                             "guardrail_candidate_id": "cand_jordan_lee",
                             "guardrail_dimension_scores": dict(GUARDRAIL_DIMENSION_SCORES),
-                            "guardrail_risk_flags": ["client_exclusion"],
+                            "guardrail_risk_flags": [
+                                "skill_gap",
+                                "client_exclusion",
+                            ],
                             "guardrail_next_questions": [
                                 "Confirm required skill: Python"
                             ],
@@ -183,7 +186,8 @@ def _payload(
                                     "candidate_id": "cand_jordan_lee",
                                     "dimension_scores": dict(GUARDRAIL_DIMENSION_SCORES),
                                     "risk_flags": [
-                                        "missing production Python evidence"
+                                        "missing production Python evidence",
+                                        "skill_gap",
                                     ],
                                     "next_questions": [
                                         "Confirm required skill: Python"
@@ -390,7 +394,10 @@ def test_validate_recruiting_smoke_cli_fails_without_guardrail_evidence(tmp_path
         for question in payload["questions"]
         if question["id"] == "rq12_recommendation_guardrails"
     )
-    for row in guardrails["payload"]["guardrails"][0:2]:
+    for row in (
+        guardrails["payload"]["guardrails"][0],
+        guardrails["payload"]["guardrails"][2],
+    ):
         row["guardrail_risk_flags"] = []
         row["guardrail_next_questions"] = []
     payload_path = tmp_path / "recruiting-natural-questions.json"
@@ -438,9 +445,13 @@ def test_validate_recruiting_smoke_cli_fails_without_shortlist_evidence(tmp_path
         for question in payload["questions"]
         if question["id"] == "rq13_client_shortlist_readiness"
     )
-    for row in shortlist["payload"]["shortlists"][0]["candidates"]:
-        row["risk_flags"] = []
-        row["next_questions"] = []
+    for shortlist_row in shortlist["payload"]["shortlists"]:
+        rows = shortlist_row["candidates"]
+        for row in rows:
+            if row["candidate_id"] == "cand_jordan_lee":
+                continue
+            row["risk_flags"] = []
+            row["next_questions"] = []
     payload_path = tmp_path / "recruiting-natural-questions.json"
     payload_path.write_text(json.dumps(payload), encoding="utf-8")
 
@@ -479,3 +490,39 @@ def test_validate_recruiting_smoke_cli_fails_without_shortlist_dimensions(tmp_pa
 
     assert result.returncode == 1
     assert "Recruiting smoke rq13 dimension_scores missing skill_fit" in result.stderr
+
+
+def test_validate_recruiting_smoke_cli_fails_without_required_skill_gap(tmp_path) -> None:
+    payload = _payload()
+    guardrails = next(
+        question["payload"]
+        for question in payload["questions"]
+        if question["id"] == "rq12_recommendation_guardrails"
+    )
+    shortlist = next(
+        question["payload"]
+        for question in payload["questions"]
+        if question["id"] == "rq13_client_shortlist_readiness"
+    )
+    for row in guardrails["guardrails"]:
+        row["guardrail_risk_flags"] = [
+            flag for flag in row["guardrail_risk_flags"] if flag != "skill_gap"
+        ]
+    for row in shortlist["shortlists"][0]["candidates"]:
+        row["risk_flags"] = [
+            flag for flag in row["risk_flags"] if flag != "skill_gap"
+        ]
+
+    path = tmp_path / "summary.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = subprocess.run(
+        [sys.executable, str(VALIDATOR), str(path)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 1
+    assert "missing required risk flags: skill_gap" in result.stderr
