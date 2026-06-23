@@ -144,6 +144,9 @@ Immediate quality order:
    - Local package gate was refreshed after the recruiting smoke validator
      hardening: package/MCPB/docs tests, npm pack dry-run, `mcpb validate`, and
      `mcpb info` all passed for the `0.1.0` line.
+   - Public registry evidence was refreshed after the local package gate:
+     npm still returns `E404` for `recruit-ai-mcp@0.1.0`, and PyPI still has no
+     matching `recruit-ai-mcp` distribution.
    - Release docs now require the current recruiting smoke contract's
      `skill_gap` surfaced-risk checks for guardrail and shortlist payloads.
    - Record fresh public `npx recruit-ai-mcp@0.1.0` smoke evidence before

@@ -12,6 +12,23 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Public registry evidence refresh
+
+Completed:
+
+- Re-checked the public npm and PyPI registries for the current
+  `recruit-ai-mcp` `0.1.0` release target.
+- npm still returns `E404` for `recruit-ai-mcp@0.1.0`, and PyPI still reports
+  no matching distribution for `recruit-ai-mcp`.
+- The existing release docs remain correct: local package/MCPB gates can pass,
+  but public `npx recruit-ai-mcp@0.1.0` readiness must stay pending until
+  publication and post-publish fresh smoke pass.
+
+Verification:
+
+- `npm.cmd view recruit-ai-mcp@0.1.0 version` -> npm `E404`
+- `python -m pip index versions recruit-ai-mcp` -> `No matching distribution found for recruit-ai-mcp`
+
 ### Bootstrapper public-smoke wording guard
 
 Completed:
