@@ -99,6 +99,9 @@ Immediate quality order:
    - Saved recommendation-run review now checks that stored recommendation
      runs can be read back with fit snapshots, feedback-adjustment ledgers,
      risk rows, and next-question rows intact.
+   - Candidate-side exclusion smoke validation now checks the actual excluded
+     role result row for `client_exclusion` and the exclusion follow-up
+     question, instead of trusting summary counts alone.
    - MCP wrapper tests now cover inferred `skill_gap` risk flags across
      recommendation save and read-back through the public tool surface.
    - MCP wrapper tests now also cover candidate-to-position client exclusion

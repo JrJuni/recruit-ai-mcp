@@ -310,7 +310,30 @@ def _payload(
                         "excluded_client_question_count": EXPECTED_CONTRACT[
                             "candidate_exclusion_question_count"
                         ],
-                    }
+                    },
+                    "run": {
+                        "results": [
+                            {
+                                "target_id": "pos_orbitpay_payments_lead",
+                                "risk_flags": [],
+                                "next_questions": [],
+                            },
+                            {
+                                "target_id": "pos_northstar_backend_lead",
+                                "risk_flags": [
+                                    "skill_gap",
+                                    "client_exclusion",
+                                    "high_match_risk",
+                                ],
+                                "next_questions": [
+                                    (
+                                        "Confirm whether the candidate "
+                                        "exclusion can be revisited."
+                                    )
+                                ],
+                            },
+                        ]
+                    },
                 },
             },
         ],
@@ -526,3 +549,59 @@ def test_validate_recruiting_smoke_cli_fails_without_required_skill_gap(tmp_path
 
     assert result.returncode == 1
     assert "missing required risk flags: skill_gap" in result.stderr
+
+
+def test_validate_recruiting_smoke_cli_fails_without_candidate_exclusion_row_evidence(
+    tmp_path,
+) -> None:
+    payload = _payload()
+    candidate_exclusion = next(
+        question["payload"]
+        for question in payload["questions"]
+        if question["id"] == "rq17_candidate_exclusion_position_guardrail"
+    )
+    excluded = candidate_exclusion["run"]["results"][1]
+    excluded["risk_flags"] = [
+        flag for flag in excluded["risk_flags"] if flag != "client_exclusion"
+    ]
+    excluded["next_questions"] = []
+
+    path = tmp_path / "summary.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = subprocess.run(
+        [sys.executable, str(VALIDATOR), str(path)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 1
+    assert "rq17 excluded result missing required risk flags" in result.stderr
+
+
+def test_validate_recruiting_smoke_cli_fails_without_candidate_exclusion_question(
+    tmp_path,
+) -> None:
+    payload = _payload()
+    candidate_exclusion = next(
+        question["payload"]
+        for question in payload["questions"]
+        if question["id"] == "rq17_candidate_exclusion_position_guardrail"
+    )
+    candidate_exclusion["run"]["results"][1]["next_questions"] = []
+
+    path = tmp_path / "summary.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = subprocess.run(
+        [sys.executable, str(VALIDATOR), str(path)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 1
+    assert "rq17 excluded result missing exclusion next question" in result.stderr

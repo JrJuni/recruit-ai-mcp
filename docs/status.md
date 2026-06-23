@@ -12,6 +12,26 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruiting smoke candidate-exclusion row guard
+
+Completed:
+
+- Tightened `scripts/validate_recruiting_smoke.py` so
+  `rq17_candidate_exclusion_position_guardrail` must include the actual
+  excluded-position result row, not only matching summary counts.
+- The validator now fails if the excluded client row drops `client_exclusion`
+  or the exclusion follow-up question while the summary still claims the
+  guardrail is covered.
+- Added validator regression coverage and confirmed the current recruiting
+  natural-question smoke payload passes the stricter row-level contract.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-rq17-validator tests\test_validate_recruiting_smoke.py`
+- `ruff check scripts\validate_recruiting_smoke.py tests\test_validate_recruiting_smoke.py`
+- `PYTHONPATH=src python -m deal_intel.cli smoke-natural-questions --pack recruiting --as-of 2026-06-22 --output-dir .tmp\rq17-validator-smoke`
+- `PYTHONPATH=src python scripts\validate_recruiting_smoke.py .tmp\rq17-validator-smoke\summary.json`
+
 ### Recruiting service candidate-to-position exclusion persistence guard
 
 Completed:

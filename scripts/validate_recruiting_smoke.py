@@ -67,6 +67,11 @@ _REQUIRED_FIT_DIMENSIONS = (
     "client_preference_fit",
     "risk",
 )
+_CANDIDATE_EXCLUSION_TARGET_ID = "pos_northstar_backend_lead"
+_CANDIDATE_EXCLUSION_REQUIRED_RISK_FLAGS = ("client_exclusion",)
+_CANDIDATE_EXCLUSION_REQUIRED_NEXT_QUESTION = (
+    "Confirm whether the candidate exclusion can be revisited."
+)
 
 
 def validate_payload(payload: dict[str, Any]) -> dict[str, Any]:
@@ -87,10 +92,14 @@ def validate_payload(payload: dict[str, Any]) -> dict[str, Any]:
     saved_run = _summary(questions, "rq14_recommendation_run_review")
     trace_safety = _summary(questions, "rq15_workflow_trace_safety")
     report_export = _summary(questions, "rq16_recruiting_report_export")
-    candidate_exclusion = _summary(
-        questions,
-        "rq17_candidate_exclusion_position_guardrail",
+    candidate_exclusion_payload = _question_payload(
+        questions, "rq17_candidate_exclusion_position_guardrail"
     )
+    candidate_exclusion = _summary_from_payload(
+        candidate_exclusion_payload,
+        question_id="rq17_candidate_exclusion_position_guardrail",
+    )
+    _validate_candidate_exclusion_run(candidate_exclusion_payload)
     actual = {
         "ok": _required_key(payload, "ok", scope="top-level payload"),
         "question_count": _required_key(
@@ -533,6 +542,65 @@ def _required_guardrail_risk_flags(
             + ", ".join(missing)
         )
     return [flag for flag in flags if flag in observed]
+
+
+def _validate_candidate_exclusion_run(payload: dict[str, Any]) -> None:
+    run = _required_key(
+        payload,
+        "run",
+        scope="rq17_candidate_exclusion_position_guardrail payload",
+    )
+    if not isinstance(run, dict):
+        raise ValueError("Recruiting smoke rq17 run must be a mapping.")
+    results = _required_key(
+        run,
+        "results",
+        scope="rq17_candidate_exclusion_position_guardrail run",
+    )
+    if not isinstance(results, list):
+        raise ValueError("Recruiting smoke rq17 run results must be a list.")
+    excluded = None
+    for result_index, row in enumerate(results):
+        if not isinstance(row, dict):
+            raise ValueError("Recruiting smoke rq17 result rows must be mappings.")
+        if row.get("target_id") == _CANDIDATE_EXCLUSION_TARGET_ID:
+            excluded = row
+            break
+    if excluded is None:
+        raise ValueError(
+            "Recruiting smoke rq17 missing excluded client result row "
+            f"{_CANDIDATE_EXCLUSION_TARGET_ID!r}."
+        )
+    risk_flags = _required_key(
+        excluded,
+        "risk_flags",
+        scope="rq17_candidate_exclusion_position_guardrail excluded result",
+    )
+    if not isinstance(risk_flags, list):
+        raise ValueError("Recruiting smoke rq17 excluded result risk_flags must be a list.")
+    missing_flags = [
+        flag
+        for flag in _CANDIDATE_EXCLUSION_REQUIRED_RISK_FLAGS
+        if flag not in risk_flags
+    ]
+    if missing_flags:
+        raise ValueError(
+            "Recruiting smoke rq17 excluded result missing required risk flags: "
+            + ", ".join(missing_flags)
+        )
+    next_questions = _required_key(
+        excluded,
+        "next_questions",
+        scope="rq17_candidate_exclusion_position_guardrail excluded result",
+    )
+    if not isinstance(next_questions, list):
+        raise ValueError(
+            "Recruiting smoke rq17 excluded result next_questions must be a list."
+        )
+    if _CANDIDATE_EXCLUSION_REQUIRED_NEXT_QUESTION not in next_questions:
+        raise ValueError(
+            "Recruiting smoke rq17 excluded result missing exclusion next question."
+        )
 
 
 def _guardrail_dimension_score_row_count(payload: dict[str, Any]) -> int:
