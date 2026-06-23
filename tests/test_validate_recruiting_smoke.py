@@ -255,7 +255,44 @@ def _payload(
                         "next_question_row_count": EXPECTED_CONTRACT[
                             "saved_run_next_question_row_count"
                         ],
-                    }
+                    },
+                    "review": {
+                        "record": {
+                            "results": [
+                                {
+                                    "target_id": "cand_avery_chen",
+                                    "feedback_adjustments": [
+                                        {
+                                            "feedback_id": (
+                                                "fb_avery_northstar_advance"
+                                            ),
+                                            "dimension": "domain_fit",
+                                        },
+                                        {
+                                            "feedback_id": (
+                                                "fb_avery_northstar_advance"
+                                            ),
+                                            "dimension": "client_preference_fit",
+                                        },
+                                    ],
+                                    "risk_flags": [],
+                                    "next_questions": [],
+                                },
+                                {
+                                    "target_id": "cand_jordan_lee",
+                                    "feedback_adjustments": [],
+                                    "risk_flags": [
+                                        "skill_gap",
+                                        "client_exclusion",
+                                        "high_match_risk",
+                                    ],
+                                    "next_questions": [
+                                        "Confirm required skill: Python"
+                                    ],
+                                },
+                            ]
+                        }
+                    },
                 },
             },
             {
@@ -605,3 +642,56 @@ def test_validate_recruiting_smoke_cli_fails_without_candidate_exclusion_questio
 
     assert result.returncode == 1
     assert "rq17 excluded result missing exclusion next question" in result.stderr
+
+
+def test_validate_recruiting_smoke_cli_fails_without_saved_run_row_evidence(
+    tmp_path,
+) -> None:
+    payload = _payload()
+    saved_run = next(
+        question["payload"]
+        for question in payload["questions"]
+        if question["id"] == "rq14_recommendation_run_review"
+    )
+    saved_run["review"]["record"]["results"][0]["feedback_adjustments"] = []
+    saved_run["review"]["record"]["results"][1]["risk_flags"] = []
+
+    path = tmp_path / "summary.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = subprocess.run(
+        [sys.executable, str(VALIDATOR), str(path)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 1
+    assert "rq14 top result missing feedback adjustments" in result.stderr
+
+
+def test_validate_recruiting_smoke_cli_fails_without_saved_run_next_question(
+    tmp_path,
+) -> None:
+    payload = _payload()
+    saved_run = next(
+        question["payload"]
+        for question in payload["questions"]
+        if question["id"] == "rq14_recommendation_run_review"
+    )
+    saved_run["review"]["record"]["results"][1]["next_questions"] = []
+
+    path = tmp_path / "summary.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = subprocess.run(
+        [sys.executable, str(VALIDATOR), str(path)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 1
+    assert "rq14 risk result missing required next question" in result.stderr

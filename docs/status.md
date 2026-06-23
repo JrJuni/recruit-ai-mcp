@@ -12,6 +12,25 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruiting smoke saved-run row guard
+
+Completed:
+
+- Tightened `scripts/validate_recruiting_smoke.py` so
+  `rq14_recommendation_run_review` must include saved recommendation run row
+  evidence, not only matching summary counts.
+- The validator now checks the saved top candidate row for expected feedback
+  adjustments and a risk-bearing candidate row for required `skill_gap`,
+  `client_exclusion`, and next-question evidence.
+- Added validator regression coverage and confirmed the latest generated
+  recruiting smoke summary passes the stricter row-level contract.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-rq14-validator tests\test_validate_recruiting_smoke.py`
+- `ruff check scripts\validate_recruiting_smoke.py tests\test_validate_recruiting_smoke.py`
+- `PYTHONPATH=src python scripts\validate_recruiting_smoke.py .tmp\rq17-validator-smoke\summary.json`
+
 ### Recruiting smoke candidate-exclusion row guard
 
 Completed:

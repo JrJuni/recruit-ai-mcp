@@ -72,6 +72,14 @@ _CANDIDATE_EXCLUSION_REQUIRED_RISK_FLAGS = ("client_exclusion",)
 _CANDIDATE_EXCLUSION_REQUIRED_NEXT_QUESTION = (
     "Confirm whether the candidate exclusion can be revisited."
 )
+_SAVED_RUN_TOP_TARGET_ID = "cand_avery_chen"
+_SAVED_RUN_TOP_FEEDBACK_ADJUSTMENTS = (
+    ("fb_avery_northstar_advance", "domain_fit"),
+    ("fb_avery_northstar_advance", "client_preference_fit"),
+)
+_SAVED_RUN_REQUIRED_RISK_TARGET_ID = "cand_jordan_lee"
+_SAVED_RUN_REQUIRED_RISK_FLAGS = ("skill_gap", "client_exclusion")
+_SAVED_RUN_REQUIRED_NEXT_QUESTION = "Confirm required skill: Python"
 
 
 def validate_payload(payload: dict[str, Any]) -> dict[str, Any]:
@@ -89,7 +97,12 @@ def validate_payload(payload: dict[str, Any]) -> dict[str, Any]:
         shortlist_payload,
         question_id="rq13_client_shortlist_readiness",
     )
-    saved_run = _summary(questions, "rq14_recommendation_run_review")
+    saved_run_payload = _question_payload(questions, "rq14_recommendation_run_review")
+    saved_run = _summary_from_payload(
+        saved_run_payload,
+        question_id="rq14_recommendation_run_review",
+    )
+    _validate_saved_recommendation_run(saved_run_payload)
     trace_safety = _summary(questions, "rq15_workflow_trace_safety")
     report_export = _summary(questions, "rq16_recruiting_report_export")
     candidate_exclusion_payload = _question_payload(
@@ -601,6 +614,108 @@ def _validate_candidate_exclusion_run(payload: dict[str, Any]) -> None:
         raise ValueError(
             "Recruiting smoke rq17 excluded result missing exclusion next question."
         )
+
+
+def _validate_saved_recommendation_run(payload: dict[str, Any]) -> None:
+    review = _required_key(
+        payload,
+        "review",
+        scope="rq14_recommendation_run_review payload",
+    )
+    if not isinstance(review, dict):
+        raise ValueError("Recruiting smoke rq14 review must be a mapping.")
+    record = _required_key(
+        review,
+        "record",
+        scope="rq14_recommendation_run_review review",
+    )
+    if not isinstance(record, dict):
+        raise ValueError("Recruiting smoke rq14 review record must be a mapping.")
+    results = _required_key(
+        record,
+        "results",
+        scope="rq14_recommendation_run_review record",
+    )
+    if not isinstance(results, list):
+        raise ValueError("Recruiting smoke rq14 record results must be a list.")
+    top_row = _find_result_row(
+        results,
+        target_id=_SAVED_RUN_TOP_TARGET_ID,
+        scope="rq14",
+    )
+    feedback_adjustments = _required_key(
+        top_row,
+        "feedback_adjustments",
+        scope="rq14_recommendation_run_review top result",
+    )
+    if not isinstance(feedback_adjustments, list):
+        raise ValueError(
+            "Recruiting smoke rq14 top result feedback_adjustments must be a list."
+        )
+    observed_adjustments = {
+        (row.get("feedback_id"), row.get("dimension"))
+        for row in feedback_adjustments
+        if isinstance(row, dict)
+    }
+    missing_adjustments = [
+        adjustment
+        for adjustment in _SAVED_RUN_TOP_FEEDBACK_ADJUSTMENTS
+        if adjustment not in observed_adjustments
+    ]
+    if missing_adjustments:
+        raise ValueError(
+            "Recruiting smoke rq14 top result missing feedback adjustments: "
+            + ", ".join(f"{fid}:{dimension}" for fid, dimension in missing_adjustments)
+        )
+    risk_row = _find_result_row(
+        results,
+        target_id=_SAVED_RUN_REQUIRED_RISK_TARGET_ID,
+        scope="rq14",
+    )
+    risk_flags = _required_key(
+        risk_row,
+        "risk_flags",
+        scope="rq14_recommendation_run_review risk result",
+    )
+    if not isinstance(risk_flags, list):
+        raise ValueError("Recruiting smoke rq14 risk result risk_flags must be a list.")
+    missing_flags = [
+        flag for flag in _SAVED_RUN_REQUIRED_RISK_FLAGS if flag not in risk_flags
+    ]
+    if missing_flags:
+        raise ValueError(
+            "Recruiting smoke rq14 risk result missing required risk flags: "
+            + ", ".join(missing_flags)
+        )
+    next_questions = _required_key(
+        risk_row,
+        "next_questions",
+        scope="rq14_recommendation_run_review risk result",
+    )
+    if not isinstance(next_questions, list):
+        raise ValueError(
+            "Recruiting smoke rq14 risk result next_questions must be a list."
+        )
+    if _SAVED_RUN_REQUIRED_NEXT_QUESTION not in next_questions:
+        raise ValueError(
+            "Recruiting smoke rq14 risk result missing required next question."
+        )
+
+
+def _find_result_row(
+    results: list[Any],
+    *,
+    target_id: str,
+    scope: str,
+) -> dict[str, Any]:
+    for row in results:
+        if not isinstance(row, dict):
+            raise ValueError(f"Recruiting smoke {scope} result rows must be mappings.")
+        if row.get("target_id") == target_id:
+            return row
+    raise ValueError(
+        f"Recruiting smoke {scope} missing required result row {target_id!r}."
+    )
 
 
 def _guardrail_dimension_score_row_count(payload: dict[str, Any]) -> int:
