@@ -12,6 +12,22 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruiting service domain/seniority persistence guard
+
+Completed:
+
+- Added service-layer coverage proving inferred `domain_mismatch` and
+  `seniority_mismatch` risk flags survive `recommend_candidates_for_position`
+  save and `get_recommendation_run` read-back serialization.
+- The test uses a junior retail analytics candidate against a staff-level
+  healthcare data-platform role, covering both low `domain_fit` and low
+  `seniority_fit` in one saved recommendation run.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-service-risk-flags-2 tests\test_recruiting_recommendations_service.py`
+- `ruff check tests\test_recruiting_recommendations_service.py`
+
 ### Recruiting service skill-gap persistence guard
 
 Completed:

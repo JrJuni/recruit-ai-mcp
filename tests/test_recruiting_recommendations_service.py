@@ -359,6 +359,43 @@ def test_recommendation_service_surfaces_inferred_skill_gap_when_saved() -> None
     assert "Confirm required skill: data platforms" in row["next_questions"]
 
 
+def test_recommendation_service_preserves_domain_and_seniority_flags() -> None:
+    storage = FakeRecommendationStorage()
+    storage.positions["pos_healthcare_staff"] = _position(
+        "pos_healthcare_staff",
+        title="Healthcare Data Platform Staff Engineer",
+        seniority="staff",
+        must_have=["Python", "MongoDB"],
+        nice_to_have=["HIPAA", "clinical workflows"],
+    )
+    storage.candidates["cand_blake"] = _candidate(
+        "cand_blake",
+        skills=["Python", "MongoDB"],
+        domains=["Retail analytics"],
+        seniority="junior",
+    )
+
+    saved = recruiting_recommendations.recommend_candidates_for_position(
+        storage,
+        position_id="pos_healthcare_staff",
+        save_run=True,
+    )
+    read_back = recruiting_recommendations.get_recommendation_run(
+        storage,
+        recommendation_run_id=saved["recommendation_run_id"],
+    )
+
+    row = read_back["record"]["results"][0]
+    assert row["target_id"] == "cand_blake"
+    assert row["fit_snapshot"]["dimensions"]["domain_fit"]["score"] == 2
+    assert row["fit_snapshot"]["dimensions"]["seniority_fit"]["score"] == 1
+    assert row["risk_flags"] == ["domain_mismatch", "seniority_mismatch"]
+    assert "Confirm whether candidate domain experience transfers to this role." in (
+        row["next_questions"]
+    )
+    assert "Improve evidence for seniority_fit." in row["next_questions"]
+
+
 def test_recommendation_service_raises_not_found_for_missing_anchor() -> None:
     storage = _storage()
 

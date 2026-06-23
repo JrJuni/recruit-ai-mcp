@@ -101,6 +101,9 @@ Immediate quality order:
      risk rows, and next-question rows intact.
    - Service-layer recommendation tests now cover inferred `skill_gap` risk
      flags across save and read-back serialization.
+   - Service-layer recommendation tests now also cover inferred
+     `domain_mismatch` and `seniority_mismatch` risk flags across save and
+     read-back serialization.
    - Workflow trace safety smoke now checks that opt-in local trace events are
      written with redaction for raw recruiting notes, MongoDB URIs,
      API-key-shaped values, and raw result content.
