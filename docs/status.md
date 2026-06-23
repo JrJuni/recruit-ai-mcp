@@ -12,6 +12,21 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### README recruiting-first demo cleanup
+
+Completed:
+
+- Tightened the top-level README so the first demo path is the current Recruit
+  AI recruiting workflow, while inherited deal dashboards are labeled as
+  compatibility demos.
+- Replaced lingering first-page sales-close wording with recruiting judgment
+  wording and added docs tests to keep the README demo path recruiting-first.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-readme-demo-current tests\test_docs_recruit_ai_current.py`
+- `ruff check tests\test_docs_recruit_ai_current.py`
+
 ### Post-process-conflict local package gate refresh
 
 Completed:

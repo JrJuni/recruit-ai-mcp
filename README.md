@@ -56,7 +56,7 @@ Start here:
 
 ## What it does
 
-- Stores recruiting records for candidates, hiring customers, positions,
+- Stores recruiting records for candidates, client companies, positions,
   submissions, feedback, interactions, and recommendation runs.
 - Recommends candidates for positions and positions for candidates using
   deterministic fit scoring plus M0-safe lexical retrieval.
@@ -68,9 +68,9 @@ Start here:
 - Preserves inherited deal-intelligence compatibility for structured deal
   fields, health signals, follow-up gaps, customer themes, and weekly review
   artifacts.
-- Lets you add seller-side product/solution context, such as ICP notes,
-  positioning, pricing notes, security claims, integrations, and competitor
-  notes, so interaction extraction can understand your product better.
+- Keeps inherited product/solution context available for compatibility deal
+  workflows, such as ICP notes, positioning, pricing notes, security claims,
+  integrations, and competitor notes.
 - Lets an AI host answer normal recruiting questions such as "which candidates
   best match this role?", "which roles fit this candidate?", or "generate a
   recruiting pipeline report".
@@ -82,8 +82,8 @@ Start here:
 
 ## What it is not
 
-- It is not an autonomous closer. It structures evidence; you still make the
-  sales judgment.
+- It is not an autonomous recruiter. It structures evidence; you still make
+  the shortlist, outreach, and hiring judgment.
 - It is not yet a mature CRM suite with permissions, contact ownership,
   calendar/email sync, workflow automation, or enterprise integrations.
 - It is not a hosted SaaS that owns your recruiting/team data. The normal full
@@ -157,21 +157,41 @@ Important boundaries:
 For the deeper module map, read [`docs/architecture.md`](docs/architecture.md).
 For fork/customization entry points, read [`docs/extending.md`](docs/extending.md).
 
-## Live demo
+## Demo Paths
 
-Two ways to look at the deal data you've accumulated.
+Start with the recruiting demo path when showing the current product shape.
+The inherited deal dashboard screenshots are retained as compatibility demos
+for users who still rely on the staged cutover surface.
 
-### 1. MongoDB Atlas Charts - Weekly Pipeline Review
+### 1. Recruit AI in-chat recruiting workflow
+
+Use the bundled `recruiting_pipeline_demo` sample to ask:
+
+```text
+Which candidates best match this open position?
+Which open positions best fit this candidate?
+What client feedback changed the recommendation?
+Generate a recruiting pipeline report.
+```
+
+The recruiting demo shows candidate-to-position and position-to-candidate
+recommendations, visible fit dimensions, client-feedback adjustments, risk
+flags, next questions, pipeline metrics, and Markdown/CSV report export.
+
+### 2. Compatibility Deal Dashboard - MongoDB Atlas Charts
 
 ![Atlas Charts Weekly Pipeline Review dashboard](docs/images/atlas-dashboard.png)
 
 Active/Attention deal counts, pipeline value by stage, qualification health-band distribution, gap distribution, and open pipeline value - all on one screen. Each chart's aggregation pipeline is generated with the `render-atlas-dashboard` CLI and pasted into Atlas Charts (see the "Atlas Charts Dashboard" section below).
 
-### 2. Claude / Codex in-chat rendered analysis
+### 3. Compatibility Deal Dashboard - Claude / Codex
 
 ![Claude in-chat rendered dashboard](docs/images/chat-dashboard.png)
 
-It takes the raw MCP tool output and renders win rate, the stage funnel, qualification gap patterns, data-quality coverage, and attention items right inside the conversation. It all starts from pasting in a single meeting note - no extra app.
+The compatibility deal surface takes raw MCP tool output and renders win rate,
+the stage funnel, qualification gap patterns, data-quality coverage, and
+attention items right inside the conversation. It starts from pasting in a
+single meeting note - no extra app.
 
 ### Cost-aware LLM boundary
 

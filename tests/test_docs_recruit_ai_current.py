@@ -299,11 +299,35 @@ def test_readme_top_copy_is_recruiting_first() -> None:
     assert "generate a\n  recruiting pipeline report" in top_copy
     assert "not a hosted SaaS that owns your recruiting/team data" in top_copy
     assert "Preserves inherited deal-intelligence compatibility" in top_copy
+    assert "shortlist, outreach, and hiring judgment" in top_copy
 
     assert "which deal needs attention\n  first?" not in top_copy
     assert "what are customers worried about?" not in top_copy
     assert "make this week's pipeline\n  report" not in top_copy
     assert "not a hosted SaaS that owns your deal data" not in top_copy
+    assert "sales judgment" not in top_copy
+
+
+def test_readme_demo_path_is_recruiting_first() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    demo = readme.split("## Demo Paths", maxsplit=1)[1].split(
+        "## Inherited Deal Health Compatibility",
+        maxsplit=1,
+    )[0]
+
+    assert "### 1. Recruit AI in-chat recruiting workflow" in demo
+    assert "recruiting_pipeline_demo" in demo
+    assert "Which candidates best match this open position?" in demo
+    assert "Which open positions best fit this candidate?" in demo
+    assert "What client feedback changed the recommendation?" in demo
+    assert "Generate a recruiting pipeline report." in demo
+    assert "Markdown/CSV report export" in demo
+    assert "### 2. Compatibility Deal Dashboard - MongoDB Atlas Charts" in demo
+    assert "### 3. Compatibility Deal Dashboard - Claude / Codex" in demo
+
+    assert "## Live demo" not in readme
+    assert "Two ways to look at the deal data you've accumulated." not in readme
+    assert "### 1. MongoDB Atlas Charts - Weekly Pipeline Review" not in demo
 
 
 def test_external_user_test_guide_is_recruit_ai_current() -> None:
