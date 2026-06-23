@@ -12,6 +12,36 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Docs-first pause after MCP risk pass-through guards
+
+Completed:
+
+- Paused before entering the next service-layer implementation unit and updated
+  the source-controlled work record first, per the long-loop lesson in
+  `docs/lesson-learned.md`.
+- Current latest implementation commits cover both public MCP recommendation
+  directions: position-to-candidate inferred `skill_gap` pass-through and
+  candidate-to-position client-exclusion pass-through, each saved and read back
+  through the MCP surface.
+- The remaining narrow gap is service-layer save/read-back coverage for the
+  candidate-to-position client-exclusion path. The MCP surface is covered, but
+  the lower service serialization contract should also be pinned before
+  broadening smoke coverage again.
+
+Recommended next implementation unit:
+
+- Add one service-level test proving `recommend_positions_for_candidate` with
+  `save_run=true` preserves `client_exclusion`, `review_match_risk`, result
+  ordering, and the exclusion follow-up question after
+  `get_recommendation_run` read-back.
+- Verify only the affected service test file, Ruff for that file, the docs
+  current guard if docs changed, and `git diff --check`. Defer full recruiting
+  smoke unless the smoke contract or sample pack changes.
+
+Verification:
+
+- Documentation-only checkpoint. No code, artifact, or smoke behavior changed.
+
 ### Recruiting MCP candidate-to-position risk guard
 
 Completed:

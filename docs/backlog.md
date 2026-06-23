@@ -108,6 +108,11 @@ Immediate quality order:
    - Service-layer recommendation tests now also cover inferred
      `domain_mismatch` and `seniority_mismatch` risk flags across save and
      read-back serialization.
+   - Next narrow service-layer gap: add candidate-to-position save/read-back
+     coverage for client-exclusion ordering, risk flags, and follow-up
+     questions. The MCP wrapper already covers this path, but the service
+     serialization contract should be pinned directly before another smoke-pack
+     expansion.
    - Workflow trace safety smoke now checks that opt-in local trace events are
      written with redaction for raw recruiting notes, MongoDB URIs,
      API-key-shaped values, and raw result content.
