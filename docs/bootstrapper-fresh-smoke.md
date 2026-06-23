@@ -37,7 +37,7 @@ Expected result:
 
 ## Published npx Smoke
 
-The user-facing smoke is:
+After the npm/PyPI packages are published, the normal user-facing smoke is:
 
 ```bash
 npx recruit-ai-mcp setup
@@ -56,6 +56,10 @@ Then, after MongoDB/API values are configured:
 ```bash
 npx recruit-ai-mcp doctor --live
 ```
+
+For release evidence, prefer the pinned `@0.1.0` commands in
+[Current Evidence To Collect](#current-evidence-to-collect) so the smoke proves
+the exact package line under review.
 
 ## Important Boundary
 

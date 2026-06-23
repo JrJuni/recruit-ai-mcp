@@ -250,6 +250,8 @@ def test_bootstrapper_fresh_smoke_uses_recruit_ai_public_package() -> None:
     assert "npm `E404`" in docs
     assert "No matching distribution found for recruit-ai-mcp" in docs
     assert "Do not mark the public `npx recruit-ai-mcp@0.1.0` path ready" in docs
+    assert "After the npm/PyPI packages are published" in docs
+    assert "prefer the pinned `@0.1.0` commands" in docs
     assert "node npm\\bin\\recruit-ai-mcp.js setup" in docs
     assert "node npm\\bin\\recruit-ai-mcp.js setup" in npm_readme
     assert "## External-Machine Evidence" in docs

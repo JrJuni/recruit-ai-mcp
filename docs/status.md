@@ -12,6 +12,21 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Bootstrapper public-smoke wording guard
+
+Completed:
+
+- Clarified `docs/bootstrapper-fresh-smoke.md` so unversioned
+  `npx recruit-ai-mcp ...` commands are explicitly described as the normal
+  user-facing flow after npm/PyPI publication.
+- Added a docs-current guard requiring release evidence to prefer the pinned
+  `@0.1.0` commands while public registry readiness remains pending.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-fresh-smoke-docs tests\test_docs_recruit_ai_current.py`
+- `ruff check tests\test_docs_recruit_ai_current.py`
+
 ### Recruit AI local package gate refresh
 
 Completed:
