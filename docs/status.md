@@ -12,6 +12,22 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruiting service skill-gap persistence guard
+
+Completed:
+
+- Added service-layer coverage proving an inferred `skill_gap` risk flag is
+  present after `recommend_candidates_for_position(save_run=True)` and still
+  present when the saved recommendation run is read back through
+  `get_recommendation_run`.
+- This guards the MCP/service response path, not just the schema builder, so
+  inferred recommendation risks survive serialization and storage round trips.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-service-risk-flags tests\test_recruiting_recommendations_service.py`
+- `ruff check tests\test_recruiting_recommendations_service.py`
+
 ### Recruiting skill-gap smoke surface guard
 
 Completed:

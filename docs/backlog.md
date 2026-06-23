@@ -99,6 +99,8 @@ Immediate quality order:
    - Saved recommendation-run review now checks that stored recommendation
      runs can be read back with fit snapshots, feedback-adjustment ledgers,
      risk rows, and next-question rows intact.
+   - Service-layer recommendation tests now cover inferred `skill_gap` risk
+     flags across save and read-back serialization.
    - Workflow trace safety smoke now checks that opt-in local trace events are
      written with redaction for raw recruiting notes, MongoDB URIs,
      API-key-shaped values, and raw result content.

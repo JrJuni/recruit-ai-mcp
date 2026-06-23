@@ -328,6 +328,37 @@ def test_recommendation_service_applies_feedback_deltas() -> None:
     assert blake["feedback_adjustments"][0]["adjusted_score"] == 3
 
 
+def test_recommendation_service_surfaces_inferred_skill_gap_when_saved() -> None:
+    storage = FakeRecommendationStorage()
+    storage.positions["pos_platform_lead"] = _position(
+        "pos_platform_lead",
+        must_have=["Python", "MongoDB", "data platforms"],
+        nice_to_have=[],
+    )
+    storage.candidates["cand_blake"] = _candidate(
+        "cand_blake",
+        skills=["Python"],
+        domains=[],
+    )
+
+    saved = recruiting_recommendations.recommend_candidates_for_position(
+        storage,
+        position_id="pos_platform_lead",
+        save_run=True,
+    )
+    read_back = recruiting_recommendations.get_recommendation_run(
+        storage,
+        recommendation_run_id=saved["recommendation_run_id"],
+    )
+
+    row = read_back["record"]["results"][0]
+    assert row["target_id"] == "cand_blake"
+    assert row["fit_snapshot"]["dimensions"]["skill_fit"]["score"] == 2
+    assert row["risk_flags"] == ["skill_gap"]
+    assert "Confirm required skill: MongoDB" in row["next_questions"]
+    assert "Confirm required skill: data platforms" in row["next_questions"]
+
+
 def test_recommendation_service_raises_not_found_for_missing_anchor() -> None:
     storage = _storage()
 
