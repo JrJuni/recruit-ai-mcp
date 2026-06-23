@@ -41,6 +41,9 @@ Lesson:
   --stat` over broad terminal dumps.
 - Resume implementation only after the docs checkpoint is committed or the
   maintainer explicitly redirects.
+- For the next implementation unit, make the first pass narrow by reading only
+  the affected files and line ranges. Avoid repo-wide searches unless a
+  contract name or stale phrase must be proven absent.
 
 Related: `docs/status.md`, `docs/backlog.md`,
 `scripts/validate_recruiting_smoke.py`.

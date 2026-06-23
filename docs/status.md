@@ -12,6 +12,46 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Docs-first pause checkpoint
+
+Completed:
+
+- Paused the implementation loop at the maintainer's request and recorded the
+  current state before starting another code change.
+- Confirmed the current codebase is in the recommendation-quality hardening
+  stream after the process-conflict guardrail, package refresh, and
+  README recruiting-first cleanup.
+- Captured the token-efficiency review: the implementation work was normal for
+  a multi-step model/recommendation/smoke loop, but context use was higher than
+  needed because some smoke payloads and broad searches were inspected too
+  verbosely.
+
+Current baseline:
+
+- Branch `main` is ahead of `origin/main`; do not push without explicit
+  maintainer approval.
+- The current recruiting smoke contract remains the 16-question pack with 12
+  sample candidates, 32 written/reloaded records, and 8 recommendation
+  guardrail candidates.
+- The package line remains `recruit-ai-mcp` version `0.1.0`; keep release
+  artifacts and docs on that version unless the maintainer asks to bump it.
+
+Next recommended unit:
+
+- Add a single recommendation-quality guardrail for low-confidence candidate
+  evidence. The intended behavior is that a keyword-strong candidate backed
+  only by internal, unknown, or unconfirmed evidence should carry a visible
+  review risk and should not outrank a similarly strong candidate with direct
+  source evidence.
+- Keep the next loop compact: inspect only the relevant model/recommendation
+  snippets, update targeted tests and smoke-contract counts, run the recruiting
+  smoke pack into `.tmp/...`, validate the summary, and summarize only the key
+  fields.
+
+Verification for this docs checkpoint:
+
+- Documentation-only update. Run `git diff --check` before committing.
+
 ### README recruiting-first demo cleanup
 
 Completed:
