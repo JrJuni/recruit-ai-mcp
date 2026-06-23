@@ -166,6 +166,40 @@ def test_release_docs_and_workflows_use_recruit_ai_package_name() -> None:
     assert "mcpb info mcpb\\recruit-ai-mcp-0.1.0.mcpb" not in release_docs
 
 
+def test_latest_status_records_current_smoke_contract_and_artifact_hash() -> None:
+    docs = (ROOT / "docs" / "status.md").read_text(encoding="utf-8")
+    latest = docs.split("### Docs-first pause checkpoint", maxsplit=1)[0]
+
+    assert "Post-low-confidence-evidence local package gate refresh" in latest
+    assert "Recruiting low-confidence evidence guardrail" in latest
+    assert (
+        "8157F0B637EBF40CE8E576F2973D47B7F6DD9CA83C7995B7170FBB096583E58C"
+        in latest
+    )
+    assert f"`candidate_count={EXPECTED_CONTRACT['candidate_count']}`" in latest
+    assert (
+        f"`written_record_count={EXPECTED_CONTRACT['written_record_count']}`"
+        in latest
+    )
+    assert (
+        f"`reloaded_record_count={EXPECTED_CONTRACT['reloaded_record_count']}`"
+        in latest
+    )
+    assert (
+        f"`guardrail_candidate_count={EXPECTED_CONTRACT['guardrail_candidate_count']}`"
+        in latest
+    )
+
+    stale_contract_tokens = [
+        ("candidate_count", 12),
+        ("written_record_count", 32),
+        ("reloaded_record_count", 32),
+        ("guardrail_candidate_count", 8),
+    ]
+    for key, value in stale_contract_tokens:
+        assert f"`{key}={value}`" not in latest
+
+
 def test_bootstrapper_fresh_smoke_uses_recruit_ai_public_package() -> None:
     docs = (ROOT / "docs" / "bootstrapper-fresh-smoke.md").read_text(
         encoding="utf-8"

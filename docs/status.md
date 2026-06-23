@@ -72,13 +72,12 @@ Completed:
   needed because some smoke payloads and broad searches were inspected too
   verbosely.
 
-Current baseline:
+Baseline at the pause:
 
 - Branch `main` is ahead of `origin/main`; do not push without explicit
   maintainer approval.
-- The current recruiting smoke contract was 16 questions with 12 sample
-  candidates, 32 written/reloaded records, and 8 recommendation guardrail
-  candidates before the next recommendation-quality guardrail.
+- The recruiting smoke contract was at the pre-low-confidence-evidence fixture
+  count before the next recommendation-quality guardrail.
 - The package line remains `recruit-ai-mcp` version `0.1.0`; keep release
   artifacts and docs on that version unless the maintainer asks to bump it.
 
