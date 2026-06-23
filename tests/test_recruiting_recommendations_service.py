@@ -255,6 +255,46 @@ def test_recommend_positions_for_candidate_respects_excluded_company() -> None:
     )
 
 
+def test_recommend_positions_for_candidate_preserves_exclusion_when_saved() -> None:
+    storage = FakeRecommendationStorage()
+    storage.candidates["cand_avery"] = _candidate(
+        "cand_avery",
+        preferences={"excluded_companies": ["Acme"]},
+    )
+    storage.positions["pos_acme_backend"] = _position(
+        "pos_acme_backend",
+        client_company_id="client_acme",
+    )
+    storage.positions["pos_beta_backend"] = _position(
+        "pos_beta_backend",
+        client_company_id="client_beta",
+    )
+
+    saved = recruiting_recommendations.recommend_positions_for_candidate(
+        storage,
+        candidate_id="cand_avery",
+        save_run=True,
+    )
+    read_back = recruiting_recommendations.get_recommendation_run(
+        storage,
+        recommendation_run_id=saved["recommendation_run_id"],
+    )
+
+    rows = read_back["record"]["results"]
+    acme = next(row for row in rows if row["target_id"] == "pos_acme_backend")
+
+    assert saved["storage_written"] is True
+    assert read_back["storage_written"] is False
+    assert [row["target_id"] for row in rows] == [
+        "pos_beta_backend",
+        "pos_acme_backend",
+    ]
+    assert acme["risk_flags"] == ["client_exclusion", "review_match_risk"]
+    assert "Confirm whether the candidate exclusion can be revisited." in (
+        acme["next_questions"]
+    )
+
+
 def test_recommend_positions_for_candidate_defaults_to_open_sample_roles() -> None:
     records = build_sample_recruiting_records(loaded_at="2026-06-22T00:00:00+00:00")
     storage = FakeRecommendationStorage()

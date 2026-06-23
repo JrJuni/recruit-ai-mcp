@@ -12,6 +12,23 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruiting service candidate-to-position exclusion persistence guard
+
+Completed:
+
+- Added service-layer save/read-back coverage for
+  `recommend_positions_for_candidate` with candidate-side client exclusions.
+- The test verifies `save_run=true` preserves result ordering,
+  `client_exclusion`, `review_match_risk`, and the exclusion follow-up question
+  after `get_recommendation_run` read-back.
+- This closes the lower-level serialization gap left after the public MCP
+  wrapper path was covered.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-service-candidate-position-exclusion tests\test_recruiting_recommendations_service.py`
+- `ruff check tests\test_recruiting_recommendations_service.py`
+
 ### Docs-first pause after MCP risk pass-through guards
 
 Completed:
