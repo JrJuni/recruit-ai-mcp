@@ -12,6 +12,18 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Saved recommendation-run smoke coverage
+
+Completed:
+
+- Broadened the recruiting-first natural-question smoke pack with
+  `rq14_recommendation_run_review`, which verifies a saved recommendation run
+  can be reviewed through the read-only recommendation-run service with fit
+  snapshots, feedback-adjustment ledgers, risk rows, and next-question rows
+  intact.
+- Updated the recruiting smoke validator and release/readiness docs to require
+  the current 14-question recruiting pack.
+
 ### Release approval boundary clarification
 
 Completed:
@@ -224,9 +236,9 @@ Completed:
   ranked candidate shortlists plus visible review risk flags and next-question
   text, with quick-read counts for risk and question review coverage. Shortlist
   candidate rows now also include compact recruiting-fit dimension scores.
-- Updated the MVP readiness recruiting workflow smoke gate to require the
-  current 13-question pack and document recommendation guardrail plus client
-  shortlist readiness coverage.
+- Updated the MVP readiness recruiting workflow smoke gate to document the
+  recommendation guardrail plus client shortlist readiness coverage introduced
+  with `rq13_client_shortlist_readiness`.
 - Tightened release/package verification so both the release candidate workflow
   and installed-package staging smoke run the recruiting natural-question pack;
   staging now uploads `recruiting-natural-questions.json` with the

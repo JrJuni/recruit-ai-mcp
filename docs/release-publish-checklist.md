@@ -178,7 +178,7 @@ Installed-package smoke passes when:
 - the requested package version installs in a fresh virtual environment;
 - `smoke-profile --profile sample --json` exits successfully;
 - `smoke-natural-questions --pack recruiting --as-of 2026-06-22 --json` exits
-  successfully with the current 13-question recruiting pack;
+  successfully with the current 14-question recruiting pack;
 - the recruiting smoke contract verifies `candidate_count=10`,
   `written_record_count=30`, `reloaded_record_count=30`, and
   `guardrail_candidate_count=6`;

@@ -523,7 +523,7 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     )
 
     assert result.exit_code == 0
-    assert "Natural Question Smoke (as_of=2026-06-22, questions=13)" in result.output
+    assert "Natural Question Smoke (as_of=2026-06-22, questions=14)" in result.output
     assert "OK: True" in result.output
     assert "candidates=10, open_positions=2, submissions=4" in result.output
     assert "open_available=2, excluded=1" in result.output
@@ -532,18 +532,25 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
         "open_positions=2, shortlists=2, risk_reviews=2, question_reviews=2"
         in result.output
     )
+    assert (
+        "run=rec_smoke_northstar_shortlist, results=3, "
+        "feedback_adjustments=2, risk_rows=2, question_rows=2"
+    ) in result.output
     assert (output_dir / "summary.md").exists()
     summary = json.loads((output_dir / "summary.json").read_text(encoding="utf-8"))
     assert summary["ok"] is True
     assert summary["pack"] == "recruiting"
-    assert summary["question_count"] == 13
-    assert summary["answerability_counts"] == {"derived": 9, "direct": 4}
+    assert summary["question_count"] == 14
+    assert summary["answerability_counts"] == {"derived": 10, "direct": 4}
     questions_by_id = {row["id"]: row for row in summary["questions"]}
     assert "open_available=2, excluded=1" in (
         questions_by_id["rq03_positions_for_avery"]["quick_read"]
     )
     assert "question_reviews=2" in (
         questions_by_id["rq13_client_shortlist_readiness"]["quick_read"]
+    )
+    assert "feedback_adjustments=2" in (
+        questions_by_id["rq14_recommendation_run_review"]["quick_read"]
     )
     validator = Path(__file__).resolve().parents[1] / "scripts" / (
         "validate_recruiting_smoke.py"
@@ -712,6 +719,35 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     assert "Confirm retention or counteroffer mitigation plan." in (
         riley_shortlist["next_questions"]
     )
+    assert (output_dir / "rq14_recommendation_run_review.json").exists()
+    saved_run_review = json.loads(
+        (output_dir / "rq14_recommendation_run_review.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert saved_run_review["summary"] == {
+        "recommendation_run_id": "rec_smoke_northstar_shortlist",
+        "mode": "position_to_candidates",
+        "anchor_type": "position",
+        "anchor_id": "pos_northstar_backend_lead",
+        "result_count": 3,
+        "storage_written": False,
+        "read_count": 1,
+        "top_candidate_id": "cand_avery_chen",
+        "feedback_adjustment_row_count": 2,
+        "risk_row_count": 2,
+        "next_question_row_count": 2,
+    }
+    saved_review_record = saved_run_review["review"]["record"]
+    assert saved_review_record["recommendation_run_id"] == "rec_smoke_northstar_shortlist"
+    assert saved_review_record["results"][0]["target_id"] == "cand_avery_chen"
+    assert {
+        (row["feedback_id"], row["dimension"])
+        for row in saved_review_record["results"][0]["feedback_adjustments"]
+    } == {
+        ("fb_avery_northstar_advance", "domain_fit"),
+        ("fb_avery_northstar_advance", "client_preference_fit"),
+    }
     encoded = json.dumps(summary, ensure_ascii=False)
     assert "raw_content" not in encoded
     assert "contacts" not in encoded
@@ -760,6 +796,7 @@ def test_smoke_natural_questions_recruiting_pack_json(monkeypatch, tmp_path) -> 
         "rq11_local_recruiting_persistence",
         "rq12_recommendation_guardrails",
         "rq13_client_shortlist_readiness",
+        "rq14_recommendation_run_review",
     ]
 
 

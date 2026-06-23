@@ -208,6 +208,25 @@ def _payload(
                     ],
                 },
             },
+            {
+                "id": "rq14_recommendation_run_review",
+                "payload": {
+                    "summary": {
+                        "result_count": EXPECTED_CONTRACT[
+                            "saved_run_result_count"
+                        ],
+                        "feedback_adjustment_row_count": EXPECTED_CONTRACT[
+                            "saved_run_feedback_adjustment_row_count"
+                        ],
+                        "risk_row_count": EXPECTED_CONTRACT[
+                            "saved_run_risk_row_count"
+                        ],
+                        "next_question_row_count": EXPECTED_CONTRACT[
+                            "saved_run_next_question_row_count"
+                        ],
+                    }
+                },
+            },
         ],
     }
 

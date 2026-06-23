@@ -3486,6 +3486,7 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
         POSITIONS,
         SUBMISSIONS,
     )
+    from deal_intel.tools.recruiting_recommendations import get_recommendation_run
     from deal_intel.tools.sample_dataset import build_sample_recruiting_records
 
     smoke_as_of = as_of or "2026-06-22"
@@ -3941,6 +3942,53 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
             "shortlists": rows,
         }
 
+    def recommendation_run_review_summary() -> dict:
+        class InMemoryRecommendationRunStore:
+            def __init__(self, run_record: dict) -> None:
+                self.run_record = deepcopy(run_record)
+                self.read_count = 0
+
+            def get_recommendation_run(self, recommendation_run_id: str) -> dict | None:
+                self.read_count += 1
+                if recommendation_run_id != self.run_record["recommendation_run_id"]:
+                    return None
+                return deepcopy(self.run_record)
+
+        saved_run = build_position_candidate_recommendation_run(
+            position=positions_by_id["pos_northstar_backend_lead"],
+            candidates=candidates,
+            client_feedback=feedback,
+            recommendation_run_id="rec_smoke_northstar_shortlist",
+            limit=3,
+            created_at=loaded_at,
+        )
+        store = InMemoryRecommendationRunStore(saved_run.model_dump(mode="json"))
+        review = get_recommendation_run(
+            store,
+            recommendation_run_id=saved_run.recommendation_run_id,
+        )
+        results = review["record"]["results"]
+        return {
+            "summary": {
+                "recommendation_run_id": review["recommendation_run_id"],
+                "mode": review["mode"],
+                "anchor_type": review["anchor_type"],
+                "anchor_id": review["anchor_id"],
+                "result_count": review["result_count"],
+                "storage_written": review["storage_written"],
+                "read_count": store.read_count,
+                "top_candidate_id": results[0]["target_id"] if results else None,
+                "feedback_adjustment_row_count": sum(
+                    len(row.get("feedback_adjustments") or []) for row in results
+                ),
+                "risk_row_count": sum(1 for row in results if row.get("risk_flags")),
+                "next_question_row_count": sum(
+                    1 for row in results if row.get("next_questions")
+                ),
+            },
+            "review": review,
+        }
+
     questions = [
         call(
             "rq01_recruiting_pipeline_metrics",
@@ -4019,6 +4067,12 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
             "Which open positions have a client-ready candidate shortlist?",
             "derived",
             client_shortlist_readiness_summary,
+        ),
+        call(
+            "rq14_recommendation_run_review",
+            "Can we review a saved recommendation run with evidence intact?",
+            "derived",
+            recommendation_run_review_summary,
         ),
     ]
 
@@ -4465,6 +4519,15 @@ def _natural_question_quick_read(question_id: str, payload: dict) -> str:
             f"shortlists={summary.get('positions_with_shortlist')}, "
             f"risk_reviews={summary.get('positions_with_review_risks')}, "
             f"question_reviews={summary.get('positions_with_next_questions')}"
+        )
+    if question_id == "rq14_recommendation_run_review":
+        summary = payload.get("summary") or {}
+        return (
+            f"run={summary.get('recommendation_run_id')}, "
+            f"results={summary.get('result_count')}, "
+            f"feedback_adjustments={summary.get('feedback_adjustment_row_count')}, "
+            f"risk_rows={summary.get('risk_row_count')}, "
+            f"question_rows={summary.get('next_question_row_count')}"
         )
     if question_id == "q01_pipeline_health":
         kpis = payload.get("kpis") or {}

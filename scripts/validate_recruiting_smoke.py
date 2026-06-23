@@ -8,7 +8,7 @@ from typing import Any
 
 EXPECTED_CONTRACT = {
     "ok": True,
-    "question_count": 13,
+    "question_count": 14,
     "candidate_count": 10,
     "written_record_count": 30,
     "reloaded_record_count": 30,
@@ -27,6 +27,10 @@ EXPECTED_CONTRACT = {
     "shortlist_risk_row_count": 4,
     "shortlist_next_question_row_count": 5,
     "shortlist_dimension_score_row_count": 6,
+    "saved_run_result_count": 3,
+    "saved_run_feedback_adjustment_row_count": 2,
+    "saved_run_risk_row_count": 2,
+    "saved_run_next_question_row_count": 2,
 }
 _REQUIRED_QUESTIONS = (
     "rq01_recruiting_pipeline_metrics",
@@ -34,6 +38,7 @@ _REQUIRED_QUESTIONS = (
     "rq11_local_recruiting_persistence",
     "rq12_recommendation_guardrails",
     "rq13_client_shortlist_readiness",
+    "rq14_recommendation_run_review",
 )
 _REQUIRED_FIT_DIMENSIONS = (
     "skill_fit",
@@ -62,6 +67,7 @@ def validate_payload(payload: dict[str, Any]) -> dict[str, Any]:
         shortlist_payload,
         question_id="rq13_client_shortlist_readiness",
     )
+    saved_run = _summary(questions, "rq14_recommendation_run_review")
     actual = {
         "ok": _required_key(payload, "ok", scope="top-level payload"),
         "question_count": _required_key(
@@ -150,6 +156,26 @@ def validate_payload(payload: dict[str, Any]) -> dict[str, Any]:
         ),
         "shortlist_dimension_score_row_count": _shortlist_dimension_score_row_count(
             shortlist_payload
+        ),
+        "saved_run_result_count": _required_key(
+            saved_run,
+            "result_count",
+            scope="rq14_recommendation_run_review summary",
+        ),
+        "saved_run_feedback_adjustment_row_count": _required_key(
+            saved_run,
+            "feedback_adjustment_row_count",
+            scope="rq14_recommendation_run_review summary",
+        ),
+        "saved_run_risk_row_count": _required_key(
+            saved_run,
+            "risk_row_count",
+            scope="rq14_recommendation_run_review summary",
+        ),
+        "saved_run_next_question_row_count": _required_key(
+            saved_run,
+            "next_question_row_count",
+            scope="rq14_recommendation_run_review summary",
         ),
     }
     if actual != EXPECTED_CONTRACT:
