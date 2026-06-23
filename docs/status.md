@@ -12,6 +12,24 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruiting smoke trace evidence guard
+
+Completed:
+
+- Tightened `scripts/validate_recruiting_smoke.py` so
+  `rq15_workflow_trace_safety` validates trace enabled/written/existence
+  evidence, max/recent event counts, and the expected recent tool name in
+  addition to redaction and forbidden-value summary fields.
+- Added validator regression coverage for trace tool evidence mismatches and
+  confirmed the latest generated recruiting smoke summary passes the stricter
+  contract.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-rq15-validator tests\test_validate_recruiting_smoke.py`
+- `ruff check scripts\validate_recruiting_smoke.py tests\test_validate_recruiting_smoke.py`
+- `PYTHONPATH=src python scripts\validate_recruiting_smoke.py .tmp\rq17-validator-smoke\summary.json`
+
 ### Recruiting smoke report-export evidence guard
 
 Completed:

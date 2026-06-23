@@ -299,9 +299,19 @@ def _payload(
                 "id": "rq15_workflow_trace_safety",
                 "payload": {
                     "summary": {
+                        "trace_written": EXPECTED_CONTRACT["trace_written"],
+                        "enabled": EXPECTED_CONTRACT["trace_enabled"],
+                        "trace_exists": EXPECTED_CONTRACT["trace_exists"],
                         "event_count": EXPECTED_CONTRACT["trace_event_count"],
                         "invalid_event_count": EXPECTED_CONTRACT[
                             "trace_invalid_event_count"
+                        ],
+                        "max_events": EXPECTED_CONTRACT["trace_max_events"],
+                        "recent_event_count": EXPECTED_CONTRACT[
+                            "trace_recent_event_count"
+                        ],
+                        "recent_tool_names": EXPECTED_CONTRACT[
+                            "trace_recent_tool_names"
                         ],
                         "redacted_marker_count": EXPECTED_CONTRACT[
                             "trace_redacted_marker_count"
@@ -658,6 +668,33 @@ def test_validate_recruiting_smoke_cli_fails_on_report_export_evidence_mismatch(
         f"'report_export_row_count': {EXPECTED_CONTRACT['report_export_row_count']}"
         in result.stderr
     )
+
+
+def test_validate_recruiting_smoke_cli_fails_on_trace_tool_evidence_mismatch(
+    tmp_path,
+) -> None:
+    payload = _payload()
+    trace_safety = next(
+        question["payload"]["summary"]
+        for question in payload["questions"]
+        if question["id"] == "rq15_workflow_trace_safety"
+    )
+    trace_safety["recent_tool_names"] = ["create_candidate"]
+
+    path = tmp_path / "summary.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = subprocess.run(
+        [sys.executable, str(VALIDATOR), str(path)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 1
+    assert "Recruiting natural-question smoke contract mismatch" in result.stderr
+    assert "'trace_recent_tool_names': ['add_recruiting_interaction']" in result.stderr
 
 
 def test_validate_recruiting_smoke_cli_fails_without_candidate_exclusion_question(

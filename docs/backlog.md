@@ -120,6 +120,9 @@ Immediate quality order:
    - Workflow trace safety smoke now checks that opt-in local trace events are
      written with redaction for raw recruiting notes, MongoDB URIs,
      API-key-shaped values, and raw result content.
+   - Workflow trace smoke validation now also checks trace written/enabled/
+     exists evidence, max/recent event counts, and the expected recent tool
+     name, instead of only checking redaction counts.
    - Recruiting report export smoke now writes CSV and Markdown artifacts to a
      temporary directory and checks that restricted fields stay out of the
      smoke payload and generated files.
