@@ -132,15 +132,15 @@ If archived content conflicts with code or active contract docs, prefer:
 
 ## Current Product Streams
 
-- Z5 profile/config work: `sample`, `full`, `pro` in one package.
-- Zero-config sample mode: MongoDB-free read-first demo path, with local
-  personal data as the next target.
-- Full mode: Atlas-backed real team data.
+- Recruit AI profile/config contract: `sample`, `full`, `pro` in one package.
+- Zero-config sample mode: MongoDB-free recruiting demo and local personal
+  recruiting persistence path.
+- Full mode: Atlas-backed real recruiting/team data.
 - Pro mode: paid-infrastructure path for API-key LLM providers and Atlas Vector
   Search.
 - Recruiting fork: candidate, client, position, submission, feedback,
-  interaction, and recommendation-run contracts beside the inherited deal
-  storage.
+  interaction, recommendation-run, metrics, report, local persistence, and
+  smoke contracts beside the inherited deal storage.
 - Deal review quality: separate evidence coverage, health quality, confirmed
   risks, and uncertainty.
 - Reporting/BI: shared deal metric engine plus recruiting pipeline metrics

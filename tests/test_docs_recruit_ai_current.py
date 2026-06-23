@@ -347,6 +347,22 @@ def test_extending_doc_is_recruit_ai_current() -> None:
     )
 
 
+def test_docs_map_current_streams_are_recruit_ai_current() -> None:
+    docs = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+    current_streams = docs.split("## Current Product Streams", maxsplit=1)[1]
+
+    assert "Recruit AI profile/config contract" in current_streams
+    assert "local personal\n  recruiting persistence path" in current_streams
+    assert "Atlas-backed real recruiting/team data" in current_streams
+    assert "recommendation-run, metrics, report, local persistence, and\n  smoke" in (
+        current_streams
+    )
+
+    assert "Z5 profile/config work" not in current_streams
+    assert "local\n  personal data as the next target" not in current_streams
+    assert "Atlas-backed real team data" not in current_streams
+
+
 def test_full_install_guide_is_recruit_ai_current() -> None:
     docs = (ROOT / "AI_FULL_INSTALL_GUIDE.md").read_text(encoding="utf-8")
 
