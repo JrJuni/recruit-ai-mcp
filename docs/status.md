@@ -12,6 +12,35 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Main CI fix and PyPI publisher blocker
+
+Completed:
+
+- Fixed the post-push CI expectation drift by updating the sample/developer MCP
+  tool-count assertions and making the Mongo index fake support mapping-style
+  collection lookup.
+- Pushed the fix to `main`; GitHub Actions CI passed for commit `bbb3c9a`.
+- Checked the `v0.1.0` release workflow. Release-candidate validation passed,
+  but PyPI publication failed before npm publication because PyPI rejected the
+  trusted-publishing token with `invalid-publisher`.
+
+Current blocker:
+
+- PyPI needs a trusted publisher entry matching repository
+  `JrJuni/recruit-ai-mcp`, workflow `release.yml`, environment `pypi`, and tag
+  release claims. Public `npx recruit-ai-mcp@0.1.0` readiness remains pending
+  until PyPI/npm publication and post-publish fresh smoke pass.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-ci-fix tests\test_cli_config_profiles.py tests\test_config_doctor.py tests\test_mongodb_indexes.py`
+- `ruff check tests\test_cli_config_profiles.py tests\test_config_doctor.py tests\test_mongodb_indexes.py`
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-ci-fix-full`
+- `ruff check .`
+- GitHub Actions CI run `28016243733` -> success for `bbb3c9a`.
+- GitHub Actions release run `28016040681` -> failed at PyPI trusted
+  publishing, after release-candidate checks passed.
+
 ### Final local release/package gate refresh
 
 Completed:

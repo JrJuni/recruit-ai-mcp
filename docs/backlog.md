@@ -154,6 +154,13 @@ Immediate quality order:
    - Final local release/package gate refresh passed after the MVP readiness
      alignment: package/MCPB/docs tests, npm pack dry-run, `mcpb validate`, and
      `mcpb info`.
+   - `main` CI passed after the tool-count/FakeIndexDB expectation fix at
+     `bbb3c9a`.
+   - The pushed `v0.1.0` release workflow passed release-candidate validation
+     but failed before npm publication because PyPI trusted publishing returned
+     `invalid-publisher`; configure the PyPI trusted publisher for
+     `JrJuni/recruit-ai-mcp`, workflow `release.yml`, environment `pypi`, before
+     retrying publication.
    - Stop for maintainer approval before any external action: push, tag, PyPI
      upload, npm publish, dist-tag change, or publish workflow trigger.
    - Record fresh public `npx recruit-ai-mcp@0.1.0` smoke evidence before

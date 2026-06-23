@@ -34,6 +34,10 @@ Current public registry evidence, last checked on 2026-06-23:
 - `npm view recruit-ai-mcp@0.1.0 version` returns npm `E404`.
 - `python -m pip index versions recruit-ai-mcp` returns
   `No matching distribution found for recruit-ai-mcp`.
+- The first `v0.1.0` release workflow passed release-candidate validation but
+  PyPI publication failed with trusted-publishing `invalid-publisher`. Configure
+  a PyPI trusted publisher matching repository `JrJuni/recruit-ai-mcp`,
+  workflow `release.yml`, and environment `pypi` before retrying publication.
 
 This means local package/MCPB gates can be complete, but public `npx` freshness
 cannot be claimed until the PyPI and npm publications happen and the
