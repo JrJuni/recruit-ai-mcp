@@ -3989,6 +3989,69 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
             "review": review,
         }
 
+    def workflow_trace_safety_summary() -> dict:
+        from deal_intel.workflow_trace import (
+            append_workflow_trace,
+            build_workflow_trace_status,
+            read_workflow_traces,
+        )
+
+        forbidden_values = (
+            "private trace note sentinel",
+            "mongodb+srv://user:pass@example/test",
+            "sk-test-secret",
+            "result raw sentinel",
+        )
+        with tempfile.TemporaryDirectory(prefix="recruit-ai-trace-smoke-") as data_dir:
+            cfg = {
+                "storage": {"local_data_dir": data_dir},
+                "observability": {"workflow_trace": {"enabled": True, "max_events": 3}},
+            }
+            append_result = append_workflow_trace(
+                cfg,
+                tool_name="add_recruiting_interaction",
+                arguments={
+                    "candidate_id": "cand_avery_chen",
+                    "raw_content": forbidden_values[0],
+                    "mongodb_uri": forbidden_values[1],
+                    "nested": {
+                        "openai_api_key": forbidden_values[2],
+                        "subject_id": "pos_northstar_backend_lead",
+                    },
+                },
+                result={
+                    "ok": True,
+                    "storage_written": True,
+                    "summary": {"candidate_count": len(candidates), "note": "private"},
+                    "raw_content": forbidden_values[3],
+                    "warnings": ["trace smoke warning"],
+                },
+                duration_ms=12.5,
+                environ={},
+            )
+            status = build_workflow_trace_status(cfg, limit=1, environ={})
+            events = read_workflow_traces(status["trace_path"])
+            serialized = json.dumps(events, ensure_ascii=False)
+
+        return {
+            "summary": {
+                "trace_written": append_result.get("trace_written") is True,
+                "enabled": status["enabled"],
+                "trace_exists": status["trace_exists"],
+                "event_count": status["event_count"],
+                "invalid_event_count": status["invalid_event_count"],
+                "max_events": status["max_events"],
+                "recent_event_count": len(status["recent_events"]),
+                "recent_tool_names": [
+                    row.get("tool_name") for row in status["recent_events"]
+                ],
+                "redacted_marker_count": serialized.count("[redacted]"),
+                "forbidden_value_present": any(
+                    value in serialized for value in forbidden_values
+                ),
+            },
+        }
+
     questions = [
         call(
             "rq01_recruiting_pipeline_metrics",
@@ -4073,6 +4136,12 @@ def _build_recruiting_natural_question_smoke_pack(*, as_of: str | None) -> dict:
             "Can we review a saved recommendation run with evidence intact?",
             "derived",
             recommendation_run_review_summary,
+        ),
+        call(
+            "rq15_workflow_trace_safety",
+            "Does opt-in workflow tracing avoid raw notes and secrets?",
+            "derived",
+            workflow_trace_safety_summary,
         ),
     ]
 
@@ -4528,6 +4597,14 @@ def _natural_question_quick_read(question_id: str, payload: dict) -> str:
             f"feedback_adjustments={summary.get('feedback_adjustment_row_count')}, "
             f"risk_rows={summary.get('risk_row_count')}, "
             f"question_rows={summary.get('next_question_row_count')}"
+        )
+    if question_id == "rq15_workflow_trace_safety":
+        summary = payload.get("summary") or {}
+        return (
+            f"written={summary.get('trace_written')}, "
+            f"events={summary.get('event_count')}, "
+            f"redacted={summary.get('redacted_marker_count')}, "
+            f"forbidden_present={summary.get('forbidden_value_present')}"
         )
     if question_id == "q01_pipeline_health":
         kpis = payload.get("kpis") or {}

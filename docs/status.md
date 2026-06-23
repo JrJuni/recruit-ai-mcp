@@ -12,6 +12,17 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Workflow trace safety smoke coverage
+
+Completed:
+
+- Broadened the recruiting-first natural-question smoke pack with
+  `rq15_workflow_trace_safety`, which verifies opt-in workflow tracing writes a
+  bounded local event while redacting raw recruiting notes, MongoDB URIs,
+  API-key-shaped values, and raw result content.
+- Updated the recruiting smoke validator and release/readiness docs to require
+  the current 15-question recruiting pack.
+
 ### Saved recommendation-run smoke coverage
 
 Completed:
@@ -21,8 +32,8 @@ Completed:
   can be reviewed through the read-only recommendation-run service with fit
   snapshots, feedback-adjustment ledgers, risk rows, and next-question rows
   intact.
-- Updated the recruiting smoke validator and release/readiness docs to require
-  the current 14-question recruiting pack.
+- Updated the recruiting smoke validator and release/readiness docs for the
+  saved recommendation-run review smoke contract.
 
 ### Release approval boundary clarification
 

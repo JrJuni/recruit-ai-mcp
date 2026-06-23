@@ -91,6 +91,12 @@ Immediate quality order:
      a ranked candidate shortlist with visible review risk flags and next
      questions, including compact quick-read coverage counts and candidate
      dimension scores.
+   - Saved recommendation-run review now checks that stored recommendation
+     runs can be read back with fit snapshots, feedback-adjustment ledgers,
+     risk rows, and next-question rows intact.
+   - Workflow trace safety smoke now checks that opt-in local trace events are
+     written with redaction for raw recruiting notes, MongoDB URIs,
+     API-key-shaped values, and raw result content.
    - Keep the inherited deal-intelligence natural-question pack as a
      compatibility smoke, not the primary Recruit AI user journey.
 3. Tighten release/package verification.

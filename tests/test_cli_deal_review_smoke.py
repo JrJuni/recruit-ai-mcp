@@ -523,7 +523,7 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     )
 
     assert result.exit_code == 0
-    assert "Natural Question Smoke (as_of=2026-06-22, questions=14)" in result.output
+    assert "Natural Question Smoke (as_of=2026-06-22, questions=15)" in result.output
     assert "OK: True" in result.output
     assert "candidates=10, open_positions=2, submissions=4" in result.output
     assert "open_available=2, excluded=1" in result.output
@@ -536,12 +536,16 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
         "run=rec_smoke_northstar_shortlist, results=3, "
         "feedback_adjustments=2, risk_rows=2, question_rows=2"
     ) in result.output
+    assert (
+        "written=True, events=1, redacted=3, forbidden_present=False"
+        in result.output
+    )
     assert (output_dir / "summary.md").exists()
     summary = json.loads((output_dir / "summary.json").read_text(encoding="utf-8"))
     assert summary["ok"] is True
     assert summary["pack"] == "recruiting"
-    assert summary["question_count"] == 14
-    assert summary["answerability_counts"] == {"derived": 10, "direct": 4}
+    assert summary["question_count"] == 15
+    assert summary["answerability_counts"] == {"derived": 11, "direct": 4}
     questions_by_id = {row["id"]: row for row in summary["questions"]}
     assert "open_available=2, excluded=1" in (
         questions_by_id["rq03_positions_for_avery"]["quick_read"]
@@ -551,6 +555,9 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
     )
     assert "feedback_adjustments=2" in (
         questions_by_id["rq14_recommendation_run_review"]["quick_read"]
+    )
+    assert "forbidden_present=False" in (
+        questions_by_id["rq15_workflow_trace_safety"]["quick_read"]
     )
     validator = Path(__file__).resolve().parents[1] / "scripts" / (
         "validate_recruiting_smoke.py"
@@ -748,6 +755,24 @@ def test_smoke_natural_questions_recruiting_pack_writes_artifacts(
         ("fb_avery_northstar_advance", "domain_fit"),
         ("fb_avery_northstar_advance", "client_preference_fit"),
     }
+    assert (output_dir / "rq15_workflow_trace_safety.json").exists()
+    trace_safety = json.loads(
+        (output_dir / "rq15_workflow_trace_safety.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert trace_safety["summary"] == {
+        "trace_written": True,
+        "enabled": True,
+        "trace_exists": True,
+        "event_count": 1,
+        "invalid_event_count": 0,
+        "max_events": 3,
+        "recent_event_count": 1,
+        "recent_tool_names": ["add_recruiting_interaction"],
+        "redacted_marker_count": 3,
+        "forbidden_value_present": False,
+    }
     encoded = json.dumps(summary, ensure_ascii=False)
     assert "raw_content" not in encoded
     assert "contacts" not in encoded
@@ -797,6 +822,7 @@ def test_smoke_natural_questions_recruiting_pack_json(monkeypatch, tmp_path) -> 
         "rq12_recommendation_guardrails",
         "rq13_client_shortlist_readiness",
         "rq14_recommendation_run_review",
+        "rq15_workflow_trace_safety",
     ]
 
 

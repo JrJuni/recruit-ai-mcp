@@ -227,6 +227,23 @@ def _payload(
                     }
                 },
             },
+            {
+                "id": "rq15_workflow_trace_safety",
+                "payload": {
+                    "summary": {
+                        "event_count": EXPECTED_CONTRACT["trace_event_count"],
+                        "invalid_event_count": EXPECTED_CONTRACT[
+                            "trace_invalid_event_count"
+                        ],
+                        "redacted_marker_count": EXPECTED_CONTRACT[
+                            "trace_redacted_marker_count"
+                        ],
+                        "forbidden_value_present": EXPECTED_CONTRACT[
+                            "trace_forbidden_value_present"
+                        ],
+                    }
+                },
+            },
         ],
     }
 

@@ -231,15 +231,16 @@ recruit-ai smoke-natural-questions --pack recruiting --as-of 2026-06-22
 
 Pass criteria:
 
-- `questions=14`.
+- `questions=15`.
 - `OK: True`.
 - No blocked questions.
 - No sensitive failures.
 - The pack covers recruiting metrics, position-to-candidate recommendations,
   candidate-to-position recommendations, feedback-adjusted scoring, active
   submissions, learned client preferences, candidate risk flags, raw-content
-  safety, intake coverage, recruiting report preview readiness, and local
-  personal recruiting persistence.
+  safety, intake coverage, recruiting report preview readiness, local personal
+  recruiting persistence, saved recommendation-run review, and opt-in workflow
+  trace redaction.
 - Candidate-to-position smoke shows the default open-role filter and the
   paused role excluded from first-pass recommendations.
 - The pack also covers realistic recommendation guardrails, including

@@ -8,7 +8,7 @@ from typing import Any
 
 EXPECTED_CONTRACT = {
     "ok": True,
-    "question_count": 14,
+    "question_count": 15,
     "candidate_count": 10,
     "written_record_count": 30,
     "reloaded_record_count": 30,
@@ -31,6 +31,10 @@ EXPECTED_CONTRACT = {
     "saved_run_feedback_adjustment_row_count": 2,
     "saved_run_risk_row_count": 2,
     "saved_run_next_question_row_count": 2,
+    "trace_event_count": 1,
+    "trace_invalid_event_count": 0,
+    "trace_redacted_marker_count": 3,
+    "trace_forbidden_value_present": False,
 }
 _REQUIRED_QUESTIONS = (
     "rq01_recruiting_pipeline_metrics",
@@ -39,6 +43,7 @@ _REQUIRED_QUESTIONS = (
     "rq12_recommendation_guardrails",
     "rq13_client_shortlist_readiness",
     "rq14_recommendation_run_review",
+    "rq15_workflow_trace_safety",
 )
 _REQUIRED_FIT_DIMENSIONS = (
     "skill_fit",
@@ -68,6 +73,7 @@ def validate_payload(payload: dict[str, Any]) -> dict[str, Any]:
         question_id="rq13_client_shortlist_readiness",
     )
     saved_run = _summary(questions, "rq14_recommendation_run_review")
+    trace_safety = _summary(questions, "rq15_workflow_trace_safety")
     actual = {
         "ok": _required_key(payload, "ok", scope="top-level payload"),
         "question_count": _required_key(
@@ -176,6 +182,26 @@ def validate_payload(payload: dict[str, Any]) -> dict[str, Any]:
             saved_run,
             "next_question_row_count",
             scope="rq14_recommendation_run_review summary",
+        ),
+        "trace_event_count": _required_key(
+            trace_safety,
+            "event_count",
+            scope="rq15_workflow_trace_safety summary",
+        ),
+        "trace_invalid_event_count": _required_key(
+            trace_safety,
+            "invalid_event_count",
+            scope="rq15_workflow_trace_safety summary",
+        ),
+        "trace_redacted_marker_count": _required_key(
+            trace_safety,
+            "redacted_marker_count",
+            scope="rq15_workflow_trace_safety summary",
+        ),
+        "trace_forbidden_value_present": _required_key(
+            trace_safety,
+            "forbidden_value_present",
+            scope="rq15_workflow_trace_safety summary",
         ),
     }
     if actual != EXPECTED_CONTRACT:

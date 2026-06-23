@@ -178,13 +178,16 @@ Installed-package smoke passes when:
 - the requested package version installs in a fresh virtual environment;
 - `smoke-profile --profile sample --json` exits successfully;
 - `smoke-natural-questions --pack recruiting --as-of 2026-06-22 --json` exits
-  successfully with the current 14-question recruiting pack;
+  successfully with the current 15-question recruiting pack;
 - the recruiting smoke contract verifies `candidate_count=10`,
   `written_record_count=30`, `reloaded_record_count=30`, and
   `guardrail_candidate_count=6`;
 - the same contract verifies candidate-to-position smoke uses open-role
   defaults with `candidate_position_available_count=2` and
   `candidate_position_excluded_count=1`;
+- the same contract verifies saved recommendation-run review and opt-in
+  workflow trace redaction with `saved_run_result_count=3`,
+  `trace_event_count=1`, and `trace_forbidden_value_present=False`;
 - `deal_intel.mcp_server.app.list_tools()` returns the sample MCP surface;
 - the core tools `config_doctor`, `get_tool_catalog`, `create_candidate`,
   `add_recruiting_interaction`, `recommend_candidates_for_position`, and
