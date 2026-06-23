@@ -168,6 +168,57 @@ def test_mcp_recruiting_create_and_recommend_flow(monkeypatch) -> None:
     assert saved["record"]["results"][0]["target_id"] == candidate["candidate_id"]
 
 
+def test_mcp_recommendation_preserves_inferred_risk_flags(monkeypatch) -> None:
+    storage = FakeRecruitingMCPStorage()
+    storage.positions["pos_platform"] = {
+        "position_id": "pos_platform",
+        "client_company_id": "client_acme",
+        "title": "Backend Platform Lead",
+        "status": "open",
+        "seniority": "lead",
+        "must_have": ["Python", "MongoDB", "data platforms"],
+        "nice_to_have": [],
+        "locations": ["Remote"],
+        "remote_policy": "remote",
+    }
+    storage.candidates["cand_blake"] = {
+        "candidate_id": "cand_blake",
+        "name": "Blake Rivera",
+        "headline": "Backend engineer",
+        "current_title": "Backend Engineer",
+        "skills": ["Python"],
+        "domains": [],
+        "seniority": "lead",
+        "locations": ["Remote"],
+        "availability": "30 days",
+        "risk_flags": [],
+        "evidence": [
+            {
+                "evidence_id": "ev_blake",
+                "source_type": "profile",
+                "source_id": "cand_blake",
+                "summary": "Candidate profile confirms Python backend work.",
+                "confidence": "candidate_stated",
+            }
+        ],
+    }
+    monkeypatch.setattr(_context, "mongo", lambda: storage)
+
+    result = mcp_server.recommend_candidates_for_position(
+        position_id="pos_platform",
+        save_run=True,
+    )
+    saved = mcp_server.get_recruiting_recommendation_run(
+        recommendation_run_id=result["recommendation_run_id"],
+    )
+
+    row = saved["record"]["results"][0]
+    assert row["target_id"] == "cand_blake"
+    assert row["risk_flags"] == ["skill_gap"]
+    assert "Confirm required skill: MongoDB" in row["next_questions"]
+    assert "Confirm required skill: data platforms" in row["next_questions"]
+
+
 def test_mcp_add_client_feedback_parses_rubric_delta_json(monkeypatch) -> None:
     storage = FakeRecruitingMCPStorage()
     monkeypatch.setattr(_context, "mongo", lambda: storage)

@@ -12,6 +12,21 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruiting MCP risk-flag pass-through guard
+
+Completed:
+
+- Added MCP wrapper coverage proving `recommend_candidates_for_position` and
+  `get_recruiting_recommendation_run` preserve inferred `skill_gap` risk flags
+  and missing-skill next questions through the public MCP tool surface.
+- The test seeds recruiting storage directly, calls the MCP functions, saves
+  the recommendation run, and reads it back through the MCP wrapper.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-mcp-risk-flags tests\test_recruiting_mcp_tools.py`
+- `ruff check tests\test_recruiting_mcp_tools.py`
+
 ### Recruiting risk-flag hardening verification checkpoint
 
 Completed:
