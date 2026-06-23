@@ -42,6 +42,7 @@ git status --short
 & "$HOME\miniconda3\envs\deal-intel\python.exe" -m build --no-isolation --outdir .tmp\publish-dist
 Push-Location mcpb
 mcpb validate manifest.json
+mcpb pack . recruit-ai-mcp-0.1.0.mcpb
 mcpb info recruit-ai-mcp-0.1.0.mcpb
 Pop-Location
 npm pack .\npm --dry-run --cache .tmp\npm-cache
@@ -53,7 +54,8 @@ Pass criteria:
 - Python wheel and sdist build successfully as
   `.tmp\publish-dist\recruit_ai_mcp-0.1.0-py3-none-any.whl` and
   `.tmp\publish-dist\recruit_ai_mcp-0.1.0.tar.gz`.
-- MCPB manifest validates and the release artifact is inspectable.
+- MCPB manifest validates and the release artifact is inspectable after the
+  MCPB artifact rebuilds.
 - npm dry-run tarball contains only the bootstrapper files.
 - targeted bootstrapper/MCPB tests pass.
 - Ruff passes.

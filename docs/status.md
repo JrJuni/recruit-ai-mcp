@@ -12,6 +12,30 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Local package readiness gate refresh
+
+Completed:
+
+- Re-ran the local package readiness gate for the Recruit AI `0.1.0` line.
+  Package contract tests, MCPB validation/info, MCPB packing, npm dry-run
+  packing, and Python wheel/sdist build all passed locally.
+- Rebuilt `mcpb/recruit-ai-mcp-0.1.0.mcpb`, copied the refreshed artifact into
+  `npm/mcpb/` and `release/latest/`, and updated
+  `release/latest/checksums.txt`. The three MCPB copies now share the same
+  SHA256:
+  `3C183B78F5EDABE221FC993D3CD54302D25FCEA53F21A3C75A9723B386755936`.
+- Tightened `docs/release-publish-checklist.md` so the pre-publish local gate
+  explicitly rebuilds the MCPB artifact before inspecting it.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-package-readiness tests\test_bootstrapper_skeleton.py tests\test_mcpb_manifest.py tests\test_docs_recruit_ai_current.py`
+- `mcpb validate manifest.json` from `mcpb/`
+- `mcpb pack . recruit-ai-mcp-0.1.0.mcpb` from `mcpb/`
+- `mcpb info recruit-ai-mcp-0.1.0.mcpb` from `mcpb/`
+- `npm pack .\npm --dry-run --cache .tmp\npm-cache`
+- `python -m build --no-isolation --outdir .tmp\publish-dist`
+
 ### Recruiting retention-risk recommendation guardrail
 
 Completed:
