@@ -101,6 +101,8 @@ Immediate quality order:
      risk rows, and next-question rows intact.
    - MCP wrapper tests now cover inferred `skill_gap` risk flags across
      recommendation save and read-back through the public tool surface.
+   - MCP wrapper tests now also cover candidate-to-position client exclusion
+     risk flags and follow-up questions across save/read-back.
    - Service-layer recommendation tests now cover inferred `skill_gap` risk
      flags across save and read-back serialization.
    - Service-layer recommendation tests now also cover inferred

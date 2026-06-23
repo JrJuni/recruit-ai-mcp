@@ -219,6 +219,76 @@ def test_mcp_recommendation_preserves_inferred_risk_flags(monkeypatch) -> None:
     assert "Confirm required skill: data platforms" in row["next_questions"]
 
 
+def test_mcp_candidate_to_position_preserves_client_exclusion(monkeypatch) -> None:
+    storage = FakeRecruitingMCPStorage()
+    storage.candidates["cand_blake"] = {
+        "candidate_id": "cand_blake",
+        "name": "Blake Rivera",
+        "headline": "Backend engineer",
+        "current_title": "Backend Engineer",
+        "skills": ["Python", "MongoDB"],
+        "domains": ["B2B SaaS"],
+        "seniority": "lead",
+        "locations": ["Remote"],
+        "availability": "30 days",
+        "preferences": {"excluded_companies": ["Acme"]},
+        "risk_flags": [],
+        "evidence": [
+            {
+                "evidence_id": "ev_blake",
+                "source_type": "profile",
+                "source_id": "cand_blake",
+                "summary": "Candidate profile confirms backend platform work.",
+                "confidence": "candidate_stated",
+            }
+        ],
+    }
+    storage.positions["pos_acme"] = {
+        "position_id": "pos_acme",
+        "client_company_id": "client_acme",
+        "title": "Backend Platform Lead",
+        "status": "open",
+        "seniority": "lead",
+        "must_have": ["Python", "MongoDB"],
+        "nice_to_have": ["B2B SaaS"],
+        "locations": ["Remote"],
+        "remote_policy": "remote",
+    }
+    storage.positions["pos_beta"] = {
+        "position_id": "pos_beta",
+        "client_company_id": "client_beta",
+        "title": "Backend Platform Lead",
+        "status": "open",
+        "seniority": "lead",
+        "must_have": ["Python", "MongoDB"],
+        "nice_to_have": ["B2B SaaS"],
+        "locations": ["Remote"],
+        "remote_policy": "remote",
+    }
+    monkeypatch.setattr(_context, "mongo", lambda: storage)
+
+    result = mcp_server.recommend_positions_for_candidate(
+        candidate_id="cand_blake",
+        save_run=True,
+    )
+    saved = mcp_server.get_recruiting_recommendation_run(
+        recommendation_run_id=result["recommendation_run_id"],
+    )
+
+    rows = {row["target_id"]: row for row in saved["record"]["results"]}
+    assert [row["target_id"] for row in saved["record"]["results"]] == [
+        "pos_beta",
+        "pos_acme",
+    ]
+    assert rows["pos_acme"]["risk_flags"] == [
+        "client_exclusion",
+        "review_match_risk",
+    ]
+    assert "Confirm whether the candidate exclusion can be revisited." in (
+        rows["pos_acme"]["next_questions"]
+    )
+
+
 def test_mcp_add_client_feedback_parses_rubric_delta_json(monkeypatch) -> None:
     storage = FakeRecruitingMCPStorage()
     monkeypatch.setattr(_context, "mongo", lambda: storage)

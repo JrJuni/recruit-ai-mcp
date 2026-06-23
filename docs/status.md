@@ -12,6 +12,21 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruiting MCP candidate-to-position risk guard
+
+Completed:
+
+- Added MCP wrapper coverage for `recommend_positions_for_candidate` with
+  `save_run=true`, followed by `get_recruiting_recommendation_run` read-back.
+- The test verifies candidate-side client exclusions still reorder the result
+  list and preserve `client_exclusion`, `review_match_risk`, and the exclusion
+  follow-up question through the public MCP surface.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-mcp-candidate-position-risk tests\test_recruiting_mcp_tools.py`
+- `ruff check tests\test_recruiting_mcp_tools.py`
+
 ### Recruiting MCP risk-flag pass-through guard
 
 Completed:
