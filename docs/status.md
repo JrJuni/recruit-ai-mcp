@@ -12,6 +12,24 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruiting risk-flag hardening verification checkpoint
+
+Completed:
+
+- Re-ran the accumulated risk-flag hardening verification after the latest
+  recommendation builder, service persistence, smoke validator, report-export,
+  and docs-contract changes.
+- Generated a fresh recruiting natural-question smoke payload and validated it
+  against the current 17-question contract, including surfaced `skill_gap`
+  requirements in both guardrail and shortlist payloads.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-risk-hardening-checkpoint tests\test_recruiting_recommendation.py tests\test_recruiting_recommendations_service.py tests\test_validate_recruiting_smoke.py tests\test_export_recruiting_report.py tests\test_docs_recruit_ai_current.py`
+- `ruff check src\deal_intel\schema\recruiting_recommendation.py tests\test_recruiting_recommendation.py tests\test_recruiting_recommendations_service.py tests\test_validate_recruiting_smoke.py tests\test_export_recruiting_report.py tests\test_docs_recruit_ai_current.py`
+- `PYTHONPATH=src python -m deal_intel.cli smoke-natural-questions --pack recruiting --as-of 2026-06-22 --output-dir .tmp\risk-hardening-smoke`
+- `PYTHONPATH=src python scripts\validate_recruiting_smoke.py .tmp\risk-hardening-smoke\summary.json`
+
 ### Recruiting generic match-risk de-duplication fix
 
 Completed:
