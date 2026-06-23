@@ -77,6 +77,9 @@ Immediate quality order:
      active submissions, learned client preferences, candidate risk flags, and
      raw-content safety, plus client/candidate/position intake coverage and an
      in-memory recruiting report preview.
+   - Latest full recruiting smoke checkpoint regenerated the 17-question pack
+     after the `rq14`-`rq17` validator hardening and passed the current
+     validator contract.
    - Local personal recruiting persistence is covered with a temp
      `recruiting.json` save/reload case that avoids touching the user's real
      `~/.recruit-ai` data.

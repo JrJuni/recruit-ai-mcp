@@ -12,6 +12,25 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Recruiting smoke validator checkpoint
+
+Completed:
+
+- Generated a fresh recruiting natural-question smoke run after tightening
+  `rq14`, `rq15`, `rq16`, and `rq17` validator evidence checks.
+- Confirmed the new 17-question payload passes the current
+  `scripts/validate_recruiting_smoke.py` contract, including saved-run row
+  evidence, workflow trace evidence, report export evidence, and
+  candidate-side exclusion row evidence.
+- Spot-checked the generated per-question artifacts under
+  `.tmp\rq15-rq17-final-smoke` for the key row-level evidence used by the
+  stricter validator.
+
+Verification:
+
+- `PYTHONPATH=src python -m deal_intel.cli smoke-natural-questions --pack recruiting --as-of 2026-06-22 --output-dir .tmp\rq15-rq17-final-smoke`
+- `PYTHONPATH=src python scripts\validate_recruiting_smoke.py .tmp\rq15-rq17-final-smoke\summary.json`
+
 ### Recruiting smoke trace evidence guard
 
 Completed:
