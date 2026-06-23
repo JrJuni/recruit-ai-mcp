@@ -114,8 +114,35 @@ def test_release_docs_and_workflows_use_recruit_ai_package_name() -> None:
     assert f"`saved_run_result_count={EXPECTED_CONTRACT['saved_run_result_count']}`" in (
         release_docs
     )
+    assert (
+        "`saved_run_feedback_adjustment_row_count="
+        f"{EXPECTED_CONTRACT['saved_run_feedback_adjustment_row_count']}`"
+        in release_docs
+    )
+    assert (
+        f"`saved_run_risk_row_count={EXPECTED_CONTRACT['saved_run_risk_row_count']}`"
+        in release_docs
+    )
+    assert (
+        "`saved_run_next_question_row_count="
+        f"{EXPECTED_CONTRACT['saved_run_next_question_row_count']}`"
+        in release_docs
+    )
+    assert f"`trace_written={EXPECTED_CONTRACT['trace_written']}`" in release_docs
+    assert f"`trace_enabled={EXPECTED_CONTRACT['trace_enabled']}`" in release_docs
+    assert f"`trace_exists={EXPECTED_CONTRACT['trace_exists']}`" in release_docs
     assert f"`trace_event_count={EXPECTED_CONTRACT['trace_event_count']}`" in (
         release_docs
+    )
+    assert (
+        "`trace_recent_tool_names="
+        f"{EXPECTED_CONTRACT['trace_recent_tool_names']}`"
+        in release_docs
+    )
+    assert (
+        "`trace_redacted_marker_count="
+        f"{EXPECTED_CONTRACT['trace_redacted_marker_count']}`"
+        in release_docs
     )
     assert (
         "`trace_forbidden_value_present="
@@ -135,6 +162,25 @@ def test_release_docs_and_workflows_use_recruit_ai_package_name() -> None:
     assert (
         "`report_export_markdown_exists="
         f"{EXPECTED_CONTRACT['report_export_markdown_exists']}`"
+        in release_docs
+    )
+    assert (
+        "`report_export_csv_row_count="
+        f"{EXPECTED_CONTRACT['report_export_csv_row_count']}`"
+        in release_docs
+    )
+    assert (
+        "`report_export_markdown_line_count="
+        f"{EXPECTED_CONTRACT['report_export_markdown_line_count']}`"
+        in release_docs
+    )
+    assert (
+        f"`report_export_row_count={EXPECTED_CONTRACT['report_export_row_count']}`"
+        in release_docs
+    )
+    assert (
+        "`report_export_briefing="
+        f"{EXPECTED_CONTRACT['report_export_briefing']}`"
         in release_docs
     )
     assert (

@@ -12,6 +12,24 @@ than loaded wholesale.
 
 ## Latest Update - 2026-06-23
 
+### Release checklist smoke-contract alignment
+
+Completed:
+
+- Updated `docs/release-publish-checklist.md` so installed-package smoke pass
+  criteria include the current stricter recruiting smoke validator contract.
+- The checklist now calls out saved recommendation feedback/risk/question
+  counts, workflow trace enabled/written/recent-tool evidence, report export
+  row/line/briefing evidence, and candidate exclusion evidence before public
+  package readiness can be claimed.
+- Added docs-current assertions so future release-doc edits do not drift behind
+  `scripts/validate_recruiting_smoke.py`.
+
+Verification:
+
+- `PYTHONPATH=src pytest -q --basetemp .tmp\pytest-release-contract-docs tests\test_docs_recruit_ai_current.py`
+- `ruff check tests\test_docs_recruit_ai_current.py`
+
 ### Public registry evidence refresh
 
 Completed:

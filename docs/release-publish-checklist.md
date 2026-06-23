@@ -190,11 +190,19 @@ Installed-package smoke passes when:
   `candidate_position_excluded_count=1`;
 - the same contract verifies saved recommendation-run review and opt-in
   workflow trace redaction with `saved_run_result_count=3`,
-  `trace_event_count=1`, and `trace_forbidden_value_present=False`;
+  `saved_run_feedback_adjustment_row_count=2`, `saved_run_risk_row_count=2`,
+  `saved_run_next_question_row_count=2`, `trace_written=True`,
+  `trace_enabled=True`, `trace_exists=True`, `trace_event_count=1`,
+  `trace_recent_tool_names=['add_recruiting_interaction']`,
+  `trace_redacted_marker_count=3`, and `trace_forbidden_value_present=False`;
 - the same contract verifies recruiting report export with
   `report_export_artifact_count=2`,
   `report_export_csv_exists=True`, and
-  `report_export_markdown_exists=True`, and
+  `report_export_markdown_exists=True`,
+  `report_export_csv_row_count=49`, `report_export_markdown_line_count=40`,
+  `report_export_row_count=48`,
+  `report_export_briefing=2 open positions, 3 active submissions, 1 placements.`,
+  and
   `report_export_forbidden_term_present=False`;
 - the same contract verifies candidate-side client exclusions stay visible in
   role recommendations with `candidate_exclusion_result_count=2`,
